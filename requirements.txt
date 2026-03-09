@@ -1,0 +1,15 @@
+# Core data and API stack for the AI Hong Kong investment MVP
+pandas>=2.2.0
+numpy>=1.26.0
+requests>=2.31.0
+python-dotenv>=1.0.0
+
+# Market data
+yfinance>=0.2.40
+
+# AI integration
+openai>=1.40.0
+
+# Optional API service layer
+fastapi>=0.111.0
+uvicorn[standard]>=0.30.0

@@ -4,13 +4,14 @@
 2026-03-09
 
 ## Current production behavior
-- Current runtime is the existing MVP script behavior in `main.py`.
+- Runtime behavior remains the existing MVP script in `main.py`.
 - No autonomous live-trading execution is enabled.
-- Human user remains final decision-maker for any real trade actions.
+- The human user remains the final decision-maker for all real trade actions.
 
 ## Current progress
-- Documentation foundation initialized (`AGENTS.md`, `docs/spec.md`, `docs/plans.md`, `docs/status.md`, `docs/implement.md`).
-- Milestone 1 (Documentation Foundation) is in progress with baseline structure now established.
+- Milestone 1 (Documentation Foundation): baseline documents created and review refinements applied.
+- Validation criteria in `docs/plans.md` were strengthened to be more explicit and auditable.
+- Execution runbook remains in place to enforce small scoped tasks and per-task status updates.
 
 ## Next approved task
-- Review and refine Milestone 1 validation details, then proceed to Milestone 2 documentation of signal framework assumptions.
+- Close Milestone 1 after one final consistency check, then begin Milestone 2 by drafting signal categories and assumptions for Hong Kong equities.

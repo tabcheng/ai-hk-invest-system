@@ -17,5 +17,6 @@ Provide a consistent execution workflow for long-horizon Codex contributions.
 2. Select the next approved milestone task from `docs/status.md`.
 3. Implement only the scoped change for that task.
 4. Run validation checks defined in `docs/plans.md`.
-5. Update `docs/status.md` with results and next approved task.
-6. Commit with a clear milestone/task summary.
+5. If any validation fails, stop and repair before taking new scope.
+6. Update `docs/status.md` with what was completed, what was validated, and the next approved task.
+7. Commit with a clear milestone/task summary.

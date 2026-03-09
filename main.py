@@ -95,25 +95,14 @@ def save_signal(client: Client, signal_data: dict) -> None:
         "reason": signal_data["reason"],
     }
 
-    existing = (
-        client.table("signals")
-        .select("date,stock")
-        .eq("date", signal_date)
-        .eq("stock", signal_data["stock"])
-        .limit(1)
-        .execute()
-    )
-
-    if existing.data:
-        print(
-            "Duplicate protection triggered: "
-            f"signal already exists for {signal_data['stock']} on {signal_date}."
-        )
-        return
-
     result = (
         client.table("signals")
-        .upsert(payload, on_conflict="date,stock", ignore_duplicates=True)
+        .upsert(
+            payload,
+            on_conflict="date,stock",
+            ignore_duplicates=True,
+            returning="representation",
+        )
         .execute()
     )
 
@@ -121,7 +110,7 @@ def save_signal(client: Client, signal_data: dict) -> None:
         print(f"Inserted into Supabase: {payload}")
     else:
         print(
-            "Duplicate protection triggered during upsert: "
+            "Duplicate protection triggered: "
             f"signal already exists for {signal_data['stock']} on {signal_date}."
         )
 

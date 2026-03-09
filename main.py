@@ -85,7 +85,6 @@ def get_signal_for_ticker(ticker: str) -> dict:
         "reason": reason,
     }
 
-
 def save_signal(client: Client, signal_data: dict) -> None:
     payload = {
         "date": datetime.now(UTC).date().isoformat(),

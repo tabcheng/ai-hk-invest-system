@@ -1,5 +1,5 @@
 import os
-from datetime import datetime
+from datetime import datetime, UTC
 
 import pandas as pd
 import yfinance as yf
@@ -88,7 +88,7 @@ def get_signal_for_ticker(ticker: str) -> dict:
 
 def save_signal(client: Client, signal_data: dict) -> None:
     payload = {
-        "date": datetime.utcnow().date().isoformat(),
+        "date": datetime.now(UTC).date().isoformat(),
         "stock": signal_data["stock"],
         "signal": signal_data["signal"],
         "price": signal_data["price"],

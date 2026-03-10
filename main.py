@@ -138,7 +138,11 @@ def update_run(client: Client, run_id: int, payload: dict) -> None:
 
 def main():
     client = get_supabase_client()
-    run_id = create_run(client)
+    run_id = None
+    try:
+        run_id = create_run(client)
+    except Exception as e:
+        print(f"Run observability disabled for this execution: create_run failed: {e}")
     failed_errors = []
     processed_tickers = 0
     successful_tickers = 0
@@ -158,44 +162,52 @@ def main():
         finished_at = datetime.now(UTC).isoformat()
         failed_tickers = len(failed_errors)
 
-        if failed_tickers == 0:
-            update_run(
-                client,
-                run_id,
-                {
-                    "status": "SUCCESS",
-                    "finished_at": finished_at,
-                    "processed_tickers": processed_tickers,
-                    "successful_tickers": successful_tickers,
-                    "failed_tickers": failed_tickers,
-                },
-            )
-        else:
-            update_run(
-                client,
-                run_id,
-                {
-                    "status": "FAILED",
-                    "finished_at": finished_at,
-                    "processed_tickers": processed_tickers,
-                    "successful_tickers": successful_tickers,
-                    "failed_tickers": failed_tickers,
-                    "error_summary": " | ".join(failed_errors)[:1000],
-                },
-            )
+        if run_id is not None:
+            try:
+                if failed_tickers == 0:
+                    update_run(
+                        client,
+                        run_id,
+                        {
+                            "status": "SUCCESS",
+                            "finished_at": finished_at,
+                            "processed_tickers": processed_tickers,
+                            "successful_tickers": successful_tickers,
+                            "failed_tickers": failed_tickers,
+                        },
+                    )
+                else:
+                    update_run(
+                        client,
+                        run_id,
+                        {
+                            "status": "FAILED",
+                            "finished_at": finished_at,
+                            "processed_tickers": processed_tickers,
+                            "successful_tickers": successful_tickers,
+                            "failed_tickers": failed_tickers,
+                            "error_summary": " | ".join(failed_errors)[:1000],
+                        },
+                    )
+            except Exception as e:
+                print(f"Run observability update failed after ticker processing: {e}")
     except Exception as e:
-        update_run(
-            client,
-            run_id,
-            {
-                "status": "FAILED",
-                "finished_at": datetime.now(UTC).isoformat(),
-                "processed_tickers": processed_tickers,
-                "successful_tickers": successful_tickers,
-                "failed_tickers": processed_tickers - successful_tickers,
-                "error_summary": str(e)[:1000],
-            },
-        )
+        if run_id is not None:
+            try:
+                update_run(
+                    client,
+                    run_id,
+                    {
+                        "status": "FAILED",
+                        "finished_at": datetime.now(UTC).isoformat(),
+                        "processed_tickers": processed_tickers,
+                        "successful_tickers": successful_tickers,
+                        "failed_tickers": processed_tickers - successful_tickers,
+                        "error_summary": str(e)[:1000],
+                    },
+                )
+            except Exception as update_error:
+                print(f"Run observability update failed during exception handling: {update_error}")
         raise
 
 

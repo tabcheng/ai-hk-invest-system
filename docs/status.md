@@ -16,6 +16,7 @@
 - Added rerun-safe migration SQL for the `signals_date_stock_unique` constraint, including deterministic duplicate-row cleanup (prefer `created_at`, then `id`) before constraint creation to protect `(date, stock)` at the database layer.
 - Milestone 2 task (basic run-level observability): added `runs` table migration and minimal `main.py` run tracking so each Railway execution creates one run row and finalizes status with counters and optional error summary.
 - Milestone 2 follow-up: corrected run counter accounting so terminal `FAILED` updates report `processed_tickers` and `failed_tickers` based on actual loop progress if execution aborts early.
+- Milestone 2 follow-up: made run observability best-effort so `create_run`/`update_run` failures are logged without interrupting signal generation or forcing post-processing failure.
 - Execution runbook remains in place to enforce small scoped tasks and per-task status updates.
 
 ## Next approved task

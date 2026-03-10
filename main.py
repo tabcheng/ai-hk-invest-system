@@ -5,7 +5,6 @@ import pandas as pd
 import yfinance as yf
 from supabase import create_client, Client
 
-
 TICKERS = ["0700.HK", "0388.HK", "1299.HK"]
 
 

@@ -116,16 +116,86 @@ def save_signal(client: Client, signal_data: dict) -> None:
     print(f"Supabase response: {result}")
 
 
+def create_run(client: Client) -> int:
+    result = (
+        client.table("runs")
+        .insert({"status": "RUNNING"}, returning="representation")
+        .execute()
+    )
+    run_id = result.data[0]["id"]
+    print(f"Created run record: id={run_id}")
+    return run_id
+
+
+def update_run(client: Client, run_id: int, payload: dict) -> None:
+    (
+        client.table("runs")
+        .update(payload)
+        .eq("id", run_id)
+        .execute()
+    )
+
+
 def main():
     client = get_supabase_client()
+    run_id = create_run(client)
+    failed_errors = []
+    successful_tickers = 0
 
-    for ticker in TICKERS:
-        try:
-            signal_data = get_signal_for_ticker(ticker)
-            print(f"Generated signal for {ticker}: {signal_data}")
-            save_signal(client, signal_data)
-        except Exception as e:
-            print(f"Error processing {ticker}: {e}")
+    try:
+        for ticker in TICKERS:
+            try:
+                signal_data = get_signal_for_ticker(ticker)
+                print(f"Generated signal for {ticker}: {signal_data}")
+                save_signal(client, signal_data)
+                successful_tickers += 1
+            except Exception as e:
+                failed_errors.append(f"{ticker}: {e}")
+                print(f"Error processing {ticker}: {e}")
+
+        finished_at = datetime.now(UTC).isoformat()
+        processed_tickers = len(TICKERS)
+        failed_tickers = len(failed_errors)
+
+        if failed_tickers == 0:
+            update_run(
+                client,
+                run_id,
+                {
+                    "status": "SUCCESS",
+                    "finished_at": finished_at,
+                    "processed_tickers": processed_tickers,
+                    "successful_tickers": successful_tickers,
+                    "failed_tickers": failed_tickers,
+                },
+            )
+        else:
+            update_run(
+                client,
+                run_id,
+                {
+                    "status": "FAILED",
+                    "finished_at": finished_at,
+                    "processed_tickers": processed_tickers,
+                    "successful_tickers": successful_tickers,
+                    "failed_tickers": failed_tickers,
+                    "error_summary": " | ".join(failed_errors)[:1000],
+                },
+            )
+    except Exception as e:
+        update_run(
+            client,
+            run_id,
+            {
+                "status": "FAILED",
+                "finished_at": datetime.now(UTC).isoformat(),
+                "processed_tickers": len(TICKERS),
+                "successful_tickers": successful_tickers,
+                "failed_tickers": len(TICKERS) - successful_tickers,
+                "error_summary": str(e)[:1000],
+            },
+        )
+        raise
 
 
 if __name__ == "__main__":

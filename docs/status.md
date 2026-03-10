@@ -12,7 +12,7 @@
 ## Current progress
 - Milestone 1 (Documentation Foundation): completed and validated; required docs remain in place and workflow rules are preserved.
 - Milestone 1 task (daily signal deduplication): refined to use single-write idempotency (`upsert` on conflict) and explicit duplicate-trigger logging without a pre-read query.
-- Added rerun-safe migration SQL for the `signals_date_stock_unique` constraint to protect `(date, stock)` at the database layer.
+- Added rerun-safe migration SQL for the `signals_date_stock_unique` constraint, including duplicate-row cleanup before constraint creation to protect `(date, stock)` at the database layer.
 - Execution runbook remains in place to enforce small scoped tasks and per-task status updates.
 
 ## Next approved task

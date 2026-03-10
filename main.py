@@ -140,10 +140,12 @@ def main():
     client = get_supabase_client()
     run_id = create_run(client)
     failed_errors = []
+    processed_tickers = 0
     successful_tickers = 0
 
     try:
         for ticker in TICKERS:
+            processed_tickers += 1
             try:
                 signal_data = get_signal_for_ticker(ticker)
                 print(f"Generated signal for {ticker}: {signal_data}")
@@ -154,7 +156,6 @@ def main():
                 print(f"Error processing {ticker}: {e}")
 
         finished_at = datetime.now(UTC).isoformat()
-        processed_tickers = len(TICKERS)
         failed_tickers = len(failed_errors)
 
         if failed_tickers == 0:
@@ -189,9 +190,9 @@ def main():
             {
                 "status": "FAILED",
                 "finished_at": datetime.now(UTC).isoformat(),
-                "processed_tickers": len(TICKERS),
+                "processed_tickers": processed_tickers,
                 "successful_tickers": successful_tickers,
-                "failed_tickers": len(TICKERS) - successful_tickers,
+                "failed_tickers": processed_tickers - successful_tickers,
                 "error_summary": str(e)[:1000],
             },
         )

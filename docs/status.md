@@ -15,6 +15,7 @@
 - Milestone 1 task (daily signal deduplication): refined to use single-write idempotency (`upsert` on conflict) and explicit duplicate-trigger logging without a pre-read query.
 - Added rerun-safe migration SQL for the `signals_date_stock_unique` constraint, including deterministic duplicate-row cleanup (prefer `created_at`, then `id`) before constraint creation to protect `(date, stock)` at the database layer.
 - Milestone 2 task (basic run-level observability): added `runs` table migration and minimal `main.py` run tracking so each Railway execution creates one run row and finalizes status with counters and optional error summary.
+- Milestone 2 follow-up: corrected run counter accounting so terminal `FAILED` updates report `processed_tickers` and `failed_tickers` based on actual loop progress if execution aborts early.
 - Execution runbook remains in place to enforce small scoped tasks and per-task status updates.
 
 ## Next approved task

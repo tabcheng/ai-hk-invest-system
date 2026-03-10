@@ -86,16 +86,34 @@ def get_signal_for_ticker(ticker: str) -> dict:
     }
 
 def save_signal(client: Client, signal_data: dict) -> None:
+    signal_date = datetime.now(UTC).date().isoformat()
     payload = {
-        "date": datetime.now(UTC).date().isoformat(),
+        "date": signal_date,
         "stock": signal_data["stock"],
         "signal": signal_data["signal"],
         "price": signal_data["price"],
         "reason": signal_data["reason"],
     }
 
-    result = client.table("signals").insert(payload).execute()
-    print(f"Inserted into Supabase: {payload}")
+    result = (
+        client.table("signals")
+        .upsert(
+            payload,
+            on_conflict="date,stock",
+            ignore_duplicates=True,
+            returning="representation",
+        )
+        .execute()
+    )
+
+    if result.data:
+        print(f"Inserted into Supabase: {payload}")
+    else:
+        print(
+            "Duplicate protection triggered: "
+            f"signal already exists for {signal_data['stock']} on {signal_date}."
+        )
+
     print(f"Supabase response: {result}")
 
 

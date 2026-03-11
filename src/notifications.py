@@ -77,7 +77,7 @@ def send_telegram_message(text: str) -> bool:
 
 
 def send_daily_run_summary(
-    client: Client,
+    client: Client | None,
     run_date: date,
     run_status: str,
     tickers: list[str],
@@ -86,10 +86,11 @@ def send_daily_run_summary(
     warning_note: str | None = None,
 ) -> bool:
     latest_total_equity = None
-    try:
-        latest_total_equity = _get_latest_total_equity(client)
-    except Exception as exc:
-        print(f"Could not fetch latest total equity for notification: {exc}")
+    if client is not None:
+        try:
+            latest_total_equity = _get_latest_total_equity(client)
+        except Exception as exc:
+            print(f"Could not fetch latest total equity for notification: {exc}")
 
     message = build_daily_summary_message(
         run_date=run_date,

@@ -28,6 +28,8 @@ Prioritization scale:
 - Notification delivery is best-effort and does not fail the core job when Telegram is unavailable/misconfigured.
 - Included concise deterministic summary fields: run date/status, per-ticker signals, paper trade count, latest total equity, and warning note.
 
+- Follow-up hardening completed: deterministic single run-date usage and startup-failure notification attempt before Supabase client initialization.
+
 ## P1 — Review reminders + near-term hardening
 
 ### Three recent PR review reminders (carry-over)

@@ -1,6 +1,6 @@
 from datetime import date
 
-from src.notifications import build_daily_summary_message
+from src.notifications import build_daily_summary_message, send_daily_run_summary, send_telegram_message
 
 
 def test_build_daily_summary_message_contains_required_fields():
@@ -34,3 +34,29 @@ def test_build_daily_summary_message_uses_na_equity_and_warning_note():
 
     assert "latest_total_equity: N/A" in message
     assert "note: paper_trading skipped" in message
+
+
+def test_send_telegram_message_skips_when_env_missing(monkeypatch):
+    monkeypatch.delenv("TELEGRAM_BOT_TOKEN", raising=False)
+    monkeypatch.delenv("TELEGRAM_CHAT_ID", raising=False)
+
+    sent = send_telegram_message("hello")
+
+    assert sent is False
+
+
+def test_send_daily_run_summary_supports_missing_client(monkeypatch):
+    monkeypatch.delenv("TELEGRAM_BOT_TOKEN", raising=False)
+    monkeypatch.delenv("TELEGRAM_CHAT_ID", raising=False)
+
+    sent = send_daily_run_summary(
+        client=None,
+        run_date=date(2026, 3, 11),
+        run_status="FAILED",
+        tickers=["0700.HK"],
+        signal_outcomes={},
+        paper_trade_count_today=0,
+        warning_note="startup failure",
+    )
+
+    assert sent is False

@@ -9,7 +9,28 @@ from src.signals import get_signal_for_ticker
 
 
 def main() -> None:
-    client = get_supabase_client()
+    run_date = datetime.now(timezone.utc).date()
+    signal_outcomes: dict[str, str] = {}
+    paper_trade_count_today = 0
+    notification_sent = False
+
+    try:
+        client = get_supabase_client()
+    except Exception as e:
+        try:
+            send_daily_run_summary(
+                client=None,
+                run_date=run_date,
+                run_status="FAILED",
+                tickers=TICKERS,
+                signal_outcomes=signal_outcomes,
+                paper_trade_count_today=paper_trade_count_today,
+                warning_note=f"supabase_client: {e}",
+            )
+        except Exception as notify_error:
+            print(f"Failed to send startup failure Telegram summary notification: {notify_error}")
+        raise
+
     run_id = None
     try:
         run_id = create_run(client)
@@ -20,9 +41,6 @@ def main() -> None:
     post_process_errors = []
     processed_tickers = 0
     successful_tickers = 0
-    signal_outcomes: dict[str, str] = {}
-    paper_trade_count_today = 0
-    notification_sent = False
 
     try:
         for ticker in TICKERS:
@@ -93,7 +111,7 @@ def main() -> None:
             try:
                 notification_sent = send_daily_run_summary(
                     client=client,
-                    run_date=datetime.now(timezone.utc).date(),
+                    run_date=run_date,
                     run_status=run_status,
                     tickers=TICKERS,
                     signal_outcomes=signal_outcomes,
@@ -124,7 +142,7 @@ def main() -> None:
             try:
                 send_daily_run_summary(
                     client=client,
-                    run_date=datetime.now(timezone.utc).date(),
+                    run_date=run_date,
                     run_status="FAILED",
                     tickers=TICKERS,
                     signal_outcomes=signal_outcomes,

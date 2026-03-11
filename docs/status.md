@@ -20,7 +20,8 @@
 - Milestone 2 implementation task (modular MVP refactor): split the single-file runtime into `src/config.py`, `src/data.py`, `src/signals.py`, `src/db.py`, `src/runs.py`, and `src/app.py`, while keeping `main.py` as the unchanged process entrypoint role.
 - Milestone 2 implementation task (minimal test layer): added initial pytest coverage for signal generation behavior and signal payload building in `tests/test_signals.py` and `tests/test_payloads.py`.
 - Milestone 2 follow-up (review fixes): expanded minimal signal tests to cover additional preserved MVP outcomes (`NO_DATA` and `HOLD`) to strengthen refactor regression safety without changing runtime strategy logic.
-- Milestone 2 documentation layer (this task): added product-definition docs for strategy semantics (`docs/strategy-spec.md`), paper-trading MVP rules (`docs/paper-trading-v1.md`), and prioritized follow-up backlog (`docs/backlog.md`) without runtime or infrastructure behavior changes.
+- Milestone 2 documentation layer: added product-definition docs for strategy semantics (`docs/strategy-spec.md`), paper-trading MVP rules (`docs/paper-trading-v1.md`), and prioritized follow-up backlog (`docs/backlog.md`) without runtime or infrastructure behavior changes.
+- Milestone 2 documentation follow-up (review pass): tightened docs to match runtime-truth signal semantics exactly, made paper-trading v1 rules deterministic (input contract, ordering, ledger updates), and clarified prioritized backlog wording for implementation readiness.
 
 ## Next approved task
-- Start Milestone 3 implementation prep by building a deterministic paper-trading v1 simulator that follows `docs/paper-trading-v1.md`, and link outputs to run-level traceability.
+- Start Milestone 3 implementation by building the deterministic paper-trading v1 simulator from `docs/paper-trading-v1.md` and linking outputs with run-level traceability (`run_id`).

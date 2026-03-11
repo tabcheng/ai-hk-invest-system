@@ -1,58 +1,63 @@
 # Strategy Specification (Current MVP)
 
 ## Purpose
-Define the current production signal semantics so future paper-trading work can be implemented consistently without changing live runtime behavior.
+Define the exact current production signal semantics so future paper-trading work can be implemented consistently **without** changing runtime behavior.
 
-## Current signal model (MA50 / MA200)
-The MVP strategy uses two moving averages per ticker:
-- **MA50**: short/medium trend proxy.
-- **MA200**: long-term trend proxy.
+## Runtime-truth signal model (MA50 / MA200)
+The runtime computes two simple moving averages from the `Close` series:
+- `MA50 = rolling_mean(Close, 50)`
+- `MA200 = rolling_mean(Close, 200)`
 
-Current interpretation:
-- **Bullish trend bias** when `MA50 > MA200`.
-- **Bearish trend bias** when `MA50 < MA200`.
-- **No crossover edge** when values are equal or effectively flat relative to data granularity.
+Signal decision uses the **latest row where both MA50 and MA200 are non-null**.
 
-This model is intentionally simple and trend-following; it is not a full portfolio strategy.
+Decision rule (exact):
+- `BUY` when `MA50 > MA200`
+- `SELL` when `MA50 < MA200`
+- `HOLD` when `MA50 == MA200`
+
+No other indicator, filter, or regime logic participates in the current decision.
 
 ## Canonical signal semantics
-The following signal labels are the product-definition contract for the current MVP logic layer.
 
 ### BUY
-- Meaning: Data supports a positive trend condition under current MA rules.
-- Intended user action: Consider a buy candidate, subject to human review (position limits, diversification, risk, and context checks).
-- Constraint: Not an instruction for automatic real trading.
+- Meaning: Latest valid MA pair indicates `MA50 > MA200`.
+- Operational implication: Bullish trend signal under the current single-factor rule.
+- Governance: Decision support only; not an autonomous real-trade command.
 
 ### SELL
-- Meaning: Data supports a negative trend condition under current MA rules.
-- Intended user action: Consider reducing or exiting an existing paper/live position after human review.
-- Constraint: Not an instruction for automatic real trading.
+- Meaning: Latest valid MA pair indicates `MA50 < MA200`.
+- Operational implication: Bearish trend signal under the current single-factor rule.
+- Governance: Decision support only; not an autonomous real-trade command.
 
 ### HOLD
-- Meaning: Data is sufficient, but current MA relationship does not justify a new directional action versus prior state.
-- Intended user action: Maintain current stance unless external factors justify override.
+- Meaning: Latest valid MA pair indicates `MA50 == MA200`.
+- Operational implication: Tie state under current MA rule; no directional edge from this strategy alone.
 
 ### NO_DATA
-- Meaning: Required market data for the ticker/date window is unavailable.
-- Intended user action: Do not infer trend direction; skip execution decision and inspect data pipeline health.
+Returned when required market data is missing for signal computation, including:
+- no market data frame, or
+- empty data frame, or
+- missing `Close` column.
+
+Operational implication: skip directional action and investigate data quality/pipeline inputs.
 
 ### INSUFFICIENT_DATA
-- Meaning: Data exists but does not include enough history to compute reliable MA50/MA200 values.
-- Intended user action: Defer decision until sufficient history is available.
+Returned when `Close` data exists but there is not enough history to produce at least one row with both MA50 and MA200.
+
+Operational implication: defer directional decision until sufficient history is available.
 
 ## Human decision authority (non-negotiable)
-- AI-generated signals are **decision-support artifacts only**.
-- The human user remains the **final decision-maker** for any real-money trade.
-- No document in this repository authorizes autonomous live trading.
+- AI-generated signals are decision-support artifacts only.
+- The human user remains the final decision-maker for any real-money trade.
+- Nothing in this repository authorizes autonomous live-trading execution.
 
 ## Current strategy limitations
-1. **Single-factor trend signal**: only MA50/MA200 relationship is considered.
-2. **No regime detection**: does not adapt to range-bound vs. trending market regimes.
-3. **No risk model integration**: no stop-loss, max drawdown guardrail, or volatility targeting in signal generation.
-4. **No portfolio-aware optimization**: signal is ticker-local and does not account for cross-position concentration.
-5. **No transaction-cost-aware optimization in signal layer**: fees/slippage are not part of current signal computation.
-6. **Data fragility exposure**: NO_DATA / INSUFFICIENT_DATA states can materially reduce actionable coverage.
-7. **No causal attribution**: MA crossover logic provides limited explainability beyond trend direction.
+1. Single-factor model (only MA50/MA200 relationship).
+2. No position/risk management embedded in signal generation.
+3. No portfolio-level optimization or concentration control in signal logic.
+4. No transaction-cost/slippage optimization in the signal rule.
+5. Data availability limitations can reduce actionable coverage (`NO_DATA` / `INSUFFICIENT_DATA`).
+6. Limited explainability beyond MA relationship state.
 
-## Change control note
-Any strategy-semantics changes must be documented here first, then implemented in a separately approved runtime task.
+## Change control
+Any semantic change to signal definitions must be documented here first and implemented only in a separately approved runtime task.

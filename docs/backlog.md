@@ -5,55 +5,55 @@ Prioritization scale:
 - **P1** = important near-term hardening
 - **P2** = valuable follow-up
 
-## P0 — Next implementation-critical items
+## P0 — Next implementation-critical
 
-### 1) Implement paper-trading v1 engine from documented contract
-- Build deterministic simulation using `docs/paper-trading-v1.md` rules.
-- Ensure no change to production signal-generation runtime behavior.
-- Produce auditable trade and portfolio logs.
+### 1) Implement paper-trading v1 exactly from docs contract
+- Build simulator strictly from `docs/paper-trading-v1.md` input/order/ledger rules.
+- Preserve current runtime signal-generation behavior.
+- Emit deterministic trade/snapshot/event outputs.
 
-### 2) Link simulation artifacts to run-level observability (`run_id` linkage)
-- Carry `run_id` (or equivalent execution identifier) through generated signal rows and paper-trading outputs for traceability.
-- Ensure one execution can be reconstructed across runs, signals, and simulation outputs.
+### 2) End-to-end traceability via `run_id` linkage
+- Link run metadata, signal rows, and paper-trading outputs with one execution identifier.
+- Make single-run reconstruction possible from persisted artifacts.
 
-### 3) Standardize `error_summary` structure
-- Replace ad hoc/truncated free-text with a lightweight structured schema (e.g., category + message + affected ticker count).
-- Preserve compact storage while improving post-run analysis.
+### 3) Structured `error_summary`
+- Replace free-form truncated text with compact structured schema (category, sample message, affected ticker count).
+- Keep storage bounded while improving debugging and analytics.
 
-### 4) Add basic pytest configuration (project-level)
-- Introduce minimal pytest config (`pytest.ini` or equivalent) for stable discovery/markers and predictable local/CI execution.
-- Keep configuration intentionally small.
+### 4) Add basic pytest project configuration
+- Add minimal `pytest.ini` (or equivalent) for stable test discovery and consistent local/CI behavior.
 
-## P1 — PR review reminders (recent) and follow-ups
+## P1 — Review reminders + near-term hardening
 
-### Recent PR review reminders (carry-over)
-1. **Extract repeated runtime helper logic** into focused helper functions/modules to reduce duplication and simplify future tests.
-2. **Improve run-trace coherence** by ensuring identifiers and status updates are consistently connected across layers.
-3. **Harden failure reporting quality** so errors are grouped and actionable rather than opaque string blobs.
+### Three recent PR review reminders (carry-over)
+1. **Helper extraction:** pull repeated runtime logic into focused helpers to reduce duplication.
+2. **Trace coherence:** ensure status/identifier consistency across run + signal + downstream layers.
+3. **Failure reporting quality:** improve error grouping/actionability over opaque string blobs.
 
-### Additional near-term follow-up
-- Expand automated tests beyond current minimal path coverage (more edge cases for signal and run lifecycle behavior).
-- Add CI workflow for lint/test gating on pull requests.
+### Near-term hardening follow-ups
+- Add CI pipeline for lint/test gating on pull requests.
+- Expand tests for edge cases: NO_DATA / INSUFFICIENT_DATA propagation, run finalization, DB failure paths.
 
-## P2 — Medium-term quality and performance work
+## P2 — Medium-term quality and performance
 
-### Testing and reliability
-- Increase test depth for data edge cases, DB write failure modes, and run finalization corner cases.
-- Add fixtures/utilities for deterministic replay-style tests.
+### Reliability and test depth
+- Add deterministic replay fixtures for multi-day simulation scenarios.
+- Increase integration-style coverage for persistence + run lifecycle behavior.
 
 ### Metrics and performance
-- Define performance metrics (runtime duration, per-ticker processing latency, failure ratio, data coverage ratio).
-- Track trend metrics over time for regression detection.
+- Track processing duration and per-ticker latency.
+- Add failure ratio and data-coverage metrics.
+- Monitor performance regressions over time.
 
-### Strategy and analytics extensions
-- Add richer evaluation metrics for paper trading (risk-adjusted returns, drawdown episodes, turnover efficiency).
-- Document candidate signal extensions only after baseline paper-trading evidence is available.
+### Strategy analytics extensions
+- Add richer paper-trading analytics (risk-adjusted return, drawdown episodes, turnover efficiency).
+- Evaluate signal extensions only after baseline paper-trading evidence is established.
 
-## Technical debt register (known)
-- Runtime flow currently contains logic that can be further decomposed for readability and testability.
-- Error summaries are constrained by coarse string truncation behavior.
-- Traceability across execution layers is incomplete without explicit linkage keys.
-- Test harness exists but remains minimal without central pytest configuration and CI enforcement.
+## Technical debt register
+- Runtime flow still has extractable helper opportunities.
+- `error_summary` remains coarse and truncation-based.
+- Execution traceability is incomplete without explicit linkage keys.
+- Test harness exists but is minimal without project-level pytest config + CI enforcement.
 
-## Backlog maintenance note
-After each completed task, update this backlog and `docs/status.md` so next approved work remains explicit and prioritized.
+## Maintenance rule
+After each completed task, update both this backlog and `docs/status.md` to keep next approved work explicit.

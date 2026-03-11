@@ -25,6 +25,7 @@
 - Milestone 3 implementation task (paper-trading v1 MVP): added deterministic paper-trading tables (`paper_trades`, `paper_daily_snapshots`, `paper_events`), implemented a minimal simulator under `src/paper_trading.py`, and wired execution to run after daily signal generation in `src/app.py` without changing signal-generation logic or Railway cron flow.
 - Milestone 3 validation layer: added focused unit tests for BUY open, SELL close, HOLD event-only behavior, and duplicate-BUY skip behavior.
 - Milestone 3 follow-up (review fixes): made daily paper-trading persistence rerun-safe by clearing same-day paper outputs before writing deterministic replacements, and separated ticker failure counting from post-processing failures in run finalization status payloads.
+- Milestone 3 follow-up (execution gating): paper trading now runs only when all ticker signals succeed; runs with ticker-level failures skip paper trading with a clear logged reason while preserving separate ticker failure counters.
 
 ## Next approved task
 - Continue Milestone 3 hardening with end-to-end traceability improvements and structured `error_summary` schema work from `docs/backlog.md` P0.

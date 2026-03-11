@@ -15,7 +15,7 @@ def main() -> None:
     except Exception as e:
         print(f"Run observability disabled for this execution: create_run failed: {e}")
 
-    failed_errors = []
+    ticker_errors = []
     post_process_errors = []
     processed_tickers = 0
     successful_tickers = 0
@@ -29,19 +29,26 @@ def main() -> None:
                 save_signal(client, signal_data)
                 successful_tickers += 1
             except Exception as e:
-                failed_errors.append(f"{ticker}: {e}")
+                ticker_errors.append(f"{ticker}: {e}")
                 print(f"Error processing {ticker}: {e}")
 
-
-        try:
-            run_paper_trading_for_today(client, run_id)
-        except Exception as e:
-            post_process_errors.append(f"paper_trading: {e}")
-            print(f"Error running paper trading: {e}")
+        if ticker_errors:
+            skip_reason = (
+                "paper_trading skipped: daily signal generation had "
+                f"{len(ticker_errors)} ticker-level failure(s)."
+            )
+            post_process_errors.append(skip_reason)
+            print(skip_reason)
+        else:
+            try:
+                run_paper_trading_for_today(client, run_id)
+            except Exception as e:
+                post_process_errors.append(f"paper_trading: {e}")
+                print(f"Error running paper trading: {e}")
 
         finished_at = datetime.now(timezone.utc).isoformat()
-        failed_tickers = len(failed_errors)
-        all_errors = failed_errors + post_process_errors
+        failed_tickers = len(ticker_errors)
+        all_errors = ticker_errors + post_process_errors
 
         if run_id is not None:
             try:

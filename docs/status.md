@@ -7,31 +7,27 @@
 - Runtime behavior remains the existing MVP script in `main.py` (Railway entry point), now as a thin entry into modularized runtime code under `src/`.
 - Daily signal writes include database-backed deduplication on `(date, stock)` with idempotent write behavior.
 - Run-level observability is preserved via a `runs` table lifecycle (`RUNNING` at start, terminal `SUCCESS`/`FAILED` at finish) without changing ticker processing scope.
+- Paper-trading v1 remains deterministic and gated to full ticker-success runs.
+- Telegram daily summary remains best-effort and non-blocking.
 - No autonomous live-trading execution is enabled.
 - The human user remains the final decision-maker for all real trade actions.
 
 ## Current progress
 - Milestone 1 (Documentation Foundation): completed and validated; required docs remain in place and workflow rules are preserved.
-- Milestone 1 task (daily signal deduplication): refined to use single-write idempotency (`upsert` on conflict) and explicit duplicate-trigger logging without a pre-read query.
-- Added rerun-safe migration SQL for the `signals_date_stock_unique` constraint, including deterministic duplicate-row cleanup (prefer `created_at`, then `id`) before constraint creation to protect `(date, stock)` at the database layer.
-- Milestone 2 task (basic run-level observability): added `runs` table migration and minimal run tracking so each Railway execution creates one run row and finalizes status with counters and optional error summary.
-- Milestone 2 follow-up: corrected run counter accounting so terminal `FAILED` updates report `processed_tickers` and `failed_tickers` based on actual loop progress if execution aborts early.
-- Milestone 2 follow-up: made run observability best-effort so `create_run`/`update_run` failures are logged without interrupting signal generation or forcing post-processing failure.
-- Milestone 2 implementation task (modular MVP refactor): split the single-file runtime into `src/config.py`, `src/data.py`, `src/signals.py`, `src/db.py`, `src/runs.py`, and `src/app.py`, while keeping `main.py` as the unchanged process entrypoint role.
-- Milestone 2 implementation task (minimal test layer): added initial pytest coverage for signal generation behavior and signal payload building in `tests/test_signals.py` and `tests/test_payloads.py`.
-- Milestone 2 follow-up (review fixes): expanded minimal signal tests to cover additional preserved MVP outcomes (`NO_DATA` and `HOLD`) to strengthen refactor regression safety without changing runtime strategy logic.
-- Milestone 2 documentation layer: added product-definition docs for strategy semantics (`docs/strategy-spec.md`), paper-trading MVP rules (`docs/paper-trading-v1.md`), and prioritized follow-up backlog (`docs/backlog.md`) without runtime or infrastructure behavior changes.
-- Milestone 2 documentation follow-up (review pass): tightened docs to match runtime-truth signal semantics exactly, made paper-trading v1 rules deterministic (input contract, ordering, ledger updates), and clarified prioritized backlog wording for implementation readiness.
-- Milestone 3 implementation task (paper-trading v1 MVP): added deterministic paper-trading tables (`paper_trades`, `paper_daily_snapshots`, `paper_events`), implemented a minimal simulator under `src/paper_trading.py`, and wired execution to run after daily signal generation in `src/app.py` without changing signal-generation logic or Railway cron flow.
-- Milestone 3 validation layer: added focused unit tests for BUY open, SELL close, HOLD event-only behavior, and duplicate-BUY skip behavior.
-- Milestone 3 follow-up (review fixes): made daily paper-trading persistence rerun-safe by clearing same-day paper outputs before writing deterministic replacements, and separated ticker failure counting from post-processing failures in run finalization status payloads.
-- Milestone 3 follow-up (execution gating): paper trading now runs only when all ticker signals succeed; runs with ticker-level failures skip paper trading with a clear logged reason while preserving separate ticker failure counters.
+- Milestone 2 (Signal framework + modularization/test baseline): completed with preserved runtime strategy semantics.
+- Milestone 3 (Paper-trading v1): completed with deterministic persistence and rerun-safe same-day behavior.
+- Milestone 4 MVP delivery (Telegram summary): completed with deterministic run-date usage and startup-failure notification attempt.
+- Documentation system-of-record layer expanded with:
+  - `docs/architecture-v3.md` (v3 architecture, layers, modules, delivery-layer role),
+  - `docs/project-implementation-plan.md` (completed Steps 1–11 + active roadmap framing),
+  - `docs/docs-maintenance.md` (review cadence, scope, and checklist),
+  - refreshed `docs/backlog.md` separating completed vs pending work,
+  - updated `AGENTS.md` coding rule requiring comments for non-obvious logic/data flow/constraints/guardrails.
 
-- Milestone 3 follow-up (test hardening): added app-level coverage to assert post-processing paper-trading failures do not change ticker failure counters and still surface in run `error_summary`.
-
-- Milestone 4 MVP delivery task (Telegram notifications): added a minimal `src/notifications.py` module and end-of-run Telegram summary sending (success and failure-path best-effort), gated by `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID` with deterministic single-send behavior that never fails the job if notification delivery fails.
-
-- Milestone 4 follow-up (notification hardening): fixed run-date determinism by capturing one UTC run date per execution and added startup-failure notification attempt so fatal pre-run failures can still emit a best-effort Telegram `FAILED` summary without requiring an initialized Supabase client.
+## Current documentation posture
+- Core planning, status, architecture, and maintenance docs now form a traceable documentation stack for future Codex execution.
+- Backlog now explicitly distinguishes recently completed items from active pending priorities.
+- No runtime, infrastructure, or behavior changes were introduced in this documentation task.
 
 ## Next approved task
-- Continue Milestone 4 hardening with end-to-end traceability improvements and structured `error_summary` schema work from `docs/backlog.md` P0, after validating Telegram delivery in production environment variables.
+- Continue Milestone 4 hardening by implementing P0 end-to-end `run_id` traceability across runs, signals, and paper-trading outputs, followed by structured `error_summary` schema work.

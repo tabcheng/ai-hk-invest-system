@@ -12,3 +12,4 @@ supabase>=2.7.4
 
 # AI integration
 openai>=1.40.0
+pytest>=8.0.0

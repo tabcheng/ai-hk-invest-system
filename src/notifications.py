@@ -15,9 +15,12 @@ DAILY_SUMMARY_SENT_STATUS = "SENT"
 
 def _format_ticker_label(ticker: str) -> str:
     """Render deterministic stock labels as '<Name> (<Ticker>)' for human-readable summaries."""
-    stock_name = STOCK_METADATA.get(ticker, ticker)
-    safe_name = html.escape(stock_name)
+    stock_name = STOCK_METADATA.get(ticker)
     safe_ticker = html.escape(ticker)
+    if not stock_name:
+        return safe_ticker
+
+    safe_name = html.escape(stock_name)
     return f"{safe_name} ({safe_ticker})"
 
 
@@ -106,13 +109,16 @@ def _has_sent_daily_summary(client: Client, run_date: date, target: str) -> bool
 
 def _record_daily_summary_sent(client: Client, run_date: date, target: str) -> None:
     # This durable marker enables cross-run dedup for the same run date and target.
-    client.table("notification_logs").insert(
+    # Upsert keeps dedup idempotent during near-simultaneous reruns that race to persist logs.
+    client.table("notification_logs").upsert(
         {
             "notification_date": run_date.isoformat(),
             "target": target,
             "message_type": DAILY_SUMMARY_MESSAGE_TYPE,
             "status": DAILY_SUMMARY_SENT_STATUS,
-        }
+        },
+        on_conflict="notification_date,target,message_type,status",
+        ignore_duplicates=True,
     ).execute()
 
 
@@ -159,7 +165,7 @@ def send_daily_run_summary(
     if client is not None and target:
         try:
             if _has_sent_daily_summary(client, run_date, target):
-                print(f"Telegram notification skipped by dedup for date={run_date} target={target}.")
+                print(f"Telegram notification skipped by dedup for date={run_date} target=<redacted>.")
                 return True
         except Exception as exc:
             print(f"Could not check notification dedup state: {exc}")

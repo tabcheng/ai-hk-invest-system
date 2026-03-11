@@ -21,6 +21,7 @@
 - Milestone 3 (Paper-trading v1): completed with deterministic persistence and rerun-safe same-day behavior.
 - Milestone 4 Telegram delivery hardening: completed through deterministic summary format upgrade, run-date equity preference, and minimal cross-run dedup support.
 - Documentation system-of-record maintenance review #1 completed with refreshed `docs/backlog.md` and `docs/status.md` alignment.
+- Follow-up review fixes applied to notification hardening: redacted dedup log target, idempotent dedup marker upsert for rerun races, and unknown-ticker label fallback.
 
 ## Current documentation posture
 - Core planning, status, architecture, and maintenance docs now form a traceable documentation stack for future Codex execution.

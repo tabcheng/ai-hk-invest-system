@@ -25,7 +25,7 @@ class _FakeQuery:
     def limit(self, _count):
         return self
 
-    def insert(self, payload):
+    def upsert(self, payload, **_kwargs):
         self.insert_payload = payload
         return self
 
@@ -103,6 +103,20 @@ def test_build_daily_summary_message_uses_na_equity_and_warning_note():
     assert "<b>total_equity:</b> N/A" in message
     assert "<b>note:</b> paper_trading skipped" in message
 
+
+
+def test_build_daily_summary_message_unknown_ticker_uses_id_only():
+    message = build_daily_summary_message(
+        run_date=date(2026, 3, 11),
+        run_status="SUCCESS",
+        tickers=["9999.HK"],
+        signal_outcomes={"9999.HK": "HOLD"},
+        paper_trade_count_today=0,
+        total_equity=None,
+        equity_source="none",
+    )
+
+    assert "• 9999.HK: <b>HOLD</b>" in message
 
 def test_send_telegram_message_skips_when_env_missing(monkeypatch):
     monkeypatch.delenv("TELEGRAM_BOT_TOKEN", raising=False)

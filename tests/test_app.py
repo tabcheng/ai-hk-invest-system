@@ -60,3 +60,31 @@ def test_paper_trading_runs_when_all_tickers_succeed(monkeypatch):
     payload = updates[0]
     assert payload["status"] == "SUCCESS"
     assert payload["failed_tickers"] == 0
+
+
+def test_paper_trading_failure_does_not_change_ticker_failure_counter(monkeypatch):
+    updates = []
+
+    monkeypatch.setattr(app, "TICKERS", ["A.HK", "B.HK"])
+    monkeypatch.setattr(app, "get_supabase_client", lambda: object())
+    monkeypatch.setattr(app, "create_run", lambda client: 125)
+    monkeypatch.setattr(
+        app,
+        "get_signal_for_ticker",
+        lambda ticker: {"stock": ticker, "signal": "HOLD", "price": 20.0, "reason": "ok"},
+    )
+    monkeypatch.setattr(app, "save_signal", lambda client, signal_data: None)
+
+    def failing_paper(client, run_id):
+        raise RuntimeError("paper engine failure")
+
+    monkeypatch.setattr(app, "run_paper_trading_for_today", failing_paper)
+    monkeypatch.setattr(app, "update_run", lambda client, run_id, payload: updates.append(payload))
+
+    app.main()
+
+    assert len(updates) == 1
+    payload = updates[0]
+    assert payload["status"] == "FAILED"
+    assert payload["failed_tickers"] == 0
+    assert "paper_trading: paper engine failure" in payload["error_summary"]

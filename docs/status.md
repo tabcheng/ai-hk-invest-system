@@ -27,5 +27,7 @@
 - Milestone 3 follow-up (review fixes): made daily paper-trading persistence rerun-safe by clearing same-day paper outputs before writing deterministic replacements, and separated ticker failure counting from post-processing failures in run finalization status payloads.
 - Milestone 3 follow-up (execution gating): paper trading now runs only when all ticker signals succeed; runs with ticker-level failures skip paper trading with a clear logged reason while preserving separate ticker failure counters.
 
+- Milestone 3 follow-up (test hardening): added app-level coverage to assert post-processing paper-trading failures do not change ticker failure counters and still surface in run `error_summary`.
+
 ## Next approved task
 - Continue Milestone 3 hardening with end-to-end traceability improvements and structured `error_summary` schema work from `docs/backlog.md` P0.

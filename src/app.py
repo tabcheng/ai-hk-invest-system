@@ -16,6 +16,7 @@ def main() -> None:
         print(f"Run observability disabled for this execution: create_run failed: {e}")
 
     failed_errors = []
+    post_process_errors = []
     processed_tickers = 0
     successful_tickers = 0
 
@@ -35,15 +36,16 @@ def main() -> None:
         try:
             run_paper_trading_for_today(client, run_id)
         except Exception as e:
-            failed_errors.append(f"paper_trading: {e}")
+            post_process_errors.append(f"paper_trading: {e}")
             print(f"Error running paper trading: {e}")
 
         finished_at = datetime.now(timezone.utc).isoformat()
         failed_tickers = len(failed_errors)
+        all_errors = failed_errors + post_process_errors
 
         if run_id is not None:
             try:
-                if failed_tickers == 0:
+                if failed_tickers == 0 and not post_process_errors:
                     update_run(
                         client,
                         run_id,
@@ -65,7 +67,7 @@ def main() -> None:
                             "processed_tickers": processed_tickers,
                             "successful_tickers": successful_tickers,
                             "failed_tickers": failed_tickers,
-                            "error_summary": " | ".join(failed_errors)[:1000],
+                            "error_summary": " | ".join(all_errors)[:1000],
                         },
                     )
             except Exception as e:

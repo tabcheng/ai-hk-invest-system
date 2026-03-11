@@ -295,6 +295,12 @@ def _fetch_prior_state(client: Client, trade_date: date) -> tuple[float | None, 
     return starting_cash, realized_pnl, positions
 
 
+def _clear_existing_day_outputs(client: Client, trade_date: date) -> None:
+    day = trade_date.isoformat()
+    client.table("paper_trades").delete().eq("trade_date", day).execute()
+    client.table("paper_events").delete().eq("event_date", day).execute()
+    client.table("paper_daily_snapshots").delete().eq("snapshot_date", day).execute()
+
 def run_paper_trading_for_today(
     client: Client,
     run_id: int | None,
@@ -311,6 +317,8 @@ def run_paper_trading_for_today(
     ).data or []
 
     starting_cash, realized_pnl, starting_positions = _fetch_prior_state(client, trade_date)
+
+    _clear_existing_day_outputs(client, trade_date)
 
     result = simulate_day(
         signal_rows=signal_rows,

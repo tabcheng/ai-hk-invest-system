@@ -2,13 +2,35 @@ from datetime import datetime, timezone
 
 from src.config import TICKERS, get_supabase_client
 from src.db import save_signal
+from src.notifications import send_daily_run_summary
 from src.paper_trading import run_paper_trading_for_today
 from src.runs import create_run, update_run
 from src.signals import get_signal_for_ticker
 
 
 def main() -> None:
-    client = get_supabase_client()
+    run_date = datetime.now(timezone.utc).date()
+    signal_outcomes: dict[str, str] = {}
+    paper_trade_count_today = 0
+    notification_sent = False
+
+    try:
+        client = get_supabase_client()
+    except Exception as e:
+        try:
+            send_daily_run_summary(
+                client=None,
+                run_date=run_date,
+                run_status="FAILED",
+                tickers=TICKERS,
+                signal_outcomes=signal_outcomes,
+                paper_trade_count_today=paper_trade_count_today,
+                warning_note=f"supabase_client: {e}",
+            )
+        except Exception as notify_error:
+            print(f"Failed to send startup failure Telegram summary notification: {notify_error}")
+        raise
+
     run_id = None
     try:
         run_id = create_run(client)
@@ -25,10 +47,12 @@ def main() -> None:
             processed_tickers += 1
             try:
                 signal_data = get_signal_for_ticker(ticker)
+                signal_outcomes[ticker] = signal_data["signal"]
                 print(f"Generated signal for {ticker}: {signal_data}")
                 save_signal(client, signal_data)
                 successful_tickers += 1
             except Exception as e:
+                signal_outcomes[ticker] = "ERROR"
                 ticker_errors.append(f"{ticker}: {e}")
                 print(f"Error processing {ticker}: {e}")
 
@@ -41,7 +65,8 @@ def main() -> None:
             print(skip_reason)
         else:
             try:
-                run_paper_trading_for_today(client, run_id)
+                paper_result = run_paper_trading_for_today(client, run_id)
+                paper_trade_count_today = len(paper_result["trades"])
             except Exception as e:
                 post_process_errors.append(f"paper_trading: {e}")
                 print(f"Error running paper trading: {e}")
@@ -79,6 +104,22 @@ def main() -> None:
                     )
             except Exception as e:
                 print(f"Run observability update failed after ticker processing: {e}")
+
+        if not notification_sent:
+            run_status = "SUCCESS" if failed_tickers == 0 and not post_process_errors else "FAILED"
+            warning_note = " | ".join(all_errors) if all_errors else None
+            try:
+                notification_sent = send_daily_run_summary(
+                    client=client,
+                    run_date=run_date,
+                    run_status=run_status,
+                    tickers=TICKERS,
+                    signal_outcomes=signal_outcomes,
+                    paper_trade_count_today=paper_trade_count_today,
+                    warning_note=warning_note,
+                )
+            except Exception as e:
+                print(f"Failed to send Telegram summary notification: {e}")
     except Exception as e:
         if run_id is not None:
             try:
@@ -96,4 +137,18 @@ def main() -> None:
                 )
             except Exception as update_error:
                 print(f"Run observability update failed during exception handling: {update_error}")
+
+        if not notification_sent:
+            try:
+                send_daily_run_summary(
+                    client=client,
+                    run_date=run_date,
+                    run_status="FAILED",
+                    tickers=TICKERS,
+                    signal_outcomes=signal_outcomes,
+                    paper_trade_count_today=paper_trade_count_today,
+                    warning_note=str(e),
+                )
+            except Exception as notify_error:
+                print(f"Failed to send failure Telegram summary notification: {notify_error}")
         raise

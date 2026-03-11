@@ -19,9 +19,11 @@ def test_paper_trading_skipped_when_any_ticker_fails(monkeypatch):
 
     def fake_paper(client, run_id):
         called["paper"] += 1
+        return {"trades": []}
 
     monkeypatch.setattr(app, "run_paper_trading_for_today", fake_paper)
     monkeypatch.setattr(app, "update_run", lambda client, run_id, payload: updates.append(payload))
+    monkeypatch.setattr(app, "send_daily_run_summary", lambda **kwargs: True)
 
     app.main()
 
@@ -49,9 +51,11 @@ def test_paper_trading_runs_when_all_tickers_succeed(monkeypatch):
 
     def fake_paper(client, run_id):
         called["paper"] += 1
+        return {"trades": []}
 
     monkeypatch.setattr(app, "run_paper_trading_for_today", fake_paper)
     monkeypatch.setattr(app, "update_run", lambda client, run_id, payload: updates.append(payload))
+    monkeypatch.setattr(app, "send_daily_run_summary", lambda **kwargs: True)
 
     app.main()
 
@@ -80,6 +84,7 @@ def test_paper_trading_failure_does_not_change_ticker_failure_counter(monkeypatc
 
     monkeypatch.setattr(app, "run_paper_trading_for_today", failing_paper)
     monkeypatch.setattr(app, "update_run", lambda client, run_id, payload: updates.append(payload))
+    monkeypatch.setattr(app, "send_daily_run_summary", lambda **kwargs: True)
 
     app.main()
 
@@ -88,3 +93,24 @@ def test_paper_trading_failure_does_not_change_ticker_failure_counter(monkeypatc
     assert payload["status"] == "FAILED"
     assert payload["failed_tickers"] == 0
     assert "paper_trading: paper engine failure" in payload["error_summary"]
+
+
+def test_startup_failure_attempts_failure_notification(monkeypatch):
+    called = {"notify": 0}
+
+    def fail_client():
+        raise ValueError("missing supabase config")
+
+    def fake_notify(**kwargs):
+        called["notify"] += 1
+        return True
+
+    monkeypatch.setattr(app, "get_supabase_client", fail_client)
+    monkeypatch.setattr(app, "send_daily_run_summary", fake_notify)
+
+    try:
+        app.main()
+    except ValueError:
+        pass
+
+    assert called["notify"] == 1

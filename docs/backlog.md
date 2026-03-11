@@ -23,6 +23,13 @@ Prioritization scale:
 ### 4) Add basic pytest project configuration
 - Add minimal `pytest.ini` (or equivalent) for stable test discovery and consistent local/CI behavior.
 
+### 5) Telegram daily summary notification MVP ✅ completed
+- Added end-of-run Telegram summary delivery for success/failure runs using `TELEGRAM_BOT_TOKEN` + `TELEGRAM_CHAT_ID`.
+- Notification delivery is best-effort and does not fail the core job when Telegram is unavailable/misconfigured.
+- Included concise deterministic summary fields: run date/status, per-ticker signals, paper trade count, latest total equity, and warning note.
+
+- Follow-up hardening completed: deterministic single run-date usage and startup-failure notification attempt before Supabase client initialization.
+
 ## P1 — Review reminders + near-term hardening
 
 ### Three recent PR review reminders (carry-over)

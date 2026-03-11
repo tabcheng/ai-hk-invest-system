@@ -29,5 +29,9 @@
 
 - Milestone 3 follow-up (test hardening): added app-level coverage to assert post-processing paper-trading failures do not change ticker failure counters and still surface in run `error_summary`.
 
+- Milestone 4 MVP delivery task (Telegram notifications): added a minimal `src/notifications.py` module and end-of-run Telegram summary sending (success and failure-path best-effort), gated by `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID` with deterministic single-send behavior that never fails the job if notification delivery fails.
+
+- Milestone 4 follow-up (notification hardening): fixed run-date determinism by capturing one UTC run date per execution and added startup-failure notification attempt so fatal pre-run failures can still emit a best-effort Telegram `FAILED` summary without requiring an initialized Supabase client.
+
 ## Next approved task
-- Continue Milestone 3 hardening with end-to-end traceability improvements and structured `error_summary` schema work from `docs/backlog.md` P0.
+- Continue Milestone 4 hardening with end-to-end traceability improvements and structured `error_summary` schema work from `docs/backlog.md` P0, after validating Telegram delivery in production environment variables.

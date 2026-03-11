@@ -26,3 +26,27 @@ def test_generate_signal_insufficient_data_when_history_too_short():
         "price": 12.0,
         "reason": "Not enough historical data to calculate both MA50 and MA200",
     }
+
+
+def test_generate_signal_returns_no_data_for_empty_frame():
+    df = pd.DataFrame()
+
+    result = generate_signal_from_data("1299.HK", df)
+
+    assert result == {
+        "stock": "1299.HK",
+        "signal": "NO_DATA",
+        "price": None,
+        "reason": "No market data returned from yfinance",
+    }
+
+
+def test_generate_signal_returns_hold_when_moving_averages_equal():
+    close_prices = [200.0] * 200
+    df = pd.DataFrame({"Close": close_prices})
+
+    result = generate_signal_from_data("0700.HK", df)
+
+    assert result["signal"] == "HOLD"
+    assert result["price"] == 200.0
+    assert "equals MA200" in result["reason"]

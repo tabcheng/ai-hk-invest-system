@@ -12,6 +12,7 @@ For any non-trivial task (anything beyond a tiny typo or formatting-only edit), 
 - Prefer small, reviewable diffs.
 - After each completed task, update `docs/status.md` to reflect current state and next approved work.
 - Preserve current runtime behavior unless a task explicitly authorizes runtime changes.
+- For future code changes, add clear comments for non-obvious logic, data flow, constraints, and guardrails.
 
 ## Strategy guardrails
 - The project goal is a long-horizon AI-assisted Hong Kong stock investing system.

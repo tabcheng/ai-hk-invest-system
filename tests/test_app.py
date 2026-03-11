@@ -19,9 +19,11 @@ def test_paper_trading_skipped_when_any_ticker_fails(monkeypatch):
 
     def fake_paper(client, run_id):
         called["paper"] += 1
+        return {"trades": []}
 
     monkeypatch.setattr(app, "run_paper_trading_for_today", fake_paper)
     monkeypatch.setattr(app, "update_run", lambda client, run_id, payload: updates.append(payload))
+    monkeypatch.setattr(app, "send_daily_run_summary", lambda **kwargs: True)
 
     app.main()
 
@@ -49,9 +51,11 @@ def test_paper_trading_runs_when_all_tickers_succeed(monkeypatch):
 
     def fake_paper(client, run_id):
         called["paper"] += 1
+        return {"trades": []}
 
     monkeypatch.setattr(app, "run_paper_trading_for_today", fake_paper)
     monkeypatch.setattr(app, "update_run", lambda client, run_id, payload: updates.append(payload))
+    monkeypatch.setattr(app, "send_daily_run_summary", lambda **kwargs: True)
 
     app.main()
 
@@ -80,6 +84,7 @@ def test_paper_trading_failure_does_not_change_ticker_failure_counter(monkeypatc
 
     monkeypatch.setattr(app, "run_paper_trading_for_today", failing_paper)
     monkeypatch.setattr(app, "update_run", lambda client, run_id, payload: updates.append(payload))
+    monkeypatch.setattr(app, "send_daily_run_summary", lambda **kwargs: True)
 
     app.main()
 

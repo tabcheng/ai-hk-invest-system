@@ -2,6 +2,7 @@ from datetime import datetime, timezone
 
 from src.config import TICKERS, get_supabase_client
 from src.db import save_signal
+from src.paper_trading import run_paper_trading_for_today
 from src.runs import create_run, update_run
 from src.signals import get_signal_for_ticker
 
@@ -29,6 +30,13 @@ def main() -> None:
             except Exception as e:
                 failed_errors.append(f"{ticker}: {e}")
                 print(f"Error processing {ticker}: {e}")
+
+
+        try:
+            run_paper_trading_for_today(client, run_id)
+        except Exception as e:
+            failed_errors.append(f"paper_trading: {e}")
+            print(f"Error running paper trading: {e}")
 
         finished_at = datetime.now(timezone.utc).isoformat()
         failed_tickers = len(failed_errors)

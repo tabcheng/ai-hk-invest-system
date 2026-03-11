@@ -22,6 +22,8 @@
 - Milestone 2 follow-up (review fixes): expanded minimal signal tests to cover additional preserved MVP outcomes (`NO_DATA` and `HOLD`) to strengthen refactor regression safety without changing runtime strategy logic.
 - Milestone 2 documentation layer: added product-definition docs for strategy semantics (`docs/strategy-spec.md`), paper-trading MVP rules (`docs/paper-trading-v1.md`), and prioritized follow-up backlog (`docs/backlog.md`) without runtime or infrastructure behavior changes.
 - Milestone 2 documentation follow-up (review pass): tightened docs to match runtime-truth signal semantics exactly, made paper-trading v1 rules deterministic (input contract, ordering, ledger updates), and clarified prioritized backlog wording for implementation readiness.
+- Milestone 3 implementation task (paper-trading v1 MVP): added deterministic paper-trading tables (`paper_trades`, `paper_daily_snapshots`, `paper_events`), implemented a minimal simulator under `src/paper_trading.py`, and wired execution to run after daily signal generation in `src/app.py` without changing signal-generation logic or Railway cron flow.
+- Milestone 3 validation layer: added focused unit tests for BUY open, SELL close, HOLD event-only behavior, and duplicate-BUY skip behavior.
 
 ## Next approved task
-- Start Milestone 3 implementation by building the deterministic paper-trading v1 simulator from `docs/paper-trading-v1.md` and linking outputs with run-level traceability (`run_id`).
+- Continue Milestone 3 hardening with end-to-end traceability improvements and structured `error_summary` schema work from `docs/backlog.md` P0.

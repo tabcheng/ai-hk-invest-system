@@ -9,6 +9,9 @@
 - Run-level observability is preserved via a `runs` table lifecycle (`RUNNING` at start, terminal `SUCCESS`/`FAILED` at finish) without changing ticker processing scope.
 - Paper-trading v1 remains deterministic and gated to full ticker-success runs.
 - Telegram daily summary remains best-effort and non-blocking.
+- Telegram summary formatting is deterministic HTML and includes stock name + stock id labels.
+- Daily-summary equity prefers run-date snapshots with explicit fallback labeling to latest snapshot when run-date data is unavailable.
+- Daily-summary notifications include minimal cross-run dedup persistence so the same run-date summary is not repeatedly re-sent to the same target.
 - No autonomous live-trading execution is enabled.
 - The human user remains the final decision-maker for all real trade actions.
 
@@ -16,18 +19,13 @@
 - Milestone 1 (Documentation Foundation): completed and validated; required docs remain in place and workflow rules are preserved.
 - Milestone 2 (Signal framework + modularization/test baseline): completed with preserved runtime strategy semantics.
 - Milestone 3 (Paper-trading v1): completed with deterministic persistence and rerun-safe same-day behavior.
-- Milestone 4 MVP delivery (Telegram summary): completed with deterministic run-date usage and startup-failure notification attempt.
-- Documentation system-of-record layer expanded with:
-  - `docs/architecture-v3.md` (v3 architecture, layers, modules, delivery-layer role),
-  - `docs/project-implementation-plan.md` (completed Steps 1–11 + active roadmap framing),
-  - `docs/docs-maintenance.md` (review cadence, scope, and checklist),
-  - refreshed `docs/backlog.md` separating completed vs pending work,
-  - updated `AGENTS.md` coding rule requiring comments for non-obvious logic/data flow/constraints/guardrails.
+- Milestone 4 Telegram delivery hardening: completed through deterministic summary format upgrade, run-date equity preference, and minimal cross-run dedup support.
+- Documentation system-of-record maintenance review #1 completed with refreshed `docs/backlog.md` and `docs/status.md` alignment.
 
 ## Current documentation posture
 - Core planning, status, architecture, and maintenance docs now form a traceable documentation stack for future Codex execution.
-- Backlog now explicitly distinguishes recently completed items from active pending priorities.
-- No runtime, infrastructure, or behavior changes were introduced in this documentation task.
+- Backlog clearly separates completed work from pending items and tracks follow-up notification work as active backlog.
+- Runtime + docs now align on notification guardrails: best-effort delivery, deterministic formatting, and non-blocking failure posture.
 
 ## Next approved task
-- Continue Milestone 4 hardening by implementing P0 end-to-end `run_id` traceability across runs, signals, and paper-trading outputs, followed by structured `error_summary` schema work.
+- Continue Milestone 4 hardening by implementing P0 end-to-end `run_id` traceability across runs, signals, paper-trading outputs, and notification logging, followed by structured `error_summary` schema work.

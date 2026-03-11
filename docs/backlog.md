@@ -16,6 +16,13 @@ Prioritization scale:
 3. **Telegram deterministic run-date + startup-failure attempt** ✅ completed
    - Hardening completed to improve summary consistency and fatal-startup visibility.
 
+4. **Telegram notification hardening + first docs maintenance review** ✅ completed
+   - Summaries now include stock name + stock id using deterministic HTML formatting.
+   - Summary equity prefers run-date snapshot with clear fallback labeling.
+   - Cross-run daily-summary dedup persistence added (`notification_logs`) for same run-date + target.
+   - Delivery remains best-effort/non-blocking.
+   - Documentation system-of-record refreshed (`status`/`backlog`).
+
 ## Active backlog (pending)
 
 ## P0 — Next implementation-critical
@@ -31,8 +38,8 @@ Prioritization scale:
 ### 3) Add basic pytest project configuration
 - Add minimal `pytest.ini` (or equivalent) for stable test discovery and consistent local/CI behavior.
 
-### 4) Telegram follow-up: delivery observability
-- Persist notification attempt metadata (attempted/sent/failed + reason) per run.
+### 4) Telegram follow-up: delivery observability expansion
+- Extend notification logging from sent-dedup marker to full attempt telemetry (attempted/sent/failed + reason + run_id linkage).
 - Keep notification behavior best-effort (non-blocking) while improving post-run diagnosability.
 
 ### 5) Telegram follow-up: summary schema versioning
@@ -71,7 +78,7 @@ Prioritization scale:
 - `error_summary` remains coarse and truncation-based.
 - Execution traceability is incomplete without explicit linkage keys.
 - Test harness exists but is minimal without project-level pytest config + CI enforcement.
-- Notification layer lacks persisted delivery-attempt telemetry and schema version governance.
+- Notification layer now has minimal sent-dedup persistence but lacks full delivery-attempt telemetry and schema version governance.
 
 ## Maintenance rule
 After each completed task, update both this backlog and `docs/status.md` to keep next approved work explicit.

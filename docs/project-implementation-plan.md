@@ -8,7 +8,7 @@ This document is the maintainable implementation-plan layer that bridges:
 
 It clarifies what is already complete, what is active, and what remains backlog-only.
 
-## Completed implementation steps (1–11)
+## Completed implementation steps (1–12)
 
 ### Step 1 — Documentation foundation ✅
 Established core operating docs and workflow discipline (`AGENTS`, spec/plans/status/implement alignment).
@@ -42,6 +42,10 @@ Added rerun-safe daily replacement writes, execution gating on full ticker succe
 
 ### Step 11 — Telegram summary delivery MVP + hardening ✅
 Added best-effort end-of-run Telegram summaries, deterministic run-date handling, and startup-failure notification attempt.
+
+
+### Step 12 — Telegram notification hardening + docs maintenance review ✅
+Upgraded summary readability (stock name + id, deterministic HTML), added run-date-first equity selection with fallback labels, and introduced minimal cross-run daily-summary dedup persistence while keeping delivery best-effort/non-blocking.
 
 ## Current state
 - Production behavior is stable with modular runtime architecture and deterministic paper-trading pipeline.

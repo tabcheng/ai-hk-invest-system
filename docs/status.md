@@ -36,6 +36,7 @@
 - Post-review Step 15 fix: delivery telemetry schema is now explicitly message-attempt based in both notification output and run payload normalization (no ticker-level message list), with dedup skips counted as `skipped` not `failed`.
 - Step 16 completed: added a conservative root `pytest.ini` for stable discovery and a GitHub Actions `tests` workflow that gates `pull_request` and `push` to `main` with `pytest`.
 - Step 17 completed: introduced daily summary payload schema v1, schema-versioned renderer dispatch, and delivery telemetry context field `summary_schema_version` while preserving existing notification runtime semantics.
+- Post-review Step 17 fix: strengthened notification test guardrails with unsupported-schema renderer coverage and low-risk test cleanup (spacing/readability) without runtime behavior changes.
 - Post-review Step 16 fix: CI now pins Python 3.10 (matching current repo test runtime) and enables pip caching for faster, more stable dependency installs without changing test behavior.
 
 ## Current documentation posture

@@ -74,7 +74,6 @@ class _FakeClient:
         return _FakeQuery(table_name, self)
 
 
-
 def test_build_daily_summary_payload_v1_contains_versioned_contract():
     payload = build_daily_summary_payload_v1(
         run_id=777,
@@ -125,8 +124,6 @@ def test_render_daily_summary_message_v1_handles_empty_stocks():
     assert "<b>paper_trades_today:</b> 0" in message
 
 
-
-
 def test_render_daily_summary_message_v1_displays_stock_name_and_id_for_multi_stock_payload():
     payload = build_daily_summary_payload_v1(
         run_id=888,
@@ -144,6 +141,18 @@ def test_render_daily_summary_message_v1_displays_stock_name_and_id_for_multi_st
     assert "Tencent Holdings (0700.HK): <b>BUY</b>" in message
     assert "Hong Kong Exchanges and Clearing (0388.HK): <b>HOLD</b>" in message
     assert "<b>total_equity (latest):</b> 123.00 HKD" in message
+
+
+def test_render_daily_summary_message_rejects_unsupported_schema_version():
+    payload = {"schema_version": 99}
+
+    try:
+        render_daily_summary_message(payload)
+        assert False, "expected ValueError for unsupported schema version"
+    except ValueError as exc:
+        assert "Unsupported daily summary schema_version" in str(exc)
+
+
 def test_build_daily_summary_message_contains_required_fields_and_stock_names():
     message = build_daily_summary_message(
         run_date=date(2026, 3, 11),
@@ -181,7 +190,6 @@ def test_build_daily_summary_message_uses_na_equity_and_warning_note():
     assert "<b>note:</b> paper_trading skipped" in message
 
 
-
 def test_build_daily_summary_message_unknown_ticker_uses_id_only():
     message = build_daily_summary_message(
         run_date=date(2026, 3, 11),
@@ -194,6 +202,7 @@ def test_build_daily_summary_message_unknown_ticker_uses_id_only():
     )
 
     assert "• 9999.HK: <b>HOLD</b>" in message
+
 
 def test_send_telegram_message_skips_when_env_missing(monkeypatch):
     monkeypatch.delenv("TELEGRAM_BOT_TOKEN", raising=False)

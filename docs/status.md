@@ -15,6 +15,7 @@
 - Telegram daily summary remains best-effort and non-blocking.
 - Telegram summary formatting is deterministic HTML and includes stock name + stock id labels.
 - Telegram daily summary now uses a versioned internal payload schema (`schema_version: 1`) with renderer separation (payload build -> render -> send).
+- Notification schema evolution now has explicit runtime guardrails: a current version constant, supported-version allowlist, centralized renderer dispatch map, and fail-fast unsupported/missing-renderer handling.
 - Daily-summary equity prefers run-date snapshots with explicit fallback labeling to latest snapshot when run-date data is unavailable.
 - Daily-summary notifications include minimal cross-run dedup persistence so the same run-date summary is not repeatedly re-sent to the same target.
 - No autonomous live-trading execution is enabled.
@@ -36,6 +37,7 @@
 - Post-review Step 15 fix: delivery telemetry schema is now explicitly message-attempt based in both notification output and run payload normalization (no ticker-level message list), with dedup skips counted as `skipped` not `failed`.
 - Step 16 completed: added a conservative root `pytest.ini` for stable discovery and a GitHub Actions `tests` workflow that gates `pull_request` and `push` to `main` with `pytest`.
 - Step 17 completed: introduced daily summary payload schema v1, schema-versioned renderer dispatch, and delivery telemetry context field `summary_schema_version` while preserving existing notification runtime semantics.
+- Step 18 completed: codified schema evolution guardrails (current/supported version constants + centralized dispatch + fail-fast unsupported/misconfigured versions) and expanded tests/docs coverage without changing v1 send behavior.
 - Post-review Step 17 fix: strengthened notification test guardrails with unsupported-schema renderer coverage and low-risk test cleanup (spacing/readability) without runtime behavior changes.
 - Post-review Step 16 fix: CI now pins Python 3.10 (matching current repo test runtime) and enables pip caching for faster, more stable dependency installs without changing test behavior.
 
@@ -46,4 +48,4 @@
 - Traceability docs now align with runtime persistence: major daily artifacts can be audited back to a single run record.
 
 ## Next approved task
-- Continue Milestone 4 hardening with small follow-up coverage/guardrail improvements around notification schema evolution and observability validation.
+- Continue Milestone 4 hardening with operational governance follow-ups (notification schema v2+ policy, branch protection required checks verification, and remaining pytest/tooling normalization work if needed).

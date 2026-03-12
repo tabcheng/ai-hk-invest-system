@@ -43,6 +43,10 @@ Prioritization scale:
    - Separated payload construction from Telegram message rendering via schema-dispatched renderer.
    - Added delivery telemetry context for `summary_schema_version` and tests for payload/renderer empty + multi-stock paths.
 
+9. **Step 18: schema evolution guardrails + contract hardening** ✅ completed
+   - Added explicit schema evolution guardrails: current schema version constant, supported-version allowlist, centralized renderer dispatch map, and fail-fast unsupported/misconfigured-version errors.
+   - Expanded tests for current-version dispatch, supported-version mapping, unsupported-version handling, renderer entrypoint stability, and telemetry schema-version propagation.
+
 ## Active backlog (pending)
 
 ## P1 — Near-term hardening and review reminders
@@ -55,6 +59,11 @@ Prioritization scale:
 ### Additional hardening
 - Expand tests for NO_DATA / INSUFFICIENT_DATA propagation, run finalization, DB failure paths, and notification failure pathways.
 - Add runbook entry for Telegram environment misconfiguration triage.
+
+### Notification governance and CI follow-ups
+- Define a formal notification schema evolution policy for future daily-summary schema v2+ (change classes, compatibility expectations, rollout and rollback rules).
+- Confirm GitHub required status checks / branch protection rules are enforced against the `tests` workflow for protected branches.
+- Normalize pytest/tooling conventions further (if still relevant) to keep local and CI invocation parity explicit.
 
 ## P2 — Medium-term quality and performance
 

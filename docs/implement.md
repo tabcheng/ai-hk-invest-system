@@ -40,3 +40,11 @@ Provide a consistent execution workflow for long-horizon Codex contributions.
 - Keep send path ordering explicit and stable: fetch equity -> build payload -> render message -> send -> dedup marker write.
 - Include `context.summary_schema_version` in delivery telemetry so run-level observability records the payload schema used for each attempt.
 - Guardrail: preserve existing best-effort/non-blocking delivery semantics and dedup/retry/transport behavior.
+
+## Step 18 implementation note (schema evolution guardrails + summary contract hardening)
+- Define explicit notification schema constants in `src/notifications.py`: `CURRENT_DAILY_SUMMARY_SCHEMA_VERSION` and `SUPPORTED_DAILY_SUMMARY_SCHEMA_VERSIONS` (currently `{1}`), while preserving v1 runtime behavior.
+- Keep renderer dispatch centralized through a single schema->renderer mapping so future version additions remain reviewable and testable.
+- Fail fast for unsupported schema versions with explicit supported-version context, and fail fast if a supported schema is missing a renderer entry.
+- Keep telemetry `context.summary_schema_version` aligned to the payload schema used at send-time for stable run-level observability.
+- Expand tests to cover current-version dispatch, supported-version mapping guarantees, unsupported-version handling, telemetry version propagation, and renderer entrypoint stability.
+

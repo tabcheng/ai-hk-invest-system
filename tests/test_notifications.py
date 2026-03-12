@@ -1,6 +1,9 @@
 from datetime import date
 
 from src.notifications import (
+    CURRENT_DAILY_SUMMARY_SCHEMA_VERSION,
+    DAILY_SUMMARY_RENDERERS,
+    SUPPORTED_DAILY_SUMMARY_SCHEMA_VERSIONS,
     build_daily_summary_message,
     build_daily_summary_payload_v1,
     render_daily_summary_message,
@@ -87,7 +90,7 @@ def test_build_daily_summary_payload_v1_contains_versioned_contract():
         warning_note="ok",
     )
 
-    assert payload["schema_version"] == 1
+    assert payload["schema_version"] == CURRENT_DAILY_SUMMARY_SCHEMA_VERSION
     assert payload["run_id"] == 777
     assert payload["run_date"] == "2026-03-11"
     assert payload["market"] == "HK"
@@ -143,6 +146,26 @@ def test_render_daily_summary_message_v1_displays_stock_name_and_id_for_multi_st
     assert "<b>total_equity (latest):</b> 123.00 HKD" in message
 
 
+def test_render_daily_summary_message_dispatches_current_supported_schema_version():
+    payload = build_daily_summary_payload_v1(
+        run_id=1,
+        run_date=date(2026, 3, 11),
+        run_status="SUCCESS",
+        tickers=["0700.HK"],
+        signal_outcomes={"0700.HK": "BUY"},
+        paper_trade_count_today=1,
+        total_equity=100.0,
+        equity_source="run_date",
+    )
+
+    message = render_daily_summary_message(payload)
+
+    assert payload["schema_version"] == CURRENT_DAILY_SUMMARY_SCHEMA_VERSION
+    assert payload["schema_version"] in SUPPORTED_DAILY_SUMMARY_SCHEMA_VERSIONS
+    assert payload["schema_version"] in DAILY_SUMMARY_RENDERERS
+    assert "Tencent Holdings (0700.HK): <b>BUY</b>" in message
+
+
 def test_render_daily_summary_message_rejects_unsupported_schema_version():
     payload = {"schema_version": 99}
 
@@ -150,7 +173,21 @@ def test_render_daily_summary_message_rejects_unsupported_schema_version():
         render_daily_summary_message(payload)
         assert False, "expected ValueError for unsupported schema version"
     except ValueError as exc:
-        assert "Unsupported daily summary schema_version" in str(exc)
+        assert "Unsupported daily summary schema_version: 99" in str(exc)
+        assert "Supported versions: [1]" in str(exc)
+
+
+def test_render_daily_summary_message_fails_when_supported_version_has_no_renderer(monkeypatch):
+    monkeypatch.setattr("src.notifications.SUPPORTED_DAILY_SUMMARY_SCHEMA_VERSIONS", frozenset([1]))
+    monkeypatch.setattr("src.notifications.DAILY_SUMMARY_RENDERERS", {})
+
+    payload = {"schema_version": 1}
+
+    try:
+        render_daily_summary_message(payload)
+        assert False, "expected ValueError for missing renderer"
+    except ValueError as exc:
+        assert "Missing renderer for supported daily summary schema_version: 1" in str(exc)
 
 
 def test_build_daily_summary_message_contains_required_fields_and_stock_names():
@@ -327,7 +364,7 @@ def test_send_daily_run_summary_with_telemetry_models_single_attempt(monkeypatch
     assert telemetry["counts"]["failed"] == 1
     assert telemetry["counts"]["skipped"] == 0
     assert telemetry["context"]["ticker_count"] == 1
-    assert telemetry["context"]["summary_schema_version"] == 1
+    assert telemetry["context"]["summary_schema_version"] == CURRENT_DAILY_SUMMARY_SCHEMA_VERSION
 
 
 def test_send_daily_run_summary_with_telemetry_dedup_skip_is_not_failure(monkeypatch):
@@ -354,7 +391,7 @@ def test_send_daily_run_summary_with_telemetry_dedup_skip_is_not_failure(monkeyp
     assert telemetry["counts"]["failed"] == 0
     assert telemetry["counts"]["skipped"] == 1
     assert telemetry["context"]["ticker_count"] == 2
-    assert telemetry["context"]["summary_schema_version"] == 1
+    assert telemetry["context"]["summary_schema_version"] == CURRENT_DAILY_SUMMARY_SCHEMA_VERSION
 
 
 def test_send_daily_run_summary_with_telemetry_success_counts(monkeypatch):
@@ -389,4 +426,4 @@ def test_send_daily_run_summary_with_telemetry_success_counts(monkeypatch):
     assert telemetry["counts"]["skipped"] == 0
     assert telemetry["telegram_message_id"] == 1234
     assert telemetry["context"]["ticker_count"] == 2
-    assert telemetry["context"]["summary_schema_version"] == 1
+    assert telemetry["context"]["summary_schema_version"] == CURRENT_DAILY_SUMMARY_SCHEMA_VERSION

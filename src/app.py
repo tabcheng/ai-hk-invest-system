@@ -192,23 +192,6 @@ def main() -> None:
                 payload["error_summary"] = " | ".join(all_errors)[:1000] if all_errors else None
             return payload
 
-        if run_id is not None:
-            try:
-                if not run_has_failures:
-                    update_run(
-                        client,
-                        run_id,
-                        _build_run_update_payload(status="SUCCESS"),
-                    )
-                else:
-                    update_run(
-                        client,
-                        run_id,
-                        _build_run_update_payload(status="FAILED"),
-                    )
-            except Exception as e:
-                print(f"Run observability update failed after ticker processing: {e}")
-
         if not notification_sent:
             run_status = "SUCCESS" if not run_has_failures else "FAILED"
             all_errors = ticker_errors + post_process_errors + notification_errors
@@ -239,16 +222,16 @@ def main() -> None:
                     _build_stage_error_record("notification", "daily_summary_not_sent")
                 )
 
-            if run_id is not None and notification_errors:
-                finished_at = datetime.now(timezone.utc).isoformat()
-                try:
-                    # Notification delivery remains best-effort and non-blocking; keep
-                    # the existing terminal run status from core processing while still
-                    # persisting notification error slices for observability.
-                    terminal_status = "FAILED" if (ticker_errors or post_process_errors) else "SUCCESS"
-                    update_run(client, run_id, _build_run_update_payload(status=terminal_status))
-                except Exception as e:
-                    print(f"Run observability update failed after notification handling: {e}")
+        if run_id is not None:
+            finished_at = datetime.now(timezone.utc).isoformat()
+            try:
+                # Keep terminal status coupled to core processing outcomes only;
+                # notification outcomes enrich observability fields but do not
+                # flip run status when ticker/post-processing succeeded.
+                terminal_status = "FAILED" if (ticker_errors or post_process_errors) else "SUCCESS"
+                update_run(client, run_id, _build_run_update_payload(status=terminal_status))
+            except Exception as e:
+                print(f"Run observability update failed after notification handling: {e}")
     except Exception as e:
         if run_id is not None:
             try:

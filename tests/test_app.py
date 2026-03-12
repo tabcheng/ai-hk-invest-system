@@ -72,6 +72,8 @@ def test_paper_trading_runs_when_all_tickers_succeed(monkeypatch):
     assert payload["status"] == "SUCCESS"
     assert payload["failed_tickers"] == 0
     assert payload["notification_error_count"] == 0
+    assert payload["delivery_summary_json"]["schema_version"] == 1
+    assert payload["delivery_summary_json"]["attempted"] is True
 
 
 def test_paper_trading_failure_does_not_change_ticker_failure_counter(monkeypatch):
@@ -124,11 +126,10 @@ def test_notification_failure_updates_run_observability(monkeypatch):
 
     app.main()
 
-    assert len(updates) == 2
+    assert len(updates) == 1
     assert updates[0]["status"] == "SUCCESS"
-    assert updates[1]["status"] == "SUCCESS"
-    assert updates[1]["notification_error_count"] == 1
-    assert "daily_summary_not_sent" in updates[1]["notification_error_summary"]
+    assert updates[0]["notification_error_count"] == 1
+    assert "daily_summary_not_sent" in updates[0]["notification_error_summary"]
 
 
 def test_notification_disabled_does_not_count_as_run_failure(monkeypatch):

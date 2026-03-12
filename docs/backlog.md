@@ -34,14 +34,15 @@ Prioritization scale:
    - Added structured ticker/stage error records and Telegram delivery telemetry persistence in run finalization.
    - Preserved legacy text summary fields and best-effort/non-blocking observability guardrails.
 
+7. **Basic pytest project config + CI test gating** ✅ completed
+   - Added a conservative root `pytest.ini` for stable repository-root discovery.
+   - Added `.github/workflows/tests.yml` to run `pytest` on pull requests and pushes to `main`.
+
 ## Active backlog (pending)
 
 ## P0 — Next implementation-critical
 
-### 1) Add basic pytest project configuration
-- Add minimal `pytest.ini` (or equivalent) for stable test discovery and consistent local/CI behavior.
-
-### 2) Telegram follow-up: summary schema versioning
+### 1) Telegram follow-up: summary schema versioning
 - Introduce explicit message schema version for summary payload formatting.
 - Prevent drift when adding/removing summary fields over time.
 
@@ -53,7 +54,6 @@ Prioritization scale:
 3. **Failure reporting quality:** improve error grouping/actionability over opaque string blobs.
 
 ### Additional hardening
-- Add CI pipeline for lint/test gating on pull requests.
 - Expand tests for NO_DATA / INSUFFICIENT_DATA propagation, run finalization, DB failure paths, and notification failure pathways.
 - Add runbook entry for Telegram environment misconfiguration triage.
 
@@ -75,7 +75,7 @@ Prioritization scale:
 ## Technical debt register
 - Runtime flow still has extractable helper opportunities.
 - Structured JSON observability is now present, but schema/version governance should be expanded over time.
-- Test harness exists but is minimal without project-level pytest config + CI enforcement.
+- Test harness now has project-level pytest config and CI enforcement; continue expanding depth and failure-path coverage.
 - Notification layer now has sent-dedup persistence and run-level delivery telemetry, but summary schema-version governance still needs formalization.
 
 ## Maintenance rule

@@ -27,3 +27,8 @@ Provide a consistent execution workflow for long-horizon Codex contributions.
 - Keep legacy text `error_summary` and category text summaries unchanged for backward compatibility.
 - Build structured ticker/stage error records and message-level Telegram delivery telemetry (single daily-summary attempt per run, with explicit dedup-skip semantics) in Python, then persist on run finalization in best-effort updates.
 - Guardrail: telemetry writes are observability-only and must never block signal generation, dedup persistence, paper-trading, or Telegram delivery attempts.
+
+## Step 16 implementation note (pytest config + CI test gating)
+- Add a conservative root `pytest.ini` (`minversion`, `testpaths`, `addopts`) to stabilize test discovery from repository root across local and CI runs.
+- Add GitHub Actions test workflow at `.github/workflows/tests.yml` that runs on `pull_request` and `push` to `main` using `ubuntu-latest` + `actions/setup-python`.
+- Reuse existing dependency flow (`pip install -r requirements.txt`) and run `pytest` directly, avoiding extra tooling or runtime-path behavior changes.

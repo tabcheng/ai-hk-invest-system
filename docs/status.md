@@ -1,7 +1,7 @@
 # Project Status
 
 ## Last reviewed date
-2026-03-11
+2026-03-12
 
 ## Current production behavior
 - Runtime behavior remains the existing MVP script in `main.py` (Railway entry point), now as a thin entry into modularized runtime code under `src/`.
@@ -33,6 +33,7 @@
 - Step 15 completed: structured run observability JSON and delivery telemetry are now written best-effort during run finalization without changing signal/dedup/runtime semantics.
 - Post-review Step 15 fix: run finalization now always persists delivery telemetry in the terminal run update (including successful notifications) while preserving non-blocking observability semantics.
 - Post-review Step 15 fix: delivery telemetry schema is now explicitly message-attempt based in both notification output and run payload normalization (no ticker-level message list), with dedup skips counted as `skipped` not `failed`.
+- Step 16 completed: added a conservative root `pytest.ini` for stable discovery and a GitHub Actions `tests` workflow that gates `pull_request` and `push` to `main` with `pytest`.
 
 ## Current documentation posture
 - Core planning, status, architecture, and maintenance docs now form a traceable documentation stack for future Codex execution.
@@ -41,4 +42,4 @@
 - Traceability docs now align with runtime persistence: major daily artifacts can be audited back to a single run record.
 
 ## Next approved task
-- Continue Milestone 4 hardening by adding project-level pytest configuration + CI test gating, then introduce explicit summary schema version governance refinements.
+- Continue Milestone 4 hardening by introducing explicit summary schema version governance refinements for Telegram daily summaries.

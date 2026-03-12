@@ -44,7 +44,7 @@ Prioritization scale:
    - Added delivery telemetry context for `summary_schema_version` and tests for payload/renderer empty + multi-stock paths.
 
 9. **Step 18: schema evolution guardrails + contract hardening** ✅ completed
-   - Added explicit schema evolution guardrails: current schema version constant, supported-version allowlist, centralized renderer dispatch map, and fail-fast unsupported/misconfigured-version errors.
+   - Added explicit schema evolution guardrails: current schema version constant, supported-version allowlist, centralized renderer dispatch map, consistency validation between supported versions and renderer keys, and fail-fast unsupported/misconfigured-version errors.
    - Expanded tests for current-version dispatch, supported-version mapping, unsupported-version handling, renderer entrypoint stability, and telemetry schema-version propagation.
 
 ## Active backlog (pending)

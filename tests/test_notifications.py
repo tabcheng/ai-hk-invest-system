@@ -4,6 +4,7 @@ from src.notifications import (
     CURRENT_DAILY_SUMMARY_SCHEMA_VERSION,
     DAILY_SUMMARY_RENDERERS,
     SUPPORTED_DAILY_SUMMARY_SCHEMA_VERSIONS,
+    _render_daily_summary_message_v1,
     build_daily_summary_message,
     build_daily_summary_payload_v1,
     render_daily_summary_message,
@@ -177,7 +178,7 @@ def test_render_daily_summary_message_rejects_unsupported_schema_version():
         assert "Supported versions: [1]" in str(exc)
 
 
-def test_render_daily_summary_message_fails_when_supported_version_has_no_renderer(monkeypatch):
+def test_render_daily_summary_message_fails_when_supported_versions_and_renderers_diverge(monkeypatch):
     monkeypatch.setattr("src.notifications.SUPPORTED_DAILY_SUMMARY_SCHEMA_VERSIONS", frozenset([1]))
     monkeypatch.setattr("src.notifications.DAILY_SUMMARY_RENDERERS", {})
 
@@ -185,9 +186,26 @@ def test_render_daily_summary_message_fails_when_supported_version_has_no_render
 
     try:
         render_daily_summary_message(payload)
-        assert False, "expected ValueError for missing renderer"
+        assert False, "expected ValueError for mismatched schema config"
     except ValueError as exc:
-        assert "Missing renderer for supported daily summary schema_version: 1" in str(exc)
+        assert "Daily summary schema configuration mismatch" in str(exc)
+
+
+def test_render_daily_summary_message_fails_when_current_version_not_supported(monkeypatch):
+    monkeypatch.setattr("src.notifications.CURRENT_DAILY_SUMMARY_SCHEMA_VERSION", 2)
+    monkeypatch.setattr("src.notifications.SUPPORTED_DAILY_SUMMARY_SCHEMA_VERSIONS", frozenset([1]))
+    monkeypatch.setattr(
+        "src.notifications.DAILY_SUMMARY_RENDERERS",
+        {1: _render_daily_summary_message_v1},
+    )
+
+    payload = {"schema_version": 1}
+
+    try:
+        render_daily_summary_message(payload)
+        assert False, "expected ValueError for unsupported current version"
+    except ValueError as exc:
+        assert "Current daily summary schema_version is not supported: 2" in str(exc)
 
 
 def test_build_daily_summary_message_contains_required_fields_and_stock_names():

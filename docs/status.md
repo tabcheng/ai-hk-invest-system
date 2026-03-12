@@ -15,7 +15,7 @@
 - Telegram daily summary remains best-effort and non-blocking.
 - Telegram summary formatting is deterministic HTML and includes stock name + stock id labels.
 - Telegram daily summary now uses a versioned internal payload schema (`schema_version: 1`) with renderer separation (payload build -> render -> send).
-- Notification schema evolution now has explicit runtime guardrails: a current version constant, supported-version allowlist, centralized renderer dispatch map, and fail-fast unsupported/missing-renderer handling.
+- Notification schema evolution now has explicit runtime guardrails: a current version constant, supported-version allowlist, centralized renderer dispatch map, guardrail consistency validation, and fail-fast unsupported handling.
 - Daily-summary equity prefers run-date snapshots with explicit fallback labeling to latest snapshot when run-date data is unavailable.
 - Daily-summary notifications include minimal cross-run dedup persistence so the same run-date summary is not repeatedly re-sent to the same target.
 - No autonomous live-trading execution is enabled.

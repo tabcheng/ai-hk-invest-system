@@ -44,7 +44,8 @@ Provide a consistent execution workflow for long-horizon Codex contributions.
 ## Step 18 implementation note (schema evolution guardrails + summary contract hardening)
 - Define explicit notification schema constants in `src/notifications.py`: `CURRENT_DAILY_SUMMARY_SCHEMA_VERSION` and `SUPPORTED_DAILY_SUMMARY_SCHEMA_VERSIONS` (currently `{1}`), while preserving v1 runtime behavior.
 - Keep renderer dispatch centralized through a single schema->renderer mapping so future version additions remain reviewable and testable.
-- Fail fast for unsupported schema versions with explicit supported-version context, and fail fast if a supported schema is missing a renderer entry.
+- Validate guardrail consistency before dispatch (`current` version must be in the supported set, and supported versions must match renderer-map keys).
+- Fail fast for unsupported schema versions with explicit supported-version context so schema drift is surfaced early in tests/CI.
 - Keep telemetry `context.summary_schema_version` aligned to the payload schema used at send-time for stable run-level observability.
 - Expand tests to cover current-version dispatch, supported-version mapping guarantees, unsupported-version handling, telemetry version propagation, and renderer entrypoint stability.
 

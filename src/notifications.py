@@ -147,8 +147,26 @@ DAILY_SUMMARY_RENDERERS = {
 }
 
 
+def _validate_daily_summary_schema_guardrails() -> None:
+    """Ensure schema-version declarations and renderer dispatch remain in sync."""
+    if CURRENT_DAILY_SUMMARY_SCHEMA_VERSION not in SUPPORTED_DAILY_SUMMARY_SCHEMA_VERSIONS:
+        raise ValueError(
+            "Current daily summary schema_version is not supported: "
+            f"{CURRENT_DAILY_SUMMARY_SCHEMA_VERSION}"
+        )
+
+    configured_renderer_versions = frozenset(DAILY_SUMMARY_RENDERERS.keys())
+    if configured_renderer_versions != SUPPORTED_DAILY_SUMMARY_SCHEMA_VERSIONS:
+        raise ValueError(
+            "Daily summary schema configuration mismatch: "
+            f"supported={sorted(SUPPORTED_DAILY_SUMMARY_SCHEMA_VERSIONS)}, "
+            f"renderers={sorted(configured_renderer_versions)}"
+        )
+
+
 def render_daily_summary_message(payload: dict) -> str:
     """Render Telegram message from versioned summary payload."""
+    _validate_daily_summary_schema_guardrails()
     schema_version = int(payload.get("schema_version", CURRENT_DAILY_SUMMARY_SCHEMA_VERSION))
     if schema_version not in SUPPORTED_DAILY_SUMMARY_SCHEMA_VERSIONS:
         supported_versions = ",".join(str(version) for version in sorted(SUPPORTED_DAILY_SUMMARY_SCHEMA_VERSIONS))
@@ -157,11 +175,7 @@ def render_daily_summary_message(payload: dict) -> str:
             f"{schema_version}. Supported versions: [{supported_versions}]"
         )
 
-    renderer = DAILY_SUMMARY_RENDERERS.get(schema_version)
-    if renderer is None:
-        # Guardrail: supported versions must always have an explicit renderer entry.
-        raise ValueError(f"Missing renderer for supported daily summary schema_version: {schema_version}")
-    return renderer(payload)
+    return DAILY_SUMMARY_RENDERERS[schema_version](payload)
 
 
 def build_daily_summary_message(

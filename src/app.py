@@ -3,10 +3,79 @@ from datetime import datetime, timezone
 
 from src.config import TICKERS, get_supabase_client
 from src.db import save_signal
-from src.notifications import send_daily_run_summary
+from src.notifications import send_daily_run_summary, send_daily_run_summary_with_telemetry
 from src.paper_trading import run_paper_trading_for_today
 from src.runs import create_run, update_run
 from src.signals import get_signal_for_ticker
+
+
+def _build_ticker_error_record(ticker: str, error: Exception) -> dict:
+    """Build stable ticker-level error records for structured run observability."""
+    return {
+        "ticker": ticker,
+        "stage": "signal_generation",
+        "error_type": error.__class__.__name__,
+        "message": str(error)[:280],
+    }
+
+
+def _build_stage_error_record(stage: str, error: str | Exception) -> dict:
+    """Capture non-ticker stage failures in the same structured shape for consistency."""
+    if isinstance(error, Exception):
+        error_type = error.__class__.__name__
+        message = str(error)
+    else:
+        error_type = "RuntimeError"
+        message = error
+    return {
+        "ticker": None,
+        "stage": stage,
+        "error_type": error_type,
+        "message": message[:280],
+    }
+
+
+def _build_error_summary_json(
+    ticker_errors: list[dict],
+    post_process_errors: list[dict],
+    notification_errors: list[dict],
+) -> dict | None:
+    """
+    Build compact, versioned structured run errors without changing failure semantics.
+
+    This JSON is observability-only and must never block signal generation,
+    persistence, paper-trading, or delivery behavior.
+    """
+    if not (ticker_errors or post_process_errors or notification_errors):
+        return None
+
+    return {
+        "schema_version": 1,
+        "ticker_errors": ticker_errors,
+        "post_process_errors": post_process_errors,
+        "notification_errors": notification_errors,
+        "counts": {
+            "ticker": len(ticker_errors),
+            "post_process": len(post_process_errors),
+            "notification": len(notification_errors),
+            "total": len(ticker_errors) + len(post_process_errors) + len(notification_errors),
+        },
+    }
+
+
+def _build_delivery_summary_json(delivery_telemetry: dict | None) -> dict | None:
+    """Normalize delivery telemetry payload into a bounded run-level summary schema."""
+    if not delivery_telemetry:
+        return None
+
+    return {
+        "schema_version": 1,
+        "attempted": bool(delivery_telemetry.get("attempted", False)),
+        "success": bool(delivery_telemetry.get("success", False)),
+        "channel": delivery_telemetry.get("channel"),
+        "messages": delivery_telemetry.get("messages", []),
+        "counts": delivery_telemetry.get("counts", {}),
+    }
 
 
 def main() -> None:
@@ -42,6 +111,10 @@ def main() -> None:
     ticker_errors = []
     post_process_errors = []
     notification_errors = []
+    ticker_error_records = []
+    post_process_error_records = []
+    notification_error_records = []
+    delivery_telemetry = None
     notification_delivery_enabled = bool(
         os.getenv("TELEGRAM_BOT_TOKEN") and os.getenv("TELEGRAM_CHAT_ID")
     )
@@ -60,6 +133,7 @@ def main() -> None:
             except Exception as e:
                 signal_outcomes[ticker] = "ERROR"
                 ticker_errors.append(f"{ticker}: {e}")
+                ticker_error_records.append(_build_ticker_error_record(ticker, e))
                 print(f"Error processing {ticker}: {e}")
 
         if ticker_errors:
@@ -68,6 +142,7 @@ def main() -> None:
                 f"{len(ticker_errors)} ticker-level failure(s)."
             )
             post_process_errors.append(skip_reason)
+            post_process_error_records.append(_build_stage_error_record("paper_trading", skip_reason))
             print(skip_reason)
         else:
             try:
@@ -75,6 +150,7 @@ def main() -> None:
                 paper_trade_count_today = len(paper_result["trades"])
             except Exception as e:
                 post_process_errors.append(f"paper_trading: {e}")
+                post_process_error_records.append(_build_stage_error_record("paper_trading", e))
                 print(f"Error running paper trading: {e}")
 
         finished_at = datetime.now(timezone.utc).isoformat()
@@ -100,6 +176,12 @@ def main() -> None:
                 "notification_error_summary": " | ".join(notification_errors)[:1000]
                 if notification_errors
                 else None,
+                "error_summary_json": _build_error_summary_json(
+                    ticker_error_records,
+                    post_process_error_records,
+                    notification_error_records,
+                ),
+                "delivery_summary_json": _build_delivery_summary_json(delivery_telemetry),
             }
             if error_summary is not None:
                 payload["error_summary"] = error_summary
@@ -132,7 +214,7 @@ def main() -> None:
             all_errors = ticker_errors + post_process_errors + notification_errors
             warning_note = " | ".join(all_errors) if all_errors else None
             try:
-                notification_sent = send_daily_run_summary(
+                delivery_telemetry = send_daily_run_summary_with_telemetry(
                     client=client,
                     run_id=run_id,
                     run_date=run_date,
@@ -142,8 +224,10 @@ def main() -> None:
                     paper_trade_count_today=paper_trade_count_today,
                     warning_note=warning_note,
                 )
+                notification_sent = bool(delivery_telemetry.get("success"))
             except Exception as e:
                 notification_errors.append(f"daily_summary_exception: {e}")
+                notification_error_records.append(_build_stage_error_record("notification", e))
                 print(f"Failed to send Telegram summary notification: {e}")
 
             # Missing Telegram configuration means delivery is intentionally disabled.
@@ -151,6 +235,9 @@ def main() -> None:
             # as a notification failure signal.
             if not notification_sent and notification_delivery_enabled:
                 notification_errors.append("daily_summary_not_sent")
+                notification_error_records.append(
+                    _build_stage_error_record("notification", "daily_summary_not_sent")
+                )
 
             if run_id is not None and notification_errors:
                 finished_at = datetime.now(timezone.utc).isoformat()
@@ -184,6 +271,13 @@ def main() -> None:
                         "notification_error_summary": " | ".join(notification_errors)[:1000]
                         if notification_errors
                         else None,
+                        "error_summary_json": _build_error_summary_json(
+                            ticker_error_records,
+                            post_process_error_records,
+                            notification_error_records
+                            + [_build_stage_error_record("run", e)],
+                        ),
+                        "delivery_summary_json": _build_delivery_summary_json(delivery_telemetry),
                         "error_summary": str(e)[:1000],
                     },
                 )

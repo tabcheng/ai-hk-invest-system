@@ -20,3 +20,10 @@ Provide a consistent execution workflow for long-horizon Codex contributions.
 5. If any validation fails, stop and repair before taking new scope.
 6. Update `docs/status.md` with what was completed, what was validated, and the next approved task.
 7. Commit with a clear milestone/task summary.
+
+
+## Step 15 implementation note (structured observability JSON)
+- Add nullable `runs.error_summary_json` and `runs.delivery_summary_json` via migration.
+- Keep legacy text `error_summary` and category text summaries unchanged for backward compatibility.
+- Build structured ticker/stage error records and Telegram delivery telemetry in Python, then persist on run finalization in best-effort updates.
+- Guardrail: telemetry writes are observability-only and must never block signal generation, dedup persistence, paper-trading, or Telegram delivery attempts.

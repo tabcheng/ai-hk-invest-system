@@ -1,6 +1,11 @@
 from datetime import date
 
-from src.notifications import build_daily_summary_message, send_daily_run_summary, send_telegram_message
+from src.notifications import (
+    build_daily_summary_message,
+    send_daily_run_summary,
+    send_daily_run_summary_with_telemetry,
+    send_telegram_message,
+)
 
 
 class _FakeQuery:
@@ -172,9 +177,14 @@ def test_send_daily_run_summary_prefers_run_date_equity_and_records_dedup(monkey
 
     def fake_send(text):
         captured["message"] = text
-        return True
+        return {
+            "delivered": True,
+            "channel": "telegram",
+            "telegram_message_id": 999,
+            "failure_reason": None,
+        }
 
-    monkeypatch.setattr("src.notifications.send_telegram_message", fake_send)
+    monkeypatch.setattr("src.notifications.send_telegram_message_with_result", fake_send)
 
     fake_client = _FakeClient(equity_by_date={"2026-03-11": 123456.78}, latest_equity=99999.0)
 
@@ -196,3 +206,38 @@ def test_send_daily_run_summary_prefers_run_date_equity_and_records_dedup(monkey
     assert payload["notification_date"] == "2026-03-11"
     assert payload["target"] == "chat-2"
     assert payload["run_id"] == 302
+
+
+def test_send_daily_run_summary_with_telemetry_includes_message_records(monkeypatch):
+    monkeypatch.setenv("TELEGRAM_CHAT_ID", "chat-telemetry")
+    monkeypatch.setenv("TELEGRAM_BOT_TOKEN", "token")
+
+    def fake_send(_text):
+        return {
+            "delivered": False,
+            "channel": "telegram",
+            "telegram_message_id": None,
+            "failure_reason": "http_500",
+        }
+
+    monkeypatch.setattr("src.notifications.send_telegram_message_with_result", fake_send)
+
+    telemetry = send_daily_run_summary_with_telemetry(
+        client=None,
+        run_id=None,
+        run_date=date(2026, 3, 11),
+        run_status="FAILED",
+        tickers=["0700.HK"],
+        signal_outcomes={"0700.HK": "ERROR"},
+        paper_trade_count_today=0,
+    )
+
+    assert telemetry["attempted"] is True
+    assert telemetry["success"] is False
+    assert telemetry["channel"] == "telegram"
+    assert telemetry["counts"]["total"] == 1
+    assert telemetry["counts"]["failed"] == 1
+    assert telemetry["messages"][0]["ticker"] == "0700.HK"
+    assert telemetry["messages"][0]["stock_name"] == "Tencent Holdings"
+    assert telemetry["messages"][0]["delivered"] is False
+    assert telemetry["messages"][0]["failure_reason"] == "http_500"

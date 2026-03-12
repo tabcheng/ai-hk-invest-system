@@ -148,7 +148,11 @@ def main() -> None:
             if run_id is not None and notification_errors:
                 finished_at = datetime.now(timezone.utc).isoformat()
                 try:
-                    update_run(client, run_id, _build_run_update_payload(status="FAILED"))
+                    # Notification delivery remains best-effort and non-blocking; keep
+                    # the existing terminal run status from core processing while still
+                    # persisting notification error slices for observability.
+                    terminal_status = "FAILED" if (ticker_errors or post_process_errors) else "SUCCESS"
+                    update_run(client, run_id, _build_run_update_payload(status=terminal_status))
                 except Exception as e:
                     print(f"Run observability update failed after notification handling: {e}")
     except Exception as e:

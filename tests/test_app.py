@@ -124,7 +124,7 @@ def test_notification_failure_updates_run_observability(monkeypatch):
 
     assert len(updates) == 2
     assert updates[0]["status"] == "SUCCESS"
-    assert updates[1]["status"] == "FAILED"
+    assert updates[1]["status"] == "SUCCESS"
     assert updates[1]["notification_error_count"] == 1
     assert "daily_summary_not_sent" in updates[1]["notification_error_summary"]
 

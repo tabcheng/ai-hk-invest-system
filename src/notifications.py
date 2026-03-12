@@ -159,13 +159,13 @@ def send_telegram_message(text: str) -> bool:
 
 def send_daily_run_summary(
     client: Client | None,
-    run_id: int | None,
     run_date: date,
     run_status: str,
     tickers: list[str],
     signal_outcomes: dict[str, str],
     paper_trade_count_today: int,
     warning_note: str | None = None,
+    run_id: int | None = None,
 ) -> bool:
     total_equity = None
     equity_source = "none"

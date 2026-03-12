@@ -25,6 +25,7 @@
 - Documentation system-of-record maintenance review #1 completed with refreshed `docs/backlog.md` and `docs/status.md` alignment.
 - Follow-up review fixes applied to notification hardening: redacted dedup log target, idempotent dedup marker upsert for rerun races, and unknown-ticker label fallback.
 - Milestone 4 traceability hardening completed: run-linked persistence added for major outputs plus category-separated run failure observability.
+- Post-review fix applied: notification delivery failures now enrich run observability fields without changing terminal run status semantics for core processing outcomes.
 
 ## Current documentation posture
 - Core planning, status, architecture, and maintenance docs now form a traceable documentation stack for future Codex execution.

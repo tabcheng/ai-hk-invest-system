@@ -107,16 +107,25 @@ def _has_sent_daily_summary(client: Client, run_date: date, target: str) -> bool
     return bool(result.data)
 
 
-def _record_daily_summary_sent(client: Client, run_date: date, target: str) -> None:
+def _record_daily_summary_sent(
+    client: Client,
+    run_date: date,
+    target: str,
+    run_id: int | None,
+) -> None:
     # This durable marker enables cross-run dedup for the same run date and target.
     # Upsert keeps dedup idempotent during near-simultaneous reruns that race to persist logs.
+    payload = {
+        "notification_date": run_date.isoformat(),
+        "target": target,
+        "message_type": DAILY_SUMMARY_MESSAGE_TYPE,
+        "status": DAILY_SUMMARY_SENT_STATUS,
+    }
+    if run_id is not None:
+        payload["run_id"] = run_id
+
     client.table("notification_logs").upsert(
-        {
-            "notification_date": run_date.isoformat(),
-            "target": target,
-            "message_type": DAILY_SUMMARY_MESSAGE_TYPE,
-            "status": DAILY_SUMMARY_SENT_STATUS,
-        },
+        payload,
         on_conflict="notification_date,target,message_type,status",
         ignore_duplicates=True,
     ).execute()
@@ -156,6 +165,7 @@ def send_daily_run_summary(
     signal_outcomes: dict[str, str],
     paper_trade_count_today: int,
     warning_note: str | None = None,
+    run_id: int | None = None,
 ) -> bool:
     total_equity = None
     equity_source = "none"
@@ -190,7 +200,7 @@ def send_daily_run_summary(
     sent = send_telegram_message(message)
     if sent and client is not None and target:
         try:
-            _record_daily_summary_sent(client, run_date, target)
+            _record_daily_summary_sent(client, run_date, target, run_id)
         except Exception as exc:
             print(f"Could not persist notification dedup marker: {exc}")
     return sent

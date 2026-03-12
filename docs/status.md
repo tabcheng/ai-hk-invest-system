@@ -7,6 +7,8 @@
 - Runtime behavior remains the existing MVP script in `main.py` (Railway entry point), now as a thin entry into modularized runtime code under `src/`.
 - Daily signal writes include database-backed deduplication on `(date, stock)` with idempotent write behavior.
 - Run-level observability is preserved via a `runs` table lifecycle (`RUNNING` at start, terminal `SUCCESS`/`FAILED` at finish) without changing ticker processing scope.
+- End-to-end run traceability is hardened: `signals`, `paper_trades`, `paper_daily_snapshots`, `paper_events`, and `notification_logs` now persist `run_id` linkage for single-run reconstruction.
+- Run observability now separates failure categories (`ticker`, `post-processing`, `notification`) with per-category counts and summaries on `runs`.
 - Paper-trading v1 remains deterministic and gated to full ticker-success runs.
 - Telegram daily summary remains best-effort and non-blocking.
 - Telegram summary formatting is deterministic HTML and includes stock name + stock id labels.
@@ -22,11 +24,16 @@
 - Milestone 4 Telegram delivery hardening: completed through deterministic summary format upgrade, run-date equity preference, and minimal cross-run dedup support.
 - Documentation system-of-record maintenance review #1 completed with refreshed `docs/backlog.md` and `docs/status.md` alignment.
 - Follow-up review fixes applied to notification hardening: redacted dedup log target, idempotent dedup marker upsert for rerun races, and unknown-ticker label fallback.
+- Milestone 4 traceability hardening completed: run-linked persistence added for major outputs plus category-separated run failure observability.
+- Post-review fix applied: notification delivery failures now enrich run observability fields without changing terminal run status semantics for core processing outcomes.
+- Post-review fix applied: same-day rerun signal dedup now re-links existing `(date, stock)` signal rows to the current `run_id`, and intentionally disabled Telegram delivery no longer contributes notification failure counts.
+- Follow-up traceability guardrail added: rerun signal relink path updates `run_id` only (not signal values), with test coverage for duplicate rows when `run_id` is absent.
 
 ## Current documentation posture
 - Core planning, status, architecture, and maintenance docs now form a traceable documentation stack for future Codex execution.
 - Backlog clearly separates completed work from pending items and tracks follow-up notification work as active backlog.
 - Runtime + docs now align on notification guardrails: best-effort delivery, deterministic formatting, and non-blocking failure posture.
+- Traceability docs now align with runtime persistence: major daily artifacts can be audited back to a single run record.
 
 ## Next approved task
-- Continue Milestone 4 hardening by implementing P0 end-to-end `run_id` traceability across runs, signals, paper-trading outputs, and notification logging, followed by structured `error_summary` schema work.
+- Continue Milestone 4 hardening by implementing compact structured `error_summary` schema/versioning and adding project-level pytest configuration + CI test gating.

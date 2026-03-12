@@ -23,26 +23,27 @@ Prioritization scale:
    - Delivery remains best-effort/non-blocking.
    - Documentation system-of-record refreshed (`status`/`backlog`).
 
+5. **End-to-end `run_id` traceability hardening** ✅ completed
+   - Added run linkage persistence for `signals`, `paper_trades`, `paper_daily_snapshots`, `paper_events`, and `notification_logs`.
+   - Added migration-level FK-style links/indexes where practical.
+   - Run records now persist separated ticker/post-processing/notification failure summaries.
+
 ## Active backlog (pending)
 
 ## P0 — Next implementation-critical
 
-### 1) End-to-end traceability via `run_id` linkage
-- Link run metadata, signal rows, and paper-trading outputs with one execution identifier.
-- Make single-run reconstruction deterministic for audit and debugging.
-
-### 2) Structured `error_summary`
+### 1) Structured `error_summary`
 - Replace free-form truncated text with compact structured schema (category, sample message, affected ticker count).
 - Keep storage bounded while improving debugging analytics.
 
-### 3) Add basic pytest project configuration
+### 2) Add basic pytest project configuration
 - Add minimal `pytest.ini` (or equivalent) for stable test discovery and consistent local/CI behavior.
 
-### 4) Telegram follow-up: delivery observability expansion
+### 3) Telegram follow-up: delivery observability expansion
 - Extend notification logging from sent-dedup marker to full attempt telemetry (attempted/sent/failed + reason + run_id linkage).
 - Keep notification behavior best-effort (non-blocking) while improving post-run diagnosability.
 
-### 5) Telegram follow-up: summary schema versioning
+### 4) Telegram follow-up: summary schema versioning
 - Introduce explicit message schema version for summary payload formatting.
 - Prevent drift when adding/removing summary fields over time.
 
@@ -75,8 +76,7 @@ Prioritization scale:
 
 ## Technical debt register
 - Runtime flow still has extractable helper opportunities.
-- `error_summary` remains coarse and truncation-based.
-- Execution traceability is incomplete without explicit linkage keys.
+- `error_summary` remains coarse and should move to explicit structured schema/versioning.
 - Test harness exists but is minimal without project-level pytest config + CI enforcement.
 - Notification layer now has minimal sent-dedup persistence but lacks full delivery-attempt telemetry and schema version governance.
 

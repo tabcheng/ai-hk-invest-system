@@ -36,7 +36,7 @@ Prioritization scale:
 
 7. **Basic pytest project config + CI test gating** ✅ completed
    - Added a conservative root `pytest.ini` for stable repository-root discovery.
-   - Added `.github/workflows/tests.yml` to run `pytest` on pull requests and pushes to `main`.
+   - Added `.github/workflows/tests.yml` to run `pytest` on pull requests and pushes to `main`, pinned to Python 3.10 with pip caching.
 
 ## Active backlog (pending)
 

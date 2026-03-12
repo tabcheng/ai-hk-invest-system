@@ -32,6 +32,7 @@
 - Follow-up traceability guardrail added: rerun signal relink path updates `run_id` only (not signal values), with test coverage for duplicate rows when `run_id` is absent.
 - Step 15 completed: structured run observability JSON and delivery telemetry are now written best-effort during run finalization without changing signal/dedup/runtime semantics.
 - Post-review Step 15 fix: run finalization now always persists delivery telemetry in the terminal run update (including successful notifications) while preserving non-blocking observability semantics.
+- Post-review Step 15 fix: delivery telemetry schema is now explicitly message-attempt based in both notification output and run payload normalization (no ticker-level message list), with dedup skips counted as `skipped` not `failed`.
 
 ## Current documentation posture
 - Core planning, status, architecture, and maintenance docs now form a traceable documentation stack for future Codex execution.

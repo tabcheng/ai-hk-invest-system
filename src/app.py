@@ -64,17 +64,35 @@ def _build_error_summary_json(
 
 
 def _build_delivery_summary_json(delivery_telemetry: dict | None) -> dict | None:
-    """Normalize delivery telemetry payload into a bounded run-level summary schema."""
+    """
+    Normalize delivery telemetry into a stable message-attempt schema for runs.
+
+    Guardrail: this serializer is observability-only. Missing telemetry keys must
+    degrade to safe defaults and never affect run status or core processing flow.
+    """
     if not delivery_telemetry:
         return None
 
+    counts = delivery_telemetry.get("counts", {})
+    context = delivery_telemetry.get("context", {})
     return {
-        "schema_version": 1,
+        "schema_version": int(delivery_telemetry.get("schema_version", 1)),
         "attempted": bool(delivery_telemetry.get("attempted", False)),
         "success": bool(delivery_telemetry.get("success", False)),
         "channel": delivery_telemetry.get("channel"),
-        "messages": delivery_telemetry.get("messages", []),
-        "counts": delivery_telemetry.get("counts", {}),
+        "message_type": delivery_telemetry.get("message_type"),
+        "telegram_message_id": delivery_telemetry.get("telegram_message_id"),
+        "failure_reason": delivery_telemetry.get("failure_reason"),
+        "skip_reason": delivery_telemetry.get("skip_reason"),
+        "counts": {
+            "attempts": int(counts.get("attempts", 0)),
+            "delivered": int(counts.get("delivered", 0)),
+            "failed": int(counts.get("failed", 0)),
+            "skipped": int(counts.get("skipped", 0)),
+        },
+        "context": {
+            "ticker_count": int(context.get("ticker_count", 0)),
+        },
     }
 
 

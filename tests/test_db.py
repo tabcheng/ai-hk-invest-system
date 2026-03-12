@@ -79,3 +79,15 @@ def test_save_signal_relinks_existing_same_day_row_to_current_run():
     assert payload == {"run_id": 902}
     assert filters["date"]
     assert filters["stock"] == "0700.HK"
+
+
+def test_save_signal_duplicate_without_run_id_does_not_issue_relink_update():
+    fake_client = _FakeClient(simulate_duplicate_upsert=True)
+
+    save_signal(
+        fake_client,
+        {"stock": "0700.HK", "signal": "BUY", "price": 300.0, "reason": "ok"},
+        run_id=None,
+    )
+
+    assert fake_client.update_calls == []

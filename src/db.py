@@ -40,6 +40,8 @@ def save_signal(client: Client, signal_data: dict, run_id: int | None = None) ->
         # run so downstream artifacts never reference a newer run while signals point
         # at an older one.
         if run_id is not None:
+            # Only re-link run lineage; do not mutate signal values on reruns so
+            # strategy outputs remain consistent with existing same-day dedup rules.
             client.table("signals").update({"run_id": run_id}).eq("date", payload["date"]).eq(
                 "stock", payload["stock"]
             ).execute()

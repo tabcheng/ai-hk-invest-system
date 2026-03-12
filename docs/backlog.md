@@ -38,13 +38,12 @@ Prioritization scale:
    - Added a conservative root `pytest.ini` for stable repository-root discovery.
    - Added `.github/workflows/tests.yml` to run `pytest` on pull requests and pushes to `main`, pinned to Python 3.10 with pip caching.
 
+8. **Telegram follow-up: summary schema versioning** ✅ completed
+   - Added a compact versioned daily-summary payload contract (`schema_version: 1`) with run metadata, totals, and stock rows (`stock_id` + optional `stock_name`).
+   - Separated payload construction from Telegram message rendering via schema-dispatched renderer.
+   - Added delivery telemetry context for `summary_schema_version` and tests for payload/renderer empty + multi-stock paths.
+
 ## Active backlog (pending)
-
-## P0 — Next implementation-critical
-
-### 1) Telegram follow-up: summary schema versioning
-- Introduce explicit message schema version for summary payload formatting.
-- Prevent drift when adding/removing summary fields over time.
 
 ## P1 — Near-term hardening and review reminders
 
@@ -74,9 +73,9 @@ Prioritization scale:
 
 ## Technical debt register
 - Runtime flow still has extractable helper opportunities.
-- Structured JSON observability is now present, but schema/version governance should be expanded over time.
+- Structured JSON observability is now present with versioned daily-summary payload contracts; continue disciplined schema evolution for future versions.
 - Test harness now has project-level pytest config and CI enforcement; continue expanding depth and failure-path coverage.
-- Notification layer now has sent-dedup persistence and run-level delivery telemetry, but summary schema-version governance still needs formalization.
+- Notification layer now has sent-dedup persistence, run-level delivery telemetry, and summary schema-version governance v1; future revisions should evolve the schema with explicit version bumps.
 
 ## Maintenance rule
 After each completed task, update both this backlog and `docs/status.md` to keep next approved work explicit.

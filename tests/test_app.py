@@ -77,6 +77,7 @@ def test_paper_trading_runs_when_all_tickers_succeed(monkeypatch):
     assert payload["delivery_summary_json"]["message_type"] == "DAILY_SUMMARY"
     assert payload["delivery_summary_json"]["counts"]["attempts"] == 1
     assert payload["delivery_summary_json"]["counts"]["delivered"] == 1
+    assert payload["delivery_summary_json"]["context"]["summary_schema_version"] == 1
 
 
 def test_paper_trading_failure_does_not_change_ticker_failure_counter(monkeypatch):

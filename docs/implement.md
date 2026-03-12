@@ -32,3 +32,11 @@ Provide a consistent execution workflow for long-horizon Codex contributions.
 - Add a conservative root `pytest.ini` (`minversion`, `testpaths`, `addopts`) to stabilize test discovery from repository root across local and CI runs.
 - Add GitHub Actions test workflow at `.github/workflows/tests.yml` that runs on `pull_request` and `push` to `main` using `ubuntu-latest` + `actions/setup-python`.
 - Reuse existing dependency flow (`pip install -r requirements.txt`) and run `pytest` directly, avoiding extra tooling or runtime-path behavior changes.
+
+
+## Step 17 implementation note (versioned daily summary payload + renderer separation)
+- Introduce a compact internal `build_daily_summary_payload_v1(...)` contract with `schema_version`, run identity/date, market, summary type, totals, and per-stock rows (`stock_id`, `stock_name`, `signal`).
+- Render Telegram text via `render_daily_summary_message(payload)` with schema-version dispatch (v1 renderer), so message formatting can evolve without changing aggregation inputs.
+- Keep send path ordering explicit and stable: fetch equity -> build payload -> render message -> send -> dedup marker write.
+- Include `context.summary_schema_version` in delivery telemetry so run-level observability records the payload schema used for each attempt.
+- Guardrail: preserve existing best-effort/non-blocking delivery semantics and dedup/retry/transport behavior.

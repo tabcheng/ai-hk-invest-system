@@ -9,28 +9,12 @@ from supabase import Client
 
 from src.config import STOCK_METADATA
 
+DAILY_SUMMARY_SCHEMA_VERSION_V1 = 1
 DAILY_SUMMARY_MESSAGE_TYPE = "DAILY_SUMMARY"
 DAILY_SUMMARY_SENT_STATUS = "SENT"
 DELIVERY_CHANNEL_TELEGRAM = "telegram"
+HK_MARKET_CODE = "HK"
 
-
-def _format_ticker_label(ticker: str) -> str:
-    """Render deterministic stock labels as '<Name> (<Ticker>)' for human-readable summaries."""
-    stock_name = STOCK_METADATA.get(ticker)
-    safe_ticker = html.escape(ticker)
-    if not stock_name:
-        return safe_ticker
-
-    safe_name = html.escape(stock_name)
-    return f"{safe_name} ({safe_ticker})"
-
-
-def _format_signal_summary(tickers: list[str], signal_outcomes: dict[str, str]) -> str:
-    lines: list[str] = []
-    for ticker in tickers:
-        signal = html.escape(signal_outcomes.get(ticker, "UNKNOWN"))
-        lines.append(f"• {_format_ticker_label(ticker)}: <b>{signal}</b>")
-    return "\n".join(lines)
 
 
 def _get_total_equity_for_date(client: Client, run_date: date) -> tuple[float | None, str]:
@@ -63,6 +47,107 @@ def _get_total_equity_for_date(client: Client, run_date: date) -> tuple[float | 
     return None, "none"
 
 
+def build_daily_summary_payload_v1(
+    *,
+    run_id: int | None,
+    run_date: date,
+    run_status: str,
+    tickers: list[str],
+    signal_outcomes: dict[str, str],
+    paper_trade_count_today: int,
+    total_equity: float | None,
+    equity_source: str,
+    warning_note: str | None = None,
+) -> dict:
+    """
+    Build the stable internal daily-summary contract consumed by renderer + telemetry.
+
+    Guardrail: this schema is intentionally small and versioned so display-layer changes
+    do not require reworking aggregation/business logic.
+    """
+    stocks = []
+    for ticker in tickers:
+        stocks.append(
+            {
+                "stock_id": ticker,
+                "stock_name": STOCK_METADATA.get(ticker),
+                "signal": signal_outcomes.get(ticker, "UNKNOWN"),
+            }
+        )
+
+    payload = {
+        "schema_version": DAILY_SUMMARY_SCHEMA_VERSION_V1,
+        "run_id": run_id,
+        "run_date": run_date.isoformat(),
+        "market": HK_MARKET_CODE,
+        "summary_type": DAILY_SUMMARY_MESSAGE_TYPE,
+        "run_status": run_status,
+        "totals": {
+            "ticker_count": len(tickers),
+            "paper_trades_today": int(paper_trade_count_today),
+            "total_equity": total_equity,
+            "equity_source": equity_source,
+        },
+        "stocks": stocks,
+    }
+    if warning_note:
+        # Keep the note bounded so schema payload remains compact for logs/telemetry.
+        payload["warning_note"] = warning_note[:280]
+    return payload
+
+
+def _render_daily_summary_message_v1(payload: dict) -> str:
+    run_date_text = html.escape(str(payload.get("run_date", "")))
+    run_status = html.escape(str(payload.get("run_status", "UNKNOWN")))
+
+    totals = payload.get("totals", {})
+    total_equity = totals.get("total_equity")
+    equity_text = "N/A" if total_equity is None else f"{float(total_equity):.2f} HKD"
+    equity_source = totals.get("equity_source", "none")
+    equity_label = {
+        "run_date": "total_equity (run_date)",
+        "latest": "total_equity (latest)",
+        "none": "total_equity",
+    }.get(equity_source, "total_equity")
+
+    lines = [
+        "<b>AI HK Daily Run Summary</b>",
+        f"<b>date:</b> {run_date_text}",
+        f"<b>status:</b> {run_status}",
+        "<b>signals:</b>",
+    ]
+
+    stocks = payload.get("stocks", [])
+    for stock in stocks:
+        stock_id = html.escape(str(stock.get("stock_id", "")))
+        stock_name = stock.get("stock_name")
+        signal = html.escape(str(stock.get("signal", "UNKNOWN")))
+        if stock_name:
+            lines.append(f"• {html.escape(str(stock_name))} ({stock_id}): <b>{signal}</b>")
+        else:
+            lines.append(f"• {stock_id}: <b>{signal}</b>")
+
+    lines.extend(
+        [
+            f"<b>paper_trades_today:</b> {int(totals.get('paper_trades_today', 0))}",
+            f"<b>{equity_label}:</b> {html.escape(equity_text)}",
+        ]
+    )
+
+    warning_note = payload.get("warning_note")
+    if warning_note:
+        lines.append(f"<b>note:</b> {html.escape(str(warning_note))}")
+    return "\n".join(lines)
+
+
+def render_daily_summary_message(payload: dict) -> str:
+    """Render Telegram message from versioned summary payload."""
+    schema_version = int(payload.get("schema_version", DAILY_SUMMARY_SCHEMA_VERSION_V1))
+    if schema_version == DAILY_SUMMARY_SCHEMA_VERSION_V1:
+        return _render_daily_summary_message_v1(payload)
+    raise ValueError(f"Unsupported daily summary schema_version: {schema_version}")
+
+
 def build_daily_summary_message(
     run_date: date,
     run_status: str,
@@ -73,25 +158,19 @@ def build_daily_summary_message(
     equity_source: str,
     warning_note: str | None = None,
 ) -> str:
-    equity_text = "N/A" if total_equity is None else f"{total_equity:.2f} HKD"
-    equity_label = {
-        "run_date": "total_equity (run_date)",
-        "latest": "total_equity (latest)",
-        "none": "total_equity",
-    }.get(equity_source, "total_equity")
-
-    lines = [
-        "<b>AI HK Daily Run Summary</b>",
-        f"<b>date:</b> {html.escape(run_date.isoformat())}",
-        f"<b>status:</b> {html.escape(run_status)}",
-        "<b>signals:</b>",
-        _format_signal_summary(tickers, signal_outcomes),
-        f"<b>paper_trades_today:</b> {paper_trade_count_today}",
-        f"<b>{equity_label}:</b> {html.escape(equity_text)}",
-    ]
-    if warning_note:
-        lines.append(f"<b>note:</b> {html.escape(warning_note[:280])}")
-    return "\n".join(lines)
+    """Backward-compatible adapter used by existing tests/callers."""
+    payload = build_daily_summary_payload_v1(
+        run_id=None,
+        run_date=run_date,
+        run_status=run_status,
+        tickers=tickers,
+        signal_outcomes=signal_outcomes,
+        paper_trade_count_today=paper_trade_count_today,
+        total_equity=total_equity,
+        equity_source=equity_source,
+        warning_note=warning_note,
+    )
+    return render_daily_summary_message(payload)
 
 
 def _has_sent_daily_summary(client: Client, run_date: date, target: str) -> bool:
@@ -246,6 +325,7 @@ def send_daily_run_summary_with_telemetry(
         },
         "context": {
             "ticker_count": len(tickers),
+            "summary_schema_version": DAILY_SUMMARY_SCHEMA_VERSION_V1,
         },
     }
 
@@ -273,7 +353,8 @@ def send_daily_run_summary_with_telemetry(
         except Exception as exc:
             print(f"Could not fetch total equity for notification: {exc}")
 
-    message = build_daily_summary_message(
+    summary_payload = build_daily_summary_payload_v1(
+        run_id=run_id,
         run_date=run_date,
         run_status=run_status,
         tickers=tickers,
@@ -283,6 +364,7 @@ def send_daily_run_summary_with_telemetry(
         equity_source=equity_source,
         warning_note=warning_note,
     )
+    message = render_daily_summary_message(summary_payload)
 
     send_result = send_telegram_message_with_result(message)
     sent = bool(send_result["delivered"])
@@ -297,6 +379,10 @@ def send_daily_run_summary_with_telemetry(
     telemetry["success"] = sent
     telemetry["telegram_message_id"] = send_result.get("telegram_message_id")
     telemetry["failure_reason"] = send_result.get("failure_reason")
+    telemetry["context"] = {
+        "ticker_count": len(tickers),
+        "summary_schema_version": summary_payload["schema_version"],
+    }
     telemetry["counts"] = {
         "attempts": 1,
         "delivered": 1 if sent else 0,

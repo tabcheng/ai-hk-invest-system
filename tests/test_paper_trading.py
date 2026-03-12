@@ -19,6 +19,8 @@ def test_buy_opens_position():
     trade = result["trades"][0]
     assert trade["action"] == "BUY"
     assert trade["quantity"] == 100
+    assert trade["run_id"] == 10
+    assert result["snapshot"]["run_id"] == 10
     assert result["ending_positions"]["0700.HK"] == Position(quantity=100, average_entry_price=100.0)
 
 
@@ -48,6 +50,7 @@ def test_hold_produces_event_only():
     assert result["trades"] == []
     assert len(result["events"]) == 1
     assert result["events"][0]["event_type"] == "HOLD_EVENT"
+    assert result["events"][0]["run_id"] == 12
 
 
 def test_duplicate_buy_does_not_create_second_position():

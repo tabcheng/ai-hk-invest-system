@@ -133,6 +133,7 @@ def test_send_daily_run_summary_supports_missing_client(monkeypatch):
 
     sent = send_daily_run_summary(
         client=None,
+        run_id=None,
         run_date=date(2026, 3, 11),
         run_status="FAILED",
         tickers=["0700.HK"],
@@ -151,6 +152,7 @@ def test_send_daily_run_summary_skips_when_already_sent(monkeypatch):
 
     sent = send_daily_run_summary(
         client=fake_client,
+        run_id=301,
         run_date=date(2026, 3, 11),
         run_status="SUCCESS",
         tickers=["0700.HK"],
@@ -178,6 +180,7 @@ def test_send_daily_run_summary_prefers_run_date_equity_and_records_dedup(monkey
 
     sent = send_daily_run_summary(
         client=fake_client,
+        run_id=302,
         run_date=date(2026, 3, 11),
         run_status="SUCCESS",
         tickers=["0700.HK"],
@@ -192,3 +195,4 @@ def test_send_daily_run_summary_prefers_run_date_equity_and_records_dedup(monkey
     assert table_name == "notification_logs"
     assert payload["notification_date"] == "2026-03-11"
     assert payload["target"] == "chat-2"
+    assert payload["run_id"] == 302

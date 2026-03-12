@@ -4,6 +4,7 @@ import src.app as app
 def test_paper_trading_skipped_when_any_ticker_fails(monkeypatch):
     updates = []
     called = {"paper": 0}
+    saved = []
 
     monkeypatch.setattr(app, "TICKERS", ["A.HK", "B.HK"])
     monkeypatch.setattr(app, "get_supabase_client", lambda: object())
@@ -15,7 +16,10 @@ def test_paper_trading_skipped_when_any_ticker_fails(monkeypatch):
         raise RuntimeError("fetch failed")
 
     monkeypatch.setattr(app, "get_signal_for_ticker", fake_signal)
-    monkeypatch.setattr(app, "save_signal", lambda client, signal_data: None)
+    def fake_save_signal(client, signal_data, run_id=None):
+        saved.append(run_id)
+
+    monkeypatch.setattr(app, "save_signal", fake_save_signal)
 
     def fake_paper(client, run_id):
         called["paper"] += 1
@@ -32,7 +36,10 @@ def test_paper_trading_skipped_when_any_ticker_fails(monkeypatch):
     payload = updates[0]
     assert payload["status"] == "FAILED"
     assert payload["failed_tickers"] == 1
+    assert payload["ticker_error_count"] == 1
+    assert payload["post_process_error_count"] == 1
     assert "paper_trading skipped" in payload["error_summary"]
+    assert saved == [123]
 
 
 def test_paper_trading_runs_when_all_tickers_succeed(monkeypatch):
@@ -47,7 +54,7 @@ def test_paper_trading_runs_when_all_tickers_succeed(monkeypatch):
         "get_signal_for_ticker",
         lambda ticker: {"stock": ticker, "signal": "HOLD", "price": 20.0, "reason": "ok"},
     )
-    monkeypatch.setattr(app, "save_signal", lambda client, signal_data: None)
+    monkeypatch.setattr(app, "save_signal", lambda client, signal_data, run_id=None: None)
 
     def fake_paper(client, run_id):
         called["paper"] += 1
@@ -64,6 +71,7 @@ def test_paper_trading_runs_when_all_tickers_succeed(monkeypatch):
     payload = updates[0]
     assert payload["status"] == "SUCCESS"
     assert payload["failed_tickers"] == 0
+    assert payload["notification_error_count"] == 0
 
 
 def test_paper_trading_failure_does_not_change_ticker_failure_counter(monkeypatch):
@@ -77,7 +85,7 @@ def test_paper_trading_failure_does_not_change_ticker_failure_counter(monkeypatc
         "get_signal_for_ticker",
         lambda ticker: {"stock": ticker, "signal": "HOLD", "price": 20.0, "reason": "ok"},
     )
-    monkeypatch.setattr(app, "save_signal", lambda client, signal_data: None)
+    monkeypatch.setattr(app, "save_signal", lambda client, signal_data, run_id=None: None)
 
     def failing_paper(client, run_id):
         raise RuntimeError("paper engine failure")
@@ -92,7 +100,33 @@ def test_paper_trading_failure_does_not_change_ticker_failure_counter(monkeypatc
     payload = updates[0]
     assert payload["status"] == "FAILED"
     assert payload["failed_tickers"] == 0
+    assert payload["post_process_error_count"] == 1
     assert "paper_trading: paper engine failure" in payload["error_summary"]
+
+
+def test_notification_failure_updates_run_observability(monkeypatch):
+    updates = []
+
+    monkeypatch.setattr(app, "TICKERS", ["A.HK"])
+    monkeypatch.setattr(app, "get_supabase_client", lambda: object())
+    monkeypatch.setattr(app, "create_run", lambda client: 126)
+    monkeypatch.setattr(
+        app,
+        "get_signal_for_ticker",
+        lambda ticker: {"stock": ticker, "signal": "HOLD", "price": 20.0, "reason": "ok"},
+    )
+    monkeypatch.setattr(app, "save_signal", lambda client, signal_data, run_id=None: None)
+    monkeypatch.setattr(app, "run_paper_trading_for_today", lambda client, run_id: {"trades": []})
+    monkeypatch.setattr(app, "send_daily_run_summary", lambda **kwargs: False)
+    monkeypatch.setattr(app, "update_run", lambda client, run_id, payload: updates.append(payload))
+
+    app.main()
+
+    assert len(updates) == 2
+    assert updates[0]["status"] == "SUCCESS"
+    assert updates[1]["status"] == "FAILED"
+    assert updates[1]["notification_error_count"] == 1
+    assert "daily_summary_not_sent" in updates[1]["notification_error_summary"]
 
 
 def test_startup_failure_attempts_failure_notification(monkeypatch):

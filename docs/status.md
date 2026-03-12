@@ -14,6 +14,7 @@
 - Paper-trading v1 remains deterministic and gated to full ticker-success runs.
 - Telegram daily summary remains best-effort and non-blocking.
 - Telegram summary formatting is deterministic HTML and includes stock name + stock id labels.
+- Telegram daily summary now uses a versioned internal payload schema (`schema_version: 1`) with renderer separation (payload build -> render -> send).
 - Daily-summary equity prefers run-date snapshots with explicit fallback labeling to latest snapshot when run-date data is unavailable.
 - Daily-summary notifications include minimal cross-run dedup persistence so the same run-date summary is not repeatedly re-sent to the same target.
 - No autonomous live-trading execution is enabled.
@@ -34,6 +35,8 @@
 - Post-review Step 15 fix: run finalization now always persists delivery telemetry in the terminal run update (including successful notifications) while preserving non-blocking observability semantics.
 - Post-review Step 15 fix: delivery telemetry schema is now explicitly message-attempt based in both notification output and run payload normalization (no ticker-level message list), with dedup skips counted as `skipped` not `failed`.
 - Step 16 completed: added a conservative root `pytest.ini` for stable discovery and a GitHub Actions `tests` workflow that gates `pull_request` and `push` to `main` with `pytest`.
+- Step 17 completed: introduced daily summary payload schema v1, schema-versioned renderer dispatch, and delivery telemetry context field `summary_schema_version` while preserving existing notification runtime semantics.
+- Post-review Step 17 fix: strengthened notification test guardrails with unsupported-schema renderer coverage and low-risk test cleanup (spacing/readability) without runtime behavior changes.
 - Post-review Step 16 fix: CI now pins Python 3.10 (matching current repo test runtime) and enables pip caching for faster, more stable dependency installs without changing test behavior.
 
 ## Current documentation posture
@@ -43,4 +46,4 @@
 - Traceability docs now align with runtime persistence: major daily artifacts can be audited back to a single run record.
 
 ## Next approved task
-- Continue Milestone 4 hardening by introducing explicit summary schema version governance refinements for Telegram daily summaries.
+- Continue Milestone 4 hardening with small follow-up coverage/guardrail improvements around notification schema evolution and observability validation.

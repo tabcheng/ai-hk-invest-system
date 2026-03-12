@@ -92,6 +92,7 @@ def _build_delivery_summary_json(delivery_telemetry: dict | None) -> dict | None
         },
         "context": {
             "ticker_count": int(context.get("ticker_count", 0)),
+            "summary_schema_version": int(context.get("summary_schema_version", 1)),
         },
     }
 

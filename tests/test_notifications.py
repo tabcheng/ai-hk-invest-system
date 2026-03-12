@@ -2,6 +2,8 @@ from datetime import date
 
 from src.notifications import (
     build_daily_summary_message,
+    build_daily_summary_payload_v1,
+    render_daily_summary_message,
     send_daily_run_summary,
     send_daily_run_summary_with_telemetry,
     send_telegram_message,
@@ -72,6 +74,85 @@ class _FakeClient:
         return _FakeQuery(table_name, self)
 
 
+def test_build_daily_summary_payload_v1_contains_versioned_contract():
+    payload = build_daily_summary_payload_v1(
+        run_id=777,
+        run_date=date(2026, 3, 11),
+        run_status="SUCCESS",
+        tickers=["0700.HK", "9999.HK"],
+        signal_outcomes={"0700.HK": "BUY"},
+        paper_trade_count_today=2,
+        total_equity=88888.5,
+        equity_source="run_date",
+        warning_note="ok",
+    )
+
+    assert payload["schema_version"] == 1
+    assert payload["run_id"] == 777
+    assert payload["run_date"] == "2026-03-11"
+    assert payload["market"] == "HK"
+    assert payload["summary_type"] == "DAILY_SUMMARY"
+    assert payload["totals"]["ticker_count"] == 2
+    assert payload["totals"]["paper_trades_today"] == 2
+    assert payload["totals"]["total_equity"] == 88888.5
+    assert payload["totals"]["equity_source"] == "run_date"
+    assert payload["stocks"][0]["stock_id"] == "0700.HK"
+    assert payload["stocks"][0]["stock_name"] == "Tencent Holdings"
+    assert payload["stocks"][0]["signal"] == "BUY"
+    assert payload["stocks"][1]["stock_id"] == "9999.HK"
+    assert payload["stocks"][1]["stock_name"] is None
+    assert payload["stocks"][1]["signal"] == "UNKNOWN"
+
+
+def test_render_daily_summary_message_v1_handles_empty_stocks():
+    payload = build_daily_summary_payload_v1(
+        run_id=None,
+        run_date=date(2026, 3, 11),
+        run_status="FAILED",
+        tickers=[],
+        signal_outcomes={},
+        paper_trade_count_today=0,
+        total_equity=None,
+        equity_source="none",
+        warning_note=None,
+    )
+
+    message = render_daily_summary_message(payload)
+
+    assert "<b>signals:</b>" in message
+    assert "• " not in message
+    assert "<b>paper_trades_today:</b> 0" in message
+
+
+def test_render_daily_summary_message_v1_displays_stock_name_and_id_for_multi_stock_payload():
+    payload = build_daily_summary_payload_v1(
+        run_id=888,
+        run_date=date(2026, 3, 11),
+        run_status="SUCCESS",
+        tickers=["0700.HK", "0388.HK"],
+        signal_outcomes={"0700.HK": "BUY", "0388.HK": "HOLD"},
+        paper_trade_count_today=1,
+        total_equity=123.0,
+        equity_source="latest",
+    )
+
+    message = render_daily_summary_message(payload)
+
+    assert "Tencent Holdings (0700.HK): <b>BUY</b>" in message
+    assert "Hong Kong Exchanges and Clearing (0388.HK): <b>HOLD</b>" in message
+    assert "<b>total_equity (latest):</b> 123.00 HKD" in message
+
+
+def test_render_daily_summary_message_rejects_unsupported_schema_version():
+    payload = {"schema_version": 99}
+
+    try:
+        render_daily_summary_message(payload)
+        assert False, "expected ValueError for unsupported schema version"
+    except ValueError as exc:
+        assert "Unsupported daily summary schema_version" in str(exc)
+
+
 def test_build_daily_summary_message_contains_required_fields_and_stock_names():
     message = build_daily_summary_message(
         run_date=date(2026, 3, 11),
@@ -109,7 +190,6 @@ def test_build_daily_summary_message_uses_na_equity_and_warning_note():
     assert "<b>note:</b> paper_trading skipped" in message
 
 
-
 def test_build_daily_summary_message_unknown_ticker_uses_id_only():
     message = build_daily_summary_message(
         run_date=date(2026, 3, 11),
@@ -122,6 +202,7 @@ def test_build_daily_summary_message_unknown_ticker_uses_id_only():
     )
 
     assert "• 9999.HK: <b>HOLD</b>" in message
+
 
 def test_send_telegram_message_skips_when_env_missing(monkeypatch):
     monkeypatch.delenv("TELEGRAM_BOT_TOKEN", raising=False)
@@ -246,6 +327,7 @@ def test_send_daily_run_summary_with_telemetry_models_single_attempt(monkeypatch
     assert telemetry["counts"]["failed"] == 1
     assert telemetry["counts"]["skipped"] == 0
     assert telemetry["context"]["ticker_count"] == 1
+    assert telemetry["context"]["summary_schema_version"] == 1
 
 
 def test_send_daily_run_summary_with_telemetry_dedup_skip_is_not_failure(monkeypatch):
@@ -272,6 +354,7 @@ def test_send_daily_run_summary_with_telemetry_dedup_skip_is_not_failure(monkeyp
     assert telemetry["counts"]["failed"] == 0
     assert telemetry["counts"]["skipped"] == 1
     assert telemetry["context"]["ticker_count"] == 2
+    assert telemetry["context"]["summary_schema_version"] == 1
 
 
 def test_send_daily_run_summary_with_telemetry_success_counts(monkeypatch):
@@ -306,3 +389,4 @@ def test_send_daily_run_summary_with_telemetry_success_counts(monkeypatch):
     assert telemetry["counts"]["skipped"] == 0
     assert telemetry["telegram_message_id"] == 1234
     assert telemetry["context"]["ticker_count"] == 2
+    assert telemetry["context"]["summary_schema_version"] == 1

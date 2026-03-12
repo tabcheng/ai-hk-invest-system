@@ -10,6 +10,8 @@ from supabase import Client
 from src.config import STOCK_METADATA
 
 DAILY_SUMMARY_SCHEMA_VERSION_V1 = 1
+CURRENT_DAILY_SUMMARY_SCHEMA_VERSION = DAILY_SUMMARY_SCHEMA_VERSION_V1
+SUPPORTED_DAILY_SUMMARY_SCHEMA_VERSIONS = frozenset([DAILY_SUMMARY_SCHEMA_VERSION_V1])
 DAILY_SUMMARY_MESSAGE_TYPE = "DAILY_SUMMARY"
 DAILY_SUMMARY_SENT_STATUS = "SENT"
 DELIVERY_CHANNEL_TELEGRAM = "telegram"
@@ -140,12 +142,40 @@ def _render_daily_summary_message_v1(payload: dict) -> str:
     return "\n".join(lines)
 
 
+DAILY_SUMMARY_RENDERERS = {
+    DAILY_SUMMARY_SCHEMA_VERSION_V1: _render_daily_summary_message_v1,
+}
+
+
+def _validate_daily_summary_schema_guardrails() -> None:
+    """Ensure schema-version declarations and renderer dispatch remain in sync."""
+    if CURRENT_DAILY_SUMMARY_SCHEMA_VERSION not in SUPPORTED_DAILY_SUMMARY_SCHEMA_VERSIONS:
+        raise ValueError(
+            "Current daily summary schema_version is not supported: "
+            f"{CURRENT_DAILY_SUMMARY_SCHEMA_VERSION}"
+        )
+
+    configured_renderer_versions = frozenset(DAILY_SUMMARY_RENDERERS.keys())
+    if configured_renderer_versions != SUPPORTED_DAILY_SUMMARY_SCHEMA_VERSIONS:
+        raise ValueError(
+            "Daily summary schema configuration mismatch: "
+            f"supported={sorted(SUPPORTED_DAILY_SUMMARY_SCHEMA_VERSIONS)}, "
+            f"renderers={sorted(configured_renderer_versions)}"
+        )
+
+
 def render_daily_summary_message(payload: dict) -> str:
     """Render Telegram message from versioned summary payload."""
-    schema_version = int(payload.get("schema_version", DAILY_SUMMARY_SCHEMA_VERSION_V1))
-    if schema_version == DAILY_SUMMARY_SCHEMA_VERSION_V1:
-        return _render_daily_summary_message_v1(payload)
-    raise ValueError(f"Unsupported daily summary schema_version: {schema_version}")
+    _validate_daily_summary_schema_guardrails()
+    schema_version = int(payload.get("schema_version", CURRENT_DAILY_SUMMARY_SCHEMA_VERSION))
+    if schema_version not in SUPPORTED_DAILY_SUMMARY_SCHEMA_VERSIONS:
+        supported_versions = ",".join(str(version) for version in sorted(SUPPORTED_DAILY_SUMMARY_SCHEMA_VERSIONS))
+        raise ValueError(
+            "Unsupported daily summary schema_version: "
+            f"{schema_version}. Supported versions: [{supported_versions}]"
+        )
+
+    return DAILY_SUMMARY_RENDERERS[schema_version](payload)
 
 
 def build_daily_summary_message(
@@ -325,7 +355,7 @@ def send_daily_run_summary_with_telemetry(
         },
         "context": {
             "ticker_count": len(tickers),
-            "summary_schema_version": DAILY_SUMMARY_SCHEMA_VERSION_V1,
+            "summary_schema_version": CURRENT_DAILY_SUMMARY_SCHEMA_VERSION,
         },
     }
 

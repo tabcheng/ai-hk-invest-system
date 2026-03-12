@@ -77,6 +77,8 @@ The platform is designed as an **AI investment firm operating model** with stric
 - Current MVP: Telegram end-of-run summary (best-effort, non-blocking) with run-level, message-attempt telemetry persisted for observability only (including explicit dedup-skip accounting).
 - Future role: become a generalized **delivery bus** for structured daily intelligence packets (Telegram/email/dashboard/webhook) without altering strategy semantics.
 - Design goal: delivery failures should never mutate signal or paper-trading truth.
+- Daily summary payload contract is versioned with explicit evolution guardrails: a current version constant, an allowlisted supported-version set, centralized schema-dispatch renderer mapping, plus consistency validation to prevent supported/renderer drift.
+- Delivery telemetry carries `context.summary_schema_version` so every attempt records which payload schema generated the notification.
 
 ### 8) Human decision layer
 - Human reviews summarized outputs, trace artifacts, and risk posture.

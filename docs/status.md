@@ -26,6 +26,7 @@
 - Follow-up review fixes applied to notification hardening: redacted dedup log target, idempotent dedup marker upsert for rerun races, and unknown-ticker label fallback.
 - Milestone 4 traceability hardening completed: run-linked persistence added for major outputs plus category-separated run failure observability.
 - Post-review fix applied: notification delivery failures now enrich run observability fields without changing terminal run status semantics for core processing outcomes.
+- Post-review fix applied: same-day rerun signal dedup now re-links existing `(date, stock)` signal rows to the current `run_id`, and intentionally disabled Telegram delivery no longer contributes notification failure counts.
 
 ## Current documentation posture
 - Core planning, status, architecture, and maintenance docs now form a traceable documentation stack for future Codex execution.

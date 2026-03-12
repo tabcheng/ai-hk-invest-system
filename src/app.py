@@ -1,3 +1,4 @@
+import os
 from datetime import datetime, timezone
 
 from src.config import TICKERS, get_supabase_client
@@ -41,6 +42,9 @@ def main() -> None:
     ticker_errors = []
     post_process_errors = []
     notification_errors = []
+    notification_delivery_enabled = bool(
+        os.getenv("TELEGRAM_BOT_TOKEN") and os.getenv("TELEGRAM_CHAT_ID")
+    )
     processed_tickers = 0
     successful_tickers = 0
 
@@ -142,7 +146,10 @@ def main() -> None:
                 notification_errors.append(f"daily_summary_exception: {e}")
                 print(f"Failed to send Telegram summary notification: {e}")
 
-            if not notification_sent:
+            # Missing Telegram configuration means delivery is intentionally disabled.
+            # Keep runs best-effort/non-blocking and avoid treating disabled delivery
+            # as a notification failure signal.
+            if not notification_sent and notification_delivery_enabled:
                 notification_errors.append("daily_summary_not_sent")
 
             if run_id is not None and notification_errors:

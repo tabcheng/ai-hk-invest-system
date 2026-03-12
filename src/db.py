@@ -35,6 +35,14 @@ def save_signal(client: Client, signal_data: dict, run_id: int | None = None) ->
     if result.data:
         print(f"Inserted into Supabase: {payload}")
     else:
+        # Same-day reruns may hit the unique (date, stock) constraint. We keep the
+        # original dedup behavior but still relink that existing row to the current
+        # run so downstream artifacts never reference a newer run while signals point
+        # at an older one.
+        if run_id is not None:
+            client.table("signals").update({"run_id": run_id}).eq("date", payload["date"]).eq(
+                "stock", payload["stock"]
+            ).execute()
         print(
             "Duplicate protection triggered: "
             f"signal already exists for {signal_data['stock']} on {payload['date']}."

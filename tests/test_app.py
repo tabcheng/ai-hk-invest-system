@@ -107,6 +107,8 @@ def test_paper_trading_failure_does_not_change_ticker_failure_counter(monkeypatc
 def test_notification_failure_updates_run_observability(monkeypatch):
     updates = []
 
+    monkeypatch.setenv("TELEGRAM_BOT_TOKEN", "token")
+    monkeypatch.setenv("TELEGRAM_CHAT_ID", "chat")
     monkeypatch.setattr(app, "TICKERS", ["A.HK"])
     monkeypatch.setattr(app, "get_supabase_client", lambda: object())
     monkeypatch.setattr(app, "create_run", lambda client: 126)
@@ -127,6 +129,31 @@ def test_notification_failure_updates_run_observability(monkeypatch):
     assert updates[1]["status"] == "SUCCESS"
     assert updates[1]["notification_error_count"] == 1
     assert "daily_summary_not_sent" in updates[1]["notification_error_summary"]
+
+
+def test_notification_disabled_does_not_count_as_run_failure(monkeypatch):
+    updates = []
+
+    monkeypatch.delenv("TELEGRAM_BOT_TOKEN", raising=False)
+    monkeypatch.delenv("TELEGRAM_CHAT_ID", raising=False)
+    monkeypatch.setattr(app, "TICKERS", ["A.HK"])
+    monkeypatch.setattr(app, "get_supabase_client", lambda: object())
+    monkeypatch.setattr(app, "create_run", lambda client: 127)
+    monkeypatch.setattr(
+        app,
+        "get_signal_for_ticker",
+        lambda ticker: {"stock": ticker, "signal": "HOLD", "price": 20.0, "reason": "ok"},
+    )
+    monkeypatch.setattr(app, "save_signal", lambda client, signal_data, run_id=None: None)
+    monkeypatch.setattr(app, "run_paper_trading_for_today", lambda client, run_id: {"trades": []})
+    monkeypatch.setattr(app, "send_daily_run_summary", lambda **kwargs: False)
+    monkeypatch.setattr(app, "update_run", lambda client, run_id, payload: updates.append(payload))
+
+    app.main()
+
+    assert len(updates) == 1
+    assert updates[0]["status"] == "SUCCESS"
+    assert updates[0]["notification_error_count"] == 0
 
 
 def test_startup_failure_attempts_failure_notification(monkeypatch):

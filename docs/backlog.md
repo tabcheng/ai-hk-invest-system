@@ -28,22 +28,20 @@ Prioritization scale:
    - Added migration-level FK-style links/indexes where practical.
    - Run records now persist separated ticker/post-processing/notification failure summaries.
 
+
+6. **Structured run observability JSON + delivery telemetry** ✅ completed
+   - Added `runs.error_summary_json` and `runs.delivery_summary_json` schema support.
+   - Added structured ticker/stage error records and Telegram delivery telemetry persistence in run finalization.
+   - Preserved legacy text summary fields and best-effort/non-blocking observability guardrails.
+
 ## Active backlog (pending)
 
 ## P0 — Next implementation-critical
 
-### 1) Structured `error_summary`
-- Replace free-form truncated text with compact structured schema (category, sample message, affected ticker count).
-- Keep storage bounded while improving debugging analytics.
-
-### 2) Add basic pytest project configuration
+### 1) Add basic pytest project configuration
 - Add minimal `pytest.ini` (or equivalent) for stable test discovery and consistent local/CI behavior.
 
-### 3) Telegram follow-up: delivery observability expansion
-- Extend notification logging from sent-dedup marker to full attempt telemetry (attempted/sent/failed + reason + run_id linkage).
-- Keep notification behavior best-effort (non-blocking) while improving post-run diagnosability.
-
-### 4) Telegram follow-up: summary schema versioning
+### 2) Telegram follow-up: summary schema versioning
 - Introduce explicit message schema version for summary payload formatting.
 - Prevent drift when adding/removing summary fields over time.
 
@@ -76,9 +74,9 @@ Prioritization scale:
 
 ## Technical debt register
 - Runtime flow still has extractable helper opportunities.
-- `error_summary` remains coarse and should move to explicit structured schema/versioning.
+- Structured JSON observability is now present, but schema/version governance should be expanded over time.
 - Test harness exists but is minimal without project-level pytest config + CI enforcement.
-- Notification layer now has minimal sent-dedup persistence but lacks full delivery-attempt telemetry and schema version governance.
+- Notification layer now has sent-dedup persistence and run-level delivery telemetry, but summary schema-version governance still needs formalization.
 
 ## Maintenance rule
 After each completed task, update both this backlog and `docs/status.md` to keep next approved work explicit.

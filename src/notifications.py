@@ -11,6 +11,7 @@ from src.config import STOCK_METADATA
 
 DAILY_SUMMARY_MESSAGE_TYPE = "DAILY_SUMMARY"
 DAILY_SUMMARY_SENT_STATUS = "SENT"
+DELIVERY_CHANNEL_TELEGRAM = "telegram"
 
 
 def _format_ticker_label(ticker: str) -> str:
@@ -132,11 +133,21 @@ def _record_daily_summary_sent(
 
 
 def send_telegram_message(text: str) -> bool:
+    result = send_telegram_message_with_result(text)
+    return bool(result["delivered"])
+
+
+def send_telegram_message_with_result(text: str) -> dict:
     token = os.getenv("TELEGRAM_BOT_TOKEN")
     chat_id = os.getenv("TELEGRAM_CHAT_ID")
     if not token or not chat_id:
         print("Telegram notification skipped: TELEGRAM_BOT_TOKEN or TELEGRAM_CHAT_ID is missing.")
-        return False
+        return {
+            "delivered": False,
+            "channel": DELIVERY_CHANNEL_TELEGRAM,
+            "telegram_message_id": None,
+            "failure_reason": "missing_telegram_config",
+        }
 
     try:
         response = requests.post(
@@ -146,15 +157,37 @@ def send_telegram_message(text: str) -> bool:
         )
         if response.ok:
             print("Telegram notification sent.")
-            return True
+            telegram_message_id = None
+            try:
+                payload = response.json()
+                telegram_message_id = payload.get("result", {}).get("message_id")
+            except Exception:
+                # Response parsing is observability-only; delivery already succeeded.
+                telegram_message_id = None
+            return {
+                "delivered": True,
+                "channel": DELIVERY_CHANNEL_TELEGRAM,
+                "telegram_message_id": telegram_message_id,
+                "failure_reason": None,
+            }
         print(
             "Telegram notification failed: "
             f"status={response.status_code}, body={response.text[:300]}"
         )
+        return {
+            "delivered": False,
+            "channel": DELIVERY_CHANNEL_TELEGRAM,
+            "telegram_message_id": None,
+            "failure_reason": f"http_{response.status_code}",
+        }
     except Exception as exc:
         print(f"Telegram notification failed with exception: {exc}")
-
-    return False
+        return {
+            "delivered": False,
+            "channel": DELIVERY_CHANNEL_TELEGRAM,
+            "telegram_message_id": None,
+            "failure_reason": str(exc)[:280],
+        }
 
 
 def send_daily_run_summary(
@@ -167,16 +200,70 @@ def send_daily_run_summary(
     warning_note: str | None = None,
     run_id: int | None = None,
 ) -> bool:
+    telemetry = send_daily_run_summary_with_telemetry(
+        client=client,
+        run_date=run_date,
+        run_status=run_status,
+        tickers=tickers,
+        signal_outcomes=signal_outcomes,
+        paper_trade_count_today=paper_trade_count_today,
+        warning_note=warning_note,
+        run_id=run_id,
+    )
+    return bool(telemetry["success"])
+
+
+def send_daily_run_summary_with_telemetry(
+    client: Client | None,
+    run_date: date,
+    run_status: str,
+    tickers: list[str],
+    signal_outcomes: dict[str, str],
+    paper_trade_count_today: int,
+    warning_note: str | None = None,
+    run_id: int | None = None,
+) -> dict:
     total_equity = None
     equity_source = "none"
     target = os.getenv("TELEGRAM_CHAT_ID", "")
+
+    # Daily summary delivery is a single message-level attempt per run.
+    # Telemetry must reflect attempt-level truth, not ticker-level fan-out.
+    base_telemetry = {
+        "schema_version": 1,
+        "attempted": False,
+        "success": False,
+        "channel": DELIVERY_CHANNEL_TELEGRAM,
+        "message_type": DAILY_SUMMARY_MESSAGE_TYPE,
+        "telegram_message_id": None,
+        "failure_reason": None,
+        "skip_reason": None,
+        "counts": {
+            "attempts": 0,
+            "delivered": 0,
+            "failed": 0,
+            "skipped": 0,
+        },
+        "context": {
+            "ticker_count": len(tickers),
+        },
+    }
 
     # Dedup/read errors should never block summary delivery; we degrade gracefully to send attempt.
     if client is not None and target:
         try:
             if _has_sent_daily_summary(client, run_date, target):
                 print(f"Telegram notification skipped by dedup for date={run_date} target=<redacted>.")
-                return True
+                skipped = dict(base_telemetry)
+                skipped["success"] = True
+                skipped["skip_reason"] = "dedup_already_sent"
+                skipped["counts"] = {
+                    "attempts": 0,
+                    "delivered": 0,
+                    "failed": 0,
+                    "skipped": 1,
+                }
+                return skipped
         except Exception as exc:
             print(f"Could not check notification dedup state: {exc}")
 
@@ -197,10 +284,23 @@ def send_daily_run_summary(
         warning_note=warning_note,
     )
 
-    sent = send_telegram_message(message)
+    send_result = send_telegram_message_with_result(message)
+    sent = bool(send_result["delivered"])
     if sent and client is not None and target:
         try:
             _record_daily_summary_sent(client, run_date, target, run_id)
         except Exception as exc:
             print(f"Could not persist notification dedup marker: {exc}")
-    return sent
+
+    telemetry = dict(base_telemetry)
+    telemetry["attempted"] = True
+    telemetry["success"] = sent
+    telemetry["telegram_message_id"] = send_result.get("telegram_message_id")
+    telemetry["failure_reason"] = send_result.get("failure_reason")
+    telemetry["counts"] = {
+        "attempts": 1,
+        "delivered": 1 if sent else 0,
+        "failed": 0 if sent else 1,
+        "skipped": 0,
+    }
+    return telemetry

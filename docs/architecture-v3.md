@@ -52,7 +52,7 @@ The platform is designed as an **AI investment firm operating model** with stric
 
 ### 2) Run observability layer
 - Per-run lifecycle state (`RUNNING`, `SUCCESS`, `FAILED`) persisted in `runs`.
-- Per-run counts and bounded failure summary support post-run diagnosis.
+- Per-run counts, bounded text summaries, and structured JSON summaries (`error_summary_json`, `delivery_summary_json`) support post-run diagnosis without changing core processing semantics.
 - Observability is best-effort; failures in run tracking should not corrupt core signal-generation execution.
 
 ### 3) Data ingestion layer
@@ -74,7 +74,7 @@ The platform is designed as an **AI investment firm operating model** with stric
 - Rerun-safe same-day replacement behavior keeps outputs deterministic.
 
 ### 7) Delivery/notification layer (current + future role)
-- Current MVP: Telegram end-of-run summary (best-effort, non-blocking).
+- Current MVP: Telegram end-of-run summary (best-effort, non-blocking) with run-level, message-attempt telemetry persisted for observability only (including explicit dedup-skip accounting).
 - Future role: become a generalized **delivery bus** for structured daily intelligence packets (Telegram/email/dashboard/webhook) without altering strategy semantics.
 - Design goal: delivery failures should never mutate signal or paper-trading truth.
 

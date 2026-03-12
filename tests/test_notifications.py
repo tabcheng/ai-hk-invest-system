@@ -1,6 +1,11 @@
 from datetime import date
 
-from src.notifications import build_daily_summary_message, send_daily_run_summary, send_telegram_message
+from src.notifications import (
+    build_daily_summary_message,
+    send_daily_run_summary,
+    send_daily_run_summary_with_telemetry,
+    send_telegram_message,
+)
 
 
 class _FakeQuery:
@@ -172,9 +177,14 @@ def test_send_daily_run_summary_prefers_run_date_equity_and_records_dedup(monkey
 
     def fake_send(text):
         captured["message"] = text
-        return True
+        return {
+            "delivered": True,
+            "channel": "telegram",
+            "telegram_message_id": 999,
+            "failure_reason": None,
+        }
 
-    monkeypatch.setattr("src.notifications.send_telegram_message", fake_send)
+    monkeypatch.setattr("src.notifications.send_telegram_message_with_result", fake_send)
 
     fake_client = _FakeClient(equity_by_date={"2026-03-11": 123456.78}, latest_equity=99999.0)
 
@@ -196,3 +206,103 @@ def test_send_daily_run_summary_prefers_run_date_equity_and_records_dedup(monkey
     assert payload["notification_date"] == "2026-03-11"
     assert payload["target"] == "chat-2"
     assert payload["run_id"] == 302
+
+
+def test_send_daily_run_summary_with_telemetry_models_single_attempt(monkeypatch):
+    monkeypatch.setenv("TELEGRAM_CHAT_ID", "chat-telemetry")
+    monkeypatch.setenv("TELEGRAM_BOT_TOKEN", "token")
+
+    def fake_send(_text):
+        return {
+            "delivered": False,
+            "channel": "telegram",
+            "telegram_message_id": None,
+            "failure_reason": "http_500",
+        }
+
+    monkeypatch.setattr("src.notifications.send_telegram_message_with_result", fake_send)
+
+    telemetry = send_daily_run_summary_with_telemetry(
+        client=None,
+        run_id=None,
+        run_date=date(2026, 3, 11),
+        run_status="FAILED",
+        tickers=["0700.HK"],
+        signal_outcomes={"0700.HK": "ERROR"},
+        paper_trade_count_today=0,
+    )
+
+    assert telemetry["schema_version"] == 1
+    assert telemetry["attempted"] is True
+    assert telemetry["success"] is False
+    assert telemetry["channel"] == "telegram"
+    assert telemetry["message_type"] == "DAILY_SUMMARY"
+    assert telemetry["telegram_message_id"] is None
+    assert telemetry["failure_reason"] == "http_500"
+    assert telemetry["skip_reason"] is None
+    assert "messages" not in telemetry
+    assert telemetry["counts"]["attempts"] == 1
+    assert telemetry["counts"]["delivered"] == 0
+    assert telemetry["counts"]["failed"] == 1
+    assert telemetry["counts"]["skipped"] == 0
+    assert telemetry["context"]["ticker_count"] == 1
+
+
+def test_send_daily_run_summary_with_telemetry_dedup_skip_is_not_failure(monkeypatch):
+    monkeypatch.setenv("TELEGRAM_CHAT_ID", "chat-dedup")
+
+    fake_client = _FakeClient(sent_logs={("2026-03-11", "chat-dedup"): True})
+
+    telemetry = send_daily_run_summary_with_telemetry(
+        client=fake_client,
+        run_id=401,
+        run_date=date(2026, 3, 11),
+        run_status="SUCCESS",
+        tickers=["0700.HK", "0388.HK"],
+        signal_outcomes={"0700.HK": "BUY", "0388.HK": "HOLD"},
+        paper_trade_count_today=1,
+    )
+
+    assert telemetry["attempted"] is False
+    assert telemetry["success"] is True
+    assert telemetry["skip_reason"] == "dedup_already_sent"
+    assert telemetry["failure_reason"] is None
+    assert telemetry["counts"]["attempts"] == 0
+    assert telemetry["counts"]["delivered"] == 0
+    assert telemetry["counts"]["failed"] == 0
+    assert telemetry["counts"]["skipped"] == 1
+    assert telemetry["context"]["ticker_count"] == 2
+
+
+def test_send_daily_run_summary_with_telemetry_success_counts(monkeypatch):
+    monkeypatch.setenv("TELEGRAM_CHAT_ID", "chat-success")
+    monkeypatch.setenv("TELEGRAM_BOT_TOKEN", "token")
+
+    def fake_send(_text):
+        return {
+            "delivered": True,
+            "channel": "telegram",
+            "telegram_message_id": 1234,
+            "failure_reason": None,
+        }
+
+    monkeypatch.setattr("src.notifications.send_telegram_message_with_result", fake_send)
+
+    telemetry = send_daily_run_summary_with_telemetry(
+        client=None,
+        run_id=None,
+        run_date=date(2026, 3, 11),
+        run_status="SUCCESS",
+        tickers=["0700.HK", "0388.HK"],
+        signal_outcomes={"0700.HK": "BUY", "0388.HK": "HOLD"},
+        paper_trade_count_today=1,
+    )
+
+    assert telemetry["attempted"] is True
+    assert telemetry["success"] is True
+    assert telemetry["counts"]["attempts"] == 1
+    assert telemetry["counts"]["delivered"] == 1
+    assert telemetry["counts"]["failed"] == 0
+    assert telemetry["counts"]["skipped"] == 0
+    assert telemetry["telegram_message_id"] == 1234
+    assert telemetry["context"]["ticker_count"] == 2

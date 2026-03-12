@@ -25,5 +25,5 @@ Provide a consistent execution workflow for long-horizon Codex contributions.
 ## Step 15 implementation note (structured observability JSON)
 - Add nullable `runs.error_summary_json` and `runs.delivery_summary_json` via migration.
 - Keep legacy text `error_summary` and category text summaries unchanged for backward compatibility.
-- Build structured ticker/stage error records and Telegram delivery telemetry in Python, then persist on run finalization in best-effort updates.
+- Build structured ticker/stage error records and message-level Telegram delivery telemetry (single daily-summary attempt per run, with explicit dedup-skip semantics) in Python, then persist on run finalization in best-effort updates.
 - Guardrail: telemetry writes are observability-only and must never block signal generation, dedup persistence, paper-trading, or Telegram delivery attempts.

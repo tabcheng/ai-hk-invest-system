@@ -74,7 +74,7 @@ The platform is designed as an **AI investment firm operating model** with stric
 - Rerun-safe same-day replacement behavior keeps outputs deterministic.
 
 ### 7) Delivery/notification layer (current + future role)
-- Current MVP: Telegram end-of-run summary (best-effort, non-blocking) with run-level delivery telemetry persisted for observability only.
+- Current MVP: Telegram end-of-run summary (best-effort, non-blocking) with run-level, message-attempt telemetry persisted for observability only (including explicit dedup-skip accounting).
 - Future role: become a generalized **delivery bus** for structured daily intelligence packets (Telegram/email/dashboard/webhook) without altering strategy semantics.
 - Design goal: delivery failures should never mutate signal or paper-trading truth.
 

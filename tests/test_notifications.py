@@ -208,7 +208,7 @@ def test_send_daily_run_summary_prefers_run_date_equity_and_records_dedup(monkey
     assert payload["run_id"] == 302
 
 
-def test_send_daily_run_summary_with_telemetry_includes_message_records(monkeypatch):
+def test_send_daily_run_summary_with_telemetry_models_single_attempt(monkeypatch):
     monkeypatch.setenv("TELEGRAM_CHAT_ID", "chat-telemetry")
     monkeypatch.setenv("TELEGRAM_BOT_TOKEN", "token")
 
@@ -232,12 +232,42 @@ def test_send_daily_run_summary_with_telemetry_includes_message_records(monkeypa
         paper_trade_count_today=0,
     )
 
+    assert telemetry["schema_version"] == 1
     assert telemetry["attempted"] is True
     assert telemetry["success"] is False
     assert telemetry["channel"] == "telegram"
-    assert telemetry["counts"]["total"] == 1
+    assert telemetry["message_type"] == "DAILY_SUMMARY"
+    assert telemetry["telegram_message_id"] is None
+    assert telemetry["failure_reason"] == "http_500"
+    assert telemetry["skip_reason"] is None
+    assert telemetry["counts"]["attempts"] == 1
+    assert telemetry["counts"]["delivered"] == 0
     assert telemetry["counts"]["failed"] == 1
-    assert telemetry["messages"][0]["ticker"] == "0700.HK"
-    assert telemetry["messages"][0]["stock_name"] == "Tencent Holdings"
-    assert telemetry["messages"][0]["delivered"] is False
-    assert telemetry["messages"][0]["failure_reason"] == "http_500"
+    assert telemetry["counts"]["skipped"] == 0
+    assert telemetry["context"]["ticker_count"] == 1
+
+
+def test_send_daily_run_summary_with_telemetry_dedup_skip_is_not_failure(monkeypatch):
+    monkeypatch.setenv("TELEGRAM_CHAT_ID", "chat-dedup")
+
+    fake_client = _FakeClient(sent_logs={("2026-03-11", "chat-dedup"): True})
+
+    telemetry = send_daily_run_summary_with_telemetry(
+        client=fake_client,
+        run_id=401,
+        run_date=date(2026, 3, 11),
+        run_status="SUCCESS",
+        tickers=["0700.HK", "0388.HK"],
+        signal_outcomes={"0700.HK": "BUY", "0388.HK": "HOLD"},
+        paper_trade_count_today=1,
+    )
+
+    assert telemetry["attempted"] is False
+    assert telemetry["success"] is True
+    assert telemetry["skip_reason"] == "dedup_already_sent"
+    assert telemetry["failure_reason"] is None
+    assert telemetry["counts"]["attempts"] == 0
+    assert telemetry["counts"]["delivered"] == 0
+    assert telemetry["counts"]["failed"] == 0
+    assert telemetry["counts"]["skipped"] == 1
+    assert telemetry["context"]["ticker_count"] == 2

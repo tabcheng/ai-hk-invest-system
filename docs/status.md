@@ -10,6 +10,7 @@
 - End-to-end run traceability is hardened: `signals`, `paper_trades`, `paper_daily_snapshots`, `paper_events`, and `notification_logs` now persist `run_id` linkage for single-run reconstruction.
 - Run observability now separates failure categories (`ticker`, `post-processing`, `notification`) with per-category counts and summaries on `runs`.
 - Run observability now also persists structured JSON payloads for categorized errors and Telegram delivery telemetry (`error_summary_json`, `delivery_summary_json`) while preserving legacy text summaries for compatibility.
+- Delivery telemetry now models one daily-summary message attempt per run (not per ticker), and dedup skips are tracked as `skipped` rather than failed sends.
 - Paper-trading v1 remains deterministic and gated to full ticker-success runs.
 - Telegram daily summary remains best-effort and non-blocking.
 - Telegram summary formatting is deterministic HTML and includes stock name + stock id labels.

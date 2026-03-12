@@ -226,33 +226,44 @@ def send_daily_run_summary_with_telemetry(
     total_equity = None
     equity_source = "none"
     target = os.getenv("TELEGRAM_CHAT_ID", "")
-    base_messages = [
-        {
-            "ticker": ticker,
-            "stock_name": STOCK_METADATA.get(ticker),
-            "delivered": False,
-            "telegram_message_id": None,
-            "failure_reason": None,
-        }
-        for ticker in tickers
-    ]
+
+    # Daily summary delivery is a single message-level attempt per run.
+    # Telemetry must reflect attempt-level truth, not ticker-level fan-out.
+    base_telemetry = {
+        "schema_version": 1,
+        "attempted": False,
+        "success": False,
+        "channel": DELIVERY_CHANNEL_TELEGRAM,
+        "message_type": DAILY_SUMMARY_MESSAGE_TYPE,
+        "telegram_message_id": None,
+        "failure_reason": None,
+        "skip_reason": None,
+        "counts": {
+            "attempts": 0,
+            "delivered": 0,
+            "failed": 0,
+            "skipped": 0,
+        },
+        "context": {
+            "ticker_count": len(tickers),
+        },
+    }
 
     # Dedup/read errors should never block summary delivery; we degrade gracefully to send attempt.
     if client is not None and target:
         try:
             if _has_sent_daily_summary(client, run_date, target):
                 print(f"Telegram notification skipped by dedup for date={run_date} target=<redacted>.")
-                return {
-                    "attempted": False,
-                    "success": True,
-                    "channel": DELIVERY_CHANNEL_TELEGRAM,
-                    "messages": base_messages,
-                    "counts": {
-                        "total": len(base_messages),
-                        "delivered": 0,
-                        "failed": len(base_messages),
-                    },
+                skipped = dict(base_telemetry)
+                skipped["success"] = True
+                skipped["skip_reason"] = "dedup_already_sent"
+                skipped["counts"] = {
+                    "attempts": 0,
+                    "delivered": 0,
+                    "failed": 0,
+                    "skipped": 1,
                 }
+                return skipped
         except Exception as exc:
             print(f"Could not check notification dedup state: {exc}")
 
@@ -281,25 +292,15 @@ def send_daily_run_summary_with_telemetry(
         except Exception as exc:
             print(f"Could not persist notification dedup marker: {exc}")
 
-    messages = [
-        {
-            "ticker": ticker,
-            "stock_name": STOCK_METADATA.get(ticker),
-            "delivered": sent,
-            "telegram_message_id": send_result.get("telegram_message_id"),
-            "failure_reason": send_result.get("failure_reason"),
-        }
-        for ticker in tickers
-    ]
-    delivered_count = len(messages) if sent else 0
-    return {
-        "attempted": True,
-        "success": sent,
-        "channel": DELIVERY_CHANNEL_TELEGRAM,
-        "messages": messages,
-        "counts": {
-            "total": len(messages),
-            "delivered": delivered_count,
-            "failed": len(messages) - delivered_count,
-        },
+    telemetry = dict(base_telemetry)
+    telemetry["attempted"] = True
+    telemetry["success"] = sent
+    telemetry["telegram_message_id"] = send_result.get("telegram_message_id")
+    telemetry["failure_reason"] = send_result.get("failure_reason")
+    telemetry["counts"] = {
+        "attempts": 1,
+        "delivered": 1 if sent else 0,
+        "failed": 0 if sent else 1,
+        "skipped": 0,
     }
+    return telemetry

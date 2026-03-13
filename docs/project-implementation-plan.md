@@ -54,6 +54,14 @@ Documented platform-level baseline controls and manual verification requirements
 - Railway worker healthcheck posture (no HTTP `/health` endpoint required for current script runtime), plus env-var hygiene and logging expectations.
 - Supabase backup/PITR, RLS exposure review, free-plan pause risk, and production safety expectations for run/telemetry records.
 
+
+### Step 19B — Supabase access model clarification + safe RLS hardening plan ✅
+Documented a system table inventory and current exposure posture for `runs`, `signals`, `paper_trades`, `paper_daily_snapshots`, `paper_events`, and `notification_logs`.
+- Clarified current runtime model as backend-only data access (no anon/client table access required by repository runtime).
+- Captured current-risk posture: core runtime tables remain in `public` and manual review indicates RLS is not enabled.
+- Defined a low-risk staged plan: start with a single-table migration (`public.runs`) for RLS enablement + explicit backend policy + verification/rollback notes, then expand table-by-table.
+- Deferred broad/private-schema migration to follow-up planning to avoid production-breaking one-shot changes.
+
 ## Current state
 - Production behavior is stable with modular runtime architecture and deterministic paper-trading pipeline.
 - Signal generation remains unchanged in strategic semantics.
@@ -66,6 +74,7 @@ These are expected next milestones for active implementation sequencing:
 2. **Failure-intelligence milestone:** introduce structured `error_summary` schema and bounded categorization.
 3. **Quality-gate milestone:** add project-level pytest config and CI lint/test enforcement.
 4. **Operational governance milestone:** verify platform hardening settings and keep manual controls auditable in docs/backlog.
+5. **Supabase access-control hardening milestone:** execute staged RLS rollout and validation from the Step 19B plan.
 
 ## Backlog vs active roadmap policy
 

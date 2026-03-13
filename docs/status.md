@@ -1,7 +1,7 @@
 # Project Status
 
 ## Last reviewed date
-2026-03-12
+2026-03-13
 
 ## Current production behavior
 - Runtime behavior remains the existing MVP script in `main.py` (Railway entry point), now as a thin entry into modularized runtime code under `src/`.
@@ -41,6 +41,7 @@
 - Post-review Step 17 fix: strengthened notification test guardrails with unsupported-schema renderer coverage and low-risk test cleanup (spacing/readability) without runtime behavior changes.
 - Post-review Step 16 fix: CI now pins Python 3.10 (matching current repo test runtime) and enables pip caching for faster, more stable dependency installs without changing test behavior.
 - Step 19 completed: added an operational baseline hardening pass in docs for GitHub, Railway, and Supabase (branch protection/status checks/security scanning, worker healthcheck posture, env/log hygiene, backup/PITR + RLS/free-tier risk expectations) with manual-action tasks tracked in backlog.
+- Step 19B completed: clarified Supabase backend-only access model, documented core table inventory + current RLS-off posture, and defined a staged low-risk RLS hardening sequence starting with single-table rollout (`public.runs`) before wider adoption.
 
 ## Current documentation posture
 - Core planning, status, architecture, and maintenance docs now form a traceable documentation stack for future Codex execution.
@@ -48,6 +49,7 @@
 - Runtime + docs now align on notification guardrails: best-effort delivery, deterministic formatting, and non-blocking failure posture.
 - Traceability docs now align with runtime persistence: major daily artifacts can be audited back to a single run record.
 - Platform-governance baseline is now documented for GitHub/Railway/Supabase with explicit manual verification ownership separated from code changes.
+- Supabase access-control posture is now explicit in architecture docs: core runtime tables are backend-only by design, currently in `public`, with RLS hardening planned as staged single-table migrations.
 
 ## Next approved task
-- Execute the manual platform hardening checklist from `docs/backlog.md` (GitHub protection/security settings, Railway worker healthcheck config, Supabase backup/PITR + RLS review), then implement the notification schema-governance follow-up for v2+ policy and telemetry schema-version single-source derivation.
+- Execute Step 19B follow-up migration sequence: enable and validate RLS on `public.runs` first (explicit backend policy + rollback/verification), then expand table-by-table to `signals`, `notification_logs`, and `paper_*` tables; continue manual platform checklist closure and notification schema-governance follow-up.

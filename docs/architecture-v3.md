@@ -136,3 +136,39 @@ The platform is designed as an **AI investment firm operating model** with stric
   - Treat `runs`, `signals`, `paper_*`, and `notification_logs` as audit records.
   - Keep mutation paths controlled to runtime writes/migrations only.
   - Preserve retention/export expectations so telemetry is available for post-run review.
+
+## Step 19B Supabase access model clarification + safe RLS hardening plan
+
+### Current runtime access model
+- Runtime access is backend-worker initiated via server-side environment configuration (`SUPABASE_URL`, `SUPABASE_KEY`) in `src/config.py`.
+- No first-party browser/mobile client path exists in this repository that needs direct table access.
+- Current production expectation: Supabase runtime tables are backend-only operational records.
+
+### Core table inventory + current exposure posture
+
+| Table | Schema | In `public`? | Backend-only? | Anon/client access needed now? | RLS state (manual review) |
+|---|---|---:|---:|---:|---|
+| `runs` | `public` | Yes | Yes | No | Not enabled |
+| `signals` | `public` | Yes | Yes | No | Not enabled |
+| `paper_trades` | `public` | Yes | Yes | No | Not enabled |
+| `paper_daily_snapshots` | `public` | Yes | Yes | No | Not enabled |
+| `paper_events` | `public` | Yes | Yes | No | Not enabled |
+| `notification_logs` | `public` | Yes | Yes | No | Not enabled |
+
+### Hardening approach (safe + staged)
+1. Keep Step 19B limited to documentation and rollout planning (no broad production schema mutation in this step).
+2. Prefer table-by-table RLS enablement in `public` with minimal explicit backend-safe policies and verification after each table.
+3. Keep private-schema migration as a later option after the initial RLS rollout proves stable.
+4. Verify API exposure settings for `public`; if `public` remains exposed, complete RLS coverage for all runtime tables.
+
+### Exact next migration step (follow-up task)
+- Introduce a dedicated migration targeting only one low-risk table (`public.runs`) first:
+  - `alter table public.runs enable row level security;`
+  - add explicit backend policy for service-role usage;
+  - include post-deploy verification and rollback notes.
+- After verification, roll forward sequentially to `signals`, `notification_logs`, and `paper_*` tables.
+
+### Rollout guardrails
+- Preserve backend runtime behavior and run observability writes.
+- Avoid one-shot all-table RLS flips.
+- Keep each migration small, reviewable, and reversible.

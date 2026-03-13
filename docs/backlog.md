@@ -50,6 +50,13 @@ Prioritization scale:
 
 10. **Step 19: operational baseline hardening (GitHub/Railway/Supabase)** ✅ completed
    - Documented platform baseline controls and explicit manual verification checklist for GitHub branch protection/security settings, Railway worker healthcheck posture + env/logging hygiene, and Supabase backup/RLS/free-tier production risks.
+
+
+11. **Step 19B: Supabase access model clarification + safe RLS hardening plan** ✅ completed
+   - Documented current Supabase runtime access model as backend-only and inventory of core runtime tables (`runs`, `signals`, `paper_trades`, `paper_daily_snapshots`, `paper_events`, `notification_logs`).
+   - Captured current posture from manual review: core tables are in `public`, and RLS is not enabled.
+   - Added a low-risk staged hardening plan: start with single-table RLS rollout (`public.runs`) + explicit backend policy + verification/rollback notes, then expand table-by-table.
+   - Deferred broad schema/private-schema migration to follow-up planning to avoid one-shot production risk.
    - Preserved runtime behavior and trading logic (documentation + low-risk governance pass only).
 
 ## Active backlog (pending)
@@ -72,6 +79,8 @@ Prioritization scale:
 - Configure Railway service as a worker-style deployment (no HTTP `/health` requirement for current runtime entrypoint) and verify healthcheck settings do not expect an HTTP path.
 - Verify Railway production secrets hygiene (managed env vars only, rotation cadence documented).
 - Verify Supabase production backup/PITR posture and RLS exposure review for all runtime tables.
+- Manage free-plan pause risk explicitly (wake-up runbook, missed-run catch-up expectations, and alerting/visibility expectations).
+- Plan future private-schema migration for backend-only operational tables after staged RLS rollout validation (scope, sequencing, and rollback path).
 
 ### Code/documentation follow-ups (repo changes)
 - Define a formal notification schema evolution policy for future daily-summary schema v2+ (change classes, compatibility expectations, rollout and rollback rules).

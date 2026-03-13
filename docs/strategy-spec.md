@@ -51,6 +51,10 @@ Operational implication: defer directional decision until sufficient history is 
 - The human user remains the final decision-maker for any real-money trade.
 - Nothing in this repository authorizes autonomous live-trading execution.
 
+## Decision ledger v1 expectation
+- For paper-trading governance, each AI signal should be recorded alongside an explicit human decision state (`PENDING`/approved/rejected/deferred) in a decision ledger record.
+- This ledger is for reviewability and process discipline; it is not an automatic execution mechanism.
+
 ## Current strategy limitations
 1. Single-factor model (only MA50/MA200 relationship).
 2. No position/risk management embedded in signal generation.

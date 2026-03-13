@@ -59,6 +59,12 @@ Prioritization scale:
    - Deferred broad schema/private-schema migration to follow-up planning to avoid one-shot production risk.
    - Preserved runtime behavior and trading logic (documentation + low-risk governance pass only).
 
+
+12. **Step 20: paper-trading decision ledger / decision record v1** ✅ completed
+   - Added `paper_trade_decisions` schema for run-linked AI signal and human decision records.
+   - Added minimal application helper + best-effort insert integration at signal persistence time.
+   - Added tests for schema presence, required-field validation, and happy-path insert behavior.
+
 ## Active backlog (pending)
 
 ## P1 — Near-term hardening and review reminders

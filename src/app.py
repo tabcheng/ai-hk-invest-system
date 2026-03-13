@@ -1,8 +1,9 @@
 import os
 from datetime import datetime, timezone
 
-from src.config import TICKERS, get_supabase_client
+from src.config import STOCK_METADATA, TICKERS, get_supabase_client
 from src.db import save_signal
+from src.decision_ledger import create_decision_record_from_signal, save_paper_trade_decision_record
 from src.notifications import send_daily_run_summary, send_daily_run_summary_with_telemetry
 from src.paper_trading import run_paper_trading_for_today
 from src.runs import create_run, update_run
@@ -148,6 +149,22 @@ def main() -> None:
                 signal_outcomes[ticker] = signal_data["signal"]
                 print(f"Generated signal for {ticker}: {signal_data}")
                 save_signal(client, signal_data, run_id=run_id)
+
+                # Decision-ledger entries separate AI signal output from later human
+                # approval/rejection so paper-trading reviews are auditable by run.
+                try:
+                    decision_record = create_decision_record_from_signal(
+                        run_id=run_id,
+                        stock_id=ticker,
+                        stock_name=STOCK_METADATA.get(ticker, ticker),
+                        signal_data=signal_data,
+                    )
+                    save_paper_trade_decision_record(client, decision_record)
+                except Exception as ledger_error:
+                    # Ledger persistence is observability/supporting data only and
+                    # must never block signal generation or change run outcomes.
+                    print(f"Decision ledger write skipped for {ticker}: {ledger_error}")
+
                 successful_tickers += 1
             except Exception as e:
                 signal_outcomes[ticker] = "ERROR"

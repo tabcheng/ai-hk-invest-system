@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from math import isfinite
 
 from supabase import Client
 
@@ -26,20 +27,23 @@ class DecisionRecord:
 
 def build_decision_record_payload(record: DecisionRecord) -> dict:
     """Build a validated decision-ledger payload for persistence."""
-    if not record.stock_id.strip():
+    if not isinstance(record.stock_id, str) or not record.stock_id.strip():
         raise ValueError("stock_id is required")
-    if not record.stock_name.strip():
+    if not isinstance(record.stock_name, str) or not record.stock_name.strip():
         raise ValueError("stock_name is required")
     if record.signal_action not in _ALLOWED_SIGNAL_ACTIONS:
         raise ValueError(f"signal_action must be one of {sorted(_ALLOWED_SIGNAL_ACTIONS)}")
     if record.human_decision not in _ALLOWED_HUMAN_DECISIONS:
         raise ValueError(f"human_decision must be one of {sorted(_ALLOWED_HUMAN_DECISIONS)}")
-    if not record.decision_note.strip():
+    if not isinstance(record.decision_note, str) or not record.decision_note.strip():
         raise ValueError("decision_note is required")
     if record.paper_trade_status not in _ALLOWED_PAPER_TRADE_STATUSES:
         raise ValueError(
             f"paper_trade_status must be one of {sorted(_ALLOWED_PAPER_TRADE_STATUSES)}"
         )
+    if record.signal_score is not None:
+        if not isinstance(record.signal_score, (float, int)) or not isfinite(float(record.signal_score)):
+            raise ValueError("signal_score must be a finite number when provided")
 
     return {
         "run_id": record.run_id,

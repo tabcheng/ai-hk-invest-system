@@ -55,6 +55,40 @@ def test_build_decision_record_payload_validates_required_fields():
         )
 
 
+def test_build_decision_record_payload_rejects_non_string_required_fields():
+    with pytest.raises(ValueError, match="stock_name is required"):
+        build_decision_record_payload(
+            DecisionRecord(
+                run_id=1,
+                stock_id="0700.HK",
+                stock_name=None,
+                signal_action="BUY",
+                signal_score=None,
+                rationale_summary=None,
+                human_decision="PENDING",
+                decision_note="Awaiting review",
+                paper_trade_status="PENDING",
+            )
+        )
+
+
+def test_build_decision_record_payload_rejects_non_finite_signal_score():
+    with pytest.raises(ValueError, match="signal_score must be a finite number"):
+        build_decision_record_payload(
+            DecisionRecord(
+                run_id=1,
+                stock_id="0700.HK",
+                stock_name="Tencent Holdings",
+                signal_action="BUY",
+                signal_score=float("inf"),
+                rationale_summary=None,
+                human_decision="PENDING",
+                decision_note="Awaiting review",
+                paper_trade_status="PENDING",
+            )
+        )
+
+
 def test_save_paper_trade_decision_record_happy_path():
     client = _FakeClient()
     record = DecisionRecord(

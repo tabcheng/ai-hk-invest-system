@@ -44,6 +44,7 @@
 - Step 19 completed: added an operational baseline hardening pass in docs for GitHub, Railway, and Supabase (branch protection/status checks/security scanning, worker healthcheck posture, env/log hygiene, backup/PITR + RLS/free-tier risk expectations) with manual-action tasks tracked in backlog.
 - Step 19B completed: clarified Supabase backend-only access model, documented core table inventory + current RLS-off posture, and defined a staged low-risk RLS hardening sequence starting with single-table rollout (`public.runs`) before wider adoption.
 - Step 20 completed: added paper-trading decision ledger v1 (`paper_trade_decisions`) with run-linked AI signal + human decision records, plus minimal validation-backed helper integration and focused tests.
+- Post-review Step 20 fix: extracted decision-ledger app integration into a dedicated best-effort helper, tightened payload validation guardrails for required text fields and numeric `signal_score`, and expanded app/ledger tests for metadata mapping and non-blocking ledger-write failures.
 
 ## Current documentation posture
 - Core planning, status, architecture, and maintenance docs now form a traceable documentation stack for future Codex execution.

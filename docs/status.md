@@ -40,12 +40,14 @@
 - Step 18 completed: codified schema evolution guardrails (current/supported version constants + centralized dispatch + fail-fast unsupported/misconfigured versions) and expanded tests/docs coverage without changing v1 send behavior.
 - Post-review Step 17 fix: strengthened notification test guardrails with unsupported-schema renderer coverage and low-risk test cleanup (spacing/readability) without runtime behavior changes.
 - Post-review Step 16 fix: CI now pins Python 3.10 (matching current repo test runtime) and enables pip caching for faster, more stable dependency installs without changing test behavior.
+- Step 19 completed: added an operational baseline hardening pass in docs for GitHub, Railway, and Supabase (branch protection/status checks/security scanning, worker healthcheck posture, env/log hygiene, backup/PITR + RLS/free-tier risk expectations) with manual-action tasks tracked in backlog.
 
 ## Current documentation posture
 - Core planning, status, architecture, and maintenance docs now form a traceable documentation stack for future Codex execution.
 - Backlog clearly separates completed work from pending items and tracks follow-up notification work as active backlog.
 - Runtime + docs now align on notification guardrails: best-effort delivery, deterministic formatting, and non-blocking failure posture.
 - Traceability docs now align with runtime persistence: major daily artifacts can be audited back to a single run record.
+- Platform-governance baseline is now documented for GitHub/Railway/Supabase with explicit manual verification ownership separated from code changes.
 
 ## Next approved task
-- Continue Milestone 4 hardening with operational governance follow-ups (notification schema v2+ policy, branch protection required checks verification, and remaining pytest/tooling normalization work if needed).
+- Execute the manual platform hardening checklist from `docs/backlog.md` (GitHub protection/security settings, Railway worker healthcheck config, Supabase backup/PITR + RLS review), then implement the notification schema-governance follow-up for v2+ policy and telemetry schema-version single-source derivation.

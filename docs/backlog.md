@@ -47,6 +47,11 @@ Prioritization scale:
    - Added explicit schema evolution guardrails: current schema version constant, supported-version allowlist, centralized renderer dispatch map, consistency validation between supported versions and renderer keys, and fail-fast unsupported/misconfigured-version errors.
    - Expanded tests for current-version dispatch, supported-version mapping, unsupported-version handling, renderer entrypoint stability, and telemetry schema-version propagation.
 
+
+10. **Step 19: operational baseline hardening (GitHub/Railway/Supabase)** ✅ completed
+   - Documented platform baseline controls and explicit manual verification checklist for GitHub branch protection/security settings, Railway worker healthcheck posture + env/logging hygiene, and Supabase backup/RLS/free-tier production risks.
+   - Preserved runtime behavior and trading logic (documentation + low-risk governance pass only).
+
 ## Active backlog (pending)
 
 ## P1 — Near-term hardening and review reminders
@@ -60,10 +65,18 @@ Prioritization scale:
 - Expand tests for NO_DATA / INSUFFICIENT_DATA propagation, run finalization, DB failure paths, and notification failure pathways.
 - Add runbook entry for Telegram environment misconfiguration triage.
 
-### Notification governance and CI follow-ups
+### Manual platform actions (cannot be enforced in repo code)
+- Configure GitHub branch protection for `main`: require pull request + review, dismiss stale approvals, require passing `tests` status check, and restrict force-push/delete.
+- Enable/verify GitHub Dependabot security updates and version updates.
+- Enable/verify GitHub secret scanning and push protection.
+- Configure Railway service as a worker-style deployment (no HTTP `/health` requirement for current runtime entrypoint) and verify healthcheck settings do not expect an HTTP path.
+- Verify Railway production secrets hygiene (managed env vars only, rotation cadence documented).
+- Verify Supabase production backup/PITR posture and RLS exposure review for all runtime tables.
+
+### Code/documentation follow-ups (repo changes)
 - Define a formal notification schema evolution policy for future daily-summary schema v2+ (change classes, compatibility expectations, rollout and rollback rules).
-- Confirm GitHub required status checks / branch protection rules are enforced against the `tests` workflow for protected branches.
 - Normalize pytest/tooling conventions further (if still relevant) to keep local and CI invocation parity explicit.
+- Derive delivery telemetry schema version from the actual summary payload object at send-time (single source of truth), instead of relying on independently-provided context fields.
 
 ## P2 — Medium-term quality and performance
 
@@ -85,6 +98,7 @@ Prioritization scale:
 - Structured JSON observability is now present with versioned daily-summary payload contracts; continue disciplined schema evolution for future versions.
 - Test harness now has project-level pytest config and CI enforcement; continue expanding depth and failure-path coverage.
 - Notification layer now has sent-dedup persistence, run-level delivery telemetry, and summary schema-version governance v1; future revisions should evolve the schema with explicit version bumps.
+- Telemetry metadata currently relies on explicit context shaping; future hardening should derive schema-version telemetry directly from the rendered payload contract to reduce drift risk.
 
 ## Maintenance rule
 After each completed task, update both this backlog and `docs/status.md` to keep next approved work explicit.

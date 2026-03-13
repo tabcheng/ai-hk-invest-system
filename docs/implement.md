@@ -49,3 +49,9 @@ Provide a consistent execution workflow for long-horizon Codex contributions.
 - Keep telemetry `context.summary_schema_version` aligned to the payload schema used at send-time for stable run-level observability.
 - Expand tests to cover current-version dispatch, supported-version mapping guarantees, unsupported-version handling, telemetry version propagation, and renderer entrypoint stability.
 
+## Step 19 implementation note (operational baseline hardening)
+- Document platform baseline controls across GitHub, Railway, and Supabase with explicit separation between code-enforceable and manual settings.
+- Keep runtime behavior unchanged: no trading-logic changes and no new web server path for the worker runtime.
+- For Railway healthchecks, document worker-appropriate settings (no HTTP `/health` dependency for current script execution model).
+- Capture environment-variable hygiene, log/observability expectations, and Supabase backup/RLS/free-tier risk checks as explicit operational guardrails.
+- Record manual follow-ups in `docs/backlog.md` and reflect completion + next approved task in `docs/status.md`.

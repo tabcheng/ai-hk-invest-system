@@ -106,3 +106,33 @@ The platform is designed as an **AI investment firm operating model** with stric
 2. Structured `error_summary` schema for diagnosability.
 3. Notification layer hardening while preserving non-blocking behavior.
 4. CI/test harness consistency to protect deterministic behavior over time.
+
+## Step 19 operational baseline hardening (GitHub / Railway / Supabase)
+
+### GitHub baseline controls (repository governance)
+- Protect `main` with branch protection rules: require pull requests, require at least one review, dismiss stale approvals on new commits, and block force-push/deletion for non-admin contributors.
+- Require the `tests` status check (from `.github/workflows/tests.yml`) to pass before merge.
+- Enable Dependabot security updates and version updates for Python/GitHub Actions dependencies.
+- Enable secret scanning and push protection for all supported token types.
+- These controls are platform settings, not runtime code behavior; enforce through repository settings and keep documented for periodic verification.
+
+### Railway baseline controls (runtime operations)
+- Current runtime is a scheduled worker/script entrypoint (`main.py` -> `src.app.main`) rather than a long-lived HTTP service.
+- Decision for this baseline pass: **do not add a `/health` HTTP endpoint** because no web server exists in the deployed runtime path, and introducing one would add unnecessary process behavior.
+- Required Railway healthcheck setting: disable HTTP healthcheck probing for this worker service; if Railway requires checks, use process/startup success semantics rather than URL probing.
+- Environment variable hygiene expectations:
+  - Store all credentials in Railway managed secrets (never hardcoded).
+  - Keep `.env` local-only and excluded from git.
+  - Rotate Supabase/Telegram credentials on leakage or team membership changes.
+- Observability/logging expectations:
+  - Keep structured run observability in Supabase (`runs` + JSON summaries) as source-of-truth.
+  - Keep Railway logs enabled for process-level diagnostics and exception traces.
+
+### Supabase baseline controls (data platform safety)
+- Backup/PITR: verify daily backups and point-in-time recovery are enabled for production-tier projects before live dependency.
+- RLS/exposure review: review every table exposed to API access; ensure least-privilege policies and avoid exposing service-role credentials to clients.
+- Free-plan pause risk: if running on free tier, document that project pausing can delay scheduled jobs and notifications; treat free-tier as non-production.
+- Production safety for run/telemetry data:
+  - Treat `runs`, `signals`, `paper_*`, and `notification_logs` as audit records.
+  - Keep mutation paths controlled to runtime writes/migrations only.
+  - Preserve retention/export expectations so telemetry is available for post-run review.

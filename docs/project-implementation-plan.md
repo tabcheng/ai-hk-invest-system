@@ -47,6 +47,13 @@ Added best-effort end-of-run Telegram summaries, deterministic run-date handling
 ### Step 12 — Telegram notification hardening + docs maintenance review ✅
 Upgraded summary readability (stock name + id, deterministic HTML), added run-date-first equity selection with fallback labels, and introduced minimal cross-run daily-summary dedup persistence while keeping delivery best-effort/non-blocking.
 
+
+### Step 19 — Operational baseline hardening (GitHub/Railway/Supabase) ✅
+Documented platform-level baseline controls and manual verification requirements for:
+- GitHub branch protection + required `tests` check + Dependabot + secret scanning/push protection.
+- Railway worker healthcheck posture (no HTTP `/health` endpoint required for current script runtime), plus env-var hygiene and logging expectations.
+- Supabase backup/PITR, RLS exposure review, free-plan pause risk, and production safety expectations for run/telemetry records.
+
 ## Current state
 - Production behavior is stable with modular runtime architecture and deterministic paper-trading pipeline.
 - Signal generation remains unchanged in strategic semantics.
@@ -58,7 +65,7 @@ These are expected next milestones for active implementation sequencing:
 1. **Traceability milestone:** unify `run_id` linkage across run metadata, signals, and paper-trading outputs.
 2. **Failure-intelligence milestone:** introduce structured `error_summary` schema and bounded categorization.
 3. **Quality-gate milestone:** add project-level pytest config and CI lint/test enforcement.
-4. **Notification hardening milestone:** ensure delivery-layer reliability and consistent summary semantics.
+4. **Operational governance milestone:** verify platform hardening settings and keep manual controls auditable in docs/backlog.
 
 ## Backlog vs active roadmap policy
 

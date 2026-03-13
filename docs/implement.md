@@ -55,3 +55,12 @@ Provide a consistent execution workflow for long-horizon Codex contributions.
 - For Railway healthchecks, document worker-appropriate settings (no HTTP `/health` dependency for current script execution model).
 - Capture environment-variable hygiene, log/observability expectations, and Supabase backup/RLS/free-tier risk checks as explicit operational guardrails.
 - Record manual follow-ups in `docs/backlog.md` and reflect completion + next approved task in `docs/status.md`.
+
+## Step 19B implementation note (Supabase access model + RLS hardening plan)
+- Keep this step scoped to access-model clarification and explicit rollout planning; do not perform broad production RLS toggles in one pass.
+- Document the current runtime access model as backend-only (no direct anon/client table access path in this repo).
+- Maintain an explicit table inventory (`runs`, `signals`, `paper_trades`, `paper_daily_snapshots`, `paper_events`, `notification_logs`) with schema location, `public` exposure, and current RLS state.
+- Recommend staged hardening: enable RLS table-by-table with minimal backend-safe policies and post-deploy verification per table.
+- Defer private-schema migration to a follow-up after initial RLS enablement is validated.
+- Record exact next migration scope (start with `public.runs`) and required rollback/verification notes before expanding to other tables.
+

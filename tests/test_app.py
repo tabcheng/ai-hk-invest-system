@@ -181,3 +181,95 @@ def test_startup_failure_attempts_failure_notification(monkeypatch):
         pass
 
     assert called["notify"] == 1
+
+
+def test_decision_ledger_write_uses_stock_metadata_name(monkeypatch):
+    updates = []
+    ledger_calls = []
+
+    monkeypatch.setattr(app, "TICKERS", ["A.HK"])
+    monkeypatch.setattr(app, "STOCK_METADATA", {"A.HK": "Company A"})
+    monkeypatch.setattr(app, "get_supabase_client", lambda: object())
+    monkeypatch.setattr(app, "create_run", lambda client: 128)
+    monkeypatch.setattr(
+        app,
+        "get_signal_for_ticker",
+        lambda ticker: {"stock": ticker, "signal": "BUY", "price": 10.0, "reason": "ok"},
+    )
+    monkeypatch.setattr(app, "save_signal", lambda client, signal_data, run_id=None: None)
+    monkeypatch.setattr(
+        app,
+        "create_decision_record_from_signal",
+        lambda **kwargs: ledger_calls.append(kwargs) or object(),
+    )
+    monkeypatch.setattr(app, "save_paper_trade_decision_record", lambda client, record: None)
+    monkeypatch.setattr(app, "run_paper_trading_for_today", lambda client, run_id: {"trades": []})
+    monkeypatch.setattr(app, "update_run", lambda client, run_id, payload: updates.append(payload))
+    monkeypatch.setattr(
+        app,
+        "send_daily_run_summary_with_telemetry",
+        lambda **kwargs: {
+            "schema_version": 1,
+            "attempted": True,
+            "success": True,
+            "channel": "telegram",
+            "message_type": "DAILY_SUMMARY",
+            "telegram_message_id": 321,
+            "failure_reason": None,
+            "skip_reason": None,
+            "counts": {"attempts": 1, "delivered": 1, "failed": 0, "skipped": 0},
+            "context": {"ticker_count": 1},
+        },
+    )
+
+    app.main()
+
+    assert len(ledger_calls) == 1
+    assert ledger_calls[0]["run_id"] == 128
+    assert ledger_calls[0]["stock_id"] == "A.HK"
+    assert ledger_calls[0]["stock_name"] == "Company A"
+    assert len(updates) == 1
+    assert updates[0]["status"] == "SUCCESS"
+
+
+def test_decision_ledger_write_failure_is_non_blocking(monkeypatch):
+    updates = []
+
+    monkeypatch.setattr(app, "TICKERS", ["A.HK"])
+    monkeypatch.setattr(app, "get_supabase_client", lambda: object())
+    monkeypatch.setattr(app, "create_run", lambda client: 129)
+    monkeypatch.setattr(
+        app,
+        "get_signal_for_ticker",
+        lambda ticker: {"stock": ticker, "signal": "HOLD", "price": 10.0, "reason": "ok"},
+    )
+    monkeypatch.setattr(app, "save_signal", lambda client, signal_data, run_id=None: None)
+    monkeypatch.setattr(
+        app,
+        "save_paper_trade_decision_record",
+        lambda client, record: (_ for _ in ()).throw(RuntimeError("ledger down")),
+    )
+    monkeypatch.setattr(app, "run_paper_trading_for_today", lambda client, run_id: {"trades": []})
+    monkeypatch.setattr(app, "update_run", lambda client, run_id, payload: updates.append(payload))
+    monkeypatch.setattr(
+        app,
+        "send_daily_run_summary_with_telemetry",
+        lambda **kwargs: {
+            "schema_version": 1,
+            "attempted": True,
+            "success": True,
+            "channel": "telegram",
+            "message_type": "DAILY_SUMMARY",
+            "telegram_message_id": 321,
+            "failure_reason": None,
+            "skip_reason": None,
+            "counts": {"attempts": 1, "delivered": 1, "failed": 0, "skipped": 0},
+            "context": {"ticker_count": 1},
+        },
+    )
+
+    app.main()
+
+    assert len(updates) == 1
+    assert updates[0]["status"] == "SUCCESS"
+    assert updates[0]["failed_tickers"] == 0

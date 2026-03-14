@@ -59,6 +59,17 @@ Prioritization scale:
    - Deferred broad schema/private-schema migration to follow-up planning to avoid one-shot production risk.
    - Preserved runtime behavior and trading logic (documentation + low-risk governance pass only).
 
+
+12. **Step 20: paper-trading decision ledger / decision record v1** ✅ completed
+   - Added `paper_trade_decisions` schema for run-linked AI signal and human decision records.
+   - Added minimal application helper + best-effort insert integration at signal persistence time.
+   - Added tests for schema presence, required-field validation, and happy-path insert behavior.
+
+13. **Post-review Step 20 hardening** ✅ completed
+   - Refactored app integration to a dedicated best-effort decision-ledger helper for clearer guardrails.
+   - Tightened decision payload validation for non-string required fields and invalid/non-finite `signal_score` values.
+   - Added app-level tests for stock metadata mapping and non-blocking behavior when ledger writes fail.
+
 ## Active backlog (pending)
 
 ## P1 — Near-term hardening and review reminders

@@ -1,8 +1,12 @@
 import os
 from datetime import datetime, timezone
 
-from src.config import TICKERS, get_supabase_client
+from src.config import STOCK_METADATA, TICKERS, get_supabase_client
 from src.db import save_signal
+from src.decision_ledger import (
+    create_decision_record_from_signal,
+    save_paper_trade_decision_record,
+)
 from src.notifications import send_daily_run_summary, send_daily_run_summary_with_telemetry
 from src.paper_trading import run_paper_trading_for_today
 from src.runs import create_run, update_run
@@ -97,6 +101,28 @@ def _build_delivery_summary_json(delivery_telemetry: dict | None) -> dict | None
     }
 
 
+def _write_decision_ledger_record_best_effort(
+    *,
+    client,
+    run_id: int | None,
+    ticker: str,
+    signal_data: dict,
+) -> None:
+    """
+    Persist decision-ledger row without affecting runtime outcome semantics.
+
+    Guardrail: this ledger is for review/audit support. Failures here must not
+    alter signal processing, paper-trading execution, or run terminal status.
+    """
+    decision_record = create_decision_record_from_signal(
+        run_id=run_id,
+        stock_id=ticker,
+        stock_name=STOCK_METADATA.get(ticker, ticker),
+        signal_data=signal_data,
+    )
+    save_paper_trade_decision_record(client, decision_record)
+
+
 def main() -> None:
     run_date = datetime.now(timezone.utc).date()
     signal_outcomes: dict[str, str] = {}
@@ -148,6 +174,19 @@ def main() -> None:
                 signal_outcomes[ticker] = signal_data["signal"]
                 print(f"Generated signal for {ticker}: {signal_data}")
                 save_signal(client, signal_data, run_id=run_id)
+
+                try:
+                    _write_decision_ledger_record_best_effort(
+                        client=client,
+                        run_id=run_id,
+                        ticker=ticker,
+                        signal_data=signal_data,
+                    )
+                except Exception as ledger_error:
+                    # Ledger persistence is supporting data only and must never
+                    # block signal generation or change run outcomes.
+                    print(f"Decision ledger write skipped for {ticker}: {ledger_error}")
+
                 successful_tickers += 1
             except Exception as e:
                 signal_outcomes[ticker] = "ERROR"

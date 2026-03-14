@@ -64,3 +64,10 @@ Provide a consistent execution workflow for long-horizon Codex contributions.
 - Defer private-schema migration to a follow-up after initial RLS enablement is validated.
 - Record exact next migration scope (start with `public.runs`) and required rollback/verification notes before expanding to other tables.
 
+
+
+## Step 20 implementation note (paper-trading decision ledger / decision record v1)
+- Add a new persistence table for paper-trading decision records with explicit AI-vs-human separation fields (`signal_action` vs `human_decision`) plus `stock_id` and `stock_name` for analytics-grade traceability.
+- Add a small application helper/model layer that validates required decision fields before insert.
+- Integrate decision-record creation at the signal-save path as best-effort observability (must not block signal generation or paper-trading execution).
+- Keep real-money execution out-of-scope: this ledger records review decisions only and does not place orders.

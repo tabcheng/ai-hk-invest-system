@@ -18,6 +18,7 @@
 - Notification schema evolution now has explicit runtime guardrails: a current version constant, supported-version allowlist, centralized renderer dispatch map, guardrail consistency validation, and fail-fast unsupported handling.
 - Daily-summary equity prefers run-date snapshots with explicit fallback labeling to latest snapshot when run-date data is unavailable.
 - Daily-summary notifications include minimal cross-run dedup persistence so the same run-date summary is not repeatedly re-sent to the same target.
+- Paper-trading decision ledger v1 is now persisted in `paper_trade_decisions`, explicitly separating AI signal action from human decision state with both `stock_id` and `stock_name` retained.
 - No autonomous live-trading execution is enabled.
 - The human user remains the final decision-maker for all real trade actions.
 
@@ -42,14 +43,17 @@
 - Post-review Step 16 fix: CI now pins Python 3.10 (matching current repo test runtime) and enables pip caching for faster, more stable dependency installs without changing test behavior.
 - Step 19 completed: added an operational baseline hardening pass in docs for GitHub, Railway, and Supabase (branch protection/status checks/security scanning, worker healthcheck posture, env/log hygiene, backup/PITR + RLS/free-tier risk expectations) with manual-action tasks tracked in backlog.
 - Step 19B completed: clarified Supabase backend-only access model, documented core table inventory + current RLS-off posture, and defined a staged low-risk RLS hardening sequence starting with single-table rollout (`public.runs`) before wider adoption.
+- Step 20 completed: added paper-trading decision ledger v1 (`paper_trade_decisions`) with run-linked AI signal + human decision records, plus minimal validation-backed helper integration and focused tests.
+- Post-review Step 20 fix: extracted decision-ledger app integration into a dedicated best-effort helper, tightened payload validation guardrails for required text fields and numeric `signal_score`, and expanded app/ledger tests for metadata mapping and non-blocking ledger-write failures.
 
 ## Current documentation posture
 - Core planning, status, architecture, and maintenance docs now form a traceable documentation stack for future Codex execution.
 - Backlog clearly separates completed work from pending items and tracks follow-up notification work as active backlog.
 - Runtime + docs now align on notification guardrails: best-effort delivery, deterministic formatting, and non-blocking failure posture.
 - Traceability docs now align with runtime persistence: major daily artifacts can be audited back to a single run record.
+- Decision-governance docs now align with runtime data capture: AI signal output and human decision state are explicitly separated in a review ledger.
 - Platform-governance baseline is now documented for GitHub/Railway/Supabase with explicit manual verification ownership separated from code changes.
 - Supabase access-control posture is now explicit in architecture docs: core runtime tables are backend-only by design, currently in `public`, with RLS hardening planned as staged single-table migrations.
 
 ## Next approved task
-- Execute Step 19B follow-up migration sequence: enable and validate RLS on `public.runs` first (explicit backend policy + rollback/verification), then expand table-by-table to `signals`, `notification_logs`, and `paper_*` tables; continue manual platform checklist closure and notification schema-governance follow-up.
+- Execute Step 19B follow-up migration sequence: enable and validate RLS on `public.runs` first (explicit backend policy + rollback/verification), then expand table-by-table to `signals`, `notification_logs`, `paper_*`, and `paper_trade_decisions`; continue manual platform checklist closure and notification schema-governance follow-up.

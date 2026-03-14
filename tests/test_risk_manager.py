@@ -1,4 +1,4 @@
-from src.risk_manager import evaluate_paper_trade_risk
+from src.risk_manager import build_risk_evaluation_payload, evaluate_paper_trade_risk
 
 
 BASE_CONFIG = {
@@ -124,3 +124,26 @@ def test_concentration_uses_post_trade_equity_after_buy_fee_impact():
         row["rule_name"] == "max_single_position_weight" and row["severity"] == "blocked"
         for row in result["rule_results"]
     )
+
+
+def test_build_risk_evaluation_payload_normalizes_compact_shape():
+    payload = build_risk_evaluation_payload(
+        {
+            "allowed": True,
+            "severity": "warning",
+            "summary_message": "daily allocation warning",
+            "rule_results": [{"rule_name": "max_daily_new_allocation_hkd", "severity": "warning"}],
+            "internal_only": "ignored",
+        }
+    )
+
+    assert payload == {
+        "allowed": True,
+        "severity": "warning",
+        "summary_message": "daily allocation warning",
+        "rule_results": [{"rule_name": "max_daily_new_allocation_hkd", "severity": "warning"}],
+    }
+
+
+def test_build_risk_evaluation_payload_returns_none_for_missing_input():
+    assert build_risk_evaluation_payload(None) is None

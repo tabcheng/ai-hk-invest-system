@@ -6,7 +6,7 @@ from math import floor
 
 from supabase import Client
 
-from src.risk_manager import evaluate_paper_trade_risk
+from src.risk_manager import build_risk_evaluation_payload, evaluate_paper_trade_risk
 
 
 @dataclass(frozen=True)
@@ -121,6 +121,27 @@ def _evaluate_buy_trade_risk(
     )
 
 
+def _build_event_payload(
+    *,
+    base_event: dict,
+    event_type: str,
+    message: str,
+    risk_evaluation: dict | None = None,
+) -> dict:
+    """Build a paper-event row with optional structured risk context."""
+    event = {
+        **base_event,
+        "event_type": event_type,
+        "message": message,
+    }
+    risk_payload = build_risk_evaluation_payload(risk_evaluation)
+    if risk_payload is not None:
+        # Traceability guardrail: keep risk context compact and consistent so
+        # blocked/warning/info outcomes are reviewable without log parsing.
+        event["risk_evaluation"] = risk_payload
+    return event
+
+
 def simulate_day(
     signal_rows: list[dict],
     run_id: int | None,
@@ -195,14 +216,15 @@ def simulate_day(
                     config=config,
                 )
                 events.append(
-                    {
-                        **base_event,
-                        "event_type": "BUY_SKIPPED_ALREADY_HOLDING",
-                        "message": (
+                    _build_event_payload(
+                        base_event=base_event,
+                        event_type="BUY_SKIPPED_ALREADY_HOLDING",
+                        message=(
                             "BUY skipped because position already exists for ticker. "
                             f"Add-check: {risk_evaluation['summary_message']}"
                         ),
-                    }
+                        risk_evaluation=risk_evaluation,
+                    )
                 )
                 continue
 
@@ -245,11 +267,12 @@ def simulate_day(
 
             if not risk_evaluation["allowed"]:
                 events.append(
-                    {
-                        **base_event,
-                        "event_type": "BUY_BLOCKED_RISK_GUARDRAIL",
-                        "message": risk_evaluation["summary_message"],
-                    }
+                    _build_event_payload(
+                        base_event=base_event,
+                        event_type="BUY_BLOCKED_RISK_GUARDRAIL",
+                        message=risk_evaluation["summary_message"],
+                        risk_evaluation=risk_evaluation,
+                    )
                 )
                 continue
 
@@ -270,6 +293,14 @@ def simulate_day(
                     "signal_id": signal_id,
                     "run_id": run_id,
                 }
+            )
+            events.append(
+                _build_event_payload(
+                    base_event=base_event,
+                    event_type="BUY_EXECUTED",
+                    message="BUY executed in paper trading simulation.",
+                    risk_evaluation=risk_evaluation,
+                )
             )
             continue
 

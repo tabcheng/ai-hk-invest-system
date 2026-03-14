@@ -88,6 +88,8 @@ def test_duplicate_buy_includes_add_check_context():
     assert len(result["events"]) == 1
     assert result["events"][0]["event_type"] == "BUY_SKIPPED_ALREADY_HOLDING"
     assert "Add-check:" in result["events"][0]["message"]
+    assert result["events"][0]["risk_evaluation"]["allowed"] is False
+    assert result["events"][0]["risk_evaluation"]["severity"] == "blocked"
 
 
 def test_buy_blocked_by_risk_guardrail_cash_floor():
@@ -103,7 +105,41 @@ def test_buy_blocked_by_risk_guardrail_cash_floor():
     assert len(result["events"]) == 1
     assert result["events"][0]["event_type"] == "BUY_BLOCKED_RISK_GUARDRAIL"
     assert "cash_floor_and_sufficiency" in result["events"][0]["message"]
+    risk = result["events"][0]["risk_evaluation"]
+    assert sorted(risk.keys()) == ["allowed", "rule_results", "severity", "summary_message"]
+    assert risk["allowed"] is False
+    assert risk["severity"] == "blocked"
 
+
+
+
+def test_buy_executed_event_includes_info_risk_context():
+    result = simulate_day(
+        signal_rows=[{"id": 60, "date": "2026-03-11", "stock": "0005.HK", "signal": "BUY", "price": 100.0}],
+        run_id=140,
+        trade_date=date(2026, 3, 11),
+    )
+
+    executed_events = [e for e in result["events"] if e["event_type"] == "BUY_EXECUTED"]
+    assert len(executed_events) == 1
+    assert executed_events[0]["risk_evaluation"]["allowed"] is True
+    assert executed_events[0]["risk_evaluation"]["severity"] == "info"
+
+
+def test_buy_executed_event_includes_warning_risk_context():
+    result = simulate_day(
+        signal_rows=[{"id": 61, "date": "2026-03-11", "stock": "0388.HK", "signal": "BUY", "price": 100.0}],
+        run_id=141,
+        trade_date=date(2026, 3, 11),
+        config=PaperTradingConfig(max_daily_new_allocation_hkd=5000.0),
+    )
+
+    assert len(result["trades"]) == 1
+    executed_events = [e for e in result["events"] if e["event_type"] == "BUY_EXECUTED"]
+    assert len(executed_events) == 1
+    risk = executed_events[0]["risk_evaluation"]
+    assert risk["allowed"] is True
+    assert risk["severity"] == "warning"
 
 def test_concentration_uses_mark_valuation_with_unrealized_gain_allows_buy():
     result = simulate_day(
@@ -451,3 +487,11 @@ def test_refresh_paper_positions_deletes_stale_tickers():
     _refresh_paper_positions_from_trades(Client(), date(2026, 3, 14))
 
     assert delete_calls == [("ticker", ["0700.HK"])]
+
+
+def test_risk_observability_migration_adds_jsonb_columns():
+    migration_sql = Path("db/migrations/20260314_add_risk_evaluation_observability_v1.sql").read_text()
+
+    assert "alter table if exists paper_events" in migration_sql
+    assert "add column if not exists risk_evaluation jsonb" in migration_sql
+    assert "alter table if exists paper_trade_decisions" in migration_sql

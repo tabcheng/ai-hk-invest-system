@@ -33,6 +33,32 @@ def _build_result(
     }
 
 
+def build_risk_evaluation_payload(risk_evaluation: dict | None) -> dict | None:
+    """Return a compact, stable risk payload shape for observability records.
+
+    This helper keeps event/decision persistence focused on the review contract
+    (`allowed`, `severity`, `summary_message`, `rule_results`) and normalizes
+    missing/partial values so downstream readers do not depend on runtime-only
+    internal fields.
+    """
+    if not isinstance(risk_evaluation, dict):
+        return None
+
+    severity = str(risk_evaluation.get("severity", "info"))
+    if severity not in SEVERITY_RANK:
+        severity = "info"
+
+    raw_rules = risk_evaluation.get("rule_results")
+    rule_results = raw_rules if isinstance(raw_rules, list) else []
+
+    return {
+        "allowed": bool(risk_evaluation.get("allowed", False)),
+        "severity": severity,
+        "summary_message": str(risk_evaluation.get("summary_message", "")),
+        "rule_results": rule_results,
+    }
+
+
 def evaluate_paper_trade_risk(
     portfolio_summary: dict,
     positions: list[dict],

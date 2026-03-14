@@ -294,6 +294,14 @@ def simulate_day(
                     "run_id": run_id,
                 }
             )
+            events.append(
+                _build_event_payload(
+                    base_event=base_event,
+                    event_type="BUY_EXECUTED",
+                    message="BUY executed in paper trading simulation.",
+                    risk_evaluation=risk_evaluation,
+                )
+            )
             continue
 
         if signal == "SELL":

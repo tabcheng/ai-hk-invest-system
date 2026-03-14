@@ -97,6 +97,10 @@ Prioritization scale:
    - Attached structured risk metadata to relevant paper-trading events (blocked BUY guardrail and already-holding add-check paths) to keep blocked/warning/info outcomes traceable.
    - Extended decision-ledger payload/schema support for optional `risk_evaluation` JSON and added focused migration + serialization/integration tests.
 
+20. **Post-review Step 23 consistency fix** ✅ completed
+   - Added `BUY_EXECUTED` paper-event emission with normalized `risk_evaluation` payload so allowed `info` and `warning` outcomes are persisted in the same review schema as blocked/skip paths.
+   - Added focused tests asserting info/warning risk context on executed BUY events.
+
 ## Active backlog (pending)
 
 ## P1 — Near-term hardening and review reminders

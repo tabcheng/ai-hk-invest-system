@@ -12,7 +12,7 @@
 - Run observability now also persists structured JSON payloads for categorized errors and Telegram delivery telemetry (`error_summary_json`, `delivery_summary_json`) while preserving legacy text summaries for compatibility.
 - Delivery telemetry now models one daily-summary message attempt per run (not per ticker), and dedup skips are tracked as `skipped` rather than failed sends.
 - Paper-trading v1 remains deterministic and gated to full ticker-success runs.
-- Paper-trading events and decision records now support compact structured `risk_evaluation` metadata (`allowed`, `severity`, `summary_message`, `rule_results`) for review traceability, including blocked BUY guardrail and already-holding add-check paths.
+- Paper-trading events and decision records now support compact structured `risk_evaluation` metadata (`allowed`, `severity`, `summary_message`, `rule_results`) for review traceability, including blocked BUY guardrail, already-holding add-check paths, and executed BUY outcomes (info/warning visibility).
 - Telegram daily summary remains best-effort and non-blocking.
 - Telegram summary formatting is deterministic HTML and includes stock name + stock id labels.
 - Telegram daily summary now uses a versioned internal payload schema (`schema_version: 1`) with renderer separation (payload build -> render -> send).
@@ -53,6 +53,7 @@
 - Post-review Step 21 test hardening: added explicit assertions for strict `< trade_date` prior-state filtering and stale-ticker cleanup in position refresh to lock rerun correctness and deterministic state deletion behavior.
 - Step 22 completed: added paper-trading risk guardrails v1 via a dedicated pure evaluation module and integrated BUY pre-trade checks for concentration, daily allocation, add exposure, and cash floor/sufficiency with focused allowed/warning/blocked test coverage.
 - Step 23 completed: added risk observability / decision-support record v1 by introducing a compact risk payload helper, attaching structured risk metadata to relevant paper events, extending decision-ledger payload support, and adding migration/tests for persisted `risk_evaluation` JSONB fields.
+- Post-review Step 23 fix: successful BUY executions now emit `BUY_EXECUTED` paper events carrying normalized risk-evaluation payloads so allowed `info`/`warning` outcomes are persisted consistently alongside blocked/skip contexts.
 - Post-review Step 22 fix: existing-position BUY-skip path now runs explicit add-exposure risk evaluation for decision-support context (without changing non-additive paper-trading behavior), with added tests for add-limit blocking and skip-event risk context.
 - Post-review Step 22 fix #2: concentration guardrail valuation now uses mark-based position pricing (not average entry cost) so unrealized gain/loss is reflected in projected weights, with tests covering gain-allowed vs loss-blocked scenarios.
 - Post-review Step 22 fix #3: concentration projected-weight denominator now uses post-trade equity (`total_equity - BUY fee impact`) to avoid understated concentration under high-fee assumptions; added focused unit coverage.

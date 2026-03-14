@@ -111,6 +111,36 @@ def test_buy_blocked_by_risk_guardrail_cash_floor():
     assert risk["severity"] == "blocked"
 
 
+
+
+def test_buy_executed_event_includes_info_risk_context():
+    result = simulate_day(
+        signal_rows=[{"id": 60, "date": "2026-03-11", "stock": "0005.HK", "signal": "BUY", "price": 100.0}],
+        run_id=140,
+        trade_date=date(2026, 3, 11),
+    )
+
+    executed_events = [e for e in result["events"] if e["event_type"] == "BUY_EXECUTED"]
+    assert len(executed_events) == 1
+    assert executed_events[0]["risk_evaluation"]["allowed"] is True
+    assert executed_events[0]["risk_evaluation"]["severity"] == "info"
+
+
+def test_buy_executed_event_includes_warning_risk_context():
+    result = simulate_day(
+        signal_rows=[{"id": 61, "date": "2026-03-11", "stock": "0388.HK", "signal": "BUY", "price": 100.0}],
+        run_id=141,
+        trade_date=date(2026, 3, 11),
+        config=PaperTradingConfig(max_daily_new_allocation_hkd=5000.0),
+    )
+
+    assert len(result["trades"]) == 1
+    executed_events = [e for e in result["events"] if e["event_type"] == "BUY_EXECUTED"]
+    assert len(executed_events) == 1
+    risk = executed_events[0]["risk_evaluation"]
+    assert risk["allowed"] is True
+    assert risk["severity"] == "warning"
+
 def test_concentration_uses_mark_valuation_with_unrealized_gain_allows_buy():
     result = simulate_day(
         signal_rows=[

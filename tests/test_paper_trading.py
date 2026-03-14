@@ -1,9 +1,12 @@
 from datetime import date
+from pathlib import Path
 
 from src.paper_trading import (
     PaperTradingConfig,
     Position,
+    _build_position_state_from_trade_rows,
     _clear_existing_day_outputs,
+    get_paper_portfolio_summary,
     simulate_day,
 )
 
@@ -108,3 +111,92 @@ def test_clear_existing_day_outputs_deletes_all_daily_tables():
         ("paper_daily_snapshots", "eq", "snapshot_date", "2026-03-11"),
         ("paper_daily_snapshots", "execute"),
     ]
+
+
+def test_build_position_state_from_trade_rows_updates_avg_cost_and_partial_sell():
+    rows = [
+        {"stock": "0700.HK", "action": "BUY", "quantity": 100, "price": 100.0, "realized_pnl": 0.0},
+        {"stock": "0700.HK", "action": "BUY", "quantity": 100, "price": 120.0, "realized_pnl": 0.0},
+        {"stock": "0700.HK", "action": "SELL", "quantity": 50, "price": 130.0, "realized_pnl": 740.0},
+    ]
+
+    positions = _build_position_state_from_trade_rows(rows)
+
+    assert positions["0700.HK"]["quantity"] == 150
+    assert positions["0700.HK"]["avg_cost"] == 110.0
+    assert positions["0700.HK"]["last_price"] == 130.0
+    assert positions["0700.HK"]["unrealized_pnl"] == 3000.0
+    assert positions["0700.HK"]["realized_pnl"] == 740.0
+
+
+def test_get_paper_portfolio_summary_reads_positions_and_latest_snapshot():
+    class Result:
+        def __init__(self, data):
+            self.data = data
+
+    class Query:
+        def __init__(self, table_name):
+            self.table_name = table_name
+
+        def select(self, _columns):
+            return self
+
+        def order(self, *_args, **_kwargs):
+            return self
+
+        def limit(self, _n):
+            return self
+
+        def execute(self):
+            if self.table_name == "paper_positions":
+                return Result(
+                    [
+                        {
+                            "ticker": "0700.HK",
+                            "quantity": 150,
+                            "avg_cost": 110.0,
+                            "last_price": 130.0,
+                            "unrealized_pnl": 3000.0,
+                            "realized_pnl": 740.0,
+                        }
+                    ]
+                )
+            return Result(
+                [
+                    {
+                        "snapshot_date": "2026-03-14",
+                        "cash": 80000.0,
+                        "total_equity": 99500.0,
+                        "cumulative_realized_pnl": 740.0,
+                        "cumulative_unrealized_pnl": 3000.0,
+                    }
+                ]
+            )
+
+    class Client:
+        def table(self, table_name):
+            return Query(table_name)
+
+    summary = get_paper_portfolio_summary(Client())
+
+    assert summary["snapshot_date"] == "2026-03-14"
+    assert summary["cash"] == 80000.0
+    assert summary["market_value"] == 19500.0
+    assert summary["total_equity"] == 99500.0
+    assert summary["open_positions"] == 1
+
+
+def test_paper_positions_migration_contains_required_columns():
+    migration_sql = Path("db/migrations/20260314_create_paper_positions_table.sql").read_text()
+
+    for required_column in [
+        "create table if not exists paper_positions",
+        "ticker text not null",
+        "quantity integer not null default 0",
+        "avg_cost numeric not null default 0",
+        "last_price numeric not null default 0",
+        "unrealized_pnl numeric not null default 0",
+        "realized_pnl numeric not null default 0",
+        "updated_at timestamptz not null",
+    ]:
+        assert required_column in migration_sql

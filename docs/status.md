@@ -1,7 +1,7 @@
 # Project Status
 
 ## Last reviewed date
-2026-03-13
+2026-03-14
 
 ## Current production behavior
 - Runtime behavior remains the existing MVP script in `main.py` (Railway entry point), now as a thin entry into modularized runtime code under `src/`.
@@ -19,6 +19,7 @@
 - Daily-summary equity prefers run-date snapshots with explicit fallback labeling to latest snapshot when run-date data is unavailable.
 - Daily-summary notifications include minimal cross-run dedup persistence so the same run-date summary is not repeatedly re-sent to the same target.
 - Paper-trading decision ledger v1 is now persisted in `paper_trade_decisions`, explicitly separating AI signal action from human decision state with both `stock_id` and `stock_name` retained.
+- Paper-trading now also maintains a lightweight `paper_positions` state table (long-only) refreshed from simulated trades, with weighted-average cost and realized/unrealized PnL fields plus a reusable portfolio summary read helper.
 - No autonomous live-trading execution is enabled.
 - The human user remains the final decision-maker for all real trade actions.
 
@@ -45,6 +46,7 @@
 - Step 19B completed: clarified Supabase backend-only access model, documented core table inventory + current RLS-off posture, and defined a staged low-risk RLS hardening sequence starting with single-table rollout (`public.runs`) before wider adoption.
 - Step 20 completed: added paper-trading decision ledger v1 (`paper_trade_decisions`) with run-linked AI signal + human decision records, plus minimal validation-backed helper integration and focused tests.
 - Post-review Step 20 fix: extracted decision-ledger app integration into a dedicated best-effort helper, tightened payload validation guardrails for required text fields and numeric `signal_score`, and expanded app/ledger tests for metadata mapping and non-blocking ledger-write failures.
+- Step 21 completed: added paper portfolio position/PnL foundation with `paper_positions` schema, long-only position state refresh after simulated trades, weighted-average cost updates across repeated buys, quantity reduction on sells, and a reusable `get_paper_portfolio_summary` helper for downstream reporting surfaces.
 
 ## Current documentation posture
 - Core planning, status, architecture, and maintenance docs now form a traceable documentation stack for future Codex execution.

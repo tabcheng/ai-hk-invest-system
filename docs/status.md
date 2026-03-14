@@ -13,6 +13,7 @@
 - Delivery telemetry now models one daily-summary message attempt per run (not per ticker), and dedup skips are tracked as `skipped` rather than failed sends.
 - Paper-trading v1 remains deterministic and gated to full ticker-success runs.
 - Paper-trading events and decision records now support compact structured `risk_evaluation` metadata (`allowed`, `severity`, `summary_message`, `rule_results`) for review traceability, including blocked BUY guardrail, already-holding add-check paths, and executed BUY outcomes (info/warning visibility).
+- Paper-trading risk read-surface/reporting v1 now provides a compact per-run review helper that summarizes persisted BUY risk outcomes (`blocked`/`warning`/executed) and groups per-ticker review rows (`event_type`, `severity`, `summary_message`, compact rule summary) without log parsing.
 - Telegram daily summary remains best-effort and non-blocking.
 - Telegram summary formatting is deterministic HTML and includes stock name + stock id labels.
 - Telegram daily summary now uses a versioned internal payload schema (`schema_version: 1`) with renderer separation (payload build -> render -> send).
@@ -54,6 +55,7 @@
 - Step 22 completed: added paper-trading risk guardrails v1 via a dedicated pure evaluation module and integrated BUY pre-trade checks for concentration, daily allocation, add exposure, and cash floor/sufficiency with focused allowed/warning/blocked test coverage.
 - Step 23 completed: added risk observability / decision-support record v1 by introducing a compact risk payload helper, attaching structured risk metadata to relevant paper events, extending decision-ledger payload support, and adding migration/tests for persisted `risk_evaluation` JSONB fields.
 - Post-review Step 23 fix: successful BUY executions now emit `BUY_EXECUTED` paper events carrying normalized risk-evaluation payloads so allowed `info`/`warning` outcomes are persisted consistently alongside blocked/skip contexts.
+- Step 24 completed: added a dedicated paper-risk review summarizer for single-run read surfaces, driven by persisted `paper_events.risk_evaluation` payloads with compact grouped output and focused formatting/grouping tests.
 - Post-review Step 22 fix: existing-position BUY-skip path now runs explicit add-exposure risk evaluation for decision-support context (without changing non-additive paper-trading behavior), with added tests for add-limit blocking and skip-event risk context.
 - Post-review Step 22 fix #2: concentration guardrail valuation now uses mark-based position pricing (not average entry cost) so unrealized gain/loss is reflected in projected weights, with tests covering gain-allowed vs loss-blocked scenarios.
 - Post-review Step 22 fix #3: concentration projected-weight denominator now uses post-trade equity (`total_equity - BUY fee impact`) to avoid understated concentration under high-fee assumptions; added focused unit coverage.
@@ -68,4 +70,4 @@
 - Supabase access-control posture is now explicit in architecture docs: core runtime tables are backend-only by design, currently in `public`, with RLS hardening planned as staged single-table migrations.
 
 ## Next approved task
-- Review Step 23 risk-observability output in paper-trading runs and define Step 24 follow-up for read-surface/reporting workflow (no live-trade automation).
+- Define Step 25 follow-up to expose the Step 24 paper-risk review surface via a minimal operator-facing read path (CLI/report export) while preserving paper-only behavior and execution/runtime separation.

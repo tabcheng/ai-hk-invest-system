@@ -4,10 +4,12 @@ from pathlib import Path
 from src.paper_trading import (
     PaperTradingConfig,
     Position,
+    _build_compact_rule_summary,
     _build_position_state_from_trade_rows,
     _clear_existing_day_outputs,
     _fetch_prior_state,
     _refresh_paper_positions_from_trades,
+    get_paper_risk_review_for_run,
     get_paper_portfolio_summary,
     simulate_day,
 )
@@ -495,3 +497,111 @@ def test_risk_observability_migration_adds_jsonb_columns():
     assert "alter table if exists paper_events" in migration_sql
     assert "add column if not exists risk_evaluation jsonb" in migration_sql
     assert "alter table if exists paper_trade_decisions" in migration_sql
+
+
+def test_build_compact_rule_summary_groups_failed_warning_and_passed_rules():
+    summary = _build_compact_rule_summary(
+        {
+            "rule_results": [
+                {"rule_name": "cash_floor_and_sufficiency", "passed": False, "severity": "blocked"},
+                {"rule_name": "max_daily_new_allocation_hkd", "passed": True, "severity": "warning"},
+                {"rule_name": "max_single_position_weight", "passed": True, "severity": "info"},
+            ]
+        }
+    )
+
+    assert summary == (
+        "failed=cash_floor_and_sufficiency"
+        " | warning=max_daily_new_allocation_hkd"
+        " | passed=max_single_position_weight"
+    )
+
+
+def test_get_paper_risk_review_for_run_summarizes_buy_risk_outcomes():
+    class Result:
+        def __init__(self, data):
+            self.data = data
+
+    class Query:
+        def select(self, _columns):
+            return self
+
+        def eq(self, _column, _value):
+            return self
+
+        def order(self, _column):
+            return self
+
+        def execute(self):
+            return Result(
+                [
+                    {
+                        "id": 1,
+                        "stock": "0005.HK",
+                        "event_type": "BUY_BLOCKED_RISK_GUARDRAIL",
+                        "risk_evaluation": {
+                            "severity": "blocked",
+                            "summary_message": "Trade risk-check blocked by: cash_floor_and_sufficiency.",
+                            "rule_results": [
+                                {"rule_name": "cash_floor_and_sufficiency", "passed": False, "severity": "blocked"}
+                            ],
+                        },
+                    },
+                    {
+                        "id": 2,
+                        "stock": "0388.HK",
+                        "event_type": "BUY_EXECUTED",
+                        "risk_evaluation": {
+                            "severity": "warning",
+                            "summary_message": "Trade risk-check passed with overall severity=warning.",
+                            "rule_results": [
+                                {"rule_name": "max_daily_new_allocation_hkd", "passed": True, "severity": "warning"}
+                            ],
+                        },
+                    },
+                    {
+                        "id": 3,
+                        "stock": "0700.HK",
+                        "event_type": "BUY_EXECUTED",
+                        "risk_evaluation": {
+                            "severity": "info",
+                            "summary_message": "Trade risk-check passed with overall severity=info.",
+                            "rule_results": [
+                                {"rule_name": "max_single_position_weight", "passed": True, "severity": "info"}
+                            ],
+                        },
+                    },
+                    {
+                        "id": 4,
+                        "stock": "0700.HK",
+                        "event_type": "HOLD_EVENT",
+                        "risk_evaluation": {
+                            "severity": "blocked",
+                            "summary_message": "Should be ignored.",
+                            "rule_results": [],
+                        },
+                    },
+                    {
+                        "id": 5,
+                        "stock": "1299.HK",
+                        "event_type": "BUY_SKIPPED_ALREADY_HOLDING",
+                        "risk_evaluation": None,
+                    },
+                ]
+            )
+
+    class Client:
+        def table(self, _table_name):
+            return Query()
+
+    review = get_paper_risk_review_for_run(Client(), run_id=200)
+
+    assert review["run_id"] == 200
+    assert review["total_blocked_buys"] == 1
+    assert review["total_warning_buys"] == 1
+    assert review["total_executed_buys"] == 2
+    assert sorted(review["per_ticker"].keys()) == ["0005.HK", "0388.HK", "0700.HK"]
+    assert review["per_ticker"]["0005.HK"][0]["event_type"] == "BUY_BLOCKED_RISK_GUARDRAIL"
+    assert review["per_ticker"]["0005.HK"][0]["severity"] == "blocked"
+    assert review["per_ticker"]["0005.HK"][0]["compact_rule_summary"] == "failed=cash_floor_and_sufficiency"
+    assert review["per_ticker"]["0388.HK"][0]["compact_rule_summary"] == "warning=max_daily_new_allocation_hkd"

@@ -101,6 +101,11 @@ Prioritization scale:
    - Added `BUY_EXECUTED` paper-event emission with normalized `risk_evaluation` payload so allowed `info` and `warning` outcomes are persisted in the same review schema as blocked/skip paths.
    - Added focused tests asserting info/warning risk context on executed BUY events.
 
+21. **Step 24: risk read-surface / review reporting v1** ✅ completed
+   - Added a dedicated paper-trading run review helper that summarizes BUY risk outcomes from persisted `paper_events.risk_evaluation` payloads.
+   - Added compact grouped reporting output: `total_blocked_buys`, `total_warning_buys`, `total_executed_buys`, and per-ticker review rows (`event_type`, `severity`, `summary_message`, compact rule summary).
+   - Added focused tests for compact rule-summary formatting and run-level grouping/count behavior.
+
 ## Active backlog (pending)
 
 ## P1 — Near-term hardening and review reminders
@@ -125,6 +130,7 @@ Prioritization scale:
 - Plan future private-schema migration for backend-only operational tables after staged RLS rollout validation (scope, sequencing, and rollback path).
 
 ### Code/documentation follow-ups (repo changes)
+- Expose the Step 24 paper-risk read surface through a minimal operator-facing path (CLI/report export) without coupling review rendering to execution flow.
 - Evolve paper-trade risk guardrails from v1 to v2 (config source, richer sell-path checks, and decision-ledger linkage) after observing paper-run outcomes.
 - Define a formal notification schema evolution policy for future daily-summary schema v2+ (change classes, compatibility expectations, rollout and rollback rules).
 - Normalize pytest/tooling conventions further (if still relevant) to keep local and CI invocation parity explicit.

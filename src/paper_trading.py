@@ -573,6 +573,96 @@ def get_paper_portfolio_summary(client: Client) -> dict:
     }
 
 
+def _build_compact_rule_summary(risk_evaluation: dict) -> str:
+    """Return a compact, stable one-line rule summary for review surfaces."""
+    rule_rows = risk_evaluation.get("rule_results")
+    if not isinstance(rule_rows, list) or not rule_rows:
+        return "rules=none"
+
+    failed_rules: list[str] = []
+    warning_rules: list[str] = []
+    passed_rules: list[str] = []
+
+    for row in rule_rows:
+        if not isinstance(row, dict):
+            continue
+        rule_name = str(row.get("rule_name") or "unknown_rule")
+        if row.get("passed") is False:
+            failed_rules.append(rule_name)
+            continue
+        if str(row.get("severity", "info")) == "warning":
+            warning_rules.append(rule_name)
+            continue
+        passed_rules.append(rule_name)
+
+    parts: list[str] = []
+    if failed_rules:
+        parts.append(f"failed={','.join(sorted(set(failed_rules)))}")
+    if warning_rules:
+        parts.append(f"warning={','.join(sorted(set(warning_rules)))}")
+    if passed_rules:
+        parts.append(f"passed={','.join(sorted(set(passed_rules)))}")
+
+    return " | ".join(parts) if parts else "rules=none"
+
+
+def get_paper_risk_review_for_run(client: Client, run_id: int) -> dict:
+    """Build a compact human-readable risk review for one paper-trading run.
+
+    This read surface is intentionally observability-only and derives review
+    output from persisted `paper_events.risk_evaluation` payloads.
+    """
+    event_rows = (
+        client.table("paper_events")
+        .select("id,stock,event_type,risk_evaluation")
+        .eq("run_id", run_id)
+        .order("id")
+        .execute()
+    ).data or []
+
+    review_by_ticker: dict[str, list[dict]] = {}
+    total_blocked_buys = 0
+    total_warning_buys = 0
+    total_executed_buys = 0
+
+    for row in event_rows:
+        event_type = str(row.get("event_type") or "")
+        if not event_type.startswith("BUY_"):
+            continue
+
+        risk_evaluation = row.get("risk_evaluation")
+        if not isinstance(risk_evaluation, dict):
+            continue
+
+        severity = str(risk_evaluation.get("severity") or "info")
+        summary_message = str(risk_evaluation.get("summary_message") or "")
+
+        if severity == "blocked":
+            total_blocked_buys += 1
+        if severity == "warning":
+            total_warning_buys += 1
+        if event_type == "BUY_EXECUTED":
+            total_executed_buys += 1
+
+        ticker = str(row.get("stock") or "UNKNOWN")
+        review_by_ticker.setdefault(ticker, []).append(
+            {
+                "event_type": event_type,
+                "severity": severity,
+                "summary_message": summary_message,
+                "compact_rule_summary": _build_compact_rule_summary(risk_evaluation),
+            }
+        )
+
+    return {
+        "run_id": run_id,
+        "total_blocked_buys": total_blocked_buys,
+        "total_warning_buys": total_warning_buys,
+        "total_executed_buys": total_executed_buys,
+        "per_ticker": review_by_ticker,
+    }
+
+
 def run_paper_trading_for_today(
     client: Client,
     run_id: int | None,

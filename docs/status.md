@@ -20,6 +20,7 @@
 - Daily-summary notifications include minimal cross-run dedup persistence so the same run-date summary is not repeatedly re-sent to the same target.
 - Paper-trading decision ledger v1 is now persisted in `paper_trade_decisions`, explicitly separating AI signal action from human decision state with both `stock_id` and `stock_name` retained.
 - Paper-trading now also maintains a lightweight `paper_positions` state table (long-only) refreshed from simulated trades, with weighted-average cost and realized/unrealized PnL fields plus a reusable portfolio summary read helper.
+- Paper-trading risk guardrails v1 now evaluate candidate BUY trades pre-execution (single-position concentration, daily new-allocation budget, add-to-existing exposure, and cash-floor/sufficiency) and block only explicit high-risk breaches while remaining paper-only decision support.
 - No autonomous live-trading execution is enabled.
 - The human user remains the final decision-maker for all real trade actions.
 
@@ -49,6 +50,10 @@
 - Step 21 completed: added paper portfolio position/PnL foundation with `paper_positions` schema, long-only position state refresh after simulated trades, weighted-average cost updates across repeated buys, quantity reduction on sells, and a reusable `get_paper_portfolio_summary` helper for downstream reporting surfaces.
 - Post-review Step 21 fix: prior-state reconstruction is now date-correct for reruns/backfills by rebuilding strictly from `paper_trades` rows before `trade_date`, and position refresh uses ticker upsert + stale-row cleanup while explicitly refreshing `updated_at` on each write.
 - Post-review Step 21 test hardening: added explicit assertions for strict `< trade_date` prior-state filtering and stale-ticker cleanup in position refresh to lock rerun correctness and deterministic state deletion behavior.
+- Step 22 completed: added paper-trading risk guardrails v1 via a dedicated pure evaluation module and integrated BUY pre-trade checks for concentration, daily allocation, add exposure, and cash floor/sufficiency with focused allowed/warning/blocked test coverage.
+- Post-review Step 22 fix: existing-position BUY-skip path now runs explicit add-exposure risk evaluation for decision-support context (without changing non-additive paper-trading behavior), with added tests for add-limit blocking and skip-event risk context.
+- Post-review Step 22 fix #2: concentration guardrail valuation now uses mark-based position pricing (not average entry cost) so unrealized gain/loss is reflected in projected weights, with tests covering gain-allowed vs loss-blocked scenarios.
+- Post-review Step 22 fix #3: concentration projected-weight denominator now uses post-trade equity (`total_equity - BUY fee impact`) to avoid understated concentration under high-fee assumptions; added focused unit coverage.
 
 ## Current documentation posture
 - Core planning, status, architecture, and maintenance docs now form a traceable documentation stack for future Codex execution.
@@ -60,4 +65,4 @@
 - Supabase access-control posture is now explicit in architecture docs: core runtime tables are backend-only by design, currently in `public`, with RLS hardening planned as staged single-table migrations.
 
 ## Next approved task
-- Execute Step 19B follow-up migration sequence: enable and validate RLS on `public.runs` first (explicit backend policy + rollback/verification), then expand table-by-table to `signals`, `notification_logs`, `paper_*`, and `paper_trade_decisions`; continue manual platform checklist closure and notification schema-governance follow-up.
+- Design Step 23 risk-observability follow-up: persist paper-trade risk-evaluation results to decision-support records (without auto-execution changes), and document review workflow for interpreting warning vs blocked outcomes.

@@ -6,6 +6,8 @@ from math import floor
 
 from supabase import Client
 
+from src.risk_manager import evaluate_paper_trade_risk
+
 
 @dataclass(frozen=True)
 class PaperTradingConfig:
@@ -14,6 +16,11 @@ class PaperTradingConfig:
     commission_rate: float = 0.001
     min_fee_hkd: float = 18.0
     max_open_positions: int = 5
+    # v1 risk guardrails for paper-trade evaluation and human decision support.
+    max_single_position_weight: float = 0.40
+    max_daily_new_allocation_hkd: float = 30000.0
+    max_position_add_allocation_hkd: float = 10000.0
+    cash_floor_hkd: float = 5000.0
 
 
 @dataclass
@@ -55,6 +62,65 @@ def _build_mark_prices(signal_rows: list[dict], positions: dict[str, Position]) 
     return price_map
 
 
+def _evaluate_buy_trade_risk(
+    *,
+    cash: float,
+    positions: dict[str, Position],
+    mark_prices: dict[str, float],
+    trades: list[dict],
+    stock: str,
+    quantity: int,
+    execution_price: float,
+    total_cost: float,
+    config: PaperTradingConfig,
+) -> dict:
+    """Evaluate BUY risk guardrails using explicit, serializable plain-data inputs."""
+    gross_amount = quantity * execution_price
+    # Concentration guardrail must use mark-based valuation so unrealized
+    # gains/losses are reflected in projected portfolio weights.
+    position_rows_for_risk = [
+        {
+            "ticker": ticker,
+            "quantity": position.quantity,
+            "last_price": float(mark_prices.get(ticker, position.average_entry_price)),
+        }
+        for ticker, position in positions.items()
+    ]
+    portfolio_summary_for_risk = {
+        "cash": cash,
+        "total_equity": cash
+        + sum(
+            p.quantity * float(mark_prices.get(ticker, p.average_entry_price))
+            for ticker, p in positions.items()
+        ),
+        "daily_new_allocation_used_hkd": sum(
+            float(trade["gross_amount"])
+            for trade in trades
+            if trade["action"] == "BUY"
+        ),
+    }
+    candidate_for_risk = {
+        "action": "BUY",
+        "stock": stock,
+        "quantity": quantity,
+        "price": execution_price,
+        "gross_amount": gross_amount,
+        "total_cost": total_cost,
+    }
+    risk_config = {
+        "max_single_position_weight": config.max_single_position_weight,
+        "max_daily_new_allocation_hkd": config.max_daily_new_allocation_hkd,
+        "max_position_add_allocation_hkd": config.max_position_add_allocation_hkd,
+        "cash_floor_hkd": config.cash_floor_hkd,
+    }
+    return evaluate_paper_trade_risk(
+        portfolio_summary=portfolio_summary_for_risk,
+        positions=position_rows_for_risk,
+        candidate_trade=candidate_for_risk,
+        config=risk_config,
+    )
+
+
 def simulate_day(
     signal_rows: list[dict],
     run_id: int | None,
@@ -72,6 +138,7 @@ def simulate_day(
     events: list[dict] = []
 
     ordered_rows = _normalize_signal_rows(signal_rows)
+    mark_prices = _build_mark_prices(ordered_rows, positions)
 
     for row in ordered_rows:
         stock = row["stock"]
@@ -89,15 +156,6 @@ def simulate_day(
         }
 
         if signal == "BUY":
-            if stock in positions:
-                events.append(
-                    {
-                        **base_event,
-                        "event_type": "BUY_SKIPPED_ALREADY_HOLDING",
-                        "message": "BUY skipped because position already exists for ticker.",
-                    }
-                )
-                continue
             if execution_price is None or execution_price <= 0:
                 events.append(
                     {
@@ -107,6 +165,47 @@ def simulate_day(
                     }
                 )
                 continue
+
+            if stock in positions:
+                # Existing positions are still non-additive in v1 simulation behavior,
+                # but run the dedicated add-exposure risk check for decision support
+                # so this path surfaces guardrail posture explicitly.
+                quantity = floor(config.target_allocation_per_new_position_hkd / execution_price)
+                if quantity < 1:
+                    events.append(
+                        {
+                            **base_event,
+                            "event_type": "BUY_SKIPPED_ALREADY_HOLDING",
+                            "message": "BUY skipped because position already exists for ticker.",
+                        }
+                    )
+                    continue
+
+                gross_amount = quantity * execution_price
+                fee = _calculate_fee(gross_amount, config)
+                risk_evaluation = _evaluate_buy_trade_risk(
+                    cash=cash,
+                    positions=positions,
+                    mark_prices=mark_prices,
+                    trades=trades,
+                    stock=stock,
+                    quantity=quantity,
+                    execution_price=execution_price,
+                    total_cost=gross_amount + fee,
+                    config=config,
+                )
+                events.append(
+                    {
+                        **base_event,
+                        "event_type": "BUY_SKIPPED_ALREADY_HOLDING",
+                        "message": (
+                            "BUY skipped because position already exists for ticker. "
+                            f"Add-check: {risk_evaluation['summary_message']}"
+                        ),
+                    }
+                )
+                continue
+
             if len(positions) >= config.max_open_positions:
                 events.append(
                     {
@@ -131,12 +230,25 @@ def simulate_day(
             gross_amount = quantity * execution_price
             fee = _calculate_fee(gross_amount, config)
             total_cost = gross_amount + fee
-            if total_cost > cash:
+
+            risk_evaluation = _evaluate_buy_trade_risk(
+                cash=cash,
+                positions=positions,
+                mark_prices=mark_prices,
+                trades=trades,
+                stock=stock,
+                quantity=quantity,
+                execution_price=execution_price,
+                total_cost=total_cost,
+                config=config,
+            )
+
+            if not risk_evaluation["allowed"]:
                 events.append(
                     {
                         **base_event,
-                        "event_type": "BUY_SKIPPED_INSUFFICIENT_CASH",
-                        "message": "BUY skipped because available cash is insufficient.",
+                        "event_type": "BUY_BLOCKED_RISK_GUARDRAIL",
+                        "message": risk_evaluation["summary_message"],
                     }
                 )
                 continue

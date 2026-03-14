@@ -73,6 +73,72 @@ def test_duplicate_buy_does_not_create_second_position():
     assert result["ending_positions"]["1299.HK"].quantity == 100
 
 
+
+
+def test_duplicate_buy_includes_add_check_context():
+    result = simulate_day(
+        signal_rows=[{"id": 41, "date": "2026-03-11", "stock": "1299.HK", "signal": "BUY", "price": 50.0}],
+        run_id=131,
+        trade_date=date(2026, 3, 11),
+        starting_positions={"1299.HK": Position(quantity=100, average_entry_price=48.0)},
+        config=PaperTradingConfig(max_position_add_allocation_hkd=2000.0),
+    )
+
+    assert result["trades"] == []
+    assert len(result["events"]) == 1
+    assert result["events"][0]["event_type"] == "BUY_SKIPPED_ALREADY_HOLDING"
+    assert "Add-check:" in result["events"][0]["message"]
+
+
+def test_buy_blocked_by_risk_guardrail_cash_floor():
+    result = simulate_day(
+        signal_rows=[{"id": 40, "date": "2026-03-11", "stock": "1299.HK", "signal": "BUY", "price": 50.0}],
+        run_id=130,
+        trade_date=date(2026, 3, 11),
+        starting_cash=4000.0,
+        config=PaperTradingConfig(cash_floor_hkd=5000.0),
+    )
+
+    assert result["trades"] == []
+    assert len(result["events"]) == 1
+    assert result["events"][0]["event_type"] == "BUY_BLOCKED_RISK_GUARDRAIL"
+    assert "cash_floor_and_sufficiency" in result["events"][0]["message"]
+
+
+def test_concentration_uses_mark_valuation_with_unrealized_gain_allows_buy():
+    result = simulate_day(
+        signal_rows=[
+            {"id": 50, "date": "2026-03-11", "stock": "0001.HK", "signal": "HOLD", "price": 200.0},
+            {"id": 51, "date": "2026-03-11", "stock": "0002.HK", "signal": "BUY", "price": 100.0},
+        ],
+        run_id=132,
+        trade_date=date(2026, 3, 11),
+        starting_cash=50000.0,
+        starting_positions={"0001.HK": Position(quantity=100, average_entry_price=100.0)},
+        config=PaperTradingConfig(max_single_position_weight=0.155),
+    )
+
+    assert len(result["trades"]) == 1
+    assert result["trades"][0]["stock"] == "0002.HK"
+
+
+def test_concentration_uses_mark_valuation_with_unrealized_loss_blocks_buy():
+    result = simulate_day(
+        signal_rows=[
+            {"id": 52, "date": "2026-03-11", "stock": "0001.HK", "signal": "HOLD", "price": 50.0},
+            {"id": 53, "date": "2026-03-11", "stock": "0002.HK", "signal": "BUY", "price": 100.0},
+        ],
+        run_id=133,
+        trade_date=date(2026, 3, 11),
+        starting_cash=50000.0,
+        starting_positions={"0001.HK": Position(quantity=100, average_entry_price=100.0)},
+        config=PaperTradingConfig(max_single_position_weight=0.17),
+    )
+
+    assert result["trades"] == []
+    assert any(event["event_type"] == "BUY_BLOCKED_RISK_GUARDRAIL" for event in result["events"])
+
+
 def test_clear_existing_day_outputs_deletes_all_daily_tables():
     calls = []
 

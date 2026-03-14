@@ -82,6 +82,16 @@ Prioritization scale:
 16. **Post-review Step 21 test guardrail hardening** ✅ completed
    - Added focused tests that assert strict `< trade_date` query filtering for prior-state reconstruction and stale ticker deletion behavior during `paper_positions` refresh.
 
+
+17. **Post-review Step 22 concentration valuation fix** ✅ completed
+   - Corrected concentration-risk inputs to use mark-based valuation for existing positions and portfolio equity (unrealized PnL aware) instead of cost-basis valuation.
+   - Added simulation tests proving gain/loss-sensitive concentration behavior remains correct under BUY guardrail blocking rules.
+
+
+18. **Post-review Step 22 fee-denominator concentration fix** ✅ completed
+   - Updated concentration projected-weight denominator to use post-trade equity (accounting for BUY fee impact) for tighter risk accuracy under non-trivial fee assumptions.
+   - Added pure risk-module test coverage locking this denominator behavior.
+
 ## Active backlog (pending)
 
 ## P1 — Near-term hardening and review reminders
@@ -106,6 +116,7 @@ Prioritization scale:
 - Plan future private-schema migration for backend-only operational tables after staged RLS rollout validation (scope, sequencing, and rollback path).
 
 ### Code/documentation follow-ups (repo changes)
+- Evolve paper-trade risk guardrails from v1 to v2 (config source, richer sell-path checks, and decision-ledger linkage) after observing paper-run outcomes.
 - Define a formal notification schema evolution policy for future daily-summary schema v2+ (change classes, compatibility expectations, rollout and rollback rules).
 - Normalize pytest/tooling conventions further (if still relevant) to keep local and CI invocation parity explicit.
 - Derive delivery telemetry schema version from the actual summary payload object at send-time (single source of truth), instead of relying on independently-provided context fields.

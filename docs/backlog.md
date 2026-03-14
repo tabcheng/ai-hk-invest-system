@@ -70,6 +70,18 @@ Prioritization scale:
    - Tightened decision payload validation for non-string required fields and invalid/non-finite `signal_score` values.
    - Added app-level tests for stock metadata mapping and non-blocking behavior when ledger writes fail.
 
+14. **Step 21: paper position / PnL snapshot foundation** ✅ completed
+   - Added `paper_positions` schema for ticker-level quantity, average cost, mark price, and realized/unrealized PnL state.
+   - Added long-only position-state refresh after simulated trade writes (including weighted-average cost updates across repeated buys and clean zero-quantity handling on sells).
+   - Added a compact `get_paper_portfolio_summary` helper to support future Telegram/dashboard read paths.
+
+15. **Post-review Step 21 state-sync hardening** ✅ completed
+   - Prior-day state bootstrap is date-correct for reruns/backfills by rebuilding from `paper_trades` strictly before `trade_date` (no dependency on current `paper_positions` state).
+   - `paper_positions` refresh now upserts by ticker, deletes stale tickers, and explicitly refreshes `updated_at` on each state write.
+
+16. **Post-review Step 21 test guardrail hardening** ✅ completed
+   - Added focused tests that assert strict `< trade_date` query filtering for prior-state reconstruction and stale ticker deletion behavior during `paper_positions` refresh.
+
 ## Active backlog (pending)
 
 ## P1 — Near-term hardening and review reminders

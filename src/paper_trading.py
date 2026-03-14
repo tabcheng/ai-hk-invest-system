@@ -271,6 +271,8 @@ def _fetch_prior_state(client: Client, trade_date: date) -> tuple[float | None, 
         starting_cash = float(snapshot_result.data[0]["cash"])
         realized_pnl = float(snapshot_result.data[0]["cumulative_realized_pnl"])
 
+    # Historical-correct bootstrap for reruns/backfills: only include trades
+    # strictly before the target trade_date.
     trade_rows = (
         client.table("paper_trades")
         .select("stock,action,quantity,price")
@@ -280,17 +282,13 @@ def _fetch_prior_state(client: Client, trade_date: date) -> tuple[float | None, 
         .execute()
     ).data or []
 
+    rebuilt = _build_position_state_from_trade_rows(trade_rows)
     positions: dict[str, Position] = {}
-    for row in trade_rows:
-        stock = row["stock"]
-        action = row["action"]
-        quantity = int(row["quantity"])
-        price = float(row["price"])
-
-        if action == "BUY":
-            positions[stock] = Position(quantity=quantity, average_entry_price=price)
-        elif action == "SELL":
-            positions.pop(stock, None)
+    for ticker, row in rebuilt.items():
+        qty = int(row["quantity"])
+        if qty <= 0:
+            continue
+        positions[ticker] = Position(quantity=qty, average_entry_price=float(row["avg_cost"]))
 
     return starting_cash, realized_pnl, positions
 
@@ -300,6 +298,137 @@ def _clear_existing_day_outputs(client: Client, trade_date: date) -> None:
     client.table("paper_trades").delete().eq("trade_date", day).execute()
     client.table("paper_events").delete().eq("event_date", day).execute()
     client.table("paper_daily_snapshots").delete().eq("snapshot_date", day).execute()
+
+
+def _build_position_state_from_trade_rows(trade_rows: list[dict]) -> dict[str, dict[str, float | int]]:
+    positions: dict[str, dict[str, float | int]] = {}
+
+    for row in trade_rows:
+        ticker = row["stock"]
+        action = row["action"]
+        quantity = int(row["quantity"])
+        price = float(row["price"])
+        realized_pnl = float(row.get("realized_pnl") or 0.0)
+
+        existing = positions.get(
+            ticker,
+            {
+                "ticker": ticker,
+                "quantity": 0,
+                "avg_cost": 0.0,
+                "last_price": 0.0,
+                "unrealized_pnl": 0.0,
+                "realized_pnl": 0.0,
+            },
+        )
+
+        current_qty = int(existing["quantity"])
+        current_avg = float(existing["avg_cost"])
+
+        if action == "BUY":
+            # Weighted-average entry price is intentionally explicit and long-only:
+            # every BUY grows the position and updates avg_cost by notional weighting.
+            new_qty = current_qty + quantity
+            if new_qty > 0:
+                existing["avg_cost"] = ((current_avg * current_qty) + (price * quantity)) / new_qty
+            existing["quantity"] = new_qty
+            existing["last_price"] = price
+
+        elif action == "SELL":
+            # Long-only guardrail: a SELL cannot create a short position. If a
+            # trade row is inconsistent (sell > holdings), clamp to zero.
+            new_qty = max(current_qty - quantity, 0)
+            existing["quantity"] = new_qty
+            existing["last_price"] = price
+            existing["realized_pnl"] = float(existing["realized_pnl"]) + realized_pnl
+            if new_qty == 0:
+                existing["avg_cost"] = 0.0
+
+        existing["unrealized_pnl"] = (
+            (float(existing["last_price"]) - float(existing["avg_cost"])) * int(existing["quantity"])
+        )
+        positions[ticker] = existing
+
+    return positions
+
+
+def _refresh_paper_positions_from_trades(client: Client, trade_date: date) -> list[dict]:
+    trade_rows = (
+        client.table("paper_trades")
+        .select("stock,action,quantity,price,realized_pnl,trade_date,id")
+        .lte("trade_date", trade_date.isoformat())
+        .order("trade_date")
+        .order("id")
+        .execute()
+    ).data or []
+
+    position_map = _build_position_state_from_trade_rows(trade_rows)
+    position_rows: list[dict] = []
+    for ticker in sorted(position_map.keys()):
+        row = position_map[ticker]
+        position_rows.append(
+            {
+                "ticker": ticker,
+                "quantity": int(row["quantity"]),
+                "avg_cost": float(row["avg_cost"]),
+                "last_price": float(row["last_price"]),
+                "unrealized_pnl": float(row["unrealized_pnl"]),
+                "realized_pnl": float(row["realized_pnl"]),
+                # Explicitly refresh updated_at on each write so read surfaces
+                # can reliably detect fresh position-state updates.
+                "updated_at": datetime.now(timezone.utc).isoformat(),
+            }
+        )
+
+    existing_rows = (
+        client.table("paper_positions")
+        .select("ticker")
+        .execute()
+    ).data or []
+    existing_tickers = {row["ticker"] for row in existing_rows}
+    next_tickers = {row["ticker"] for row in position_rows}
+
+    if position_rows:
+        client.table("paper_positions").upsert(
+            position_rows, on_conflict="ticker", ignore_duplicates=False
+        ).execute()
+
+    stale_tickers = sorted(existing_tickers - next_tickers)
+    if stale_tickers:
+        client.table("paper_positions").delete().in_("ticker", stale_tickers).execute()
+
+    return position_rows
+
+
+def get_paper_portfolio_summary(client: Client) -> dict:
+    positions = (
+        client.table("paper_positions")
+        .select("ticker,quantity,avg_cost,last_price,unrealized_pnl,realized_pnl")
+        .order("ticker")
+        .execute()
+    ).data or []
+
+    latest_snapshot = (
+        client.table("paper_daily_snapshots")
+        .select("snapshot_date,cash,total_equity,cumulative_realized_pnl,cumulative_unrealized_pnl")
+        .order("snapshot_date", desc=True)
+        .limit(1)
+        .execute()
+    ).data or []
+
+    cash = float(latest_snapshot[0]["cash"]) if latest_snapshot else 0.0
+    total_equity = float(latest_snapshot[0]["total_equity"]) if latest_snapshot else 0.0
+    market_value = sum(float(row["last_price"]) * int(row["quantity"]) for row in positions)
+
+    return {
+        "snapshot_date": latest_snapshot[0]["snapshot_date"] if latest_snapshot else None,
+        "cash": cash,
+        "market_value": market_value,
+        "total_equity": total_equity,
+        "open_positions": sum(1 for row in positions if int(row["quantity"]) > 0),
+        "positions": positions,
+    }
+
 
 def run_paper_trading_for_today(
     client: Client,
@@ -339,6 +468,13 @@ def run_paper_trading_for_today(
     client.table("paper_daily_snapshots").upsert(
         result["snapshot"], on_conflict="snapshot_date", ignore_duplicates=False
     ).execute()
+
+    try:
+        _refresh_paper_positions_from_trades(client, trade_date)
+    except Exception as e:
+        # Best-effort observability-only layer: position snapshots should not
+        # change the existing run success/failure semantics for paper trading.
+        print(f"paper_positions refresh failed (non-blocking): {e}")
 
     print(
         "Paper trading completed: "

@@ -76,8 +76,8 @@ Prioritization scale:
    - Added a compact `get_paper_portfolio_summary` helper to support future Telegram/dashboard read paths.
 
 15. **Post-review Step 21 state-sync hardening** ✅ completed
-   - Prior-day state bootstrap now reads from `paper_positions` first to preserve quantity/average-cost fidelity, with a safe fallback rebuild from `paper_trades` if backfill is unavailable.
-   - `paper_positions` refresh now upserts by ticker and deletes stale tickers, avoiding full-table delete/insert churn while preserving deterministic state output.
+   - Prior-day state bootstrap is date-correct for reruns/backfills by rebuilding from `paper_trades` strictly before `trade_date` (no dependency on current `paper_positions` state).
+   - `paper_positions` refresh now upserts by ticker, deletes stale tickers, and explicitly refreshes `updated_at` on each state write.
 
 ## Active backlog (pending)
 

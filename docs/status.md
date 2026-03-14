@@ -47,7 +47,7 @@
 - Step 20 completed: added paper-trading decision ledger v1 (`paper_trade_decisions`) with run-linked AI signal + human decision records, plus minimal validation-backed helper integration and focused tests.
 - Post-review Step 20 fix: extracted decision-ledger app integration into a dedicated best-effort helper, tightened payload validation guardrails for required text fields and numeric `signal_score`, and expanded app/ledger tests for metadata mapping and non-blocking ledger-write failures.
 - Step 21 completed: added paper portfolio position/PnL foundation with `paper_positions` schema, long-only position state refresh after simulated trades, weighted-average cost updates across repeated buys, quantity reduction on sells, and a reusable `get_paper_portfolio_summary` helper for downstream reporting surfaces.
-- Post-review Step 21 fix: prior-state reconstruction now prefers persisted `paper_positions` (with trade-history fallback for non-backfilled environments), and position refresh now uses ticker upsert + stale-row cleanup instead of full-table delete/insert churn.
+- Post-review Step 21 fix: prior-state reconstruction is now date-correct for reruns/backfills by rebuilding strictly from `paper_trades` rows before `trade_date`, and position refresh uses ticker upsert + stale-row cleanup while explicitly refreshing `updated_at` on each write.
 
 ## Current documentation posture
 - Core planning, status, architecture, and maintenance docs now form a traceable documentation stack for future Codex execution.

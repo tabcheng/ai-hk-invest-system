@@ -256,26 +256,6 @@ def simulate_day(
     }
 
 
-def _load_positions_from_paper_positions(client: Client) -> dict[str, Position]:
-    rows = (
-        client.table("paper_positions")
-        .select("ticker,quantity,avg_cost")
-        .execute()
-    ).data or []
-
-    positions: dict[str, Position] = {}
-    for row in rows:
-        quantity = int(row["quantity"])
-        if quantity <= 0:
-            continue
-        positions[row["ticker"]] = Position(
-            quantity=quantity,
-            average_entry_price=float(row["avg_cost"]),
-        )
-
-    return positions
-
-
 def _fetch_prior_state(client: Client, trade_date: date) -> tuple[float | None, float, dict[str, Position]]:
     snapshot_result = (
         client.table("paper_daily_snapshots")
@@ -291,12 +271,6 @@ def _fetch_prior_state(client: Client, trade_date: date) -> tuple[float | None, 
         starting_cash = float(snapshot_result.data[0]["cash"])
         realized_pnl = float(snapshot_result.data[0]["cumulative_realized_pnl"])
 
-    positions = _load_positions_from_paper_positions(client)
-    if positions:
-        return starting_cash, realized_pnl, positions
-
-    # Backward-compatible fallback for environments where `paper_positions`
-    # has not been backfilled yet.
     trade_rows = (
         client.table("paper_trades")
         .select("stock,action,quantity,price")
@@ -307,14 +281,14 @@ def _fetch_prior_state(client: Client, trade_date: date) -> tuple[float | None, 
     ).data or []
 
     rebuilt = _build_position_state_from_trade_rows(trade_rows)
-    fallback_positions: dict[str, Position] = {}
+    positions: dict[str, Position] = {}
     for ticker, row in rebuilt.items():
         qty = int(row["quantity"])
         if qty <= 0:
             continue
-        fallback_positions[ticker] = Position(quantity=qty, average_entry_price=float(row["avg_cost"]))
+        positions[ticker] = Position(quantity=qty, average_entry_price=float(row["avg_cost"]))
 
-    return starting_cash, realized_pnl, fallback_positions
+    return starting_cash, realized_pnl, positions
 
 
 def _clear_existing_day_outputs(client: Client, trade_date: date) -> None:
@@ -398,6 +372,9 @@ def _refresh_paper_positions_from_trades(client: Client, trade_date: date) -> li
                 "last_price": float(row["last_price"]),
                 "unrealized_pnl": float(row["unrealized_pnl"]),
                 "realized_pnl": float(row["realized_pnl"]),
+                # Explicitly refresh updated_at on each write so read surfaces
+                # can reliably detect fresh position-state updates.
+                "updated_at": datetime.now(timezone.utc).isoformat(),
             }
         )
 

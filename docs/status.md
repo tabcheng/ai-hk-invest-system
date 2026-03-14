@@ -57,6 +57,8 @@
 - Post-review Step 23 fix: successful BUY executions now emit `BUY_EXECUTED` paper events carrying normalized risk-evaluation payloads so allowed `info`/`warning` outcomes are persisted consistently alongside blocked/skip contexts.
 - Step 24 completed: added a dedicated paper-risk review summarizer for single-run read surfaces, driven by persisted `paper_events.risk_evaluation` payloads with compact grouped output and focused formatting/grouping tests.
 - Post-review Step 24 fix: run-level review summarization now normalizes persisted risk payloads (including unknown severities) before grouping/counting so read-surface outputs stay schema-stable.
+- Step 25 completed: exposed a minimal operator-facing paper-risk read path via a dedicated CLI module (`python -m src.paper_risk_review_cli --run-id <id>`) that reuses `get_paper_risk_review_for_run(...)` and emits compact deterministic JSON from persisted `paper_events` risk payloads.
+- Post-review Step 25 fix: CLI output now preserves a deterministic per-ticker mapping shape (instead of list-wrapped ticker objects), sorts review rows for stable ordering, and pins `run_id` to the requested CLI input for schema-stable operator exports.
 - Post-review Step 22 fix: existing-position BUY-skip path now runs explicit add-exposure risk evaluation for decision-support context (without changing non-additive paper-trading behavior), with added tests for add-limit blocking and skip-event risk context.
 - Post-review Step 22 fix #2: concentration guardrail valuation now uses mark-based position pricing (not average entry cost) so unrealized gain/loss is reflected in projected weights, with tests covering gain-allowed vs loss-blocked scenarios.
 - Post-review Step 22 fix #3: concentration projected-weight denominator now uses post-trade equity (`total_equity - BUY fee impact`) to avoid understated concentration under high-fee assumptions; added focused unit coverage.
@@ -71,4 +73,4 @@
 - Supabase access-control posture is now explicit in architecture docs: core runtime tables are backend-only by design, currently in `public`, with RLS hardening planned as staged single-table migrations.
 
 ## Next approved task
-- Define Step 25 follow-up to expose the Step 24 paper-risk review surface via a minimal operator-facing read path (CLI/report export) while preserving paper-only behavior and execution/runtime separation.
+- Define Step 26 follow-up to add lightweight operator guidance/runbook docs for using the paper-risk CLI output in routine review workflows (inputs, expected output interpretation, and failure triage).

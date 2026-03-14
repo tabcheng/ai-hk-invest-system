@@ -83,9 +83,14 @@ Prioritization scale:
    - Added focused tests that assert strict `< trade_date` query filtering for prior-state reconstruction and stale ticker deletion behavior during `paper_positions` refresh.
 
 
-18. **Post-review Step 22 concentration valuation fix** ✅ completed
+17. **Post-review Step 22 concentration valuation fix** ✅ completed
    - Corrected concentration-risk inputs to use mark-based valuation for existing positions and portfolio equity (unrealized PnL aware) instead of cost-basis valuation.
    - Added simulation tests proving gain/loss-sensitive concentration behavior remains correct under BUY guardrail blocking rules.
+
+
+18. **Post-review Step 22 fee-denominator concentration fix** ✅ completed
+   - Updated concentration projected-weight denominator to use post-trade equity (accounting for BUY fee impact) for tighter risk accuracy under non-trivial fee assumptions.
+   - Added pure risk-module test coverage locking this denominator behavior.
 
 ## Active backlog (pending)
 

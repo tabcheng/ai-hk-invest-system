@@ -95,3 +95,32 @@ def test_evaluate_paper_trade_risk_blocked_for_existing_position_add_limit():
         row["rule_name"] == "max_position_add_allocation_hkd" and row["severity"] == "blocked"
         for row in result["rule_results"]
     )
+
+
+def test_concentration_uses_post_trade_equity_after_buy_fee_impact():
+    result = evaluate_paper_trade_risk(
+        portfolio_summary={"cash": 95000.0, "total_equity": 100000.0, "daily_new_allocation_used_hkd": 0.0},
+        positions=[{"ticker": "0700.HK", "quantity": 50, "last_price": 100.0}],
+        candidate_trade={
+            "action": "BUY",
+            "stock": "0388.HK",
+            "quantity": 350,
+            "price": 100.0,
+            "gross_amount": 35000.0,
+            "total_cost": 37000.0,
+        },
+        config={
+            **BASE_CONFIG,
+            "max_single_position_weight": 0.3570,
+            "max_daily_new_allocation_hkd": 100000.0,
+            "cash_floor_hkd": 0.0,
+        },
+    )
+
+    # projected weight uses denominator (total_equity - fee_impact) = 98,000
+    # so 35,000/98,000 ~= 0.35714 and should breach the 0.3570 threshold.
+    assert result["allowed"] is False
+    assert any(
+        row["rule_name"] == "max_single_position_weight" and row["severity"] == "blocked"
+        for row in result["rule_results"]
+    )

@@ -69,7 +69,10 @@ def evaluate_paper_trade_risk(
 
     existing_position_value = position_value_map.get(stock, 0.0)
     projected_position_value = existing_position_value + (notional if action == "BUY" else 0.0)
-    projected_total_equity = max(total_equity, 0.0)
+    # Equity should reflect BUY friction cost (fees/slippage) so concentration
+    # checks use a realistic post-trade denominator.
+    fee_impact = max(total_cost - notional, 0.0) if action == "BUY" else 0.0
+    projected_total_equity = max(total_equity - fee_impact, 0.0)
     projected_weight = (
         projected_position_value / projected_total_equity
         if projected_total_equity > 0

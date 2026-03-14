@@ -53,6 +53,7 @@
 - Step 22 completed: added paper-trading risk guardrails v1 via a dedicated pure evaluation module and integrated BUY pre-trade checks for concentration, daily allocation, add exposure, and cash floor/sufficiency with focused allowed/warning/blocked test coverage.
 - Post-review Step 22 fix: existing-position BUY-skip path now runs explicit add-exposure risk evaluation for decision-support context (without changing non-additive paper-trading behavior), with added tests for add-limit blocking and skip-event risk context.
 - Post-review Step 22 fix #2: concentration guardrail valuation now uses mark-based position pricing (not average entry cost) so unrealized gain/loss is reflected in projected weights, with tests covering gain-allowed vs loss-blocked scenarios.
+- Post-review Step 22 fix #3: concentration projected-weight denominator now uses post-trade equity (`total_equity - BUY fee impact`) to avoid understated concentration under high-fee assumptions; added focused unit coverage.
 
 ## Current documentation posture
 - Core planning, status, architecture, and maintenance docs now form a traceable documentation stack for future Codex execution.

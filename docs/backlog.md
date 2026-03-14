@@ -82,6 +82,11 @@ Prioritization scale:
 16. **Post-review Step 21 test guardrail hardening** ✅ completed
    - Added focused tests that assert strict `< trade_date` query filtering for prior-state reconstruction and stale ticker deletion behavior during `paper_positions` refresh.
 
+
+18. **Post-review Step 22 concentration valuation fix** ✅ completed
+   - Corrected concentration-risk inputs to use mark-based valuation for existing positions and portfolio equity (unrealized PnL aware) instead of cost-basis valuation.
+   - Added simulation tests proving gain/loss-sensitive concentration behavior remains correct under BUY guardrail blocking rules.
+
 ## Active backlog (pending)
 
 ## P1 — Near-term hardening and review reminders

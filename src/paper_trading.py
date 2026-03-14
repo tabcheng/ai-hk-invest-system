@@ -66,6 +66,7 @@ def _evaluate_buy_trade_risk(
     *,
     cash: float,
     positions: dict[str, Position],
+    mark_prices: dict[str, float],
     trades: list[dict],
     stock: str,
     quantity: int,
@@ -75,17 +76,23 @@ def _evaluate_buy_trade_risk(
 ) -> dict:
     """Evaluate BUY risk guardrails using explicit, serializable plain-data inputs."""
     gross_amount = quantity * execution_price
+    # Concentration guardrail must use mark-based valuation so unrealized
+    # gains/losses are reflected in projected portfolio weights.
     position_rows_for_risk = [
         {
             "ticker": ticker,
             "quantity": position.quantity,
-            "last_price": position.average_entry_price,
+            "last_price": float(mark_prices.get(ticker, position.average_entry_price)),
         }
         for ticker, position in positions.items()
     ]
     portfolio_summary_for_risk = {
         "cash": cash,
-        "total_equity": cash + sum(p.quantity * p.average_entry_price for p in positions.values()),
+        "total_equity": cash
+        + sum(
+            p.quantity * float(mark_prices.get(ticker, p.average_entry_price))
+            for ticker, p in positions.items()
+        ),
         "daily_new_allocation_used_hkd": sum(
             float(trade["gross_amount"])
             for trade in trades
@@ -131,6 +138,7 @@ def simulate_day(
     events: list[dict] = []
 
     ordered_rows = _normalize_signal_rows(signal_rows)
+    mark_prices = _build_mark_prices(ordered_rows, positions)
 
     for row in ordered_rows:
         stock = row["stock"]
@@ -178,6 +186,7 @@ def simulate_day(
                 risk_evaluation = _evaluate_buy_trade_risk(
                     cash=cash,
                     positions=positions,
+                    mark_prices=mark_prices,
                     trades=trades,
                     stock=stock,
                     quantity=quantity,
@@ -225,6 +234,7 @@ def simulate_day(
             risk_evaluation = _evaluate_buy_trade_risk(
                 cash=cash,
                 positions=positions,
+                mark_prices=mark_prices,
                 trades=trades,
                 stock=stock,
                 quantity=quantity,

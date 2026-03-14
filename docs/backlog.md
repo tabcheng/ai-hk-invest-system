@@ -111,6 +111,7 @@ Prioritization scale:
    - Added a dedicated paper-risk review CLI (`python -m src.paper_risk_review_cli --run-id <id>`) that reuses `get_paper_risk_review_for_run(...)`.
    - CLI output is compact deterministic JSON with run totals and per-ticker review rows (`event_type`, `severity`, `summary_message`, `compact_rule_summary`).
    - Added focused tests for deterministic normalization and CLI output shape.
+   - Post-review fix: aligned CLI output shape to deterministic `per_ticker` mapping rows, added stable row sorting, and ensured exported `run_id` always mirrors the operator-requested run id.
 
 ## Active backlog (pending)
 

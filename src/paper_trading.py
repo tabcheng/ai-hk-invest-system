@@ -271,6 +271,8 @@ def _fetch_prior_state(client: Client, trade_date: date) -> tuple[float | None, 
         starting_cash = float(snapshot_result.data[0]["cash"])
         realized_pnl = float(snapshot_result.data[0]["cumulative_realized_pnl"])
 
+    # Historical-correct bootstrap for reruns/backfills: only include trades
+    # strictly before the target trade_date.
     trade_rows = (
         client.table("paper_trades")
         .select("stock,action,quantity,price")

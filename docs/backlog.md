@@ -79,6 +79,9 @@ Prioritization scale:
    - Prior-day state bootstrap is date-correct for reruns/backfills by rebuilding from `paper_trades` strictly before `trade_date` (no dependency on current `paper_positions` state).
    - `paper_positions` refresh now upserts by ticker, deletes stale tickers, and explicitly refreshes `updated_at` on each state write.
 
+16. **Post-review Step 21 test guardrail hardening** ✅ completed
+   - Added focused tests that assert strict `< trade_date` query filtering for prior-state reconstruction and stale ticker deletion behavior during `paper_positions` refresh.
+
 ## Active backlog (pending)
 
 ## P1 — Near-term hardening and review reminders

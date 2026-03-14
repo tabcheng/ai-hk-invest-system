@@ -297,3 +297,91 @@ def test_refresh_paper_positions_sets_updated_at_on_upsert_rows():
     assert isinstance(rows[0]["updated_at"], str)
     assert upsert_payload["rows"] is not None
     assert "updated_at" in upsert_payload["rows"][0]
+
+
+def test_fetch_prior_state_uses_strict_lt_trade_date_filter():
+    calls = []
+
+    class Result:
+        def __init__(self, data):
+            self.data = data
+
+    class Query:
+        def __init__(self, table_name):
+            self.table_name = table_name
+
+        def select(self, _columns):
+            return self
+
+        def lt(self, column, value):
+            calls.append((self.table_name, "lt", column, value))
+            return self
+
+        def order(self, *_args, **_kwargs):
+            return self
+
+        def limit(self, _n):
+            return self
+
+        def execute(self):
+            if self.table_name == "paper_daily_snapshots":
+                return Result([])
+            if self.table_name == "paper_trades":
+                return Result([])
+            raise AssertionError(f"unexpected table {self.table_name}")
+
+    class Client:
+        def table(self, table_name):
+            return Query(table_name)
+
+    _fetch_prior_state(Client(), date(2026, 3, 14))
+
+    assert ("paper_trades", "lt", "trade_date", "2026-03-14") in calls
+
+
+def test_refresh_paper_positions_deletes_stale_tickers():
+    delete_calls = []
+
+    class Result:
+        def __init__(self, data):
+            self.data = data
+
+    class Query:
+        def __init__(self, table_name):
+            self.table_name = table_name
+            self._delete_mode = False
+
+        def select(self, _columns):
+            return self
+
+        def lte(self, *_args):
+            return self
+
+        def order(self, *_args, **_kwargs):
+            return self
+
+        def upsert(self, *_args, **_kwargs):
+            return self
+
+        def delete(self):
+            self._delete_mode = True
+            return self
+
+        def in_(self, column, values):
+            delete_calls.append((column, values))
+            return self
+
+        def execute(self):
+            if self.table_name == "paper_trades":
+                return Result([])
+            if self.table_name == "paper_positions" and not self._delete_mode:
+                return Result([{"ticker": "0700.HK"}])
+            return Result([])
+
+    class Client:
+        def table(self, table_name):
+            return Query(table_name)
+
+    _refresh_paper_positions_from_trades(Client(), date(2026, 3, 14))
+
+    assert delete_calls == [("ticker", ["0700.HK"])]

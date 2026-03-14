@@ -256,6 +256,26 @@ def simulate_day(
     }
 
 
+def _load_positions_from_paper_positions(client: Client) -> dict[str, Position]:
+    rows = (
+        client.table("paper_positions")
+        .select("ticker,quantity,avg_cost")
+        .execute()
+    ).data or []
+
+    positions: dict[str, Position] = {}
+    for row in rows:
+        quantity = int(row["quantity"])
+        if quantity <= 0:
+            continue
+        positions[row["ticker"]] = Position(
+            quantity=quantity,
+            average_entry_price=float(row["avg_cost"]),
+        )
+
+    return positions
+
+
 def _fetch_prior_state(client: Client, trade_date: date) -> tuple[float | None, float, dict[str, Position]]:
     snapshot_result = (
         client.table("paper_daily_snapshots")
@@ -271,6 +291,12 @@ def _fetch_prior_state(client: Client, trade_date: date) -> tuple[float | None, 
         starting_cash = float(snapshot_result.data[0]["cash"])
         realized_pnl = float(snapshot_result.data[0]["cumulative_realized_pnl"])
 
+    positions = _load_positions_from_paper_positions(client)
+    if positions:
+        return starting_cash, realized_pnl, positions
+
+    # Backward-compatible fallback for environments where `paper_positions`
+    # has not been backfilled yet.
     trade_rows = (
         client.table("paper_trades")
         .select("stock,action,quantity,price")
@@ -280,19 +306,15 @@ def _fetch_prior_state(client: Client, trade_date: date) -> tuple[float | None, 
         .execute()
     ).data or []
 
-    positions: dict[str, Position] = {}
-    for row in trade_rows:
-        stock = row["stock"]
-        action = row["action"]
-        quantity = int(row["quantity"])
-        price = float(row["price"])
+    rebuilt = _build_position_state_from_trade_rows(trade_rows)
+    fallback_positions: dict[str, Position] = {}
+    for ticker, row in rebuilt.items():
+        qty = int(row["quantity"])
+        if qty <= 0:
+            continue
+        fallback_positions[ticker] = Position(quantity=qty, average_entry_price=float(row["avg_cost"]))
 
-        if action == "BUY":
-            positions[stock] = Position(quantity=quantity, average_entry_price=price)
-        elif action == "SELL":
-            positions.pop(stock, None)
-
-    return starting_cash, realized_pnl, positions
+    return starting_cash, realized_pnl, fallback_positions
 
 
 def _clear_existing_day_outputs(client: Client, trade_date: date) -> None:
@@ -379,9 +401,22 @@ def _refresh_paper_positions_from_trades(client: Client, trade_date: date) -> li
             }
         )
 
-    client.table("paper_positions").delete().neq("ticker", "").execute()
+    existing_rows = (
+        client.table("paper_positions")
+        .select("ticker")
+        .execute()
+    ).data or []
+    existing_tickers = {row["ticker"] for row in existing_rows}
+    next_tickers = {row["ticker"] for row in position_rows}
+
     if position_rows:
-        client.table("paper_positions").insert(position_rows).execute()
+        client.table("paper_positions").upsert(
+            position_rows, on_conflict="ticker", ignore_duplicates=False
+        ).execute()
+
+    stale_tickers = sorted(existing_tickers - next_tickers)
+    if stale_tickers:
+        client.table("paper_positions").delete().in_("ticker", stale_tickers).execute()
 
     return position_rows
 

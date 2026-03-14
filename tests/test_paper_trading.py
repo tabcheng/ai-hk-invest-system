@@ -6,6 +6,7 @@ from src.paper_trading import (
     Position,
     _build_position_state_from_trade_rows,
     _clear_existing_day_outputs,
+    _fetch_prior_state,
     get_paper_portfolio_summary,
     simulate_day,
 )
@@ -200,3 +201,87 @@ def test_paper_positions_migration_contains_required_columns():
         "updated_at timestamptz not null",
     ]:
         assert required_column in migration_sql
+
+
+def test_fetch_prior_state_prefers_paper_positions_when_available():
+    class Result:
+        def __init__(self, data):
+            self.data = data
+
+    class Query:
+        def __init__(self, table_name):
+            self.table_name = table_name
+
+        def select(self, _columns):
+            return self
+
+        def lt(self, *_args):
+            return self
+
+        def order(self, *_args, **_kwargs):
+            return self
+
+        def limit(self, _n):
+            return self
+
+        def execute(self):
+            if self.table_name == "paper_daily_snapshots":
+                return Result([{"snapshot_date": "2026-03-13", "cash": 90000.0, "cumulative_realized_pnl": 500.0}])
+            if self.table_name == "paper_positions":
+                return Result([{"ticker": "0700.HK", "quantity": 120, "avg_cost": 105.0}])
+            raise AssertionError("paper_trades fallback should not be queried when paper_positions is available")
+
+    class Client:
+        def table(self, table_name):
+            return Query(table_name)
+
+    cash, realized, positions = _fetch_prior_state(Client(), date(2026, 3, 14))
+
+    assert cash == 90000.0
+    assert realized == 500.0
+    assert positions["0700.HK"] == Position(quantity=120, average_entry_price=105.0)
+
+
+def test_fetch_prior_state_falls_back_to_trades_when_positions_empty():
+    class Result:
+        def __init__(self, data):
+            self.data = data
+
+    class Query:
+        def __init__(self, table_name):
+            self.table_name = table_name
+
+        def select(self, _columns):
+            return self
+
+        def lt(self, *_args):
+            return self
+
+        def order(self, *_args, **_kwargs):
+            return self
+
+        def limit(self, _n):
+            return self
+
+        def execute(self):
+            if self.table_name == "paper_daily_snapshots":
+                return Result([])
+            if self.table_name == "paper_positions":
+                return Result([])
+            if self.table_name == "paper_trades":
+                return Result([
+                    {"stock": "0700.HK", "action": "BUY", "quantity": 100, "price": 100.0},
+                    {"stock": "0700.HK", "action": "BUY", "quantity": 100, "price": 120.0},
+                    {"stock": "0700.HK", "action": "SELL", "quantity": 50, "price": 130.0},
+                ])
+            raise AssertionError(f"unexpected table {self.table_name}")
+
+    class Client:
+        def table(self, table_name):
+            return Query(table_name)
+
+    cash, realized, positions = _fetch_prior_state(Client(), date(2026, 3, 14))
+
+    assert cash is None
+    assert realized == 0.0
+    assert positions["0700.HK"] == Position(quantity=150, average_entry_price=110.0)

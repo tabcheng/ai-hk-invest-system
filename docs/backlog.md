@@ -75,6 +75,10 @@ Prioritization scale:
    - Added long-only position-state refresh after simulated trade writes (including weighted-average cost updates across repeated buys and clean zero-quantity handling on sells).
    - Added a compact `get_paper_portfolio_summary` helper to support future Telegram/dashboard read paths.
 
+15. **Post-review Step 21 state-sync hardening** ✅ completed
+   - Prior-day state bootstrap now reads from `paper_positions` first to preserve quantity/average-cost fidelity, with a safe fallback rebuild from `paper_trades` if backfill is unavailable.
+   - `paper_positions` refresh now upserts by ticker and deletes stale tickers, avoiding full-table delete/insert churn while preserving deterministic state output.
+
 ## Active backlog (pending)
 
 ## P1 — Near-term hardening and review reminders

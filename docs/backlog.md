@@ -106,6 +106,7 @@ Prioritization scale:
 - Plan future private-schema migration for backend-only operational tables after staged RLS rollout validation (scope, sequencing, and rollback path).
 
 ### Code/documentation follow-ups (repo changes)
+- Evolve paper-trade risk guardrails from v1 to v2 (config source, richer sell-path checks, and decision-ledger linkage) after observing paper-run outcomes.
 - Define a formal notification schema evolution policy for future daily-summary schema v2+ (change classes, compatibility expectations, rollout and rollback rules).
 - Normalize pytest/tooling conventions further (if still relevant) to keep local and CI invocation parity explicit.
 - Derive delivery telemetry schema version from the actual summary payload object at send-time (single source of truth), instead of relying on independently-provided context fields.

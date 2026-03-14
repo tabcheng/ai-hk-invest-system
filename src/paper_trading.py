@@ -6,6 +6,8 @@ from math import floor
 
 from supabase import Client
 
+from src.risk_manager import evaluate_paper_trade_risk
+
 
 @dataclass(frozen=True)
 class PaperTradingConfig:
@@ -14,6 +16,11 @@ class PaperTradingConfig:
     commission_rate: float = 0.001
     min_fee_hkd: float = 18.0
     max_open_positions: int = 5
+    # v1 risk guardrails for paper-trade evaluation and human decision support.
+    max_single_position_weight: float = 0.40
+    max_daily_new_allocation_hkd: float = 30000.0
+    max_position_add_allocation_hkd: float = 10000.0
+    cash_floor_hkd: float = 5000.0
 
 
 @dataclass
@@ -131,12 +138,54 @@ def simulate_day(
             gross_amount = quantity * execution_price
             fee = _calculate_fee(gross_amount, config)
             total_cost = gross_amount + fee
-            if total_cost > cash:
+
+            # Risk checks are explicit and pure so they can be reused for review
+            # surfaces and independently unit-tested.
+            position_rows_for_risk = [
+                {
+                    "ticker": ticker,
+                    "quantity": position.quantity,
+                    "last_price": position.average_entry_price,
+                }
+                for ticker, position in positions.items()
+            ]
+            portfolio_summary_for_risk = {
+                "cash": cash,
+                "total_equity": cash
+                + sum(p.quantity * p.average_entry_price for p in positions.values()),
+                "daily_new_allocation_used_hkd": sum(
+                    float(trade["gross_amount"])
+                    for trade in trades
+                    if trade["action"] == "BUY"
+                ),
+            }
+            candidate_for_risk = {
+                "action": "BUY",
+                "stock": stock,
+                "quantity": quantity,
+                "price": execution_price,
+                "gross_amount": gross_amount,
+                "total_cost": total_cost,
+            }
+            risk_config = {
+                "max_single_position_weight": config.max_single_position_weight,
+                "max_daily_new_allocation_hkd": config.max_daily_new_allocation_hkd,
+                "max_position_add_allocation_hkd": config.max_position_add_allocation_hkd,
+                "cash_floor_hkd": config.cash_floor_hkd,
+            }
+            risk_evaluation = evaluate_paper_trade_risk(
+                portfolio_summary=portfolio_summary_for_risk,
+                positions=position_rows_for_risk,
+                candidate_trade=candidate_for_risk,
+                config=risk_config,
+            )
+
+            if not risk_evaluation["allowed"]:
                 events.append(
                     {
                         **base_event,
-                        "event_type": "BUY_SKIPPED_INSUFFICIENT_CASH",
-                        "message": "BUY skipped because available cash is insufficient.",
+                        "event_type": "BUY_BLOCKED_RISK_GUARDRAIL",
+                        "message": risk_evaluation["summary_message"],
                     }
                 )
                 continue

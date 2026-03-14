@@ -5,6 +5,8 @@ from math import isfinite
 
 from supabase import Client
 
+from src.risk_manager import build_risk_evaluation_payload
+
 # Keep validation enums intentionally small and explicit so records are easy to
 # query consistently in analytics/review workflows.
 _ALLOWED_SIGNAL_ACTIONS = {"BUY", "SELL", "HOLD", "NO_DATA", "INSUFFICIENT_DATA", "ERROR"}
@@ -23,6 +25,7 @@ class DecisionRecord:
     human_decision: str
     decision_note: str
     paper_trade_status: str
+    risk_evaluation: dict | None = None
 
 
 def build_decision_record_payload(record: DecisionRecord) -> dict:
@@ -45,7 +48,7 @@ def build_decision_record_payload(record: DecisionRecord) -> dict:
         if not isinstance(record.signal_score, (float, int)) or not isfinite(float(record.signal_score)):
             raise ValueError("signal_score must be a finite number when provided")
 
-    return {
+    payload = {
         "run_id": record.run_id,
         "stock_id": record.stock_id,
         "stock_name": record.stock_name,
@@ -56,6 +59,12 @@ def build_decision_record_payload(record: DecisionRecord) -> dict:
         "decision_note": record.decision_note,
         "paper_trade_status": record.paper_trade_status,
     }
+
+    risk_payload = build_risk_evaluation_payload(record.risk_evaluation)
+    if risk_payload is not None:
+        payload["risk_evaluation"] = risk_payload
+
+    return payload
 
 
 def save_paper_trade_decision_record(client: Client, record: DecisionRecord) -> None:
@@ -86,4 +95,5 @@ def create_decision_record_from_signal(
         human_decision="PENDING",
         decision_note="Initial AI signal recorded; awaiting human review.",
         paper_trade_status="PENDING",
+        risk_evaluation=signal_data.get("risk_evaluation"),
     )

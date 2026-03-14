@@ -145,3 +145,60 @@ def test_decision_ledger_migration_contains_required_columns():
         "created_at timestamptz not null",
     ]:
         assert required_column in migration_sql
+
+
+def test_build_decision_record_payload_includes_risk_evaluation_when_present():
+    payload = build_decision_record_payload(
+        DecisionRecord(
+            run_id=1,
+            stock_id="0700.HK",
+            stock_name="Tencent Holdings",
+            signal_action="BUY",
+            signal_score=None,
+            rationale_summary="context",
+            human_decision="PENDING",
+            decision_note="Awaiting review",
+            paper_trade_status="PENDING",
+            risk_evaluation={
+                "allowed": True,
+                "severity": "info",
+                "summary_message": "ok",
+                "rule_results": [{"rule_name": "x", "severity": "info"}],
+                "noise": "ignored",
+            },
+        )
+    )
+
+    assert payload["risk_evaluation"] == {
+        "allowed": True,
+        "severity": "info",
+        "summary_message": "ok",
+        "rule_results": [{"rule_name": "x", "severity": "info"}],
+    }
+
+
+def test_create_decision_record_from_signal_maps_risk_evaluation_when_present():
+    record = create_decision_record_from_signal(
+        run_id=100,
+        stock_id="0005.HK",
+        stock_name="HSBC Holdings",
+        signal_data={
+            "signal": "BUY",
+            "reason": "breakout",
+            "risk_evaluation": {
+                "allowed": True,
+                "severity": "warning",
+                "summary_message": "budget warning",
+                "rule_results": [],
+            },
+        },
+    )
+
+    assert record.risk_evaluation is not None
+    assert record.risk_evaluation["severity"] == "warning"
+
+
+def test_decision_risk_observability_migration_adds_jsonb_column():
+    migration_sql = Path("db/migrations/20260314_add_risk_evaluation_observability_v1.sql").read_text()
+    assert "alter table if exists paper_trade_decisions" in migration_sql
+    assert "add column if not exists risk_evaluation jsonb" in migration_sql

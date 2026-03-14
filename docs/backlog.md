@@ -92,6 +92,11 @@ Prioritization scale:
    - Updated concentration projected-weight denominator to use post-trade equity (accounting for BUY fee impact) for tighter risk accuracy under non-trivial fee assumptions.
    - Added pure risk-module test coverage locking this denominator behavior.
 
+19. **Step 23: risk observability / decision-support record v1** ✅ completed
+   - Added a compact risk-evaluation payload helper for stable review schema (`allowed`, `severity`, `summary_message`, `rule_results`).
+   - Attached structured risk metadata to relevant paper-trading events (blocked BUY guardrail and already-holding add-check paths) to keep blocked/warning/info outcomes traceable.
+   - Extended decision-ledger payload/schema support for optional `risk_evaluation` JSON and added focused migration + serialization/integration tests.
+
 ## Active backlog (pending)
 
 ## P1 — Near-term hardening and review reminders

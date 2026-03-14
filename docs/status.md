@@ -51,6 +51,7 @@
 - Post-review Step 21 fix: prior-state reconstruction is now date-correct for reruns/backfills by rebuilding strictly from `paper_trades` rows before `trade_date`, and position refresh uses ticker upsert + stale-row cleanup while explicitly refreshing `updated_at` on each write.
 - Post-review Step 21 test hardening: added explicit assertions for strict `< trade_date` prior-state filtering and stale-ticker cleanup in position refresh to lock rerun correctness and deterministic state deletion behavior.
 - Step 22 completed: added paper-trading risk guardrails v1 via a dedicated pure evaluation module and integrated BUY pre-trade checks for concentration, daily allocation, add exposure, and cash floor/sufficiency with focused allowed/warning/blocked test coverage.
+- Post-review Step 22 fix: existing-position BUY-skip path now runs explicit add-exposure risk evaluation for decision-support context (without changing non-additive paper-trading behavior), with added tests for add-limit blocking and skip-event risk context.
 
 ## Current documentation posture
 - Core planning, status, architecture, and maintenance docs now form a traceable documentation stack for future Codex execution.

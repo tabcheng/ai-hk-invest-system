@@ -72,3 +72,26 @@ def test_evaluate_paper_trade_risk_blocked_for_cash_floor_and_insufficient_cash(
         row["rule_name"] == "cash_floor_and_sufficiency" and row["severity"] == "blocked"
         for row in result["rule_results"]
     )
+
+
+def test_evaluate_paper_trade_risk_blocked_for_existing_position_add_limit():
+    result = evaluate_paper_trade_risk(
+        portfolio_summary={"cash": 90000.0, "total_equity": 100000.0, "daily_new_allocation_used_hkd": 0.0},
+        positions=[{"ticker": "0700.HK", "quantity": 100, "last_price": 100.0}],
+        candidate_trade={
+            "action": "BUY",
+            "stock": "0700.HK",
+            "quantity": 200,
+            "price": 100.0,
+            "gross_amount": 20000.0,
+            "total_cost": 20020.0,
+        },
+        config=BASE_CONFIG,
+    )
+
+    assert result["allowed"] is False
+    assert result["severity"] == "blocked"
+    assert any(
+        row["rule_name"] == "max_position_add_allocation_hkd" and row["severity"] == "blocked"
+        for row in result["rule_results"]
+    )

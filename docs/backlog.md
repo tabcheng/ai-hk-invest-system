@@ -105,6 +105,7 @@ Prioritization scale:
    - Added a dedicated paper-trading run review helper that summarizes BUY risk outcomes from persisted `paper_events.risk_evaluation` payloads.
    - Added compact grouped reporting output: `total_blocked_buys`, `total_warning_buys`, `total_executed_buys`, and per-ticker review rows (`event_type`, `severity`, `summary_message`, compact rule summary).
    - Added focused tests for compact rule-summary formatting and run-level grouping/count behavior.
+   - Post-review fix: review summarizer now normalizes persisted risk payloads before aggregation and defaults unknown severities to `info`, with added focused test coverage.
 
 ## Active backlog (pending)
 

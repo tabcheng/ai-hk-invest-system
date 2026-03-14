@@ -6,7 +6,7 @@ from math import floor
 
 from supabase import Client
 
-from src.risk_manager import build_risk_evaluation_payload, evaluate_paper_trade_risk
+from src.risk_manager import SEVERITY_RANK, build_risk_evaluation_payload, evaluate_paper_trade_risk
 
 
 @dataclass(frozen=True)
@@ -630,11 +630,13 @@ def get_paper_risk_review_for_run(client: Client, run_id: int) -> dict:
         if not event_type.startswith("BUY_"):
             continue
 
-        risk_evaluation = row.get("risk_evaluation")
-        if not isinstance(risk_evaluation, dict):
+        risk_evaluation = build_risk_evaluation_payload(row.get("risk_evaluation"))
+        if risk_evaluation is None:
             continue
 
         severity = str(risk_evaluation.get("severity") or "info")
+        if severity not in SEVERITY_RANK:
+            severity = "info"
         summary_message = str(risk_evaluation.get("summary_message") or "")
 
         if severity == "blocked":

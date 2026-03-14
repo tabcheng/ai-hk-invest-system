@@ -605,3 +605,47 @@ def test_get_paper_risk_review_for_run_summarizes_buy_risk_outcomes():
     assert review["per_ticker"]["0005.HK"][0]["severity"] == "blocked"
     assert review["per_ticker"]["0005.HK"][0]["compact_rule_summary"] == "failed=cash_floor_and_sufficiency"
     assert review["per_ticker"]["0388.HK"][0]["compact_rule_summary"] == "warning=max_daily_new_allocation_hkd"
+
+
+def test_get_paper_risk_review_for_run_normalizes_unknown_severity_to_info():
+    class Result:
+        def __init__(self, data):
+            self.data = data
+
+    class Query:
+        def select(self, _columns):
+            return self
+
+        def eq(self, _column, _value):
+            return self
+
+        def order(self, _column):
+            return self
+
+        def execute(self):
+            return Result(
+                [
+                    {
+                        "id": 1,
+                        "stock": "0001.HK",
+                        "event_type": "BUY_EXECUTED",
+                        "risk_evaluation": {
+                            "allowed": True,
+                            "severity": "urgent",
+                            "summary_message": "risk payload with unknown severity",
+                            "rule_results": [],
+                        },
+                    }
+                ]
+            )
+
+    class Client:
+        def table(self, _table_name):
+            return Query()
+
+    review = get_paper_risk_review_for_run(Client(), run_id=201)
+
+    assert review["total_warning_buys"] == 0
+    assert review["total_blocked_buys"] == 0
+    assert review["total_executed_buys"] == 1
+    assert review["per_ticker"]["0001.HK"][0]["severity"] == "info"

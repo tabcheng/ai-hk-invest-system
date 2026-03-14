@@ -107,6 +107,11 @@ Prioritization scale:
    - Added focused tests for compact rule-summary formatting and run-level grouping/count behavior.
    - Post-review fix: review summarizer now normalizes persisted risk payloads before aggregation and defaults unknown severities to `info`, with added focused test coverage.
 
+22. **Step 25: operator-facing paper-risk read path** ✅ completed
+   - Added a dedicated paper-risk review CLI (`python -m src.paper_risk_review_cli --run-id <id>`) that reuses `get_paper_risk_review_for_run(...)`.
+   - CLI output is compact deterministic JSON with run totals and per-ticker review rows (`event_type`, `severity`, `summary_message`, `compact_rule_summary`).
+   - Added focused tests for deterministic normalization and CLI output shape.
+
 ## Active backlog (pending)
 
 ## P1 — Near-term hardening and review reminders
@@ -131,7 +136,6 @@ Prioritization scale:
 - Plan future private-schema migration for backend-only operational tables after staged RLS rollout validation (scope, sequencing, and rollback path).
 
 ### Code/documentation follow-ups (repo changes)
-- Expose the Step 24 paper-risk read surface through a minimal operator-facing path (CLI/report export) without coupling review rendering to execution flow.
 - Evolve paper-trade risk guardrails from v1 to v2 (config source, richer sell-path checks, and decision-ledger linkage) after observing paper-run outcomes.
 - Define a formal notification schema evolution policy for future daily-summary schema v2+ (change classes, compatibility expectations, rollout and rollback rules).
 - Normalize pytest/tooling conventions further (if still relevant) to keep local and CI invocation parity explicit.

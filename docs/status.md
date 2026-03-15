@@ -64,6 +64,7 @@
 - Post-review Step 22 fix #3: concentration projected-weight denominator now uses post-trade equity (`total_equity - BUY fee impact`) to avoid understated concentration under high-fee assumptions; added focused unit coverage.
 - Step 26 completed: added a beginner-friendly operator runbook for paper-risk review workflow with plain-language system overview, daily step-by-step usage, `run_id` explanation, CLI command usage (`python -m src.paper_risk_review_cli --run-id <id>`), output field interpretation (`total_blocked_buys`, `total_warning_buys`, `total_executed_buys`, `per_ticker`), and short troubleshooting guidance.
 - Step 27 completed: added a beginner-friendly operator Telegram notification troubleshooting runbook (`docs/operator-runbook-telegram-troubleshooting.md`) covering simple checks for run completion, notify-worthy output, env-var configuration, bot/chat reachability, and skip/dedup/failure classification, plus an escalation checklist to separate “no signal,” “no notification needed,” and “delivery failure.”
+- Step 28 completed: added a beginner-friendly paper-trading daily review summary helper (`get_paper_daily_review_summary_for_run(...)`) that composes persisted run risk/trade/snapshot data into a compact operator-facing shape (`run_id`, BUY totals, ticker activity count, notable plain-language items, and optional short portfolio-change summary).
 
 ## Current documentation posture
 - Core planning, status, architecture, and maintenance docs now form a traceable documentation stack for future Codex execution.
@@ -77,4 +78,4 @@
 - Operator documentation now also includes a beginner-friendly Telegram troubleshooting runbook for notification delivery triage and escalation.
 
 ## Next approved task
-- Define Step 28 follow-up to add an operator-facing quick-reference mapping from notification log outcomes (sent/skipped/deduped/failed) to recommended first action and escalation threshold examples.
+- Define Step 29 follow-up to add an operator-facing quick-reference mapping from notification log outcomes (sent/skipped/deduped/failed) to recommended first action and escalation threshold examples.

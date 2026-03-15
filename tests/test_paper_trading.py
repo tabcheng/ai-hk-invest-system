@@ -9,6 +9,7 @@ from src.paper_trading import (
     _clear_existing_day_outputs,
     _fetch_prior_state,
     _refresh_paper_positions_from_trades,
+    get_paper_daily_review_summary_for_run,
     get_paper_risk_review_for_run,
     get_paper_portfolio_summary,
     simulate_day,
@@ -649,3 +650,156 @@ def test_get_paper_risk_review_for_run_normalizes_unknown_severity_to_info():
     assert review["total_blocked_buys"] == 0
     assert review["total_executed_buys"] == 1
     assert review["per_ticker"]["0001.HK"][0]["severity"] == "info"
+
+
+def test_get_paper_daily_review_summary_for_run_returns_beginner_friendly_shape():
+    class Result:
+        def __init__(self, data):
+            self.data = data
+
+    class Query:
+        def __init__(self, table_name):
+            self.table_name = table_name
+            self._snapshot_lt_value = None
+
+        def select(self, _columns):
+            return self
+
+        def eq(self, _column, _value):
+            return self
+
+        def lt(self, _column, value):
+            self._snapshot_lt_value = value
+            return self
+
+        def order(self, *_args, **_kwargs):
+            return self
+
+        def limit(self, _n):
+            return self
+
+        def execute(self):
+            if self.table_name == "paper_events":
+                return Result(
+                    [
+                        {
+                            "id": 1,
+                            "stock": "0005.HK",
+                            "event_type": "BUY_BLOCKED_RISK_GUARDRAIL",
+                            "risk_evaluation": {
+                                "severity": "blocked",
+                                "summary_message": "blocked",
+                                "rule_results": [],
+                            },
+                        },
+                        {
+                            "id": 2,
+                            "stock": "0700.HK",
+                            "event_type": "BUY_EXECUTED",
+                            "risk_evaluation": {
+                                "severity": "warning",
+                                "summary_message": "warning",
+                                "rule_results": [],
+                            },
+                        },
+                    ]
+                )
+            if self.table_name == "paper_trades":
+                return Result(
+                    [
+                        {"stock": "0700.HK", "action": "BUY"},
+                        {"stock": "0388.HK", "action": "SELL"},
+                    ]
+                )
+            if self.table_name == "paper_daily_snapshots" and self._snapshot_lt_value is None:
+                return Result(
+                    [
+                        {
+                            "snapshot_date": "2026-03-15",
+                            "cash": 90000.0,
+                            "total_equity": 101000.0,
+                            "open_positions": 2,
+                        }
+                    ]
+                )
+            if self.table_name == "paper_daily_snapshots" and self._snapshot_lt_value is not None:
+                return Result([{"snapshot_date": "2026-03-14", "cash": 95000.0, "total_equity": 100000.0}])
+            return Result([])
+
+    class Client:
+        def table(self, table_name):
+            return Query(table_name)
+
+    summary = get_paper_daily_review_summary_for_run(Client(), run_id=300)
+
+    assert summary["run_id"] == 300
+    assert summary["total_executed_buys"] == 1
+    assert summary["total_blocked_buys"] == 1
+    assert summary["total_warning_buys"] == 1
+    assert summary["number_of_tickers_with_activity"] == 3
+    assert summary["notable_items"] == [
+        "1 BUY signal(s) were blocked by risk guardrails.",
+        "1 BUY execution(s) had warning-level risk notes.",
+        "1 SELL trade(s) were executed.",
+    ]
+    assert summary["portfolio_change_summary"] == (
+        "Portfolio vs previous snapshot: equity +1000.00 HKD, cash -5000.00 HKD, open positions now 2."
+    )
+
+
+def test_get_paper_daily_review_summary_for_run_handles_missing_snapshot_and_no_executed_buys():
+    class Result:
+        def __init__(self, data):
+            self.data = data
+
+    class Query:
+        def __init__(self, table_name):
+            self.table_name = table_name
+
+        def select(self, _columns):
+            return self
+
+        def eq(self, _column, _value):
+            return self
+
+        def lt(self, _column, _value):
+            return self
+
+        def order(self, *_args, **_kwargs):
+            return self
+
+        def limit(self, _n):
+            return self
+
+        def execute(self):
+            if self.table_name == "paper_events":
+                return Result(
+                    [
+                        {
+                            "id": 1,
+                            "stock": "1299.HK",
+                            "event_type": "BUY_BLOCKED_RISK_GUARDRAIL",
+                            "risk_evaluation": {
+                                "severity": "blocked",
+                                "summary_message": "blocked",
+                                "rule_results": [],
+                            },
+                        }
+                    ]
+                )
+            return Result([])
+
+    class Client:
+        def table(self, table_name):
+            return Query(table_name)
+
+    summary = get_paper_daily_review_summary_for_run(Client(), run_id=301)
+
+    assert summary["run_id"] == 301
+    assert summary["total_executed_buys"] == 0
+    assert summary["number_of_tickers_with_activity"] == 1
+    assert summary["notable_items"] == [
+        "1 BUY signal(s) were blocked by risk guardrails.",
+        "No BUY trades were executed in this run.",
+    ]
+    assert summary["portfolio_change_summary"] is None

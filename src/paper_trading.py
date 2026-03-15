@@ -665,6 +665,97 @@ def get_paper_risk_review_for_run(client: Client, run_id: int) -> dict:
     }
 
 
+def get_paper_daily_review_summary_for_run(client: Client, run_id: int) -> dict:
+    """Return a compact beginner-friendly daily review for one paper-trading run.
+
+    The output intentionally uses short plain-language fields so operators can
+    understand one run quickly without reading raw event JSON.
+    """
+    risk_review = get_paper_risk_review_for_run(client, run_id)
+
+    trade_rows = (
+        client.table("paper_trades")
+        .select("stock,action")
+        .eq("run_id", run_id)
+        .order("id")
+        .execute()
+    ).data or []
+
+    snapshot_rows = (
+        client.table("paper_daily_snapshots")
+        .select("snapshot_date,cash,total_equity,open_positions")
+        .eq("run_id", run_id)
+        .order("id")
+        .limit(1)
+        .execute()
+    ).data or []
+
+    snapshot = snapshot_rows[0] if snapshot_rows else None
+    previous_snapshot_rows: list[dict] = []
+    if snapshot and snapshot.get("snapshot_date"):
+        previous_snapshot_rows = (
+            client.table("paper_daily_snapshots")
+            .select("snapshot_date,cash,total_equity")
+            .lt("snapshot_date", str(snapshot["snapshot_date"]))
+            .order("snapshot_date", desc=True)
+            .limit(1)
+            .execute()
+        ).data or []
+
+    tickers_with_activity = {str(ticker) for ticker in risk_review["per_ticker"].keys()}
+    for row in trade_rows:
+        stock = row.get("stock")
+        if stock is not None:
+            tickers_with_activity.add(str(stock))
+
+    sell_count = sum(1 for row in trade_rows if str(row.get("action") or "") == "SELL")
+
+    notable_items: list[str] = []
+    blocked_count = int(risk_review["total_blocked_buys"])
+    warning_count = int(risk_review["total_warning_buys"])
+    executed_count = int(risk_review["total_executed_buys"])
+    if blocked_count > 0:
+        notable_items.append(f"{blocked_count} BUY signal(s) were blocked by risk guardrails.")
+    if warning_count > 0:
+        notable_items.append(f"{warning_count} BUY execution(s) had warning-level risk notes.")
+    if executed_count == 0:
+        notable_items.append("No BUY trades were executed in this run.")
+    if sell_count > 0:
+        notable_items.append(f"{sell_count} SELL trade(s) were executed.")
+
+    portfolio_change_summary = None
+    if snapshot:
+        equity_now = float(snapshot.get("total_equity") or 0.0)
+        cash_now = float(snapshot.get("cash") or 0.0)
+        open_positions_now = int(snapshot.get("open_positions") or 0)
+
+        if previous_snapshot_rows:
+            prev = previous_snapshot_rows[0]
+            equity_change = equity_now - float(prev.get("total_equity") or 0.0)
+            cash_change = cash_now - float(prev.get("cash") or 0.0)
+            portfolio_change_summary = (
+                "Portfolio vs previous snapshot: "
+                f"equity {equity_change:+.2f} HKD, cash {cash_change:+.2f} HKD, "
+                f"open positions now {open_positions_now}."
+            )
+        else:
+            portfolio_change_summary = (
+                "Portfolio snapshot recorded: "
+                f"total equity {equity_now:.2f} HKD, cash {cash_now:.2f} HKD, "
+                f"open positions {open_positions_now}."
+            )
+
+    return {
+        "run_id": run_id,
+        "total_executed_buys": executed_count,
+        "total_blocked_buys": blocked_count,
+        "total_warning_buys": warning_count,
+        "number_of_tickers_with_activity": len(tickers_with_activity),
+        "notable_items": notable_items,
+        "portfolio_change_summary": portfolio_change_summary,
+    }
+
+
 def run_paper_trading_for_today(
     client: Client,
     run_id: int | None,

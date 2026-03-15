@@ -118,6 +118,15 @@ Prioritization scale:
    - Documented `run_id` basics, exact CLI usage (`python -m src.paper_risk_review_cli --run-id <id>`), output field interpretation (`total_blocked_buys`, `total_warning_buys`, `total_executed_buys`, `per_ticker`), and short troubleshooting steps.
    - Preserved runtime behavior (documentation-only change).
 
+
+24. **Step 27: beginner-friendly Telegram notification troubleshooting runbook v1** ✅ completed
+   - Added `docs/operator-runbook-telegram-troubleshooting.md` for non-technical operators.
+   - Documented plain-language checks for run completion, notify-worthy output, Telegram env vars, bot/chat reachability, and skipped/deduped/failed outcomes.
+   - Added an escalation checklist to distinguish “no signal”, “no notification needed”, and “delivery failure”.
+   - Preserved runtime behavior (documentation-only change).
+
+
+
 ## Active backlog (pending)
 
 ## P1 — Near-term hardening and review reminders
@@ -129,7 +138,6 @@ Prioritization scale:
 
 ### Additional hardening
 - Expand tests for NO_DATA / INSUFFICIENT_DATA propagation, run finalization, DB failure paths, and notification failure pathways.
-- Add runbook entry for Telegram environment misconfiguration triage.
 
 ### Manual platform actions (cannot be enforced in repo code)
 - Configure GitHub branch protection for `main`: require pull request + review, dismiss stale approvals, require passing `tests` status check, and restrict force-push/delete.

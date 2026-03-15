@@ -1,7 +1,7 @@
 # Project Status
 
 ## Last reviewed date
-2026-03-14
+2026-03-15
 
 ## Current production behavior
 - Runtime behavior remains the existing MVP script in `main.py` (Railway entry point), now as a thin entry into modularized runtime code under `src/`.
@@ -63,6 +63,7 @@
 - Post-review Step 22 fix #2: concentration guardrail valuation now uses mark-based position pricing (not average entry cost) so unrealized gain/loss is reflected in projected weights, with tests covering gain-allowed vs loss-blocked scenarios.
 - Post-review Step 22 fix #3: concentration projected-weight denominator now uses post-trade equity (`total_equity - BUY fee impact`) to avoid understated concentration under high-fee assumptions; added focused unit coverage.
 - Step 26 completed: added a beginner-friendly operator runbook for paper-risk review workflow with plain-language system overview, daily step-by-step usage, `run_id` explanation, CLI command usage (`python -m src.paper_risk_review_cli --run-id <id>`), output field interpretation (`total_blocked_buys`, `total_warning_buys`, `total_executed_buys`, `per_ticker`), and short troubleshooting guidance.
+- Step 27 completed: added a beginner-friendly operator Telegram notification troubleshooting runbook (`docs/operator-runbook-telegram-troubleshooting.md`) covering simple checks for run completion, notify-worthy output, env-var configuration, bot/chat reachability, and skip/dedup/failure classification, plus an escalation checklist to separate “no signal,” “no notification needed,” and “delivery failure.”
 
 ## Current documentation posture
 - Core planning, status, architecture, and maintenance docs now form a traceable documentation stack for future Codex execution.
@@ -73,6 +74,7 @@
 - Platform-governance baseline is now documented for GitHub/Railway/Supabase with explicit manual verification ownership separated from code changes.
 - Supabase access-control posture is now explicit in architecture docs: core runtime tables are backend-only by design, currently in `public`, with RLS hardening planned as staged single-table migrations.
 - Operator documentation now includes a beginner-friendly runbook for routine paper-risk CLI review and basic failure triage.
+- Operator documentation now also includes a beginner-friendly Telegram troubleshooting runbook for notification delivery triage and escalation.
 
 ## Next approved task
-- Define Step 27 follow-up to add a beginner-friendly Telegram notification troubleshooting runbook (environment checks, common failure modes, and escalation checklist) aligned with current best-effort delivery posture.
+- Define Step 28 follow-up to add an operator-facing quick-reference mapping from notification log outcomes (sent/skipped/deduped/failed) to recommended first action and escalation threshold examples.

@@ -113,6 +113,11 @@ Prioritization scale:
    - Added focused tests for deterministic normalization and CLI output shape.
    - Post-review fix: aligned CLI output shape to deterministic `per_ticker` mapping rows, added stable row sorting, and ensured exported `run_id` always mirrors the operator-requested run id.
 
+23. **Step 26: beginner-friendly operator runbook for paper-risk workflow** ✅ completed
+   - Added `docs/operator-runbook-paper-risk-review.md` with plain-language workflow guidance for non-technical operators.
+   - Documented `run_id` basics, exact CLI usage (`python -m src.paper_risk_review_cli --run-id <id>`), output field interpretation (`total_blocked_buys`, `total_warning_buys`, `total_executed_buys`, `per_ticker`), and short troubleshooting steps.
+   - Preserved runtime behavior (documentation-only change).
+
 ## Active backlog (pending)
 
 ## P1 — Near-term hardening and review reminders

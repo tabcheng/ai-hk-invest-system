@@ -7,7 +7,7 @@ Prioritization:
 
 ## Active backlog (pending)
 
-### P1 — Step 33 candidates (small, reviewable, verifiable)
+### P1 — Step 34 candidates (small, reviewable, verifiable)
 1. **Platform hardening follow-up**
    - Close/verify manual controls documented in Step 19/19B (GitHub branch protection, Railway worker posture, Supabase backup/RLS checklist).
    - Keep repo changes documentation-first unless explicit runtime/platform mutation is approved.
@@ -24,8 +24,7 @@ Prioritization:
    - Continue status/backlog/plan alignment after each completed step.
    - Keep unknowns explicitly marked as `unknown / needs confirmation`.
 
-### P1 — Step 34 candidates (small, reviewable, verifiable)
-1. **Telegram command registration follow-up (optional, scoped)**
+5. **Telegram command registration follow-up (optional, scoped)**
    - Evaluate whether to add explicit bot-command registration (for example via Telegram `setMyCommands`) for in-app discoverability.
    - Keep scope small; do not couple command registry work with strategy/paper-trading logic.
 

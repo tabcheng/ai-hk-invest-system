@@ -78,7 +78,8 @@ def test_handle_runs_command_returns_usage_on_malformed_tokens(monkeypatch):
     assert "Unsupported command" in response_numeric_without_suffix
 
 
-def test_handle_help_and_h_alias_return_same_message():
+def test_handle_help_and_h_alias_return_same_message(monkeypatch):
+    monkeypatch.setenv("TELEGRAM_CHAT_ID", "chat-1")
     help_response = handle_telegram_operator_command(object(), _build_update("/help"))
     alias_response = handle_telegram_operator_command(object(), _build_update("/h"))
     assert help_response == alias_response == build_help_command_message()
@@ -94,3 +95,9 @@ def test_help_message_contains_guardrails_and_command_list():
     assert "/runs <days>d" in message
     assert "/help" in message
     assert "/h" in message
+
+
+def test_handle_help_command_rejects_unauthorized_chat(monkeypatch):
+    monkeypatch.setenv("TELEGRAM_CHAT_ID", "chat-allowed")
+    response = handle_telegram_operator_command(object(), _build_update("/help", chat_id="chat-other"))
+    assert "Unauthorized" in response

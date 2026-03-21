@@ -120,14 +120,16 @@ def handle_telegram_operator_command(client: Any, update: dict[str, Any]) -> str
     if not text.startswith("/"):
         return None
 
-    if _HELP_COMMAND_PATTERN.match(text):
-        return build_help_command_message()
-
-    if not text.lower().startswith("/runs"):
+    is_help_command = bool(_HELP_COMMAND_PATTERN.match(text))
+    is_runs_command = text.lower().startswith("/runs")
+    if not (is_help_command or is_runs_command):
         return None
 
     if not _is_operator_authorized(update):
         return "Unauthorized: this command is restricted to the configured operator chat/user."
+
+    if is_help_command:
+        return build_help_command_message()
 
     try:
         days = _parse_runs_days(text)

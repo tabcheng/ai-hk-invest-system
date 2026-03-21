@@ -11,6 +11,7 @@
 - Decision record separation is implemented via `paper_trade_decisions` (AI signal vs human decision state).
 - Telegram delivery remains best-effort/non-blocking with deterministic summary formatting and run-date dedup tracking.
 - Telegram daily summary readability is improved with explicit per-stock sections (`stock`, `signal/action`, `key_reason/indicator`) and run-level `risk_note`, while keeping existing dedup identity keys unchanged.
+- Operator command read-surface now supports Telegram `/runs` query for recent run ids (default last 5 days) sourced from persistent `runs` table metadata (no log-file scraping).
 - No autonomous live-money execution is enabled; human remains final decision-maker.
 - Deploy/config stability note: Railway/Railpack build previously failed when defaulting to Python `3.13.12` (mise install failure path); repository now pins Python to `3.12.9` via `.python-version` as a deploy stability guardrail (no strategy/paper-trading/signal-flow logic change).
 
@@ -18,9 +19,9 @@
 - Milestone 1 (Documentation Foundation): completed.
 - Milestone 2 (Signal framework + modularization/test baseline): completed.
 - Milestone 3 (Paper-trading v1): completed.
-- Milestone 4 (Controlled production hardening): in-progress, with Steps 19–31 completed and follow-up hardening still pending.
+- Milestone 4 (Controlled production hardening): in-progress, with Steps 19–32 completed and follow-up hardening still pending.
 
-## Step 21–31 status ledger (Step 31 Telegram readability improvement)
+## Step 21–32 status ledger (Step 32 Telegram operator run-id command)
 
 | Step | Goal | Primary deliverable(s) | Merge / acceptance status |
 |---|---|---|---|
@@ -35,10 +36,11 @@
 | 29 | Add Telegram outcome quick reference | `docs/operator-quick-reference-telegram-outcomes.md` (+ doc tightening follow-up) | **Repo evidence:** completed. **Manual acceptance:** unknown / needs confirmation. |
 | 30 | Docs maintenance + project state alignment | Refreshed `docs/status.md`, `docs/backlog.md`, `docs/project-implementation-plan.md`, and runtime/data-flow alignment in architecture docs | **Repo evidence:** completed in this branch. **Merge:** pending PR merge. **Manual acceptance:** unknown / needs confirmation. |
 | 31 | Telegram message readability improvement | Telegram summary formatting now separates `stock` / `signal/action` / `key_reason/indicator`, keeps `stock_name + stock_id`, adds explicit run-level `risk_note`, and adds focused message-format tests | **Repo evidence:** completed in this branch. **Merge:** pending PR merge. **Manual acceptance:** unknown / needs confirmation. |
+| 32 | Telegram operator run-id lookup command | Added operator `/runs` command handler (default 5-day window, optional `/runs <days>d`) backed by durable `runs` table query with chat/user guardrail and focused tests | **Repo evidence:** completed in this branch. **Merge:** pending PR merge. **Manual acceptance:** unknown / needs confirmation. |
 
 ## Known unknowns / needs confirmation
 - Exact PR numbers and explicit human acceptance timestamps for Steps 21–29 are not derivable from repository files alone and need manual confirmation.
 - Production platform settings (GitHub/Railway/Supabase) still require periodic manual verification outside repo state.
 
 ## Next approved task candidate
-- Step 32 candidate: platform/documentation hardening follow-up focused on remaining active backlog items (dedup semantics docs validation, platform hardening checklist closure, and paper-trading analytics follow-up scoping) without strategy/runtime behavior changes unless explicitly approved.
+- Step 33 candidate: platform/documentation hardening follow-up focused on remaining active backlog items (dedup semantics docs validation, platform hardening checklist closure, and paper-trading analytics follow-up scoping) without strategy/runtime behavior changes unless explicitly approved.

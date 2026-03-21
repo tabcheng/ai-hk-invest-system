@@ -7,7 +7,7 @@ Prioritization:
 
 ## Active backlog (pending)
 
-### P1 — Step 32 candidates (small, reviewable, verifiable)
+### P1 — Step 33 candidates (small, reviewable, verifiable)
 1. **Platform hardening follow-up**
    - Close/verify manual controls documented in Step 19/19B (GitHub branch protection, Railway worker posture, Supabase backup/RLS checklist).
    - Keep repo changes documentation-first unless explicit runtime/platform mutation is approved.
@@ -56,6 +56,7 @@ Prioritization:
 - Step 28 daily review summary helper (+ completeness fix).
 - Step 29 Telegram outcomes quick reference (+ wording tightening).
 - Step 31 Telegram message readability improvement (`stock` / `signal/action` / `key_reason/indicator` / `risk_note`, with stock name + stock id clarity and dedup identity unchanged).
+- Step 32 Telegram operator run-id lookup command (`/runs` default 5 days, optional day parameter) backed by persistent `runs` metadata with operator access guardrail.
 
 ## Notes
 - This backlog is a planning artifact, not proof of merge approval. For merge/acceptance truth, cross-check `docs/status.md` and human PR history.

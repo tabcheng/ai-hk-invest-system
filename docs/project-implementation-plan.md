@@ -1,92 +1,55 @@
 # Project Implementation Plan (System-of-Record View)
 
 ## Purpose
-This document is the maintainable implementation-plan layer that bridges:
-- strategic intent (`docs/spec.md`, `docs/strategy-spec.md`),
-- execution truth (`docs/status.md`), and
-- queued work (`docs/backlog.md`).
+This document aligns:
+- strategic intent (`docs/spec.md`),
+- execution truth (`docs/status.md`),
+- pending/completed work (`docs/backlog.md`).
 
-It clarifies what is already complete, what is active, and what remains backlog-only.
+It is intentionally concise and optimized for small-step execution.
 
-## Completed implementation steps (1–12)
+## Completed implementation steps (aligned)
 
-### Step 1 — Documentation foundation ✅
-Established core operating docs and workflow discipline (`AGENTS`, spec/plans/status/implement alignment).
+### Steps 1–12 ✅
+Documentation foundation, signal framework, dedup/run observability baseline, runtime modularization, regression tests, and Telegram MVP + initial hardening are complete.
 
-### Step 2 — Signal framework definition ✅
-Documented strategy semantics and output classes for disciplined human decision support.
+### Steps 13–20 ✅
+Traceability hardening, structured observability telemetry, CI test gating, notification schema guardrails, platform baseline docs, Supabase access-model clarification, and decision ledger v1 are complete.
 
-### Step 3 — Signal persistence dedup hardening ✅
-Implemented idempotent signal persistence with `(date, stock)` uniqueness protection and rerun-safe migration logic.
+### Steps 21–29 ✅ (repo-confirmed; acceptance may need human confirmation)
+- Step 21: paper position/PnL foundation.
+- Step 22: paper risk guardrails v1 (+ follow-up fixes).
+- Step 23: risk observability / decision-support record v1.
+- Step 24: paper-risk review summarizer.
+- Step 25: operator-facing paper-risk CLI.
+- Step 26: beginner paper-risk runbook.
+- Step 27: beginner Telegram troubleshooting runbook.
+- Step 28: beginner daily review summary helper.
+- Step 29: Telegram outcomes quick-reference.
 
-### Step 4 — Run lifecycle observability baseline ✅
-Added `runs` lifecycle tracking (`RUNNING` to terminal status) with core counters and error summary fields.
+## Current implementation state
+- Runtime behavior is stable and still human-in-the-loop.
+- Paper-trading + decision record + risk review surfaces exist in baseline v1 form.
+- Operator docs are present for core paper-risk and Telegram troubleshooting tasks.
+- Platform hardening execution still includes manual checklist items outside repo code.
 
-### Step 5 — Observability robustness fixes ✅
-Improved failed-run counters for early aborts and made run tracking best-effort to avoid interrupting core signal generation.
+## Next small-step candidates (do not over-plan)
 
-### Step 6 — Runtime modularization ✅
-Refactored monolithic flow into focused runtime modules under `src/` while preserving Railway entrypoint behavior.
+### Step 31 candidate set (choose one small slice first)
+1. **Docs + operations closure slice (recommended first)**
+   - Reconcile open manual platform checklist items with explicit `done/unknown` markers.
+   - Acceptance target: no contradiction across `status/backlog/plan`.
 
-### Step 7 — Minimal regression test layer ✅
-Added focused pytest coverage for signal logic and payload behavior; expanded for preserved `HOLD` and `NO_DATA` semantics.
+2. **Notification clarity + dedup semantics slice**
+   - Tighten wording/examples for `sent/skipped/deduped/failed` and stock label clarity (`stock_name + stock_id`).
+   - Acceptance target: operator-facing docs read consistently with runtime behavior.
 
-### Step 8 — Product-definition docs for strategy + paper trading ✅
-Added and refined `docs/strategy-spec.md`, `docs/paper-trading-v1.md`, and backlog documentation for implementation readiness.
+3. **Paper-trading analytics follow-up scoping slice**
+   - Define one minimal analytics increment with data dependencies and validation plan (no broad implementation yet).
+   - Acceptance target: reviewable Step 32-ready spec.
 
-### Step 9 — Paper-trading v1 implementation ✅
-Implemented deterministic paper-trading engine and persistence tables (`paper_trades`, `paper_daily_snapshots`, `paper_events`).
-
-### Step 10 — Paper-trading execution hardening ✅
-Added rerun-safe daily replacement writes, execution gating on full ticker success, and app-level tests for post-processing failure behavior.
-
-### Step 11 — Telegram summary delivery MVP + hardening ✅
-Added best-effort end-of-run Telegram summaries, deterministic run-date handling, and startup-failure notification attempt.
-
-
-### Step 12 — Telegram notification hardening + docs maintenance review ✅
-Upgraded summary readability (stock name + id, deterministic HTML), added run-date-first equity selection with fallback labels, and introduced minimal cross-run daily-summary dedup persistence while keeping delivery best-effort/non-blocking.
-
-
-### Step 19 — Operational baseline hardening (GitHub/Railway/Supabase) ✅
-Documented platform-level baseline controls and manual verification requirements for:
-- GitHub branch protection + required `tests` check + Dependabot + secret scanning/push protection.
-- Railway worker healthcheck posture (no HTTP `/health` endpoint required for current script runtime), plus env-var hygiene and logging expectations.
-- Supabase backup/PITR, RLS exposure review, free-plan pause risk, and production safety expectations for run/telemetry records.
-
-
-### Step 19B — Supabase access model clarification + safe RLS hardening plan ✅
-Documented a system table inventory and current exposure posture for `runs`, `signals`, `paper_trades`, `paper_daily_snapshots`, `paper_events`, and `notification_logs`.
-- Clarified current runtime model as backend-only data access (no anon/client table access required by repository runtime).
-- Captured current-risk posture: core runtime tables remain in `public` and manual review indicates RLS is not enabled.
-- Defined a low-risk staged plan: start with a single-table migration (`public.runs`) for RLS enablement + explicit backend policy + verification/rollback notes, then expand table-by-table.
-- Deferred broad/private-schema migration to follow-up planning to avoid production-breaking one-shot changes.
-
-## Current state
-- Production behavior is stable with modular runtime architecture and deterministic paper-trading pipeline.
-- Signal generation remains unchanged in strategic semantics.
-- Observability and notification pathways are present but still have known hardening opportunities (trace linkage, structured failure summaries).
-- Documentation set now includes architecture and maintenance layers to improve continuity across future Codex tasks.
-
-## Active roadmap (near-term execution)
-These are expected next milestones for active implementation sequencing:
-1. **Traceability milestone:** unify `run_id` linkage across run metadata, signals, and paper-trading outputs.
-2. **Failure-intelligence milestone:** introduce structured `error_summary` schema and bounded categorization.
-3. **Quality-gate milestone:** add project-level pytest config and CI lint/test enforcement.
-4. **Operational governance milestone:** verify platform hardening settings and keep manual controls auditable in docs/backlog.
-5. **Supabase access-control hardening milestone:** execute staged RLS rollout and validation from the Step 19B plan.
-
-## Backlog vs active roadmap policy
-
-### Active roadmap
-- Items explicitly listed as “next approved task” in `docs/status.md`.
-- P0 items in `docs/backlog.md` that are dependencies for reliability/traceability.
-
-### Backlog (not yet active)
-- P1/P2 improvements, exploratory analytics extensions, and non-blocking optimizations.
-- Any item lacking explicit “next approved task” status remains queued, not in active execution.
-
-## Planning boundaries
-- Do not alter Railway/Supabase/signal-generation/paper-trading/Telegram runtime behavior without explicit approval.
-- Keep changes small, reviewable, and milestone-scoped.
-- Update status/backlog after every completed task so this plan remains true to delivered state.
+## Planning guardrails
+- Keep each step small, testable, and reviewable.
+- Preserve runtime behavior unless a step explicitly approves runtime change.
+- Do not introduce autonomous real-money execution.
+- Mark uncertain facts as `unknown / needs confirmation`.

@@ -95,6 +95,34 @@ The platform is designed as an **AI investment firm operating model** with stric
 - `src/paper_trading.py`: deterministic paper-trading simulation + persistence.
 - `src/notifications.py`: Telegram summary delivery (best-effort).
 
+## Current runtime/data flow (aligned)
+
+1. **Scheduler/trigger -> run setup**
+   - Railway scheduler starts the worker process (`main.py` -> `src.app`).
+   - A `runs` row is created and set to `RUNNING` for lifecycle traceability.
+
+2. **Signal generation flow**
+   - Runtime fetches market inputs for configured HK tickers.
+   - Strategy logic computes deterministic signal actions (`BUY`, `SELL`, `HOLD`, `NO_DATA`, `INSUFFICIENT_DATA`).
+   - Signals are persisted with dedup/idempotent behavior on `(date, stock)`.
+
+3. **Decision record flow**
+   - At signal persistence time, a decision-ledger record is written to `paper_trade_decisions`.
+   - Ledger fields intentionally separate AI output (`signal_*`) from human decision state (`human_decision_*`) for auditability.
+
+4. **Paper-trading flow**
+   - Paper simulation runs from persisted signals (paper-only; no live execution).
+   - Trade/event/snapshot outputs are persisted (`paper_trades`, `paper_events`, `paper_daily_snapshots`) with `run_id` linkage.
+   - Position state is refreshed into `paper_positions` for compact portfolio/PnL read surfaces.
+
+5. **Telegram + observability flow**
+   - End-of-run summary payload is built with versioned schema and rendered to Telegram format.
+   - Delivery attempt is best-effort/non-blocking; dedup logic can skip repeated run-date sends.
+   - Run finalization updates status (`SUCCESS`/`FAILED`) and writes summary observability fields, including delivery telemetry JSON.
+
+6. **Human review flow**
+   - Human operator reviews Telegram/docs/CLI read surfaces and remains final authority for any real-money action.
+
 ## Architectural constraints for v3
 - Preserve current production behavior unless a task explicitly authorizes change.
 - Keep deterministic ordering and output reproducibility in paper-trading paths.
@@ -102,10 +130,10 @@ The platform is designed as an **AI investment firm operating model** with stric
 - Keep documentation synchronized with runtime truth after each completed task.
 
 ## Near-term architecture priorities
-1. End-to-end traceability key linkage (`run_id`) across signals + paper outputs.
-2. Structured `error_summary` schema for diagnosability.
-3. Notification layer hardening while preserving non-blocking behavior.
-4. CI/test harness consistency to protect deterministic behavior over time.
+1. Keep scheduler -> signal -> paper-trading -> notification documentation synchronized with runtime truth.
+2. Continue notification clarity/dedup hardening without breaking non-blocking delivery invariants.
+3. Close manual platform hardening follow-ups (GitHub/Railway/Supabase) with explicit verification records.
+4. Scope the next small analytics increment for paper-trading evaluation without strategy churn.
 
 ## Step 19 operational baseline hardening (GitHub / Railway / Supabase)
 

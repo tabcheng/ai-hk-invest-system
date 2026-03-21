@@ -18,6 +18,25 @@ DELIVERY_CHANNEL_TELEGRAM = "telegram"
 HK_MARKET_CODE = "HK"
 
 
+def _derive_signal_reason_text(signal: str) -> str:
+    """
+    Provide a compact, beginner-friendly reason label per signal.
+
+    Guardrail: this is display-only copy for Telegram readability; it must not
+    alter signal generation, trade decisions, or dedup behavior.
+    """
+    normalized = signal.upper()
+    if normalized == "BUY":
+        return "Model indicates bullish setup; review entry sizing and risk limits."
+    if normalized == "SELL":
+        return "Model indicates bearish/exit setup; review position reduction plan."
+    if normalized == "HOLD":
+        return "Model indicates no action preference; monitor for setup change."
+    if normalized == "ERROR":
+        return "Signal generation failed for this ticker; check run logs before action."
+    return "No detailed indicator summary is available in this notification payload."
+
+
 
 def _get_total_equity_for_date(client: Client, run_date: date) -> tuple[float | None, str]:
     """
@@ -120,14 +139,23 @@ def _render_daily_summary_message_v1(payload: dict) -> str:
     ]
 
     stocks = payload.get("stocks", [])
+    if not stocks:
+        lines.append("• <b>stock:</b> N/A")
+        lines.append("  <b>signal/action:</b> UNKNOWN")
+        lines.append("  <b>key_reason/indicator:</b> No ticker in this run summary.")
+
     for stock in stocks:
         stock_id = html.escape(str(stock.get("stock_id", "")))
         stock_name = stock.get("stock_name")
         signal = html.escape(str(stock.get("signal", "UNKNOWN")))
+        signal_reason = html.escape(_derive_signal_reason_text(signal))
         if stock_name:
-            lines.append(f"• {html.escape(str(stock_name))} ({stock_id}): <b>{signal}</b>")
+            stock_identifier = f"{html.escape(str(stock_name))} ({stock_id})"
         else:
-            lines.append(f"• {stock_id}: <b>{signal}</b>")
+            stock_identifier = stock_id
+        lines.append(f"• <b>stock:</b> {stock_identifier}")
+        lines.append(f"  <b>signal/action:</b> <b>{signal}</b>")
+        lines.append(f"  <b>key_reason/indicator:</b> {signal_reason}")
 
     lines.extend(
         [
@@ -138,7 +166,9 @@ def _render_daily_summary_message_v1(payload: dict) -> str:
 
     warning_note = payload.get("warning_note")
     if warning_note:
-        lines.append(f"<b>note:</b> {html.escape(str(warning_note))}")
+        lines.append(f"<b>risk_note:</b> {html.escape(str(warning_note))}")
+    else:
+        lines.append("<b>risk_note:</b> None reported in run-level summary.")
     return "\n".join(lines)
 
 
@@ -225,6 +255,8 @@ def _record_daily_summary_sent(
 ) -> None:
     # This durable marker enables cross-run dedup for the same run date and target.
     # Upsert keeps dedup idempotent during near-simultaneous reruns that race to persist logs.
+    # Guardrail: dedup identity is based on date/target/message_type/status, not message text.
+    # Telegram readability changes must not modify this identity contract.
     payload = {
         "notification_date": run_date.isoformat(),
         "target": target,

@@ -8,6 +8,10 @@ Use this checklist in order. Stop when you find the answer.
 
 ---
 
+For a quick outcome-to-action map, see `docs/operator-quick-reference-telegram-outcomes.md`.
+
+---
+
 ## Quick outcomes (what happened?)
 
 By the end of this runbook, your case should fit into one of these buckets:

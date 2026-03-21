@@ -131,6 +131,12 @@ Prioritization scale:
    - Added focused tests for deterministic output shape and fallback handling when snapshot history is unavailable.
    - Post-review fix: `number_of_tickers_with_activity` now counts all run events/trades (including non-risk event-only activity) for complete beginner-facing run coverage.
 
+26. **Step 29: operator-facing Telegram outcome quick-reference** ✅ completed
+   - Added `docs/operator-quick-reference-telegram-outcomes.md` as a beginner-friendly cheat sheet for notification outcomes.
+   - Mapped `sent`, `skipped`, `deduped`, and `failed` to plain-language meaning, first checks, and escalation guidance.
+   - Preserved runtime behavior (documentation-only change).
+   - Post-review doc tightening: simplified to a one-minute quick map, clarified explicit first-action wording, and added a copy/paste escalation note template.
+
 
 ## Active backlog (pending)
 

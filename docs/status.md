@@ -1,7 +1,7 @@
 # Project Status
 
 ## Last reviewed date
-2026-03-15
+2026-03-21
 
 ## Current production behavior
 - Runtime behavior remains the existing MVP script in `main.py` (Railway entry point), now as a thin entry into modularized runtime code under `src/`.
@@ -66,6 +66,8 @@
 - Step 27 completed: added a beginner-friendly operator Telegram notification troubleshooting runbook (`docs/operator-runbook-telegram-troubleshooting.md`) covering simple checks for run completion, notify-worthy output, env-var configuration, bot/chat reachability, and skip/dedup/failure classification, plus an escalation checklist to separate “no signal,” “no notification needed,” and “delivery failure.”
 - Step 28 completed: added a beginner-friendly paper-trading daily review summary helper (`get_paper_daily_review_summary_for_run(...)`) that composes persisted run risk/trade/snapshot data into a compact operator-facing shape (`run_id`, BUY totals, ticker activity count, notable plain-language items, and optional short portfolio-change summary).
 - Post-review Step 28 fix: ticker activity counting now includes all persisted run event/trade rows (including non-risk events like `HOLD_EVENT`) so beginner-facing summaries report complete run activity coverage.
+- Step 29 completed: added a beginner-friendly Telegram notification outcome quick-reference (`docs/operator-quick-reference-telegram-outcomes.md`) that maps `sent`, `skipped`, `deduped`, and `failed` to plain-language meaning, recommended first check, and clear escalation guidance.
+- Post-review Step 29 doc tightening: simplified the quick-reference into a one-minute map with explicit “first action” phrasing, added a copy/paste escalation note template, and aligned troubleshooting-runbook link wording.
 
 ## Current documentation posture
 - Core planning, status, architecture, and maintenance docs now form a traceable documentation stack for future Codex execution.
@@ -77,6 +79,7 @@
 - Supabase access-control posture is now explicit in architecture docs: core runtime tables are backend-only by design, currently in `public`, with RLS hardening planned as staged single-table migrations.
 - Operator documentation now includes a beginner-friendly runbook for routine paper-risk CLI review and basic failure triage.
 - Operator documentation now also includes a beginner-friendly Telegram troubleshooting runbook for notification delivery triage and escalation.
+- Operator documentation now also includes a quick-reference outcome map so beginners can quickly choose first actions and escalation timing for `sent`/`skipped`/`deduped`/`failed`.
 
 ## Next approved task
-- Define Step 29 follow-up to add an operator-facing quick-reference mapping from notification log outcomes (sent/skipped/deduped/failed) to recommended first action and escalation threshold examples.
+- Define Step 30 candidate(s) for beginner-facing operator documentation follow-up, keeping runtime behavior unchanged unless explicitly approved.

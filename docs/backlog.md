@@ -24,6 +24,11 @@ Prioritization:
    - Continue status/backlog/plan alignment after each completed step.
    - Keep unknowns explicitly marked as `unknown / needs confirmation`.
 
+### P1 — Step 34 candidates (small, reviewable, verifiable)
+1. **Telegram command registration follow-up (optional, scoped)**
+   - Evaluate whether to add explicit bot-command registration (for example via Telegram `setMyCommands`) for in-app discoverability.
+   - Keep scope small; do not couple command registry work with strategy/paper-trading logic.
+
 ### P2 — Medium-term quality and reliability
 - Expand deterministic replay/integration fixtures for multi-day paper-trading scenarios.
 - Improve failure-path coverage for DB/notification/run-finalization edge cases.
@@ -57,6 +62,7 @@ Prioritization:
 - Step 29 Telegram outcomes quick reference (+ wording tightening).
 - Step 31 Telegram message readability improvement (`stock` / `signal/action` / `key_reason/indicator` / `risk_note`, with stock name + stock id clarity and dedup identity unchanged).
 - Step 32 Telegram operator run-id lookup command (`/runs` default 5 days, optional day parameter) backed by persistent `runs` metadata with operator access guardrail, plus invalid-parameter usage-response hardening and schema-safe run-field selection hotfix.
+- Step 33 Telegram operator help command uplift (`/help` + `/h` alias) with compact bilingual scope/guardrail copy and command usage guidance; discoverability hardening kept handler-only because repo currently has no bot command-registration mechanism.
 
 ## Notes
 - This backlog is a planning artifact, not proof of merge approval. For merge/acceptance truth, cross-check `docs/status.md` and human PR history.

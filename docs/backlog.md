@@ -68,6 +68,7 @@ Prioritization:
 - Step 34B completed: Telegram `/risk_review [run_id]` operator command with allowlist/auth guardrail, strict run-id validation, run existence checks, safe failure replies, and observability logs for accepted/failed/completed transitions.
 - Step 34B completed: `docs/railway-service-variables.md` deployment reference for Railway service variables across Telegram/webhook, operator allowlist, Supabase, and runtime settings.
 - Step 34B review hotfix completed: isolated unexpected operator-handler/run-lookup exceptions so webhook processing remains healthy and Telegram replies stay sanitized, with focused tests for these failure paths.
+- Step 34B test hotfix completed: lazy-loaded paper-risk review dependency in Telegram operator path to reduce import-time runtime coupling and keep focused operator/webhook tests runnable in constrained environments.
 
 ## Notes
 - This backlog is a planning artifact, not proof of merge approval. For merge/acceptance truth, cross-check `docs/status.md` and human PR history.

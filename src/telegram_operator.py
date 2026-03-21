@@ -5,7 +5,6 @@ import re
 from datetime import datetime, timezone
 from typing import Any
 
-from src.paper_trading import get_paper_risk_review_for_run
 from src.runs import get_run_by_id, list_recent_runs
 
 _RUNS_COMMAND_PATTERN = re.compile(r"^/runs(?:\s+(\d+)d)?\s*$", re.IGNORECASE)
@@ -180,6 +179,16 @@ def _get_caller_context(update: dict[str, Any]) -> tuple[str, str, str]:
     return text, chat_id, user_id
 
 
+def _get_paper_risk_review(client: Any, *, run_id: int) -> dict[str, Any]:
+    """
+    Lazy-load paper-trading review dependency so command parsing/auth tests can run
+    without importing optional runtime DB client packages at module import time.
+    """
+    from src.paper_trading import get_paper_risk_review_for_run
+
+    return get_paper_risk_review_for_run(client, run_id=run_id)
+
+
 def handle_telegram_operator_command(client: Any, update: dict[str, Any]) -> str | None:
     """
     Parse and handle Telegram operator commands.
@@ -268,7 +277,7 @@ def handle_telegram_operator_command(client: Any, update: dict[str, Any]) -> str
             return f"Failed: run_id={run_id} not found. Use /runs to list recent runs."
 
         try:
-            risk_review = get_paper_risk_review_for_run(client, run_id=run_id)
+            risk_review = _get_paper_risk_review(client, run_id=run_id)
         except Exception as exc:  # defensive operator boundary
             print(
                 "Telegram /risk_review internal failure: "

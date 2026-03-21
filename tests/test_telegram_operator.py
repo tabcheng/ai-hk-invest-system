@@ -126,7 +126,7 @@ def test_handle_risk_review_command_allowlisted_user_and_valid_run_id(monkeypatc
         lambda _client, run_id: {"id": run_id, "status": "SUCCESS", "created_at": "2026-03-21T00:00:00+00:00"},
     )
     monkeypatch.setattr(
-        "src.telegram_operator.get_paper_risk_review_for_run",
+        "src.telegram_operator._get_paper_risk_review",
         lambda _client, run_id: {
             "run_id": run_id,
             "total_executed_buys": 2,
@@ -190,7 +190,7 @@ def test_handle_risk_review_command_handles_execution_failure_without_stack_trac
     def _raise_failure(_client, run_id):
         raise RuntimeError(f"simulated failure for run_id={run_id}")
 
-    monkeypatch.setattr("src.telegram_operator.get_paper_risk_review_for_run", _raise_failure)
+    monkeypatch.setattr("src.telegram_operator._get_paper_risk_review", _raise_failure)
 
     response = handle_telegram_operator_command(object(), _build_update("/risk_review 1001"))
 

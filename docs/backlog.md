@@ -7,24 +7,20 @@ Prioritization:
 
 ## Active backlog (pending)
 
-### P1 — Step 31 candidates (small, reviewable, verifiable)
+### P1 — Step 32 candidates (small, reviewable, verifiable)
 1. **Platform hardening follow-up**
    - Close/verify manual controls documented in Step 19/19B (GitHub branch protection, Railway worker posture, Supabase backup/RLS checklist).
    - Keep repo changes documentation-first unless explicit runtime/platform mutation is approved.
 
-2. **Telegram message clarity follow-up (nit-level)**
-   - Review wording consistency between daily summary and operator docs.
-   - Keep `stock name + stock id` presentation explicit and beginner-friendly across docs/examples.
-
-3. **Notification dedup follow-up**
+2. **Notification dedup follow-up**
    - Re-validate and document dedup semantics (`sent` vs `skipped` vs `deduped`/`failed`) to reduce operator confusion.
    - Add doc clarifications where ambiguity remains; runtime changes only if explicitly approved.
 
-4. **Paper-trading analytics follow-up (scoping pass)**
+3. **Paper-trading analytics follow-up (scoping pass)**
    - Define minimal next metrics package (for example drawdown/turnover/risk-adjusted lens) as a scoped Step candidate.
    - Do not introduce large analytics expansion in one step.
 
-5. **Docs maintenance (ongoing discipline)**
+4. **Docs maintenance (ongoing discipline)**
    - Continue status/backlog/plan alignment after each completed step.
    - Keep unknowns explicitly marked as `unknown / needs confirmation`.
 
@@ -59,6 +55,7 @@ Prioritization:
 - Step 27 Telegram troubleshooting runbook.
 - Step 28 daily review summary helper (+ completeness fix).
 - Step 29 Telegram outcomes quick reference (+ wording tightening).
+- Step 31 Telegram message readability improvement (`stock` / `signal/action` / `key_reason/indicator` / `risk_note`, with stock name + stock id clarity and dedup identity unchanged).
 
 ## Notes
 - This backlog is a planning artifact, not proof of merge approval. For merge/acceptance truth, cross-check `docs/status.md` and human PR history.

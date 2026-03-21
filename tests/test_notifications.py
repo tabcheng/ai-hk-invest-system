@@ -124,8 +124,10 @@ def test_render_daily_summary_message_v1_handles_empty_stocks():
     message = render_daily_summary_message(payload)
 
     assert "<b>signals:</b>" in message
-    assert "• " not in message
+    assert "• <b>stock:</b> N/A" in message
+    assert "No ticker in this run summary." in message
     assert "<b>paper_trades_today:</b> 0" in message
+    assert "<b>risk_note:</b> None reported in run-level summary." in message
 
 
 def test_render_daily_summary_message_v1_displays_stock_name_and_id_for_multi_stock_payload():
@@ -142,8 +144,11 @@ def test_render_daily_summary_message_v1_displays_stock_name_and_id_for_multi_st
 
     message = render_daily_summary_message(payload)
 
-    assert "Tencent Holdings (0700.HK): <b>BUY</b>" in message
-    assert "Hong Kong Exchanges and Clearing (0388.HK): <b>HOLD</b>" in message
+    assert "<b>stock:</b> Tencent Holdings (0700.HK)" in message
+    assert "<b>signal/action:</b> <b>BUY</b>" in message
+    assert "<b>stock:</b> Hong Kong Exchanges and Clearing (0388.HK)" in message
+    assert "<b>signal/action:</b> <b>HOLD</b>" in message
+    assert "<b>key_reason/indicator:</b> Model indicates bullish setup; review entry sizing and risk limits." in message
     assert "<b>total_equity (latest):</b> 123.00 HKD" in message
 
 
@@ -164,7 +169,7 @@ def test_render_daily_summary_message_dispatches_current_supported_schema_versio
     assert payload["schema_version"] == CURRENT_DAILY_SUMMARY_SCHEMA_VERSION
     assert payload["schema_version"] in SUPPORTED_DAILY_SUMMARY_SCHEMA_VERSIONS
     assert payload["schema_version"] in DAILY_SUMMARY_RENDERERS
-    assert "Tencent Holdings (0700.HK): <b>BUY</b>" in message
+    assert "<b>stock:</b> Tencent Holdings (0700.HK)" in message
 
 
 def test_render_daily_summary_message_rejects_unsupported_schema_version():
@@ -222,9 +227,9 @@ def test_build_daily_summary_message_contains_required_fields_and_stock_names():
 
     assert "<b>date:</b> 2026-03-11" in message
     assert "<b>status:</b> SUCCESS" in message
-    assert "Tencent Holdings (0700.HK): <b>BUY</b>" in message
-    assert "Hong Kong Exchanges and Clearing (0388.HK): <b>HOLD</b>" in message
-    assert "AIA Group (1299.HK): <b>SELL</b>" in message
+    assert "<b>stock:</b> Tencent Holdings (0700.HK)" in message
+    assert "<b>stock:</b> Hong Kong Exchanges and Clearing (0388.HK)" in message
+    assert "<b>stock:</b> AIA Group (1299.HK)" in message
     assert "<b>paper_trades_today:</b> 2" in message
     assert "<b>total_equity (run_date):</b> 101234.56 HKD" in message
 
@@ -242,7 +247,7 @@ def test_build_daily_summary_message_uses_na_equity_and_warning_note():
     )
 
     assert "<b>total_equity:</b> N/A" in message
-    assert "<b>note:</b> paper_trading skipped" in message
+    assert "<b>risk_note:</b> paper_trading skipped" in message
 
 
 def test_build_daily_summary_message_unknown_ticker_uses_id_only():
@@ -256,7 +261,8 @@ def test_build_daily_summary_message_unknown_ticker_uses_id_only():
         equity_source="none",
     )
 
-    assert "• 9999.HK: <b>HOLD</b>" in message
+    assert "• <b>stock:</b> 9999.HK" in message
+    assert "<b>signal/action:</b> <b>HOLD</b>" in message
 
 
 def test_send_telegram_message_skips_when_env_missing(monkeypatch):

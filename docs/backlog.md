@@ -7,7 +7,7 @@ Prioritization:
 
 ## Active backlog (pending)
 
-### P1 — Step 38 candidates (small, reviewable, verifiable)
+### P1 — Step 38+ candidates (small, reviewable, verifiable)
 1. **Platform hardening follow-up (Step 38A candidate)**
    - Close/verify manual controls documented in Step 19/19B (GitHub branch protection, Railway worker posture, Supabase backup/RLS checklist).
    - Keep repo changes documentation-first unless explicit runtime/platform mutation is approved.
@@ -36,6 +36,8 @@ Prioritization:
 ## Completed backlog (archived)
 
 - Step 37 completed: dedicated daily-runner entrypoint introduced (`python -m src.daily_runner`), with HKT business schedule baseline formally documented (target 20:00 HKT; Railway UTC cron `0 12 * * *`).
+- Step 38 completed: daily runner observability/logging now emits consistent execution summary fields (`started_at`, `finished_at`, `duration_seconds`, `status`, `entrypoint`, `schedule_basis`) for both success and failure paths, with safe failure summary and focused runner tests for summary content + exit codes.
+- Step 38 review hotfix completed: failure `error_summary` normalization now collapses multiline/irregular whitespace before truncation so runner failure summaries stay single-line and easier to review in log systems.
 
 ### Foundation + runtime hardening
 - Step 1–12 baseline (documentation foundation, signal framework, dedup, run lifecycle, modularization, tests, Telegram MVP/hardening).

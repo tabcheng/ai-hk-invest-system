@@ -85,6 +85,13 @@ Use `docs/railway-service-variables.md` as the canonical variable dictionary.
 2. Runner schedule health
    - Runner service has cron `0 12 * * *` (UTC), targeting 20:00 HKT.
    - Manual run and scheduled run both execute `python -m src.daily_runner` and exit.
+   - Runner logs include one lifecycle `execution_summary` JSON line per run with:
+     - `started_at`
+     - `finished_at`
+     - `duration_seconds`
+     - `status` (`success` / `failed`)
+     - `entrypoint` (`python -m src.daily_runner`)
+     - `schedule_basis` (HKT 20:00 baseline)
 3. Responsibility isolation
    - No cron on webhook service.
    - No webhook server start command on runner service.

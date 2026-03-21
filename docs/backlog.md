@@ -129,6 +129,7 @@ Prioritization scale:
    - Added `get_paper_daily_review_summary_for_run(...)` to build a compact one-run operator review from persisted paper-risk/trade/snapshot data.
    - Review output uses beginner-friendly fields: `run_id`, BUY outcome totals, `number_of_tickers_with_activity`, short plain-language `notable_items`, and optional `portfolio_change_summary`.
    - Added focused tests for deterministic output shape and fallback handling when snapshot history is unavailable.
+   - Post-review fix: `number_of_tickers_with_activity` now counts all run events/trades (including non-risk event-only activity) for complete beginner-facing run coverage.
 
 
 ## Active backlog (pending)

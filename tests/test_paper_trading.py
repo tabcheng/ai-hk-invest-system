@@ -702,6 +702,12 @@ def test_get_paper_daily_review_summary_for_run_returns_beginner_friendly_shape(
                                 "rule_results": [],
                             },
                         },
+                        {
+                            "id": 3,
+                            "stock": "0011.HK",
+                            "event_type": "HOLD_EVENT",
+                            "risk_evaluation": None,
+                        },
                     ]
                 )
             if self.table_name == "paper_trades":
@@ -736,7 +742,7 @@ def test_get_paper_daily_review_summary_for_run_returns_beginner_friendly_shape(
     assert summary["total_executed_buys"] == 1
     assert summary["total_blocked_buys"] == 1
     assert summary["total_warning_buys"] == 1
-    assert summary["number_of_tickers_with_activity"] == 3
+    assert summary["number_of_tickers_with_activity"] == 4
     assert summary["notable_items"] == [
         "1 BUY signal(s) were blocked by risk guardrails.",
         "1 BUY execution(s) had warning-level risk notes.",

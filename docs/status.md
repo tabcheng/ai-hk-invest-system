@@ -65,6 +65,7 @@
 - Step 26 completed: added a beginner-friendly operator runbook for paper-risk review workflow with plain-language system overview, daily step-by-step usage, `run_id` explanation, CLI command usage (`python -m src.paper_risk_review_cli --run-id <id>`), output field interpretation (`total_blocked_buys`, `total_warning_buys`, `total_executed_buys`, `per_ticker`), and short troubleshooting guidance.
 - Step 27 completed: added a beginner-friendly operator Telegram notification troubleshooting runbook (`docs/operator-runbook-telegram-troubleshooting.md`) covering simple checks for run completion, notify-worthy output, env-var configuration, bot/chat reachability, and skip/dedup/failure classification, plus an escalation checklist to separate “no signal,” “no notification needed,” and “delivery failure.”
 - Step 28 completed: added a beginner-friendly paper-trading daily review summary helper (`get_paper_daily_review_summary_for_run(...)`) that composes persisted run risk/trade/snapshot data into a compact operator-facing shape (`run_id`, BUY totals, ticker activity count, notable plain-language items, and optional short portfolio-change summary).
+- Post-review Step 28 fix: ticker activity counting now includes all persisted run event/trade rows (including non-risk events like `HOLD_EVENT`) so beginner-facing summaries report complete run activity coverage.
 
 ## Current documentation posture
 - Core planning, status, architecture, and maintenance docs now form a traceable documentation stack for future Codex execution.

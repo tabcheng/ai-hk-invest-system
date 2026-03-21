@@ -681,6 +681,14 @@ def get_paper_daily_review_summary_for_run(client: Client, run_id: int) -> dict:
         .execute()
     ).data or []
 
+    event_rows = (
+        client.table("paper_events")
+        .select("stock")
+        .eq("run_id", run_id)
+        .order("id")
+        .execute()
+    ).data or []
+
     snapshot_rows = (
         client.table("paper_daily_snapshots")
         .select("snapshot_date,cash,total_equity,open_positions")
@@ -703,7 +711,9 @@ def get_paper_daily_review_summary_for_run(client: Client, run_id: int) -> dict:
         ).data or []
 
     tickers_with_activity = {str(ticker) for ticker in risk_review["per_ticker"].keys()}
-    for row in trade_rows:
+    # Activity should include all event rows (for example HOLD or non-risk BUY skip
+    # paths) so operators get a complete ticker count for the run.
+    for row in event_rows + trade_rows:
         stock = row.get("stock")
         if stock is not None:
             tickers_with_activity.add(str(stock))

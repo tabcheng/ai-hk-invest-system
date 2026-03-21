@@ -12,8 +12,10 @@ class _FakeQuery:
     def __init__(self, client):
         self.client = client
         self.cutoff = None
+        self.selected_columns = None
 
-    def select(self, _columns):
+    def select(self, columns):
+        self.selected_columns = columns
         return self
 
     def gte(self, column, value):
@@ -37,10 +39,12 @@ class _FakeQuery:
 class _FakeClient:
     def __init__(self, rows):
         self.rows = rows
+        self.last_query = None
 
     def table(self, table_name):
         assert table_name == "runs"
-        return _FakeQuery(self)
+        self.last_query = _FakeQuery(self)
+        return self.last_query
 
 
 def test_list_recent_runs_filters_by_days_window():
@@ -49,8 +53,8 @@ def test_list_recent_runs_filters_by_days_window():
     out_of_window = (now - timedelta(days=8)).isoformat()
     fake_client = _FakeClient(
         rows=[
-            {"id": 101, "status": "SUCCESS", "created_at": within_window, "updated_at": within_window},
-            {"id": 99, "status": "FAILED", "created_at": out_of_window, "updated_at": out_of_window},
+            {"id": 101, "status": "SUCCESS", "created_at": within_window},
+            {"id": 99, "status": "FAILED", "created_at": out_of_window},
         ]
     )
 
@@ -58,6 +62,7 @@ def test_list_recent_runs_filters_by_days_window():
 
     assert len(rows) == 1
     assert rows[0]["id"] == 101
+    assert fake_client.last_query.selected_columns == "id,status,created_at"
 
 
 def test_list_recent_runs_rejects_invalid_days():
@@ -67,3 +72,10 @@ def test_list_recent_runs_rejects_invalid_days():
         assert False, "expected ValueError for non-positive days"
     except ValueError as exc:
         assert "days must be a positive integer" in str(exc)
+
+
+def test_list_recent_runs_selects_schema_safe_columns_only():
+    fake_client = _FakeClient(rows=[])
+    list_recent_runs(fake_client, days=5)
+    assert fake_client.last_query.selected_columns == "id,status,created_at"
+    assert "updated_at" not in fake_client.last_query.selected_columns

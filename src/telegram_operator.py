@@ -55,7 +55,10 @@ def _parse_runs_days(command_text: str) -> int:
 
 
 def _normalize_run_time(row: dict[str, Any]) -> str:
-    raw = row.get("created_at") or row.get("updated_at")
+    # Guardrail: `runs` operator output relies on stable schema fields only.
+    # We intentionally use `created_at` (existing column) and avoid fallbacks to
+    # non-guaranteed fields so malformed schema assumptions do not break `/runs`.
+    raw = row.get("created_at")
     if not raw:
         return "N/A"
     try:

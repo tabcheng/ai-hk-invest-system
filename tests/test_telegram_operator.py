@@ -64,3 +64,11 @@ def test_handle_runs_command_returns_usage_on_invalid_parameter(monkeypatch):
     monkeypatch.setenv("TELEGRAM_CHAT_ID", "chat-1")
     response = handle_telegram_operator_command(object(), _build_update("/runs 99d"))
     assert "Days must be between 1 and 30" in response
+
+
+def test_handle_runs_command_returns_usage_on_malformed_tokens(monkeypatch):
+    monkeypatch.setenv("TELEGRAM_CHAT_ID", "chat-1")
+    response_text = handle_telegram_operator_command(object(), _build_update("/runs foo"))
+    response_numeric_without_suffix = handle_telegram_operator_command(object(), _build_update("/runs 7"))
+    assert "Unsupported command" in response_text
+    assert "Unsupported command" in response_numeric_without_suffix

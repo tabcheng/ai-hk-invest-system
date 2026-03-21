@@ -23,6 +23,8 @@ def list_recent_runs(client: Any, *, days: int = 5, limit: int = 50) -> list[dic
     Guardrail/traceability note:
     - This function intentionally uses durable DB records instead of log parsing.
     - It is read-only and returns operator-facing metadata only (id/status/time).
+    - Keep selected columns aligned with the deployed `runs` schema to avoid
+      operator-command runtime failures from non-existent fields.
     """
     if days <= 0:
         raise ValueError("days must be a positive integer")
@@ -33,7 +35,7 @@ def list_recent_runs(client: Any, *, days: int = 5, limit: int = 50) -> list[dic
     cutoff = datetime.now(timezone.utc) - timedelta(days=days)
     result = (
         client.table("runs")
-        .select("id,status,created_at,updated_at")
+        .select("id,status,created_at")
         .gte("created_at", cutoff.isoformat())
         .order("created_at", desc=True)
         .limit(limit)

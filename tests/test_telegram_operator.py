@@ -1,4 +1,8 @@
-from src.telegram_operator import build_runs_command_message, handle_telegram_operator_command
+from src.telegram_operator import (
+    build_help_command_message,
+    build_runs_command_message,
+    handle_telegram_operator_command,
+)
 
 
 def _build_update(text: str, *, chat_id: str = "chat-1", user_id: str = "u-1") -> dict:
@@ -72,3 +76,28 @@ def test_handle_runs_command_returns_usage_on_malformed_tokens(monkeypatch):
     response_numeric_without_suffix = handle_telegram_operator_command(object(), _build_update("/runs 7"))
     assert "Unsupported command" in response_text
     assert "Unsupported command" in response_numeric_without_suffix
+
+
+def test_handle_help_and_h_alias_return_same_message(monkeypatch):
+    monkeypatch.setenv("TELEGRAM_CHAT_ID", "chat-1")
+    help_response = handle_telegram_operator_command(object(), _build_update("/help"))
+    alias_response = handle_telegram_operator_command(object(), _build_update("/h"))
+    assert help_response == alias_response == build_help_command_message()
+
+
+def test_help_message_contains_guardrails_and_command_list():
+    message = build_help_command_message()
+    assert "AI HK Investment System" in message
+    assert "paper trading" in message
+    assert "human makes final decision" in message
+    assert "no real-money auto execution" in message
+    assert "/runs" in message
+    assert "/runs <days>d" in message
+    assert "/help" in message
+    assert "/h" in message
+
+
+def test_handle_help_command_rejects_unauthorized_chat(monkeypatch):
+    monkeypatch.setenv("TELEGRAM_CHAT_ID", "chat-allowed")
+    response = handle_telegram_operator_command(object(), _build_update("/help", chat_id="chat-other"))
+    assert "Unauthorized" in response

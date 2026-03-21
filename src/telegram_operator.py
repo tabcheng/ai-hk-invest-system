@@ -8,6 +8,7 @@ from typing import Any
 from src.runs import list_recent_runs
 
 _RUNS_COMMAND_PATTERN = re.compile(r"^/runs(?:\s+(\d+)d)?\s*$", re.IGNORECASE)
+_HELP_COMMAND_PATTERN = re.compile(r"^/(?:help|h)\s*$", re.IGNORECASE)
 _DEFAULT_DAYS = 5
 _MAX_DAYS = 30
 _DEFAULT_LIMIT = 50
@@ -68,6 +69,29 @@ def _normalize_run_time(row: dict[str, Any]) -> str:
         return str(raw)
 
 
+def build_help_command_message() -> str:
+    """
+    Return a compact bilingual operator help message for Telegram command discoverability.
+
+    Guardrail: this copy is informational only (analysis/suggestion/review support)
+    and must never imply or enable autonomous real-money execution.
+    """
+    return "\n".join(
+        [
+            "AI HK Investment System — Operator Help",
+            "用途: AI decision support + paper trading simulation (投資決策輔助 + 模擬盤).",
+            "Guardrail: analysis/suggestion/review support only; human makes final decision.",
+            "風險界線: no real-money auto execution (不會自動進行真錢交易).",
+            "",
+            "Commands:",
+            "- /runs : List recent run IDs from the last 5 days (最近 5 日 run 記錄).",
+            "- /runs <days>d : Query a custom window, e.g. /runs 7d (自訂查詢日數).",
+            "- /help : Show this operator usage guide (顯示操作說明).",
+            "- /h : Alias of /help (與 /help 相同).",
+        ]
+    )
+
+
 def build_runs_command_message(rows: list[dict[str, Any]], *, days: int) -> str:
     if not rows:
         return f"No runs found in the last {days} day(s)."
@@ -96,11 +120,16 @@ def handle_telegram_operator_command(client: Any, update: dict[str, Any]) -> str
     if not text.startswith("/"):
         return None
 
-    if not text.lower().startswith("/runs"):
+    is_help_command = bool(_HELP_COMMAND_PATTERN.match(text))
+    is_runs_command = text.lower().startswith("/runs")
+    if not (is_help_command or is_runs_command):
         return None
 
     if not _is_operator_authorized(update):
         return "Unauthorized: this command is restricted to the configured operator chat/user."
+
+    if is_help_command:
+        return build_help_command_message()
 
     try:
         days = _parse_runs_days(text)

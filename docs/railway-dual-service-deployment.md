@@ -18,9 +18,12 @@ Guardrails:
   - Responsibility: long-running webhook ingress (`POST /telegram/webhook`) and operator reply path
   - Cron: **none**
 - **Service B:** `paper-daily-runner`
-  - Start Command: `python main.py`
+  - Start Command: `python -m src.daily_runner`
   - Responsibility: scheduled batch paper-trading decision-support run
-  - Cron: `0 12 * * *`
+  - Business schedule baseline: **Hong Kong Time (HKT)**
+  - Current target run time: **20:00 HKT**
+  - Railway cron timezone: **UTC**
+  - Cron (UTC) for current target: `0 12 * * *`
 
 Why this split:
 - Railway cron executes the service start command directly.
@@ -41,9 +44,9 @@ Create a new Railway service:
 1. Source: same GitHub repository.
 2. Service name: `paper-daily-runner`.
 3. Start Command:
-   - `python main.py`
-4. Configure cron schedule:
-   - `0 12 * * *`
+   - `python -m src.daily_runner`
+4. Configure cron schedule (Railway cron uses UTC):
+   - `0 12 * * *` (maps to 20:00 HKT)
 
 ### 3) Confirm service responsibility boundaries
 - `telegram-webhook`:
@@ -80,8 +83,8 @@ Use `docs/railway-service-variables.md` as the canonical variable dictionary.
    - Service deploys with `python -m src.telegram_webhook_server`.
    - Telegram `getWebhookInfo` points to webhook service URL.
 2. Runner schedule health
-   - Runner service has cron `0 12 * * *`.
-   - Manual run and scheduled run both execute `python main.py` and exit.
+   - Runner service has cron `0 12 * * *` (UTC), targeting 20:00 HKT.
+   - Manual run and scheduled run both execute `python -m src.daily_runner` and exit.
 3. Responsibility isolation
    - No cron on webhook service.
    - No webhook server start command on runner service.

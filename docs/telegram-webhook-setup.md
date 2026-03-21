@@ -43,6 +43,7 @@ Required for operator authorization guardrail:
 
 Optional stricter guardrail:
 - `TELEGRAM_OPERATOR_ALLOWED_USER_IDS` (comma-separated Telegram user ids)
+- `TELEGRAM_WEBHOOK_SECRET_TOKEN` (transport-level secret checked against Telegram header `X-Telegram-Bot-Api-Secret-Token`)
 
 ## Set webhook
 Assume your Railway public domain is:
@@ -52,7 +53,8 @@ Set webhook URL:
 
 ```bash
 curl -sS "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/setWebhook" \
-  --data-urlencode "url=https://<your-service>.up.railway.app/telegram/webhook"
+  --data-urlencode "url=https://<your-service>.up.railway.app/telegram/webhook" \
+  --data-urlencode "secret_token=${TELEGRAM_WEBHOOK_SECRET_TOKEN}"
 ```
 
 Expected success payload includes `"ok": true`.
@@ -66,6 +68,7 @@ curl -sS "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/getWebhookInfo"
 
 Check:
 - `url` matches your `/telegram/webhook` URL
+- `has_custom_certificate` / `pending_update_count` look healthy for your setup
 - `last_error_date` / `last_error_message` indicate no active delivery issue
 - `pending_update_count` is not continuously growing
 
@@ -75,5 +78,6 @@ In Railway service logs, verify these events when a command is received:
 2. `Telegram webhook command text: ...`
 3. `Telegram operator auth decision: ...`
 4. `Telegram sendMessage success: ...` (or failure reason)
+5. (if enabled) `Telegram webhook transport auth decision: ...`
 
 This confirms ingress → command handler → reply path is connected.

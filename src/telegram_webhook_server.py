@@ -5,12 +5,21 @@ import os
 from typing import Any
 from wsgiref.simple_server import make_server
 
-from src.config import get_supabase_client
-from src.notifications import send_telegram_chat_message_with_result
-from src.telegram_operator import get_operator_auth_decision, handle_telegram_operator_command
+
+def _load_supabase_client() -> Any:
+    from src.config import get_supabase_client
+
+    return get_supabase_client()
 
 
-def handle_telegram_webhook_update(*, client: Any, update: dict[str, Any]) -> tuple[int, dict[str, Any]]:
+def handle_telegram_webhook_update(
+    *,
+    client: Any,
+    update: dict[str, Any],
+    command_handler: Any | None = None,
+    auth_decision_reader: Any | None = None,
+    reply_sender: Any | None = None,
+) -> tuple[int, dict[str, Any]]:
     """
     Handle one Telegram update payload in a webhook-safe, guardrail-preserving path.
 
@@ -26,14 +35,24 @@ def handle_telegram_webhook_update(*, client: Any, update: dict[str, Any]) -> tu
     print("Telegram webhook request received.")
     print(f"Telegram webhook command text: {text or '<empty>'}")
 
-    auth = get_operator_auth_decision(update)
+    if auth_decision_reader is None or command_handler is None:
+        from src.telegram_operator import get_operator_auth_decision, handle_telegram_operator_command
+
+        auth_decision_reader = auth_decision_reader or get_operator_auth_decision
+        command_handler = command_handler or handle_telegram_operator_command
+    if reply_sender is None:
+        from src.notifications import send_telegram_chat_message_with_result
+
+        reply_sender = send_telegram_chat_message_with_result
+
+    auth = auth_decision_reader(update)
     print(
         "Telegram operator auth decision: "
         f"authorized={auth.get('authorized')} reason={auth.get('reason')} "
         f"chat_id={auth.get('chat_id')} user_id={auth.get('user_id')}"
     )
 
-    response_text = handle_telegram_operator_command(client, update)
+    response_text = command_handler(client, update)
     if response_text is None:
         return 200, {"ok": True, "handled": False}
 
@@ -41,7 +60,7 @@ def handle_telegram_webhook_update(*, client: Any, update: dict[str, Any]) -> tu
         print("Telegram webhook reply skipped: missing chat id in update payload.")
         return 200, {"ok": True, "handled": True, "replied": False, "reason": "missing_chat_id"}
 
-    send_result = send_telegram_chat_message_with_result(chat_id, response_text)
+    send_result = reply_sender(chat_id, response_text)
     if send_result.get("delivered"):
         print(
             "Telegram sendMessage success: "
@@ -64,6 +83,28 @@ def handle_telegram_webhook_update(*, client: Any, update: dict[str, Any]) -> tu
 def create_wsgi_app() -> Any:
     """Create a minimal WSGI app exposing `POST /telegram/webhook` for Telegram ingress."""
 
+    def _is_webhook_request_authorized(environ: dict[str, Any]) -> bool:
+        """
+        Validate optional Telegram webhook secret token.
+
+        Guardrail: this check only protects ingress transport; it must not alter
+        operator command semantics or strategy/runtime decision logic.
+        """
+        configured_secret = os.getenv("TELEGRAM_WEBHOOK_SECRET_TOKEN", "").strip()
+        if not configured_secret:
+            print("Telegram webhook transport auth: open (no secret configured).")
+            return True
+
+        provided_secret = str(
+            environ.get("HTTP_X_TELEGRAM_BOT_API_SECRET_TOKEN", "") or ""
+        ).strip()
+        is_authorized = provided_secret == configured_secret
+        print(
+            "Telegram webhook transport auth decision: "
+            f"authorized={is_authorized} has_provided_secret={bool(provided_secret)}"
+        )
+        return is_authorized
+
     def _app(environ: dict[str, Any], start_response: Any) -> list[bytes]:
         path = environ.get("PATH_INFO", "")
         method = environ.get("REQUEST_METHOD", "")
@@ -74,6 +115,9 @@ def create_wsgi_app() -> Any:
         elif method != "POST":
             status = "405 Method Not Allowed"
             payload = {"ok": False, "error": "method_not_allowed"}
+        elif not _is_webhook_request_authorized(environ):
+            status = "401 Unauthorized"
+            payload = {"ok": False, "error": "unauthorized"}
         else:
             try:
                 body_size = int(environ.get("CONTENT_LENGTH") or 0)
@@ -86,9 +130,17 @@ def create_wsgi_app() -> Any:
                 status = "400 Bad Request"
                 payload = {"ok": False, "error": "invalid_json"}
             else:
-                client = get_supabase_client()
-                code, payload = handle_telegram_webhook_update(client=client, update=update)
-                status = f"{code} OK"
+                try:
+                    client = _load_supabase_client()
+                except Exception as exc:
+                    # Keep webhook response explicit so operators can detect
+                    # infrastructure dependency issues from ingress logs.
+                    print(f"Telegram webhook failed to init Supabase client: {exc}")
+                    status = "503 Service Unavailable"
+                    payload = {"ok": False, "error": "supabase_client_unavailable"}
+                else:
+                    code, payload = handle_telegram_webhook_update(client=client, update=update)
+                    status = f"{code} OK"
 
         response_body = json.dumps(payload).encode("utf-8")
         start_response(

@@ -92,9 +92,15 @@ def test_help_message_contains_guardrails_and_command_list():
     assert "human makes final decision" in message
     assert "no real-money auto execution" in message
     assert "/runs" in message
-    assert "/runs <days>d" in message
+    assert "/runs [days]d" in message
     assert "/help" in message
     assert "/h" in message
+
+
+def test_help_message_avoids_telegram_html_placeholder_tags():
+    message = build_help_command_message()
+    assert "<days>" not in message
+    assert "<run_id>" not in message
 
 
 def test_handle_help_command_rejects_unauthorized_chat(monkeypatch):

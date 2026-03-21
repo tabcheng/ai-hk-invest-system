@@ -67,6 +67,7 @@
 - Step 28 completed: added a beginner-friendly paper-trading daily review summary helper (`get_paper_daily_review_summary_for_run(...)`) that composes persisted run risk/trade/snapshot data into a compact operator-facing shape (`run_id`, BUY totals, ticker activity count, notable plain-language items, and optional short portfolio-change summary).
 - Post-review Step 28 fix: ticker activity counting now includes all persisted run event/trade rows (including non-risk events like `HOLD_EVENT`) so beginner-facing summaries report complete run activity coverage.
 - Step 29 completed: added a beginner-friendly Telegram notification outcome quick-reference (`docs/operator-quick-reference-telegram-outcomes.md`) that maps `sent`, `skipped`, `deduped`, and `failed` to plain-language meaning, recommended first check, and clear escalation guidance.
+- Post-review Step 29 doc tightening: simplified the quick-reference into a one-minute map with explicit “first action” phrasing, added a copy/paste escalation note template, and aligned troubleshooting-runbook link wording.
 
 ## Current documentation posture
 - Core planning, status, architecture, and maintenance docs now form a traceable documentation stack for future Codex execution.

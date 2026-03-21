@@ -135,6 +135,7 @@ Prioritization scale:
    - Added `docs/operator-quick-reference-telegram-outcomes.md` as a beginner-friendly cheat sheet for notification outcomes.
    - Mapped `sent`, `skipped`, `deduped`, and `failed` to plain-language meaning, first checks, and escalation guidance.
    - Preserved runtime behavior (documentation-only change).
+   - Post-review doc tightening: simplified to a one-minute quick map, clarified explicit first-action wording, and added a copy/paste escalation note template.
 
 
 ## Active backlog (pending)

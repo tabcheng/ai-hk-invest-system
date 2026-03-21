@@ -8,7 +8,7 @@ Use this checklist in order. Stop when you find the answer.
 
 ---
 
-Need a fast cheat sheet first? See `docs/operator-quick-reference-telegram-outcomes.md`.
+For a quick outcome-to-action map, see `docs/operator-quick-reference-telegram-outcomes.md`.
 
 ---
 

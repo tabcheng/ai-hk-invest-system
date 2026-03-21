@@ -11,6 +11,7 @@
 - Decision record separation is implemented via `paper_trade_decisions` (AI signal vs human decision state).
 - Telegram delivery remains best-effort/non-blocking with deterministic summary formatting and run-date dedup tracking.
 - No autonomous live-money execution is enabled; human remains final decision-maker.
+- Deploy/config stability note: Railway/Railpack build previously failed when defaulting to Python `3.13.12` (mise install failure path); repository now pins Python to `3.12.9` via `.python-version` as a deploy stability guardrail (no strategy/paper-trading/signal-flow logic change).
 
 ## Milestone status
 - Milestone 1 (Documentation Foundation): completed.

@@ -31,6 +31,9 @@
 - Step 35 deployment topology hardening: Railway deployment is now documented as two same-repo services with split responsibilities — `telegram-webhook` (long-running ingress, start command `python -m src.telegram_webhook_server`, no cron) and `paper-daily-runner` (scheduled batch run, start command `python -m src.daily_runner`, cron `0 12 * * *`).
 - Step 37 runner-entrypoint hardening: scheduled runner now has a dedicated entrypoint (`python -m src.daily_runner`) with explicit startup/completion/failure logging and deterministic exit codes; `main.py` remains a backward-compatible thin wrapper.
 - Step 37 schedule codification: business schedule baseline is Hong Kong Time (HKT), current target run time is 20:00 HKT, Railway cron uses UTC, and current runner cron is `0 12 * * *`.
+- Step 38 runner observability hardening: daily runner output now emits consistent started/completed/failed lifecycle lines plus single-line JSON `execution_summary` with required fields (`started_at`, `finished_at`, `duration_seconds`, `status`, `entrypoint`, `schedule_basis`) for reviewability.
+- Step 38 failure-summary hardening: failed runs now include a concise/safe error summary in both failure lifecycle log and execution summary while still emitting traceback to stderr for diagnostics.
+- Step 38 review hardening: failure `error_summary` normalization now strips multiline/irregular whitespace into single-line text before truncation to keep log lines safe/consistent; focused test coverage now includes normalization + truncation behavior.
 - No autonomous live-money execution is enabled; human remains final decision-maker.
 - Deploy/config stability note: Railway/Railpack build previously failed when defaulting to Python `3.13.12` (mise install failure path); repository now pins Python to `3.12.9` via `.python-version` as a deploy stability guardrail (no strategy/paper-trading/signal-flow logic change).
 
@@ -40,7 +43,7 @@
 - Milestone 3 (Paper-trading v1): completed.
 - Milestone 4 (Controlled production hardening): in-progress, with Steps 19–33 completed and follow-up hardening still pending.
 
-## Step 21–37 status ledger (Step 37 dedicated daily runner entrypoint + HK schedule codification)
+## Step 21–38 status ledger (Step 38 daily runner execution summary + observability hardening)
 
 | Step | Goal | Primary deliverable(s) | Merge / acceptance status |
 |---|---|---|---|
@@ -65,10 +68,12 @@
 | 34B-test-hotfix | Operator command dependency lazy-load for test execution stability | Refactored `/risk_review` path to lazy-load paper-risk helper dependency at execution time (instead of module import time), reducing hard dependency coupling and enabling focused operator/webhook tests in constrained environments | **Repo evidence:** completed in this branch. **Merge:** pending PR merge. **Manual acceptance:** unknown / needs confirmation. |
 | 35 | Split Railway deployment into webhook service + scheduled runner service (same repo) | Added deployment/docs guidance for dual-service topology, explicit service responsibilities, start commands, cron ownership (`0 12 * * *` runner-only), and service-scoped variable reference (`shared` / `webhook-only` / `runner-only`) | **Repo evidence:** completed in this branch. **Merge:** pending PR merge. **Manual acceptance:** unknown / needs confirmation. |
 | 37 | Introduce dedicated daily runner entrypoint + codify HK business schedule | Added `src.daily_runner` as scheduled entrypoint (`python -m src.daily_runner`) with startup/completion/failure logging + deterministic exit codes, kept `main.py` backward-compatible wrapper, added focused runner success/failure smoke coverage, and documented HKT 20:00 target with Railway UTC cron mapping (`0 12 * * *`) across deployment docs | **Repo evidence:** completed in this branch. **Merge:** pending PR merge. **Manual acceptance:** unknown / needs confirmation. |
+| 38 | Daily runner execution summary + observability hardening | Standardized runner lifecycle logs (`started`/`completed`/`failed`) and added deterministic execution summary payload (`started_at`, `finished_at`, `duration_seconds`, `status`, `entrypoint`, `schedule_basis`, failure-only safe `error_summary`) with focused tests for success/failure summaries and exit codes | **Repo evidence:** completed in this branch. **Merge:** pending PR merge. **Manual acceptance:** unknown / needs confirmation. |
+| 38-review-hotfix | Daily runner failure summary normalization hardening | Normalized failure summary whitespace to single-line safe text before truncation, reducing multi-line/log-format noise risk, and added focused helper coverage to assert normalization + max-length truncation behavior | **Repo evidence:** completed in this branch. **Merge:** pending PR merge. **Manual acceptance:** unknown / needs confirmation. |
 
 ## Known unknowns / needs confirmation
 - Exact PR numbers and explicit human acceptance timestamps for Steps 21–29 are not derivable from repository files alone and need manual confirmation.
 - Production platform settings (GitHub/Railway/Supabase) still require periodic manual verification outside repo state.
 
 ## Next approved task candidate
-- Step 38 candidate: platform/documentation hardening follow-up focused on remaining active backlog items (dedup semantics docs validation, platform hardening checklist closure, and paper-trading analytics follow-up scoping) without strategy/runtime behavior changes unless explicitly approved.
+- Step 39 candidate: platform/documentation hardening follow-up focused on remaining active backlog items (dedup semantics docs validation, platform hardening checklist closure, and paper-trading analytics follow-up scoping) without strategy/runtime behavior changes unless explicitly approved.

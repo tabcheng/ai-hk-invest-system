@@ -1,3 +1,5 @@
+import re
+
 from src.telegram_operator import (
     build_help_command_message,
     build_runs_command_message,
@@ -99,8 +101,14 @@ def test_help_message_contains_guardrails_and_command_list():
 
 def test_help_message_avoids_telegram_html_placeholder_tags():
     message = build_help_command_message()
-    assert "<days>" not in message
-    assert "<run_id>" not in message
+    assert re.search(r"<[a-zA-Z][^>]*>", message) is None
+
+
+def test_handle_runs_command_invalid_parameter_message_is_html_safe(monkeypatch):
+    monkeypatch.setenv("TELEGRAM_CHAT_ID", "chat-1")
+    response_text = handle_telegram_operator_command(object(), _build_update("/runs foo"))
+    assert "/runs [days]d" in response_text
+    assert re.search(r"<[a-zA-Z][^>]*>", response_text) is None
 
 
 def test_handle_help_command_rejects_unauthorized_chat(monkeypatch):

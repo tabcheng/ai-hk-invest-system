@@ -49,7 +49,13 @@ Optional stricter guardrail:
 Assume your Railway public domain is:
 - `https://<your-service>.up.railway.app`
 
-Set webhook URL:
+### A) If `TELEGRAM_WEBHOOK_SECRET_TOKEN` is set (recommended for production/long-term)
+Use the same secret value in both:
+- your service env var: `TELEGRAM_WEBHOOK_SECRET_TOKEN`
+- Telegram `setWebhook` parameter: `secret_token`
+
+Telegram will then include the same value in request header `X-Telegram-Bot-Api-Secret-Token`,
+which the webhook uses for source verification.
 
 ```bash
 curl -sS "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/setWebhook" \
@@ -57,7 +63,21 @@ curl -sS "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/setWebhook" \
   --data-urlencode "secret_token=${TELEGRAM_WEBHOOK_SECRET_TOKEN}"
 ```
 
+### B) If `TELEGRAM_WEBHOOK_SECRET_TOKEN` is NOT set (allowed for early setup/testing)
+Do **not** pass `secret_token` when calling `setWebhook`.
+
+```bash
+curl -sS "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/setWebhook" \
+  --data-urlencode "url=https://<your-service>.up.railway.app/telegram/webhook"
+```
+
 Expected success payload includes `"ok": true`.
+
+## Secret-token guardrail (operational recommendation)
+- `TELEGRAM_WEBHOOK_SECRET_TOKEN` is **optional**, not required for initial testing.
+- For production / long-term deployment, enable it to reduce webhook-source spoofing risk.
+- For first-time setup, you may skip it temporarily to avoid setup confusion; enable it once
+  base webhook connectivity is verified.
 
 ## Validate webhook registration
 Use Telegram `getWebhookInfo`:

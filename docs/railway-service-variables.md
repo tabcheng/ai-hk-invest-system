@@ -1,72 +1,45 @@
 # Railway Service Variables
 
-This document is the deployment-facing reference for environment variables used by this repository's runtime services on Railway.
+This document is the deployment-facing reference for environment variables used by this repository's Railway runtime services.
 
 Guardrails:
 - Current scope is **paper trading + decision support only**.
 - No variable in this document authorizes autonomous real-money trade execution.
 
 ## Related docs
+- Dual-service deployment runbook: `docs/railway-dual-service-deployment.md`
 - Telegram webhook setup: `docs/telegram-webhook-setup.md`
 - Telegram troubleshooting runbook: `docs/operator-runbook-telegram-troubleshooting.md`
 - Operator paper-risk review runbook: `docs/operator-runbook-paper-risk-review.md`
 - Current production/status ledger: `docs/status.md`
 
-## 1) Telegram / webhook
+## 0) Step 35 service topology (same repo, two Railway services)
 
-### `TELEGRAM_BOT_TOKEN`
-- **Required/Optional:** Required for Telegram outbound delivery and webhook reply path.
-- **Purpose:** Authenticates Bot API calls to `sendMessage` and `setWebhook`.
-- **Format / Example:** Telegram bot token string, e.g. `123456789:AA...`.
-- **If missing:** Telegram send path returns `missing_telegram_config`; webhook command handling may still run internally but cannot reply to operator chat.
-- **Security note:** Secret. Never commit to repo; store only in Railway protected variables.
+Both Railway services point to the **same GitHub repository** and differ by start command/runtime responsibility:
 
-### `TELEGRAM_CHAT_ID`
-- **Required/Optional:** Required for operator authorization baseline and default notification target.
-- **Purpose:** Restricts operator command usage to configured chat and defines default delivery destination for summary notifications.
-- **Format / Example:** Telegram chat id string (often numeric), e.g. `-1001234567890`.
-- **If missing:** Operator commands are treated as unauthorized (`missing_configured_chat_id`); default Telegram delivery is skipped.
-- **Security note:** Sensitive operational identifier; avoid exposing in public logs/screenshots.
+- **Service A: `telegram-webhook`**
+  - **Start Command:** `python -m src.telegram_webhook_server`
+  - **Responsibility:** Long-running ingress service for Telegram webhook requests.
+  - **Cron:** **Not configured** on this service.
 
-### `TELEGRAM_OPERATOR_ALLOWED_USER_IDS`
-- **Required/Optional:** Optional (recommended for stricter control).
-- **Purpose:** Adds per-user allowlist on top of chat allowlist for operator commands (`/runs`, `/help`, `/h`, `/risk_review [run_id]`).
-- **Format / Example:** Comma-separated Telegram user ids, e.g. `12345678,87654321`.
-- **If missing:** Chat-level auth remains active, user-level gate is open inside the allowed chat.
-- **Security note:** Treat as sensitive access-control config.
+- **Service B: `paper-daily-runner`**
+  - **Start Command:** `python main.py`
+  - **Responsibility:** Batch/scheduled daily paper-trading decision-support run.
+  - **Cron:** `0 12 * * *` configured **only** on this service.
 
-### `TELEGRAM_WEBHOOK_SECRET_TOKEN`
-- **Required/Optional:** Optional but recommended for production/long-term deployment.
-- **Purpose:** Transport-level verification for inbound `POST /telegram/webhook` via header `X-Telegram-Bot-Api-Secret-Token`.
-- **Format / Example:** Random high-entropy string, e.g. `tg_whsec_...`.
-- **If missing:** Webhook transport auth is open (handler auth guardrails still apply).
-- **Security note:** Secret. Must match the value passed to Telegram `setWebhook secret_token` when enabled.
+Important:
+- Railway cron executes the selected service's start command.
+- Runner service should finish daily batch work and exit.
+- Runner service should **not** host Telegram webhook ingress.
+- Webhook service should **not** own cron.
 
-## 2) Operator allowlist / access control
-
-> Note: these variables also appear in Telegram sections because access control is enforced during Telegram command handling.
-
-### `TELEGRAM_CHAT_ID`
-- **Required/Optional:** Required.
-- **Purpose:** Primary operator chat boundary.
-- **Format / Example:** `-1001234567890`.
-- **If missing:** All operator commands denied.
-- **Security note:** Keep private; this value maps directly to operator surface.
-
-### `TELEGRAM_OPERATOR_ALLOWED_USER_IDS`
-- **Required/Optional:** Optional.
-- **Purpose:** Secondary operator user boundary.
-- **Format / Example:** `12345678,87654321`.
-- **If missing:** Only chat-level gate enforced.
-- **Security note:** Access control data; restrict visibility.
-
-## 3) Supabase / database
+## 1) Shared variables (both services)
 
 ### `SUPABASE_URL`
 - **Required/Optional:** Required.
-- **Purpose:** Supabase project endpoint used by runtime and webhook command execution path.
+- **Purpose:** Supabase project endpoint used by runtime and webhook command execution paths.
 - **Format / Example:** URL, e.g. `https://<project-ref>.supabase.co`.
-- **If missing:** Supabase client initialization fails (`Missing SUPABASE_URL or SUPABASE_KEY...`); main runtime and webhook processing cannot complete normally.
+- **If missing:** Supabase client initialization fails (`Missing SUPABASE_URL or SUPABASE_KEY...`); runtime and webhook command handling cannot complete normally.
 - **Security note:** Not secret by itself, but should still be managed in deployment variables (not hardcoded).
 
 ### `SUPABASE_KEY`
@@ -76,7 +49,28 @@ Guardrails:
 - **If missing:** Same failure mode as missing `SUPABASE_URL`; webhook route may return `503 supabase_client_unavailable`.
 - **Security note:** Secret with elevated privileges; never expose client-side or in logs.
 
-## 4) Runtime / environment
+### `TELEGRAM_BOT_TOKEN`
+- **Required/Optional:** Required for Telegram outbound delivery and webhook reply path.
+- **Purpose:** Authenticates Telegram Bot API calls (`sendMessage`, `setWebhook`, operator replies).
+- **Format / Example:** Telegram bot token string, e.g. `123456789:AA...`.
+- **If missing:** Telegram send path returns `missing_telegram_config`; webhook command handling may still run internally but cannot reply to operator chat.
+- **Security note:** Secret. Never commit to repo; store only in Railway protected variables.
+
+### `TELEGRAM_CHAT_ID`
+- **Required/Optional:** Required.
+- **Purpose:** Operator authorization baseline and default delivery destination.
+- **Format / Example:** Telegram chat id string (often numeric), e.g. `-1001234567890`.
+- **If missing:** Operator commands are treated as unauthorized (`missing_configured_chat_id`); default Telegram delivery is skipped.
+- **Security note:** Sensitive operational identifier; avoid exposing in public logs/screenshots.
+
+### `TELEGRAM_OPERATOR_ALLOWED_USER_IDS`
+- **Required/Optional:** Optional (recommended for stricter operator control).
+- **Purpose:** Adds per-user allowlist on top of chat allowlist for operator commands (`/runs`, `/help`, `/h`, `/risk_review [run_id]`).
+- **Format / Example:** Comma-separated Telegram user ids, e.g. `12345678,87654321`.
+- **If missing:** Chat-level auth remains active, user-level gate is open inside the allowed chat.
+- **Security note:** Treat as sensitive access-control config.
+
+## 2) Webhook-only variables (`telegram-webhook` service)
 
 ### `PORT`
 - **Required/Optional:** Required by Railway runtime contract (injected by platform).
@@ -99,8 +93,29 @@ Guardrails:
 - **If missing:** Final fallback is `8080`.
 - **Security note:** Not secret.
 
-## 5) Deployment notes (Railway)
+### `TELEGRAM_WEBHOOK_SECRET_TOKEN`
+- **Required/Optional:** Optional but recommended for production/long-term deployment.
+- **Purpose:** Transport-level verification for inbound `POST /telegram/webhook` via header `X-Telegram-Bot-Api-Secret-Token`.
+- **Format / Example:** Random high-entropy string, e.g. `tg_whsec_...`.
+- **If missing:** Webhook transport auth is open (handler auth guardrails still apply).
+- **Security note:** Secret. Must match value passed in Telegram `setWebhook secret_token` when enabled.
 
-- Keep webhook service and batch runtime behavior aligned with current guardrails: paper-trading review/support only, no real-money auto execution.
-- Prefer enabling `TELEGRAM_WEBHOOK_SECRET_TOKEN` in production after base webhook connectivity is confirmed.
+## 3) Runner-only variables (`paper-daily-runner` service)
+
+Step 35 does not introduce runner-exclusive environment variables in repo code.
+
+Runner-specific behavior is controlled by service command/schedule:
+- Start command: `python main.py`
+- Cron schedule: `0 12 * * *`
+
+Operational guardrail:
+- Do not configure webhook ingress variables solely for runner usage.
+- Keep runner service focused on batch execution and completion/exit.
+
+## 4) Deployment notes (Railway)
+
+- Keep both services in one repo, separated by responsibility and start command.
+- Cron must be attached only to `paper-daily-runner`; do not attach cron to `telegram-webhook`.
+- Keep webhook service running continuously and reachable at your Railway public URL for Telegram delivery.
+- Prefer enabling `TELEGRAM_WEBHOOK_SECRET_TOKEN` on webhook service after base connectivity validation.
 - Keep Python runtime pinned to repo `.python-version` (`3.12.9`) to avoid known Railpack mismatch issues documented in `docs/status.md`.

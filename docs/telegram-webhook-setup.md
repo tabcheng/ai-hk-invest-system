@@ -26,6 +26,13 @@ After Step 34A:
 ## Runtime entrypoint for webhook server
 Run the dedicated webhook server process:
 
+Deployment topology note (Step 35):
+- Keep this webhook process in dedicated Railway service `telegram-webhook`.
+- Do **not** configure cron on webhook service.
+- Daily cron batch run belongs to separate `paper-daily-runner` service (`python main.py`, `0 12 * * *`).
+- See `docs/railway-dual-service-deployment.md` for full two-service runbook.
+
+
 ```bash
 python -m src.telegram_webhook_server
 ```

@@ -64,6 +64,7 @@ Prioritization:
 - Step 33 Telegram operator help command uplift (`/help` + `/h` alias) with compact bilingual scope/guardrail copy and command usage guidance; discoverability hardening kept handler-only because repo currently has no bot command-registration mechanism.
 - Step 34A Telegram inbound webhook integration foundation (`POST /telegram/webhook`) wiring Telegram ingress to existing operator command handler/reply path (`/help`, `/h`, `/runs`) with minimal ingress/auth/send logging, optional transport secret verification hardening, and setup runbook.
 - Step 34A docs hotfix completed: fix webhook setup doc so optional secret token is truly optional (split with-secret vs no-secret `setWebhook` examples and add guardrail guidance).
+- Step 34A message-format hotfix completed: fix Telegram HTML parse-mode placeholder issue by replacing angle-bracket placeholders in operator help/usage text with HTML-safe bracket placeholders, with follow-up tests covering both `/help` and malformed `/runs` usage output.
 
 ## Notes
 - This backlog is a planning artifact, not proof of merge approval. For merge/acceptance truth, cross-check `docs/status.md` and human PR history.

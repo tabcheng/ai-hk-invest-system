@@ -70,7 +70,7 @@ def _is_operator_authorized(update: dict[str, Any]) -> bool:
 def _parse_runs_days(command_text: str) -> int:
     match = _RUNS_COMMAND_PATTERN.match(command_text or "")
     if not match:
-        raise ValueError("Unsupported command. Use /runs or /runs <days>d, e.g. /runs 5d.")
+        raise ValueError("Unsupported command. Use /runs or /runs [days]d, e.g. /runs 5d.")
 
     days_group = match.group(1)
     if not days_group:
@@ -112,7 +112,7 @@ def build_help_command_message() -> str:
             "",
             "Commands:",
             "- /runs : List recent run IDs from the last 5 days (最近 5 日 run 記錄).",
-            "- /runs <days>d : Query a custom window, e.g. /runs 7d (自訂查詢日數).",
+            "- /runs [days]d : Query a custom window, e.g. /runs 7d (自訂查詢日數).",
             "- /help : Show this operator usage guide (顯示操作說明).",
             "- /h : Alias of /help (與 /help 相同).",
         ]

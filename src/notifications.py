@@ -278,11 +278,17 @@ def send_telegram_message(text: str) -> bool:
     return bool(result["delivered"])
 
 
-def send_telegram_message_with_result(text: str) -> dict:
+def send_telegram_chat_message_with_result(chat_id: str, text: str) -> dict:
+    """
+    Send Telegram message to a specific chat id.
+
+    Guardrail: this helper only handles Telegram transport and must not mutate
+    strategy/paper-trading behavior.
+    """
     token = os.getenv("TELEGRAM_BOT_TOKEN")
-    chat_id = os.getenv("TELEGRAM_CHAT_ID")
-    if not token or not chat_id:
-        print("Telegram notification skipped: TELEGRAM_BOT_TOKEN or TELEGRAM_CHAT_ID is missing.")
+    chat_id_value = str(chat_id or "").strip()
+    if not token or not chat_id_value:
+        print("Telegram notification skipped: TELEGRAM_BOT_TOKEN or target chat_id is missing.")
         return {
             "delivered": False,
             "channel": DELIVERY_CHANNEL_TELEGRAM,
@@ -293,11 +299,11 @@ def send_telegram_message_with_result(text: str) -> dict:
     try:
         response = requests.post(
             f"https://api.telegram.org/bot{token}/sendMessage",
-            json={"chat_id": chat_id, "text": text, "parse_mode": "HTML"},
+            json={"chat_id": chat_id_value, "text": text, "parse_mode": "HTML"},
             timeout=10,
         )
         if response.ok:
-            print("Telegram notification sent.")
+            print(f"Telegram message sent to chat_id={chat_id_value}.")
             telegram_message_id = None
             try:
                 payload = response.json()
@@ -329,6 +335,10 @@ def send_telegram_message_with_result(text: str) -> dict:
             "telegram_message_id": None,
             "failure_reason": str(exc)[:280],
         }
+
+
+def send_telegram_message_with_result(text: str) -> dict:
+    return send_telegram_chat_message_with_result(os.getenv("TELEGRAM_CHAT_ID", ""), text)
 
 
 def send_daily_run_summary(

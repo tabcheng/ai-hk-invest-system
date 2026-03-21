@@ -17,6 +17,8 @@
 - Step 33 operator-help uplift: Telegram `/help` and `/h` now return a compact bilingual usage guide that covers system scope, guardrails, and command list (`/runs`, `/runs <days>d`, `/help`, `/h`).
 - Step 33 review hardening: `/help` and `/h` now follow the same operator chat/user authorization guardrail as `/runs`.
 - Step 33 discoverability note: repo currently has no Telegram bot command-registration setup (for example `setMyCommands` registry), so this step intentionally adds handler-only support and keeps runtime changes minimal.
+- Step 34A Telegram inbound foundation: repo-confirmed previous state was outbound-only Telegram delivery (no webhook endpoint, no polling loop). A new dedicated webhook ingress server now exposes `POST /telegram/webhook`, forwards inbound updates to `handle_telegram_operator_command(...)`, and replies to source chat via Telegram `sendMessage` for `/help`, `/h`, `/runs`.
+- Step 34A observability: webhook ingress logs now include request received, command text, authorization decision, and sendMessage success/failure outcome for operator troubleshooting.
 - No autonomous live-money execution is enabled; human remains final decision-maker.
 - Deploy/config stability note: Railway/Railpack build previously failed when defaulting to Python `3.13.12` (mise install failure path); repository now pins Python to `3.12.9` via `.python-version` as a deploy stability guardrail (no strategy/paper-trading/signal-flow logic change).
 
@@ -43,10 +45,11 @@
 | 31 | Telegram message readability improvement | Telegram summary formatting now separates `stock` / `signal/action` / `key_reason/indicator`, keeps `stock_name + stock_id`, adds explicit run-level `risk_note`, and adds focused message-format tests | **Repo evidence:** completed in this branch. **Merge:** pending PR merge. **Manual acceptance:** unknown / needs confirmation. |
 | 32 | Telegram operator run-id lookup command | Added operator `/runs` command handler (default 5-day window, optional `/runs <days>d`) backed by durable `runs` table query with chat/user guardrail and focused tests | **Repo evidence:** completed in this branch. **Merge:** pending PR merge. **Manual acceptance:** unknown / needs confirmation. |
 | 33 | Telegram operator help command discoverability | Added `/help` and `/h` operator handlers (same response), with bilingual scope/guardrail copy and command usage summary; added focused alias/content tests and kept `/runs` behavior unchanged | **Repo evidence:** completed in this branch. **Merge:** pending PR merge. **Manual acceptance:** unknown / needs confirmation. |
+| 34A | Telegram inbound webhook integration foundation | Added dedicated Telegram webhook ingress route (`POST /telegram/webhook`) wired to existing operator command handler and reply path; added minimal ingress/auth/send logging + setup runbook (`docs/telegram-webhook-setup.md`) | **Repo evidence:** completed in this branch. **Merge:** pending PR merge. **Manual acceptance:** unknown / needs confirmation. |
 
 ## Known unknowns / needs confirmation
 - Exact PR numbers and explicit human acceptance timestamps for Steps 21–29 are not derivable from repository files alone and need manual confirmation.
 - Production platform settings (GitHub/Railway/Supabase) still require periodic manual verification outside repo state.
 
 ## Next approved task candidate
-- Step 34 candidate: platform/documentation hardening follow-up focused on remaining active backlog items (dedup semantics docs validation, platform hardening checklist closure, and paper-trading analytics follow-up scoping) without strategy/runtime behavior changes unless explicitly approved.
+- Step 34B candidate: platform/documentation hardening follow-up focused on remaining active backlog items (dedup semantics docs validation, platform hardening checklist closure, and paper-trading analytics follow-up scoping) without strategy/runtime behavior changes unless explicitly approved.

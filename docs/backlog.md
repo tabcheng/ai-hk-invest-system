@@ -7,8 +7,8 @@ Prioritization:
 
 ## Active backlog (pending)
 
-### P1 — Step 35 candidates (small, reviewable, verifiable)
-1. **Platform hardening follow-up (Step 35A candidate)**
+### P1 — Step 36 candidates (small, reviewable, verifiable)
+1. **Platform hardening follow-up (Step 36A candidate)**
    - Close/verify manual controls documented in Step 19/19B (GitHub branch protection, Railway worker posture, Supabase backup/RLS checklist).
    - Keep repo changes documentation-first unless explicit runtime/platform mutation is approved.
 
@@ -69,6 +69,7 @@ Prioritization:
 - Step 34B completed: `docs/railway-service-variables.md` deployment reference for Railway service variables across Telegram/webhook, operator allowlist, Supabase, and runtime settings.
 - Step 34B review hotfix completed: isolated unexpected operator-handler/run-lookup exceptions so webhook processing remains healthy and Telegram replies stay sanitized, with focused tests for these failure paths.
 - Step 34B test hotfix completed: lazy-loaded paper-risk review dependency in Telegram operator path to reduce import-time runtime coupling and keep focused operator/webhook tests runnable in constrained environments.
+- Step 35 completed: split Railway deployment topology into two same-repo services (`telegram-webhook` long-running ingress, `paper-daily-runner` cron batch runner), clarified start commands, cron ownership, and service-scoped variable guidance in deployment docs.
 
 ## Notes
 - This backlog is a planning artifact, not proof of merge approval. For merge/acceptance truth, cross-check `docs/status.md` and human PR history.

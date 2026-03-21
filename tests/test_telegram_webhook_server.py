@@ -59,6 +59,38 @@ def test_handle_webhook_update_replies_with_handler_text(monkeypatch):
     assert sent["text"] == "operator reply"
 
 
+def test_handle_webhook_update_sanitizes_command_handler_exception(monkeypatch):
+    sent = {}
+
+    def _fake_send(chat_id: str, text: str):
+        sent["chat_id"] = chat_id
+        sent["text"] = text
+        return {
+            "delivered": True,
+            "channel": "telegram",
+            "telegram_message_id": 88,
+            "failure_reason": None,
+        }
+
+    def _raise_handler(*_args, **_kwargs):
+        raise RuntimeError("simulated operator handler crash")
+
+    code, payload = handle_telegram_webhook_update(
+        client=object(),
+        update=_build_update("/risk_review 123"),
+        command_handler=_raise_handler,
+        auth_decision_reader=lambda *_args, **_kwargs: {"authorized": True, "reason": "test"},
+        reply_sender=_fake_send,
+    )
+
+    assert code == 200
+    assert payload["handled"] is True
+    assert payload["replied"] is True
+    assert sent["chat_id"] == "chat-1"
+    assert "internal command processing error" in sent["text"]
+    assert "simulated operator handler crash" not in sent["text"]
+
+
 def test_wsgi_route_dispatches_post_telegram_webhook(monkeypatch):
     monkeypatch.setattr("src.telegram_webhook_server._load_supabase_client", lambda: object())
     monkeypatch.setattr(

@@ -24,7 +24,7 @@ def handle_telegram_webhook_update(
     Handle one Telegram update payload in a webhook-safe, guardrail-preserving path.
 
     Guardrails:
-    - Ingress only bridges existing operator command handlers (`/help`, `/h`, `/runs`).
+    - Ingress only bridges existing operator command handlers (`/help`, `/h`, `/runs`, `/risk_review [run_id]`).
     - No strategy/paper-trading/real-money execution behavior is introduced here.
     - Unknown/non-command updates return 200 no-op to avoid Telegram retries.
     """
@@ -52,7 +52,16 @@ def handle_telegram_webhook_update(
         f"chat_id={auth.get('chat_id')} user_id={auth.get('user_id')}"
     )
 
-    response_text = command_handler(client, update)
+    try:
+        response_text = command_handler(client, update)
+    except Exception as exc:
+        # Webhook isolation guardrail: one handler failure must not crash ingress.
+        # Keep Telegram reply sanitized while retaining internal details in logs.
+        print(f"Telegram webhook command handler failed: {exc!r}")
+        response_text = (
+            "Failed: internal command processing error. "
+            "Please check service logs and retry."
+        )
     if response_text is None:
         return 200, {"ok": True, "handled": False}
 

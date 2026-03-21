@@ -169,7 +169,7 @@ def main() -> None:
     Start Telegram webhook ingress HTTP server.
 
     Use this process as a dedicated ingress service. Keep the existing batch runtime
-    (`python main.py`) unchanged.
+    (`python -m src.daily_runner`) unchanged.
     """
     host = os.getenv("TELEGRAM_WEBHOOK_HOST", "0.0.0.0")
     port = int(os.getenv("PORT", os.getenv("TELEGRAM_WEBHOOK_PORT", "8080")))

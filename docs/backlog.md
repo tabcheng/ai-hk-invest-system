@@ -7,8 +7,8 @@ Prioritization:
 
 ## Active backlog (pending)
 
-### P1 — Step 36 candidates (small, reviewable, verifiable)
-1. **Platform hardening follow-up (Step 36A candidate)**
+### P1 — Step 38 candidates (small, reviewable, verifiable)
+1. **Platform hardening follow-up (Step 38A candidate)**
    - Close/verify manual controls documented in Step 19/19B (GitHub branch protection, Railway worker posture, Supabase backup/RLS checklist).
    - Keep repo changes documentation-first unless explicit runtime/platform mutation is approved.
 
@@ -34,6 +34,8 @@ Prioritization:
 - Track lightweight runtime health metrics (duration, per-ticker latency, failure ratio) once Step 31 scope is approved.
 
 ## Completed backlog (archived)
+
+- Step 37 completed: dedicated daily-runner entrypoint introduced (`python -m src.daily_runner`), with HKT business schedule baseline formally documented (target 20:00 HKT; Railway UTC cron `0 12 * * *`).
 
 ### Foundation + runtime hardening
 - Step 1–12 baseline (documentation foundation, signal framework, dedup, run lifecycle, modularization, tests, Telegram MVP/hardening).

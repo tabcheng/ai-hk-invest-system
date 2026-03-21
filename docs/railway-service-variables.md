@@ -23,9 +23,12 @@ Both Railway services point to the **same GitHub repository** and differ by star
   - **Cron:** **Not configured** on this service.
 
 - **Service B: `paper-daily-runner`**
-  - **Start Command:** `python main.py`
+  - **Start Command:** `python -m src.daily_runner`
   - **Responsibility:** Batch/scheduled daily paper-trading decision-support run.
-  - **Cron:** `0 12 * * *` configured **only** on this service.
+  - **Business schedule baseline:** Hong Kong Time (HKT).
+  - **Current target run time:** 20:00 HKT.
+  - **Railway cron timezone:** UTC.
+  - **Cron:** `0 12 * * *` configured **only** on this service (maps to 20:00 HKT).
 
 Important:
 - Railway cron executes the selected service's start command.
@@ -105,7 +108,10 @@ Important:
 Step 35 does not introduce runner-exclusive environment variables in repo code.
 
 Runner-specific behavior is controlled by service command/schedule:
-- Start command: `python main.py`
+- Start command: `python -m src.daily_runner`
+- Business schedule baseline: HKT
+- Current target run time: 20:00 HKT
+- Railway cron timezone: UTC
 - Cron schedule: `0 12 * * *`
 
 Operational guardrail:

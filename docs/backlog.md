@@ -7,8 +7,8 @@ Prioritization:
 
 ## Active backlog (pending)
 
-### P1 — Step 34 candidates (small, reviewable, verifiable)
-1. **Platform hardening follow-up (Step 34B candidate)**
+### P1 — Step 35 candidates (small, reviewable, verifiable)
+1. **Platform hardening follow-up (Step 35A candidate)**
    - Close/verify manual controls documented in Step 19/19B (GitHub branch protection, Railway worker posture, Supabase backup/RLS checklist).
    - Keep repo changes documentation-first unless explicit runtime/platform mutation is approved.
 
@@ -65,6 +65,10 @@ Prioritization:
 - Step 34A Telegram inbound webhook integration foundation (`POST /telegram/webhook`) wiring Telegram ingress to existing operator command handler/reply path (`/help`, `/h`, `/runs`) with minimal ingress/auth/send logging, optional transport secret verification hardening, and setup runbook.
 - Step 34A docs hotfix completed: fix webhook setup doc so optional secret token is truly optional (split with-secret vs no-secret `setWebhook` examples and add guardrail guidance).
 - Step 34A message-format hotfix completed: fix Telegram HTML parse-mode placeholder issue by replacing angle-bracket placeholders in operator help/usage text with HTML-safe bracket placeholders, with follow-up tests covering both `/help` and malformed `/runs` usage output.
+- Step 34B completed: Telegram `/risk_review [run_id]` operator command with allowlist/auth guardrail, strict run-id validation, run existence checks, safe failure replies, and observability logs for accepted/failed/completed transitions.
+- Step 34B completed: `docs/railway-service-variables.md` deployment reference for Railway service variables across Telegram/webhook, operator allowlist, Supabase, and runtime settings.
+- Step 34B review hotfix completed: isolated unexpected operator-handler/run-lookup exceptions so webhook processing remains healthy and Telegram replies stay sanitized, with focused tests for these failure paths.
+- Step 34B test hotfix completed: lazy-loaded paper-risk review dependency in Telegram operator path to reduce import-time runtime coupling and keep focused operator/webhook tests runnable in constrained environments.
 
 ## Notes
 - This backlog is a planning artifact, not proof of merge approval. For merge/acceptance truth, cross-check `docs/status.md` and human PR history.

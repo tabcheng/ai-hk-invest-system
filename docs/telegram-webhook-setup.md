@@ -5,6 +5,7 @@ This document describes the minimal **Telegram inbound ingress foundation** for 
 - `/help`
 - `/h`
 - `/runs`
+- `/risk_review [run_id]`
 
 Guardrail:
 - This webhook path only bridges inbound Telegram commands to existing operator command handlers.
@@ -97,7 +98,8 @@ In Railway service logs, verify these events when a command is received:
 1. `Telegram webhook request received.`
 2. `Telegram webhook command text: ...`
 3. `Telegram operator auth decision: ...`
-4. `Telegram sendMessage success: ...` (or failure reason)
-5. (if enabled) `Telegram webhook transport auth decision: ...`
+4. `Telegram /risk_review requested: ...` / `... completed` / `... failed` (for risk-review commands)
+5. `Telegram sendMessage success: ...` (or failure reason)
+6. (if enabled) `Telegram webhook transport auth decision: ...`
 
 This confirms ingress → command handler → reply path is connected.

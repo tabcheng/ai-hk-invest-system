@@ -95,6 +95,7 @@ def test_help_message_contains_guardrails_and_command_list():
     assert "no real-money auto execution" in message
     assert "/runs" in message
     assert "/runs [days]d" in message
+    assert "/risk_review [run_id]" in message
     assert "/help" in message
     assert "/h" in message
 
@@ -115,3 +116,101 @@ def test_handle_help_command_rejects_unauthorized_chat(monkeypatch):
     monkeypatch.setenv("TELEGRAM_CHAT_ID", "chat-allowed")
     response = handle_telegram_operator_command(object(), _build_update("/help", chat_id="chat-other"))
     assert "Unauthorized" in response
+
+
+def test_handle_risk_review_command_allowlisted_user_and_valid_run_id(monkeypatch):
+    monkeypatch.setenv("TELEGRAM_CHAT_ID", "chat-1")
+    monkeypatch.setenv("TELEGRAM_OPERATOR_ALLOWED_USER_IDS", "u-1")
+    monkeypatch.setattr(
+        "src.telegram_operator.get_run_by_id",
+        lambda _client, run_id: {"id": run_id, "status": "SUCCESS", "created_at": "2026-03-21T00:00:00+00:00"},
+    )
+    monkeypatch.setattr(
+        "src.telegram_operator._get_paper_risk_review",
+        lambda _client, run_id: {
+            "run_id": run_id,
+            "total_executed_buys": 2,
+            "total_blocked_buys": 1,
+            "total_warning_buys": 1,
+            "per_ticker": {"0005.HK": [], "0700.HK": []},
+        },
+    )
+
+    response = handle_telegram_operator_command(object(), _build_update("/risk_review 12345", user_id="u-1"))
+
+    assert "Accepted: /risk_review run_id=12345." in response
+    assert "Status: completed." in response
+    assert "executed_buys=2" in response
+    assert "blocked_buys=1" in response
+    assert "warning_buys=1" in response
+    assert "tickers=2" in response
+
+
+def test_handle_risk_review_command_rejects_non_allowlisted_user(monkeypatch):
+    monkeypatch.setenv("TELEGRAM_CHAT_ID", "chat-1")
+    monkeypatch.setenv("TELEGRAM_OPERATOR_ALLOWED_USER_IDS", "u-1")
+
+    response = handle_telegram_operator_command(object(), _build_update("/risk_review 12345", user_id="u-9"))
+
+    assert "Unauthorized" in response
+
+
+def test_handle_risk_review_command_returns_usage_when_run_id_missing(monkeypatch):
+    monkeypatch.setenv("TELEGRAM_CHAT_ID", "chat-1")
+
+    response = handle_telegram_operator_command(object(), _build_update("/risk_review"))
+
+    assert "Usage: /risk_review [run_id]" in response
+
+
+def test_handle_risk_review_command_rejects_invalid_run_id_format(monkeypatch):
+    monkeypatch.setenv("TELEGRAM_CHAT_ID", "chat-1")
+
+    response = handle_telegram_operator_command(object(), _build_update("/risk_review abc"))
+
+    assert "Invalid run_id format" in response
+
+
+def test_handle_risk_review_command_rejects_nonexistent_run(monkeypatch):
+    monkeypatch.setenv("TELEGRAM_CHAT_ID", "chat-1")
+    monkeypatch.setattr("src.telegram_operator.get_run_by_id", lambda _client, run_id: None)
+
+    response = handle_telegram_operator_command(object(), _build_update("/risk_review 99999"))
+
+    assert "Failed: run_id=99999 not found" in response
+
+
+def test_handle_risk_review_command_handles_execution_failure_without_stack_trace(monkeypatch):
+    monkeypatch.setenv("TELEGRAM_CHAT_ID", "chat-1")
+    monkeypatch.setattr(
+        "src.telegram_operator.get_run_by_id",
+        lambda _client, run_id: {"id": run_id, "status": "SUCCESS", "created_at": "2026-03-21T00:00:00+00:00"},
+    )
+
+    def _raise_failure(_client, run_id):
+        raise RuntimeError(f"simulated failure for run_id={run_id}")
+
+    monkeypatch.setattr("src.telegram_operator._get_paper_risk_review", _raise_failure)
+
+    response = handle_telegram_operator_command(object(), _build_update("/risk_review 1001"))
+
+    assert "Accepted: /risk_review run_id=1001." in response
+    assert "Status: failed." in response
+    assert "internal review execution error" in response
+    assert "simulated failure" not in response
+
+
+def test_handle_risk_review_command_handles_run_lookup_failure_without_stack_trace(monkeypatch):
+    monkeypatch.setenv("TELEGRAM_CHAT_ID", "chat-1")
+
+    def _raise_lookup_failure(_client, run_id):
+        raise RuntimeError(f"lookup failed for run_id={run_id}")
+
+    monkeypatch.setattr("src.telegram_operator.get_run_by_id", _raise_lookup_failure)
+
+    response = handle_telegram_operator_command(object(), _build_update("/risk_review 1002"))
+
+    assert "Accepted: /risk_review run_id=1002." in response
+    assert "Status: failed." in response
+    assert "internal review execution error" in response
+    assert "lookup failed" not in response

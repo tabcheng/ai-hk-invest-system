@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta, timezone
 from typing import Any
 
+
 def create_run(client: Any) -> int:
     result = (
         client.table("runs")
@@ -42,3 +43,13 @@ def list_recent_runs(client: Any, *, days: int = 5, limit: int = 50) -> list[dic
         .execute()
     )
     return list(result.data or [])
+
+
+def get_run_by_id(client: Any, run_id: int) -> dict[str, Any] | None:
+    """Return one run row by id for operator command existence checks."""
+    if run_id <= 0:
+        raise ValueError("run_id must be a positive integer")
+
+    result = client.table("runs").select("id,status,created_at").eq("id", run_id).limit(1).execute()
+    rows = list(result.data or [])
+    return rows[0] if rows else None

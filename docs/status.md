@@ -23,6 +23,7 @@
 - Paper-trading decision ledger v1 is now persisted in `paper_trade_decisions`, explicitly separating AI signal action from human decision state with both `stock_id` and `stock_name` retained.
 - Paper-trading now also maintains a lightweight `paper_positions` state table (long-only) refreshed from simulated trades, with weighted-average cost and realized/unrealized PnL fields plus a reusable portfolio summary read helper.
 - Paper-trading risk guardrails v1 now evaluate candidate BUY trades pre-execution (single-position concentration, daily new-allocation budget, add-to-existing exposure, and cash-floor/sufficiency) and block only explicit high-risk breaches while remaining paper-only decision support.
+- Deploy stability hotfix: Railway/Railpack builds were observed failing when defaulting to Python `3.13.12` due to mise install failure; repository now pins Python via `.python-version` (`3.12.9`) as a deploy/config guardrail only.
 - No autonomous live-trading execution is enabled.
 - The human user remains the final decision-maker for all real trade actions.
 

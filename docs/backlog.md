@@ -137,6 +137,11 @@ Prioritization scale:
    - Preserved runtime behavior (documentation-only change).
    - Post-review doc tightening: simplified to a one-minute quick map, clarified explicit first-action wording, and added a copy/paste escalation note template.
 
+27. **Deployment stability hotfix: pinned Python version for Railway/Railpack** ✅ completed
+   - Railway/Railpack deploy builds previously failed when defaulting to Python `3.13.12` (mise install failure).
+   - Added repo-root `.python-version` pinned to `3.12.9` as deploy stability guardrail.
+   - Scope is deploy/config only; strategy, signal flow, and paper-trading runtime logic are unchanged.
+
 
 ## Active backlog (pending)
 

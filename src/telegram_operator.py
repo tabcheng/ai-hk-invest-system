@@ -20,7 +20,7 @@ def _parse_allowed_user_ids(raw_value: str | None) -> set[str]:
     return {token.strip() for token in raw_value.split(",") if token.strip()}
 
 
-def _is_operator_authorized(update: dict[str, Any]) -> bool:
+def get_operator_auth_decision(update: dict[str, Any]) -> dict[str, Any]:
     """
     Guardrail: only the configured operator chat/allowed user can use commands.
 
@@ -31,13 +31,40 @@ def _is_operator_authorized(update: dict[str, Any]) -> bool:
     message = update.get("message") or {}
     chat_id = str((message.get("chat") or {}).get("id", "")).strip()
     from_user_id = str((message.get("from") or {}).get("id", "")).strip()
-    if not configured_chat_id or chat_id != configured_chat_id:
-        return False
+    if not configured_chat_id:
+        return {
+            "authorized": False,
+            "reason": "missing_configured_chat_id",
+            "chat_id": chat_id,
+            "user_id": from_user_id,
+        }
+    if chat_id != configured_chat_id:
+        return {
+            "authorized": False,
+            "reason": "chat_not_allowed",
+            "chat_id": chat_id,
+            "user_id": from_user_id,
+        }
 
     allowed_user_ids = _parse_allowed_user_ids(os.getenv("TELEGRAM_OPERATOR_ALLOWED_USER_IDS"))
     if not allowed_user_ids:
-        return True
-    return from_user_id in allowed_user_ids
+        return {
+            "authorized": True,
+            "reason": "chat_allowed_user_open",
+            "chat_id": chat_id,
+            "user_id": from_user_id,
+        }
+    is_allowed = from_user_id in allowed_user_ids
+    return {
+        "authorized": is_allowed,
+        "reason": "user_allowed" if is_allowed else "user_not_allowed",
+        "chat_id": chat_id,
+        "user_id": from_user_id,
+    }
+
+
+def _is_operator_authorized(update: dict[str, Any]) -> bool:
+    return bool(get_operator_auth_decision(update).get("authorized"))
 
 
 def _parse_runs_days(command_text: str) -> int:

@@ -58,3 +58,9 @@ def test_handle_runs_command_enforces_allowed_users_when_configured(monkeypatch)
 
 def test_build_runs_command_message_handles_empty_rows():
     assert build_runs_command_message([], days=5) == "No runs found in the last 5 day(s)."
+
+
+def test_handle_runs_command_returns_usage_on_invalid_parameter(monkeypatch):
+    monkeypatch.setenv("TELEGRAM_CHAT_ID", "chat-1")
+    response = handle_telegram_operator_command(object(), _build_update("/runs 99d"))
+    assert "Days must be between 1 and 30" in response

@@ -99,6 +99,9 @@ def handle_telegram_operator_command(client: Any, update: dict[str, Any]) -> str
     if not _is_operator_authorized(update):
         return "Unauthorized: this command is restricted to the configured operator chat/user."
 
-    days = _parse_runs_days(text)
+    try:
+        days = _parse_runs_days(text)
+    except ValueError as exc:
+        return str(exc)
     runs = list_recent_runs(client, days=days, limit=_DEFAULT_LIMIT)
     return build_runs_command_message(runs, days=days)

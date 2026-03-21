@@ -1,10 +1,7 @@
 from datetime import datetime, timedelta, timezone
 from typing import Any
 
-from supabase import Client
-
-
-def create_run(client: Client) -> int:
+def create_run(client: Any) -> int:
     result = (
         client.table("runs")
         .insert({"status": "RUNNING"}, returning="representation")
@@ -15,11 +12,11 @@ def create_run(client: Client) -> int:
     return run_id
 
 
-def update_run(client: Client, run_id: int, payload: dict) -> None:
+def update_run(client: Any, run_id: int, payload: dict) -> None:
     client.table("runs").update(payload).eq("id", run_id).execute()
 
 
-def list_recent_runs(client: Client, *, days: int = 5, limit: int = 50) -> list[dict[str, Any]]:
+def list_recent_runs(client: Any, *, days: int = 5, limit: int = 50) -> list[dict[str, Any]]:
     """
     Read recent run history from the persistent `runs` table.
 

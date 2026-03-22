@@ -71,3 +71,10 @@ Provide a consistent execution workflow for long-horizon Codex contributions.
 - Add a small application helper/model layer that validates required decision fields before insert.
 - Integrate decision-record creation at the signal-save path as best-effort observability (must not block signal generation or paper-trading execution).
 - Keep real-money execution out-of-scope: this ledger records review decisions only and does not place orders.
+
+## Step 42 implementation note (market data provider boundary v1)
+- Introduce a provider abstraction (`MarketDataProvider`) with minimal required methods: `get_daily_ohlcv`, `get_latest_price`, and `get_symbol_metadata`.
+- Keep orchestration and signal modules source-agnostic by routing market reads through provider boundary helpers in `src/data.py`.
+- Add a deterministic `mock` provider for local development and tests; keep `yfinance` as default provider.
+- Add minimal provider selection config using env var `MARKET_DATA_PROVIDER` (for Railway/local), with fail-fast validation on unsupported provider names.
+- Guardrails: provider work is paper-trading/decision-support only, no broker integration, no live-money execution, and no large ingestion-pipeline expansion in this step.

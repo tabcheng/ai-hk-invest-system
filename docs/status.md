@@ -50,6 +50,9 @@
 - Step 41 review hardening: `/pnl_review` now rejects malformed extra-argument variants (for example `/pnl_review now`) with explicit usage guidance instead of silent ignore behavior.
 - Step 41 data-quality hardening: closed-position counting now requires BUY lineage so malformed SELL-only history is surfaced as `FLAT` and excluded from closed-position totals.
 - Step 41 correctness hotfix: paper position/PnL snapshot replay ordering now matches position-refresh contract (`trade_date` then `id`) to prevent rerun/backfill `id` drift from skewing quantity/avg-cost/realized-PnL/closed-count outputs.
+- Step 42 market-data boundary v1: signal data reads now go through a provider abstraction (`MarketDataProvider`) with registry-based selection (`MARKET_DATA_PROVIDER`, default `yfinance`) and a deterministic `mock` provider for local/test usage.
+- Step 42 review hardening: yfinance latest-price adapter now compensates for exclusive `end` semantics by requesting `end_date + 1 day`; provider registry now fail-fast rejects blank `MARKET_DATA_PROVIDER` values with explicit error messaging.
+- Step 42 correctness hotfix: provider contract now explicitly defines inclusive `end_date`; yfinance compensation is centralized in `get_daily_ohlcv` so daily signal generation path (`fetch_market_data`) also includes latest available bar and avoids one-day-late BUY/SELL decisions.
 - No autonomous live-money execution is enabled; human remains final decision-maker.
 - Deploy/config stability note: Railway/Railpack build previously failed when defaulting to Python `3.13.12` (mise install failure path); repository now pins Python to `3.12.9` via `.python-version` as a deploy stability guardrail (no strategy/paper-trading/signal-flow logic change).
 
@@ -59,7 +62,7 @@
 - Milestone 3 (Paper-trading v1): completed.
 - Milestone 4 (Controlled production hardening): in-progress, with Steps 19–33 completed and follow-up hardening still pending.
 
-## Step 21–41 status ledger (Step 41 paper position/PnL review snapshot v1)
+## Step 21–42 status ledger (Step 42 market data provider boundary v1)
 
 | Step | Goal | Primary deliverable(s) | Merge / acceptance status |
 |---|---|---|---|
@@ -92,10 +95,11 @@
 | 39-review-hotfix-html-followup | `/runner_status` additional dynamic-field HTML safety | Extended HTML escaping to dynamic `status` and `run_id` fields in `/runner_status` output to further reduce parse-mode fragility from irregular persisted metadata, with focused test coverage | **Repo evidence:** completed in this branch. **Merge:** pending PR merge. **Manual acceptance:** unknown / needs confirmation. |
 | 40 | Normalize operator response formatting + HTML-safe rendering contract | Added shared Telegram operator response contract for `/runs`, `/runner_status`, `/risk_review` (`Command`/`Status`/`Result`/`Reason` + deterministic fields), centralized dynamic-field HTML escaping helper, and focused tests for consistency/no-data/failure/unauthorized/HTML-safe output without changing command business logic or webhook flow | **Repo evidence:** completed in this branch. **Merge:** pending PR merge. **Manual acceptance:** unknown / needs confirmation. |
 | 41 | Paper trading position/PnL review snapshot v1 | Added read-only snapshot helper for open/closed counts, realized/unrealized totals, and per-symbol summaries; added Telegram `/pnl_review` command with guardrailed operator replies, explicit malformed-input usage guidance, and correctness hotfix for replay ordering (`trade_date` then `id`) so review output stays aligned with position-refresh contract under rerun/backfill id drift | **Repo evidence:** completed in this branch. **Merge:** pending PR merge. **Manual acceptance:** unknown / needs confirmation. |
+| 42 | Market data provider boundary v1 | Added provider protocol (`get_daily_ohlcv`, `get_latest_price`, `get_symbol_metadata`), registry-based provider selection via `MARKET_DATA_PROVIDER`, default `yfinance` adapter, deterministic `mock` adapter, and docs/test updates with paper-only guardrails | **Repo evidence:** completed in this branch. **Merge:** pending PR merge. **Manual acceptance:** unknown / needs confirmation. |
 
 ## Known unknowns / needs confirmation
 - Exact PR numbers and explicit human acceptance timestamps for Steps 21–29 are not derivable from repository files alone and need manual confirmation.
 - Production platform settings (GitHub/Railway/Supabase) still require periodic manual verification outside repo state.
 
 ## Next approved task candidate
-- Step 42 candidate: platform/documentation hardening follow-up focused on remaining active backlog items (dedup semantics docs validation, platform hardening checklist closure, and paper-trading analytics follow-up scoping) without strategy/runtime behavior changes unless explicitly approved.
+- Step 43 candidate: platform/documentation hardening follow-up focused on remaining active backlog items (dedup semantics docs validation, platform hardening checklist closure, and paper-trading analytics follow-up scoping) without strategy/runtime behavior changes unless explicitly approved.

@@ -15,3 +15,4 @@ Build a long-horizon AI-assisted Hong Kong stock investing system with disciplin
 ## Operating Principles
 - Emphasize consistency, auditability, and incremental improvement.
 - Keep implementation and validation aligned with documented plans and status.
+- Market data access must pass through a replaceable provider boundary so sources can evolve without strategy/orchestration rewrites.

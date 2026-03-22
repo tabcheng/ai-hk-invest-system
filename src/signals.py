@@ -1,6 +1,7 @@
 import pandas as pd
 
 from src.data import fetch_market_data
+from src.market_data.provider import MarketDataProvider
 
 
 def generate_signal_from_data(ticker: str, data: pd.DataFrame) -> dict:
@@ -9,7 +10,7 @@ def generate_signal_from_data(ticker: str, data: pd.DataFrame) -> dict:
             "stock": ticker,
             "signal": "NO_DATA",
             "price": None,
-            "reason": "No market data returned from yfinance",
+            "reason": "No market data returned from provider",
         }
 
     if isinstance(data.columns, pd.MultiIndex):
@@ -59,6 +60,8 @@ def generate_signal_from_data(ticker: str, data: pd.DataFrame) -> dict:
     }
 
 
-def get_signal_for_ticker(ticker: str) -> dict:
-    data = fetch_market_data(ticker)
+def get_signal_for_ticker(ticker: str, provider: MarketDataProvider | None = None) -> dict:
+    # Paper-trading guardrail: this path only generates decision-support signals.
+    # It never places real-money orders regardless of provider choice.
+    data = fetch_market_data(ticker, provider=provider)
     return generate_signal_from_data(ticker, data)

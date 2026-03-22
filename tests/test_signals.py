@@ -37,7 +37,7 @@ def test_generate_signal_returns_no_data_for_empty_frame():
         "stock": "1299.HK",
         "signal": "NO_DATA",
         "price": None,
-        "reason": "No market data returned from yfinance",
+        "reason": "No market data returned from provider",
     }
 
 

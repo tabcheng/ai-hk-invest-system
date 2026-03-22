@@ -23,7 +23,9 @@ def test_handle_runs_command_defaults_to_5d(monkeypatch):
 
     response = handle_telegram_operator_command(object(), _build_update("/runs"))
 
-    assert "last 5 day(s)" in response
+    assert "Command: /runs" in response
+    assert "Status: completed." in response
+    assert "- window_days: 5" in response
     assert "run_id=12" in response
     assert "status=SUCCESS" in response
 
@@ -31,7 +33,8 @@ def test_handle_runs_command_defaults_to_5d(monkeypatch):
 def test_handle_runs_command_rejects_unauthorized_chat(monkeypatch):
     monkeypatch.setenv("TELEGRAM_CHAT_ID", "chat-allowed")
     response = handle_telegram_operator_command(object(), _build_update("/runs", chat_id="chat-other"))
-    assert "Unauthorized" in response
+    assert "Command: /runs" in response
+    assert "Status: unauthorized." in response
 
 
 def test_handle_runs_command_supports_days_parameter(monkeypatch):
@@ -47,7 +50,9 @@ def test_handle_runs_command_supports_days_parameter(monkeypatch):
     response = handle_telegram_operator_command(object(), _build_update("/runs 7d"))
 
     assert seen["days"] == 7
-    assert "No runs found in the last 7 day(s)." == response
+    assert "Command: /runs" in response
+    assert "Status: no data." in response
+    assert "Reason: no runs found in the last 7 day(s)" in response
 
 
 def test_handle_runs_command_enforces_allowed_users_when_configured(monkeypatch):
@@ -58,12 +63,15 @@ def test_handle_runs_command_enforces_allowed_users_when_configured(monkeypatch)
     allowed = handle_telegram_operator_command(object(), _build_update("/runs", user_id="u-2"))
     denied = handle_telegram_operator_command(object(), _build_update("/runs", user_id="u-9"))
 
-    assert allowed == "No runs found in the last 5 day(s)."
-    assert "Unauthorized" in denied
+    assert "Status: no data." in allowed
+    assert "Status: unauthorized." in denied
 
 
 def test_build_runs_command_message_handles_empty_rows():
-    assert build_runs_command_message([], days=5) == "No runs found in the last 5 day(s)."
+    message = build_runs_command_message([], days=5)
+    assert "Command: /runs" in message
+    assert "Status: no data." in message
+    assert "Reason: no runs found in the last 5 day(s)" in message
 
 
 def test_handle_runs_command_returns_usage_on_invalid_parameter(monkeypatch):
@@ -116,7 +124,8 @@ def test_handle_runs_command_invalid_parameter_message_is_html_safe(monkeypatch)
 def test_handle_help_command_rejects_unauthorized_chat(monkeypatch):
     monkeypatch.setenv("TELEGRAM_CHAT_ID", "chat-allowed")
     response = handle_telegram_operator_command(object(), _build_update("/help", chat_id="chat-other"))
-    assert "Unauthorized" in response
+    assert "Command: /help" in response
+    assert "Status: unauthorized." in response
 
 
 def test_handle_risk_review_command_allowlisted_user_and_valid_run_id(monkeypatch):
@@ -139,12 +148,13 @@ def test_handle_risk_review_command_allowlisted_user_and_valid_run_id(monkeypatc
 
     response = handle_telegram_operator_command(object(), _build_update("/risk_review 12345", user_id="u-1"))
 
-    assert "Accepted: /risk_review run_id=12345." in response
+    assert "Command: /risk_review" in response
     assert "Status: completed." in response
-    assert "executed_buys=2" in response
-    assert "blocked_buys=1" in response
-    assert "warning_buys=1" in response
-    assert "tickers=2" in response
+    assert "- run_id: 12345" in response
+    assert "- executed_buys: 2" in response
+    assert "- blocked_buys: 1" in response
+    assert "- warning_buys: 1" in response
+    assert "- tickers: 2" in response
 
 
 def test_handle_risk_review_command_rejects_non_allowlisted_user(monkeypatch):
@@ -153,7 +163,7 @@ def test_handle_risk_review_command_rejects_non_allowlisted_user(monkeypatch):
 
     response = handle_telegram_operator_command(object(), _build_update("/risk_review 12345", user_id="u-9"))
 
-    assert "Unauthorized" in response
+    assert "Status: unauthorized." in response
 
 
 def test_handle_risk_review_command_returns_usage_when_run_id_missing(monkeypatch):
@@ -178,7 +188,10 @@ def test_handle_risk_review_command_rejects_nonexistent_run(monkeypatch):
 
     response = handle_telegram_operator_command(object(), _build_update("/risk_review 99999"))
 
-    assert "Failed: run_id=99999 not found" in response
+    assert "Command: /risk_review" in response
+    assert "Status: no data." in response
+    assert "Reason: run_id not found. Use /runs to list recent runs" in response
+    assert "- run_id: 99999" in response
 
 
 def test_handle_risk_review_command_handles_execution_failure_without_stack_trace(monkeypatch):
@@ -195,7 +208,7 @@ def test_handle_risk_review_command_handles_execution_failure_without_stack_trac
 
     response = handle_telegram_operator_command(object(), _build_update("/risk_review 1001"))
 
-    assert "Accepted: /risk_review run_id=1001." in response
+    assert "Command: /risk_review" in response
     assert "Status: failed." in response
     assert "internal review execution error" in response
     assert "simulated failure" not in response
@@ -211,7 +224,7 @@ def test_handle_risk_review_command_handles_run_lookup_failure_without_stack_tra
 
     response = handle_telegram_operator_command(object(), _build_update("/risk_review 1002"))
 
-    assert "Accepted: /risk_review run_id=1002." in response
+    assert "Command: /risk_review" in response
     assert "Status: failed." in response
     assert "internal review execution error" in response
     assert "lookup failed" not in response
@@ -233,8 +246,10 @@ def test_handle_runner_status_command_allowlisted_user_success(monkeypatch):
 
     response = handle_telegram_operator_command(object(), _build_update("/runner_status", user_id="u-1"))
 
-    assert "Latest daily runner status (run_id=2001):" in response
-    assert "- status: SUCCESS" in response
+    assert "Command: /runner_status" in response
+    assert "Status: completed." in response
+    assert "- runner_status: SUCCESS" in response
+    assert "- run_id: 2001" in response
     assert "- started_at: 2026-03-21T12:00:00+00:00" in response
     assert "- finished_at: 2026-03-21T12:00:05+00:00" in response
     assert "- duration_seconds: 5.0" in response
@@ -249,7 +264,7 @@ def test_handle_runner_status_command_rejects_unauthorized_caller(monkeypatch):
 
     response = handle_telegram_operator_command(object(), _build_update("/runner_status", user_id="u-9"))
 
-    assert "Unauthorized" in response
+    assert "Status: unauthorized." in response
 
 
 def test_handle_runner_status_command_no_latest_summary(monkeypatch):
@@ -258,7 +273,7 @@ def test_handle_runner_status_command_no_latest_summary(monkeypatch):
 
     response = handle_telegram_operator_command(object(), _build_update("/runner_status"))
 
-    assert "Accepted: /runner_status." in response
+    assert "Command: /runner_status" in response
     assert "Status: no data." in response
     assert "no persisted daily runner summary available yet" in response
 
@@ -278,7 +293,7 @@ def test_handle_runner_status_command_failed_latest_summary_formatting(monkeypat
 
     response = handle_telegram_operator_command(object(), _build_update("/runner_status"))
 
-    assert "Accepted: /runner_status." in response
+    assert "Command: /runner_status" in response
     assert "Status: failed." in response
     assert "latest summary formatting error" in response
     assert "not-a-time" not in response
@@ -294,7 +309,7 @@ def test_handle_runner_status_command_lookup_failure_path(monkeypatch):
 
     response = handle_telegram_operator_command(object(), _build_update("/runner_status"))
 
-    assert "Accepted: /runner_status." in response
+    assert "Command: /runner_status" in response
     assert "Status: failed." in response
     assert "internal status lookup error" in response
     assert "db timeout" not in response
@@ -355,7 +370,24 @@ def test_handle_runner_status_command_escapes_other_dynamic_fields_for_html_safe
 
     response = handle_telegram_operator_command(object(), _build_update("/runner_status"))
 
-    assert "run_id=run&lt;&amp;&gt;01" in response
-    assert "- status: FAILED&lt;&amp;&gt;" in response
-    assert "run_id=run<&>01" not in response
-    assert "- status: FAILED<&>" not in response
+    assert "- run_id: run&lt;&amp;&gt;01" in response
+    assert "- runner_status: FAILED&lt;&amp;&gt;" in response
+    assert "- run_id: run<&>01" not in response
+    assert "- runner_status: FAILED<&>" not in response
+
+
+def test_operator_command_responses_share_consistent_shape(monkeypatch):
+    monkeypatch.setenv("TELEGRAM_CHAT_ID", "chat-1")
+    monkeypatch.setattr("src.telegram_operator.list_recent_runs", lambda *_args, **_kwargs: [])
+    monkeypatch.setattr("src.telegram_operator.get_latest_run_execution_summary", lambda _client: None)
+    monkeypatch.setattr("src.telegram_operator.get_run_by_id", lambda _client, run_id: None)
+
+    responses = [
+        handle_telegram_operator_command(object(), _build_update("/runs")),
+        handle_telegram_operator_command(object(), _build_update("/runner_status")),
+        handle_telegram_operator_command(object(), _build_update("/risk_review 1001")),
+    ]
+
+    for response in responses:
+        assert "Command: /" in response
+        assert "Status:" in response

@@ -39,6 +39,9 @@
 - Step 39 review hardening: `/runner_status` timestamp parsing now normalizes unexpected naive ISO timestamps as UTC for deterministic operator output across environments.
 - Step 39 review hotfix (HTML-safe output): `/runner_status` now HTML-escapes dynamic `error_summary` content before Telegram reply formatting so persisted `<`, `>`, `&` cannot break Telegram HTML parse mode delivery.
 - Step 39 review hotfix (HTML-safe follow-up): `/runner_status` now also HTML-escapes other dynamic metadata fields (`status`, `run_id`) to keep operator replies parse-safe even if persisted metadata becomes irregular.
+- Step 40 operator-format contract: `/runs`, `/runner_status`, and `/risk_review` replies now follow a shared operator response shape (`Command`, `Status`, optional `Result`/`Reason`, deterministic `- key: value` rows) to improve fast scan readability and wording consistency across success/failure/no-data/unauthorized paths.
+- Step 40 HTML-safe rendering contract: dynamic operator reply fields are now rendered through one centralized HTML-escaping helper so command-specific formatting no longer needs ad-hoc escaping and parse-mode safety behavior is consistent.
+- Step 40 review hardening: focused Telegram operator tests now assert shared message-shape consistency and HTML-safe dynamic rendering for command status and detail fields, while webhook-level non-crash behavior coverage remains in place.
 - No autonomous live-money execution is enabled; human remains final decision-maker.
 - Deploy/config stability note: Railway/Railpack build previously failed when defaulting to Python `3.13.12` (mise install failure path); repository now pins Python to `3.12.9` via `.python-version` as a deploy stability guardrail (no strategy/paper-trading/signal-flow logic change).
 
@@ -48,7 +51,7 @@
 - Milestone 3 (Paper-trading v1): completed.
 - Milestone 4 (Controlled production hardening): in-progress, with Steps 19–33 completed and follow-up hardening still pending.
 
-## Step 21–39 status ledger (Step 39 `/runner_status` Telegram operator command)
+## Step 21–40 status ledger (Step 40 operator formatting + HTML-safe contract)
 
 | Step | Goal | Primary deliverable(s) | Merge / acceptance status |
 |---|---|---|---|
@@ -79,10 +82,11 @@
 | 39-review-hotfix | `/runner_status` timezone-normalization hardening | Normalized naive persisted timestamps to UTC during operator summary formatting to avoid environment-dependent timezone drift and added focused coverage for naive timestamp rendering + duration output stability | **Repo evidence:** completed in this branch. **Merge:** pending PR merge. **Manual acceptance:** unknown / needs confirmation. |
 | 39-review-hotfix-html | `/runner_status` HTML-safe error-summary output | Escaped dynamic `error_summary` content for Telegram HTML parse mode safety, preventing reply parse failures from persisted special characters (`<`, `>`, `&`), and added focused coverage for escaped output correctness | **Repo evidence:** completed in this branch. **Merge:** pending PR merge. **Manual acceptance:** unknown / needs confirmation. |
 | 39-review-hotfix-html-followup | `/runner_status` additional dynamic-field HTML safety | Extended HTML escaping to dynamic `status` and `run_id` fields in `/runner_status` output to further reduce parse-mode fragility from irregular persisted metadata, with focused test coverage | **Repo evidence:** completed in this branch. **Merge:** pending PR merge. **Manual acceptance:** unknown / needs confirmation. |
+| 40 | Normalize operator response formatting + HTML-safe rendering contract | Added shared Telegram operator response contract for `/runs`, `/runner_status`, `/risk_review` (`Command`/`Status`/`Result`/`Reason` + deterministic fields), centralized dynamic-field HTML escaping helper, and focused tests for consistency/no-data/failure/unauthorized/HTML-safe output without changing command business logic or webhook flow | **Repo evidence:** completed in this branch. **Merge:** pending PR merge. **Manual acceptance:** unknown / needs confirmation. |
 
 ## Known unknowns / needs confirmation
 - Exact PR numbers and explicit human acceptance timestamps for Steps 21–29 are not derivable from repository files alone and need manual confirmation.
 - Production platform settings (GitHub/Railway/Supabase) still require periodic manual verification outside repo state.
 
 ## Next approved task candidate
-- Step 40 candidate: platform/documentation hardening follow-up focused on remaining active backlog items (dedup semantics docs validation, platform hardening checklist closure, and paper-trading analytics follow-up scoping) without strategy/runtime behavior changes unless explicitly approved.
+- Step 41 candidate: platform/documentation hardening follow-up focused on remaining active backlog items (dedup semantics docs validation, platform hardening checklist closure, and paper-trading analytics follow-up scoping) without strategy/runtime behavior changes unless explicitly approved.

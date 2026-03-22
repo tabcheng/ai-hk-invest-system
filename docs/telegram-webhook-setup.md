@@ -13,6 +13,21 @@ Guardrail:
 - It does **not** change strategy logic.
 - It does **not** add any real-money execution path.
 
+## Operator response contract (Step 40)
+
+To improve consistency/readability, operator command replies now use a shared message shape:
+
+1. `Command: /...`
+2. `Status: ...`
+3. Optional `Result: ...`
+4. Optional `Reason: ...`
+5. Optional details in deterministic `- key: value` rows
+
+Implementation note:
+- This is a small helper-level contract (not a framework rewrite).
+- Dynamic fields loaded from runtime/database content are centrally HTML-escaped before rendering.
+- Current aligned commands include `/runs`, `/runner_status`, and `/risk_review`.
+
 ## Inbound integration status (repo-confirmed)
 Before Step 34A:
 - The repo had Telegram outbound delivery (`sendMessage`) for daily run summaries.

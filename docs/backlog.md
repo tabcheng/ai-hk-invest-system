@@ -40,6 +40,7 @@ Prioritization:
 - Step 38 review hotfix completed: failure `error_summary` normalization now collapses multiline/irregular whitespace before truncation so runner failure summaries stay single-line and easier to review in log systems.
 - Step 39 completed: Telegram operator `/runner_status` command added with allowlist auth gating, latest persisted run-summary lookup, safe fallback/failure responses, and focused operator/webhook non-crash coverage.
 - Step 39 review hotfix completed: `/runner_status` naive timestamp parsing now normalizes to UTC so operator summary times and duration remain deterministic across runtime environments.
+- Step 39 review hotfix completed: `/runner_status` now HTML-escapes dynamic `error_summary` content so persisted `<`, `>`, `&` do not break Telegram HTML parse-mode message delivery.
 
 ### Foundation + runtime hardening
 - Step 1–12 baseline (documentation foundation, signal framework, dedup, run lifecycle, modularization, tests, Telegram MVP/hardening).

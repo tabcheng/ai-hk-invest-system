@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import html
 import os
 import re
 from datetime import datetime, timezone
@@ -164,7 +165,9 @@ def _format_runner_status_message(latest_summary_row: dict[str, Any]) -> str:
     status = str(latest_summary_row.get("status") or "UNKNOWN")
     run_id = latest_summary_row.get("id", "N/A")
     error_summary = (latest_summary_row.get("error_summary") or "").strip()
-    error_line = error_summary if error_summary else "None"
+    # Telegram replies use parse_mode="HTML"; escape dynamic failure text so
+    # persisted `<`, `>`, `&` in error_summary cannot break message parsing.
+    error_line = html.escape(error_summary) if error_summary else "None"
 
     lines = [
         f"Latest daily runner status (run_id={run_id}):",

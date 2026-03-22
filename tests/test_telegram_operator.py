@@ -318,3 +318,23 @@ def test_handle_runner_status_command_normalizes_naive_timestamps_as_utc(monkeyp
     assert "- started_at: 2026-03-21T12:00:00+00:00" in response
     assert "- finished_at: 2026-03-21T12:00:07+00:00" in response
     assert "- duration_seconds: 7.0" in response
+
+
+def test_handle_runner_status_command_escapes_error_summary_for_html_safety(monkeypatch):
+    monkeypatch.setenv("TELEGRAM_CHAT_ID", "chat-1")
+    monkeypatch.setattr(
+        "src.telegram_operator.get_latest_run_execution_summary",
+        lambda _client: {
+            "id": 3003,
+            "status": "FAILED",
+            "created_at": "2026-03-21T12:00:00+00:00",
+            "finished_at": "2026-03-21T12:00:02+00:00",
+            "error_summary": "ValueError: bad <tag> & broken > parser",
+        },
+    )
+
+    response = handle_telegram_operator_command(object(), _build_update("/runner_status"))
+
+    assert "- error_summary: ValueError: bad &lt;tag&gt; &amp; broken &gt; parser" in response
+    assert "<tag>" not in response
+    assert " & broken > " not in response

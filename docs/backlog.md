@@ -8,9 +8,10 @@ Prioritization:
 ## Active backlog (pending)
 
 ### P0
-1. **Step 47 candidate — Delivery semantics runtime instrumentation scoping (plan-only)**
-   - Define one minimal runtime instrumentation increment for stronger dedup/retry/rerun trace correlation (for example correlation-id and explicit dedup phase markers).
-   - Keep this as plan/spec scoping first; do not implement runtime changes until explicitly approved.
+1. **Step 48 candidate — Delivery semantics minimal runtime instrumentation implementation proposal (post-approval)**
+   - Implement only the approved minimum subset from Step 47 (expected first slice: correlation and dedup result markers).
+   - Keep rollout bounded to observability surfaces; do not alter delivery best-effort semantics or strategy logic.
+   - Include focused validation plan across Telegram observed outcomes, runner logs, and `runs.delivery_summary_json`.
 
 ### P1
 1. **Platform hardening evidence pass (GitHub / Railway / Supabase)**
@@ -39,6 +40,7 @@ Prioritization:
 - **Step 44 completed:** aligned merged/completed documentation status for Steps 40–43, hardened deployment/config documentation clarity (webhook vs runner topology, HKT schedule baseline, provider/mock policy, GitHub vs Railway responsibilities), and normalized backlog wording/state.
 - **Step 45 completed:** validated and documented current Telegram/operator-facing dedup + delivery semantics reality (command replies, runner summaries, review responses, retry/rerun/duplicate expectations), clarified operator expectation baseline, and refreshed backlog follow-ups without runtime behavior changes.
 - **Step 46 completed:** added delivery semantics observability evidence checklist, operator validation guidance, and explicit observability gap analysis (known behavior vs verifiable evidence vs unresolved gaps vs future follow-up), with docs-only scope and no runtime behavior changes.
+- **Step 47 completed:** documented delivery semantics runtime instrumentation scoping proposal, prioritized observability gaps, classified candidate fields by value/risk/priority, and codified explicit no-implementation/no-migration/no-refactor guardrails (GitHub docs-only; Railway unchanged).
 
 ### Earlier completed foundations
 - Step 1–12 baseline (documentation foundation, signal framework, dedup, run lifecycle, modularization, tests, Telegram MVP/hardening).

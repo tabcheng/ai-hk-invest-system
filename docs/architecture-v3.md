@@ -117,6 +117,12 @@ The platform is designed as an **AI investment firm operating model** with stric
 - Current gap: there is no fully automated cross-surface correlation artifact yet; operators still perform manual evidence matching (run id/date/timestamp context).
 - Deferred follow-up: stronger runtime instrumentation/correlation should be implemented only in a later explicitly approved runtime step.
 
+#### Runtime instrumentation scoping baseline (Step 47 docs-only)
+- **Current known gaps:** dedup fallback evidence remains partly log-only, phase-level delivery progression is under-specified in structured records, and Telegram observed outcomes still require manual join against run/timestamp context.
+- **Scoping proposal status:** minimal candidate instrumentation set is documented (`correlation_id`, `message_delivery_attempt_id`, `delivery_phase`, `dedup_check_result`, `dedup_persist_result`, optional `fallback_activated`) with explicit value/risk/priority ordering.
+- **Not-yet-approved runtime change:** no runtime implementation is performed in Step 47; no DB migration, no delivery summary schema change, no Telegram send-path refactor, and no queue/retry framework work is included.
+- **Future follow-up direction:** any runtime adoption should start with minimal correlation + dedup-result markers and preserve current best-effort/non-blocking delivery semantics.
+
 ### 8) Human decision layer
 - Human reviews outputs and retains final real-money decision authority.
 

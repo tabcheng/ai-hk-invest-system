@@ -127,3 +127,22 @@ Provide a consistent execution workflow for long-horizon Codex contributions.
 - Keep deployment ownership wording explicit:
   - **GitHub:** this step updates documentation/system-of-record only.
   - **Railway:** no topology/cron/runtime-variable change required in this step.
+
+## Step 47 implementation note (delivery semantics runtime instrumentation scoping proposal)
+- Scope is strictly plan/spec/scoping; do not implement runtime behavior changes in this step.
+- Document and prioritize current delivery observability gaps with explicit system-of-record separation:
+  - current known gap,
+  - scoping proposal,
+  - not-yet-approved runtime change,
+  - future follow-up.
+- Define minimal candidate instrumentation fields for future runtime consideration (for example `correlation_id`, `message_delivery_attempt_id`, `delivery_phase`, `dedup_check_result`, `dedup_persist_result`, `fallback_activated`) and classify by priority/value/risk.
+- Keep guardrails explicit:
+  - no runtime implementation,
+  - no DB migration,
+  - no `delivery_summary_json` schema change,
+  - no Telegram send-path refactor,
+  - no queue/retry framework introduction,
+  - no strategy logic change.
+- Keep platform ownership split explicit:
+  - **GitHub:** docs/system-of-record update only.
+  - **Railway:** no topology/cron/runtime-env/config change required in this step.

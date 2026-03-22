@@ -60,6 +60,10 @@
 - Step 46 observability evidence pass (docs-only): added operator-executable delivery semantics checklist and validation guidance spanning Telegram observed messages, `runs.delivery_summary_json`, runner logs, and relevant run records.
 - Step 46 gap analysis baseline (docs-only): explicitly separated known current behavior, verifiable evidence surfaces, unresolved observability gaps, and deferred runtime/instrumentation follow-ups; no runtime/API/schema/strategy change.
 - Step 46 platform ownership clarification: GitHub changes are documentation/system-of-record updates only; Railway runtime topology/cron/env configuration requires no change in this step.
+- Step 47 instrumentation scoping proposal (docs-only): delivery observability gaps are now explicitly prioritized (correlation gap, dedup fallback evidence gap, phase-visibility gap, attempt-identity gap) with clear P0/P1/P2 ordering.
+- Step 47 candidate classification (docs-only): minimal instrumentation candidates (`correlation_id`, `message_delivery_attempt_id`, `delivery_phase`, `dedup_check_result`, `dedup_persist_result`, `fallback_activated`) are documented with value/risk/scope and recommended-first vs conditional ordering.
+- Step 47 guardrail codification (docs-only): explicit non-goals recorded for this step — no runtime implementation, no DB migration, no `delivery_summary_json` schema change, no Telegram send-path refactor, no queue/retry framework, no strategy logic change.
+- Step 47 platform ownership clarification: GitHub changed docs/system-of-record artifacts only; Railway topology/cron/runtime env remains unchanged in this step.
 - No autonomous live-money execution is enabled; human remains final decision-maker.
 - Deploy/config stability note: Railway/Railpack build previously failed when defaulting to Python `3.13.12` (mise install failure path); repository now pins Python to `3.12.9` via `.python-version` as a deploy stability guardrail (no strategy/paper-trading/signal-flow logic change).
 
@@ -67,9 +71,9 @@
 - Milestone 1 (Documentation Foundation): completed.
 - Milestone 2 (Signal framework + modularization/test baseline): completed.
 - Milestone 3 (Paper-trading v1): completed.
-- Milestone 4 (Controlled production hardening): in-progress, with Steps 19–46 completed and follow-up hardening/instrumentation planning still pending.
+- Milestone 4 (Controlled production hardening): in-progress, with Steps 19–47 completed and runtime hardening follow-ups still pending.
 
-## Step 21–46 status ledger (Step 46 delivery semantics observability evidence pass)
+## Step 21–47 status ledger (Step 47 delivery semantics runtime instrumentation scoping proposal)
 
 | Step | Goal | Primary deliverable(s) | Status |
 |---|---|---|---|
@@ -107,9 +111,10 @@
 | 44 | Status/docs/backlog consistency + deployment/config hardening docs | Align status wording with merge reality; clarify webhook vs runner topology, HKT baseline, provider/mock policy, read-only review surfaces, and GitHub vs Railway responsibilities | **Completed (merged in-repo docs state).** Runtime behavior/API/schema/strategy unchanged. |
 | 45 | Dedup/delivery semantics documentation validation + operator expectation clarification | Document current Telegram/operator delivery reality (dedup/retry/rerun/duplicate semantics), define operator expectation baseline, and update backlog/state for unresolved follow-ups | **Completed (merged in-repo docs state).** Docs-only clarification; runtime/API/schema/strategy unchanged. |
 | 46 | Delivery semantics observability evidence pass | Add scenario-based evidence checklist + operator validation guidance + observability gap analysis (known reality vs evidence vs unresolved gaps vs future follow-up), and sync system-of-record docs | **Completed (merged in-repo docs state).** Docs-only scope; no runtime behavior/API/schema/strategy/deployment topology change. |
+| 47 | Delivery semantics runtime instrumentation scoping proposal | Prioritize delivery observability gaps, evaluate minimal instrumentation candidates with value/risk/scope, codify explicit no-implementation guardrails, and sync docs/backlog ownership split (GitHub vs Railway) | **Completed (merged in-repo docs state).** Docs-only scope; no runtime behavior/API/schema/strategy/deployment topology change. |
 
 ## Known unknowns / needs confirmation
 - Production platform settings (GitHub/Railway/Supabase project posture) still require periodic manual verification outside repository files.
 
 ## Next approved task candidate
-- Step 47 candidate: delivery semantics runtime instrumentation scoping (define minimal correlation/traceability increment and validation plan before any runtime change).
+- Step 48 candidate: delivery semantics minimal runtime instrumentation implementation proposal (execute only explicitly approved minimal subset from Step 47, with bounded observability-only rollout and focused validation).

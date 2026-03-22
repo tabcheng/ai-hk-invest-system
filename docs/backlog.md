@@ -8,9 +8,9 @@ Prioritization:
 ## Active backlog (pending)
 
 ### P0
-1. **Step 46 candidate — Delivery semantics observability evidence pass (docs + validation plan)**
-   - Add a small operator runbook/checklist for validating `runs.delivery_summary_json` against observed Telegram outcomes (`sent` / `failed` / `skipped`).
-   - Keep docs/validation scope only unless a concrete runtime defect is confirmed.
+1. **Step 47 candidate — Delivery semantics runtime instrumentation scoping (plan-only)**
+   - Define one minimal runtime instrumentation increment for stronger dedup/retry/rerun trace correlation (for example correlation-id and explicit dedup phase markers).
+   - Keep this as plan/spec scoping first; do not implement runtime changes until explicitly approved.
 
 ### P1
 1. **Platform hardening evidence pass (GitHub / Railway / Supabase)**
@@ -31,13 +31,14 @@ Prioritization:
 
 ## Completed backlog (archived)
 
-### Recently completed (Steps 40–45)
+### Recently completed (Steps 40–46)
 - **Step 40 completed:** normalized operator response shape for `/runs`, `/runner_status`, `/risk_review` and centralized HTML-safe rendering contract.
 - **Step 41 completed:** added read-only paper position/PnL snapshot helper and `/pnl_review` operator command, including input/correctness hardening.
 - **Step 42 completed:** added market-data provider boundary (`MARKET_DATA_PROVIDER`) with `yfinance` baseline and deterministic `mock` provider.
 - **Step 43 completed:** normalized operator/review human-facing timestamp display to HKT while preserving storage/log timestamp semantics.
 - **Step 44 completed:** aligned merged/completed documentation status for Steps 40–43, hardened deployment/config documentation clarity (webhook vs runner topology, HKT schedule baseline, provider/mock policy, GitHub vs Railway responsibilities), and normalized backlog wording/state.
 - **Step 45 completed:** validated and documented current Telegram/operator-facing dedup + delivery semantics reality (command replies, runner summaries, review responses, retry/rerun/duplicate expectations), clarified operator expectation baseline, and refreshed backlog follow-ups without runtime behavior changes.
+- **Step 46 completed:** added delivery semantics observability evidence checklist, operator validation guidance, and explicit observability gap analysis (known behavior vs verifiable evidence vs unresolved gaps vs future follow-up), with docs-only scope and no runtime behavior changes.
 
 ### Earlier completed foundations
 - Step 1–12 baseline (documentation foundation, signal framework, dedup, run lifecycle, modularization, tests, Telegram MVP/hardening).

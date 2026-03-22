@@ -106,3 +106,24 @@ Provide a consistent execution workflow for long-horizon Codex contributions.
 - Keep operator expectation explicit: what is normal, what duplicate patterns are expected, and what conditions should be tracked as follow-up.
 - Record unresolved delivery/dedup follow-ups in `docs/backlog.md` with clear active vs completed separation.
 - Guardrail reminder: decision support + paper trading only, no autonomous real-money execution.
+
+## Step 46 implementation note (delivery semantics observability evidence pass)
+- Scope remains docs-only/system-of-record alignment: no Telegram runtime refactor, no queue/retry framework, no schema refactor, no new API integration, no strategy logic change.
+- Add an operator-facing evidence checklist that is executable against current artifacts:
+  - Telegram observed messages,
+  - `runs.delivery_summary_json`,
+  - runner logs (`execution_summary` and lifecycle lines),
+  - relevant `runs` table records.
+- Explicitly document scenario-based validation paths:
+  - normal daily summary delivery,
+  - rerun behavior,
+  - duplicate skipped behavior,
+  - dedup persistence failure fallback,
+  - operator command reply vs runner summary delivery distinction.
+- Include observability gap analysis in system-of-record wording:
+  - what evidence is already strong,
+  - what remains ambiguous/manual,
+  - what should be deferred to a future runtime/instrumentation step.
+- Keep deployment ownership wording explicit:
+  - **GitHub:** this step updates documentation/system-of-record only.
+  - **Railway:** no topology/cron/runtime-variable change required in this step.

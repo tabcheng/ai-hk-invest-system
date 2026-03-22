@@ -951,3 +951,81 @@ def test_get_paper_position_pnl_review_snapshot_sell_only_row_not_counted_as_clo
     assert snapshot["closed_positions_count"] == 0
     assert len(snapshot["per_symbol"]) == 1
     assert snapshot["per_symbol"][0]["position_status"] == "FLAT"
+
+
+def test_get_paper_position_pnl_review_snapshot_replays_by_trade_date_then_id():
+    order_calls: list[tuple[str, str]] = []
+
+    class Result:
+        def __init__(self, data):
+            self.data = data
+
+    class Query:
+        def __init__(self, table_name):
+            self.table_name = table_name
+
+        def select(self, _columns):
+            return self
+
+        def order(self, column, **_kwargs):
+            order_calls.append((self.table_name, column))
+            return self
+
+        def limit(self, _n):
+            return self
+
+        def execute(self):
+            if self.table_name == "paper_trades":
+                # Simulate rerun/backfill case: older trade_date has newer id.
+                return Result(
+                    [
+                        {
+                            "stock": "0700.HK",
+                            "action": "BUY",
+                            "quantity": 50,
+                            "price": 80.0,
+                            "realized_pnl": 0.0,
+                            "trade_date": "2026-03-20",
+                            "id": 99,
+                        },
+                        {
+                            "stock": "0700.HK",
+                            "action": "BUY",
+                            "quantity": 100,
+                            "price": 100.0,
+                            "realized_pnl": 0.0,
+                            "trade_date": "2026-03-21",
+                            "id": 10,
+                        },
+                        {
+                            "stock": "0700.HK",
+                            "action": "SELL",
+                            "quantity": 100,
+                            "price": 110.0,
+                            "realized_pnl": 1600.0,
+                            "trade_date": "2026-03-22",
+                            "id": 11,
+                        },
+                    ]
+                )
+            if self.table_name == "paper_daily_snapshots":
+                return Result([{"snapshot_date": "2026-03-22"}])
+            return Result([])
+
+    class Client:
+        def table(self, table_name):
+            return Query(table_name)
+
+    snapshot = get_paper_position_pnl_review_snapshot(Client())
+
+    assert ("paper_trades", "trade_date") in order_calls
+    assert ("paper_trades", "id") in order_calls
+    assert snapshot["open_positions_count"] == 1
+    assert snapshot["closed_positions_count"] == 0
+    assert snapshot["total_realized_pnl"] == 1600.0
+    assert len(snapshot["per_symbol"]) == 1
+    symbol = snapshot["per_symbol"][0]
+    assert symbol["stock"] == "0700.HK"
+    assert symbol["quantity"] == 50
+    assert round(symbol["avg_cost"], 6) == round((50 * 80.0 + 100 * 100.0) / 150, 6)
+    assert symbol["position_status"] == "OPEN"

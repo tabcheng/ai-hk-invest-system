@@ -590,7 +590,11 @@ def get_paper_position_pnl_review_snapshot(client: Client) -> dict:
     """
     trade_rows = (
         client.table("paper_trades")
-        .select("stock,action,quantity,price,realized_pnl,id")
+        .select("stock,action,quantity,price,realized_pnl,trade_date,id")
+        # Replay-order contract must match `_refresh_paper_positions_from_trades`
+        # so review snapshots remain consistent with persisted paper_positions:
+        # primary chronological sort on `trade_date`, tie-break on `id`.
+        .order("trade_date")
         .order("id")
         .execute()
     ).data or []

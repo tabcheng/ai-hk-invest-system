@@ -113,6 +113,7 @@ Minimum summary fields:
 - Data-quality fallback: malformed SELL-only history may appear as per-symbol `position_status=FLAT` and is excluded from closed-position count.
 
 Current calculation/assumption definitions:
+- Replay ordering contract (refresh/review consistency): reconstruct position state by chronological ordering on `trade_date` with `id` as tie-breaker (not `id`-only ordering).
 - Average cost (`avg_cost`): weighted average BUY cost reconstructed from `paper_trades`.
 - Realized PnL: cumulative sum of persisted SELL-side `realized_pnl` in trade ledger replay.
 - Unrealized PnL: `(last_price - avg_cost) * quantity` for symbols with open quantity.

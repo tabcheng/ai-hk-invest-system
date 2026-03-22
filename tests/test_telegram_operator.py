@@ -338,3 +338,24 @@ def test_handle_runner_status_command_escapes_error_summary_for_html_safety(monk
     assert "- error_summary: ValueError: bad &lt;tag&gt; &amp; broken &gt; parser" in response
     assert "<tag>" not in response
     assert " & broken > " not in response
+
+
+def test_handle_runner_status_command_escapes_other_dynamic_fields_for_html_safety(monkeypatch):
+    monkeypatch.setenv("TELEGRAM_CHAT_ID", "chat-1")
+    monkeypatch.setattr(
+        "src.telegram_operator.get_latest_run_execution_summary",
+        lambda _client: {
+            "id": "run<&>01",
+            "status": "FAILED<&>",
+            "created_at": "2026-03-21T12:00:00+00:00",
+            "finished_at": "2026-03-21T12:00:03+00:00",
+            "error_summary": None,
+        },
+    )
+
+    response = handle_telegram_operator_command(object(), _build_update("/runner_status"))
+
+    assert "run_id=run&lt;&amp;&gt;01" in response
+    assert "- status: FAILED&lt;&amp;&gt;" in response
+    assert "run_id=run<&>01" not in response
+    assert "- status: FAILED<&>" not in response

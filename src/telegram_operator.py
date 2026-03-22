@@ -162,8 +162,8 @@ def _format_runner_status_message(latest_summary_row: dict[str, Any]) -> str:
         duration_value = max((finished_at - started_at).total_seconds(), 0.0)
         duration_seconds = f"{round(duration_value, 6)}"
 
-    status = str(latest_summary_row.get("status") or "UNKNOWN")
-    run_id = latest_summary_row.get("id", "N/A")
+    status = html.escape(str(latest_summary_row.get("status") or "UNKNOWN"))
+    run_id = html.escape(str(latest_summary_row.get("id", "N/A")))
     error_summary = (latest_summary_row.get("error_summary") or "").strip()
     # Telegram replies use parse_mode="HTML"; escape dynamic failure text so
     # persisted `<`, `>`, `&` in error_summary cannot break message parsing.

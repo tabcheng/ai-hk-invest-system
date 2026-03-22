@@ -1,7 +1,7 @@
 # Project Status
 
 ## Last reviewed date
-2026-03-21
+2026-03-22
 
 ## Current production behavior (repo-confirmed)
 - Scheduled runner entrypoint now supports dedicated module execution via `python -m src.daily_runner` (with `main.py` retained as backward-compatible wrapper), while orchestration remains in modular runtime code under `src/`.
@@ -14,7 +14,7 @@
 - Operator command read-surface now supports Telegram `/runs` query for recent run ids (default last 5 days) sourced from persistent `runs` table metadata (no log-file scraping).
 - Step 32 review hardening: `/runs` invalid parameter input now returns usage guidance text instead of raising handler exceptions.
 - Step 32 hotfix: `/runs` metadata query now uses schema-safe `runs` fields only (`id,status,created_at`) to prevent runtime query failures from non-existent columns.
-- Step 33 operator-help uplift: Telegram `/help` and `/h` now return a compact bilingual usage guide that covers system scope, guardrails, and command list (`/runs`, `/runs <days>d`, `/help`, `/h`).
+- Step 33 operator-help uplift: Telegram `/help` and `/h` now return a compact bilingual usage guide that covers system scope, guardrails, and command list (`/runs`, `/runs [days]d`, `/help`, `/h`).
 - Step 33 review hardening: `/help` and `/h` now follow the same operator chat/user authorization guardrail as `/runs`.
 - Step 33 discoverability note: repo currently has no Telegram bot command-registration setup (for example `setMyCommands` registry), so this step intentionally adds handler-only support and keeps runtime changes minimal.
 - Step 34A Telegram inbound foundation: repo-confirmed previous state was outbound-only Telegram delivery (no webhook endpoint, no polling loop). A new dedicated webhook ingress server now exposes `POST /telegram/webhook`, forwards inbound updates to `handle_telegram_operator_command(...)`, and replies to source chat via Telegram `sendMessage` for `/help`, `/h`, `/runs`.
@@ -34,6 +34,11 @@
 - Step 38 runner observability hardening: daily runner output now emits consistent started/completed/failed lifecycle lines plus single-line JSON `execution_summary` with required fields (`started_at`, `finished_at`, `duration_seconds`, `status`, `entrypoint`, `schedule_basis`) for reviewability.
 - Step 38 failure-summary hardening: failed runs now include a concise/safe error summary in both failure lifecycle log and execution summary while still emitting traceback to stderr for diagnostics.
 - Step 38 review hardening: failure `error_summary` normalization now strips multiline/irregular whitespace into single-line text before truncation to keep log lines safe/consistent; focused test coverage now includes normalization + truncation behavior.
+- Step 39 operator usability uplift: Telegram operator command surface now adds `/runner_status` with allowlisted chat/user gating and safe reply behavior for success/no-data/lookup-failure/format-failure paths.
+- Step 39 traceability hardening: `/runner_status` reads latest runner metadata from durable `runs` persistence (`id,status,created_at,finished_at,error_summary`) and renders required summary fields (`status`, `started_at`, `finished_at`, `duration_seconds`, `entrypoint`, `schedule_basis`, `error_summary`) without exposing raw internal exceptions.
+- Step 39 review hardening: `/runner_status` timestamp parsing now normalizes unexpected naive ISO timestamps as UTC for deterministic operator output across environments.
+- Step 39 review hotfix (HTML-safe output): `/runner_status` now HTML-escapes dynamic `error_summary` content before Telegram reply formatting so persisted `<`, `>`, `&` cannot break Telegram HTML parse mode delivery.
+- Step 39 review hotfix (HTML-safe follow-up): `/runner_status` now also HTML-escapes other dynamic metadata fields (`status`, `run_id`) to keep operator replies parse-safe even if persisted metadata becomes irregular.
 - No autonomous live-money execution is enabled; human remains final decision-maker.
 - Deploy/config stability note: Railway/Railpack build previously failed when defaulting to Python `3.13.12` (mise install failure path); repository now pins Python to `3.12.9` via `.python-version` as a deploy stability guardrail (no strategy/paper-trading/signal-flow logic change).
 
@@ -43,7 +48,7 @@
 - Milestone 3 (Paper-trading v1): completed.
 - Milestone 4 (Controlled production hardening): in-progress, with Steps 19–33 completed and follow-up hardening still pending.
 
-## Step 21–38 status ledger (Step 38 daily runner execution summary + observability hardening)
+## Step 21–39 status ledger (Step 39 `/runner_status` Telegram operator command)
 
 | Step | Goal | Primary deliverable(s) | Merge / acceptance status |
 |---|---|---|---|
@@ -70,10 +75,14 @@
 | 37 | Introduce dedicated daily runner entrypoint + codify HK business schedule | Added `src.daily_runner` as scheduled entrypoint (`python -m src.daily_runner`) with startup/completion/failure logging + deterministic exit codes, kept `main.py` backward-compatible wrapper, added focused runner success/failure smoke coverage, and documented HKT 20:00 target with Railway UTC cron mapping (`0 12 * * *`) across deployment docs | **Repo evidence:** completed in this branch. **Merge:** pending PR merge. **Manual acceptance:** unknown / needs confirmation. |
 | 38 | Daily runner execution summary + observability hardening | Standardized runner lifecycle logs (`started`/`completed`/`failed`) and added deterministic execution summary payload (`started_at`, `finished_at`, `duration_seconds`, `status`, `entrypoint`, `schedule_basis`, failure-only safe `error_summary`) with focused tests for success/failure summaries and exit codes | **Repo evidence:** completed in this branch. **Merge:** pending PR merge. **Manual acceptance:** unknown / needs confirmation. |
 | 38-review-hotfix | Daily runner failure summary normalization hardening | Normalized failure summary whitespace to single-line safe text before truncation, reducing multi-line/log-format noise risk, and added focused helper coverage to assert normalization + max-length truncation behavior | **Repo evidence:** completed in this branch. **Merge:** pending PR merge. **Manual acceptance:** unknown / needs confirmation. |
+| 39 | Add Telegram `/runner_status` operator command | Added allowlisted `/runner_status` handler backed by latest persisted `runs` metadata lookup, deterministic/safe execution summary formatting, fallback responses for no-data and failure paths, and focused tests for auth/no-data/format-failure/lookup-failure plus webhook non-crash behavior | **Repo evidence:** completed in this branch. **Merge:** pending PR merge. **Manual acceptance:** unknown / needs confirmation. |
+| 39-review-hotfix | `/runner_status` timezone-normalization hardening | Normalized naive persisted timestamps to UTC during operator summary formatting to avoid environment-dependent timezone drift and added focused coverage for naive timestamp rendering + duration output stability | **Repo evidence:** completed in this branch. **Merge:** pending PR merge. **Manual acceptance:** unknown / needs confirmation. |
+| 39-review-hotfix-html | `/runner_status` HTML-safe error-summary output | Escaped dynamic `error_summary` content for Telegram HTML parse mode safety, preventing reply parse failures from persisted special characters (`<`, `>`, `&`), and added focused coverage for escaped output correctness | **Repo evidence:** completed in this branch. **Merge:** pending PR merge. **Manual acceptance:** unknown / needs confirmation. |
+| 39-review-hotfix-html-followup | `/runner_status` additional dynamic-field HTML safety | Extended HTML escaping to dynamic `status` and `run_id` fields in `/runner_status` output to further reduce parse-mode fragility from irregular persisted metadata, with focused test coverage | **Repo evidence:** completed in this branch. **Merge:** pending PR merge. **Manual acceptance:** unknown / needs confirmation. |
 
 ## Known unknowns / needs confirmation
 - Exact PR numbers and explicit human acceptance timestamps for Steps 21–29 are not derivable from repository files alone and need manual confirmation.
 - Production platform settings (GitHub/Railway/Supabase) still require periodic manual verification outside repo state.
 
 ## Next approved task candidate
-- Step 39 candidate: platform/documentation hardening follow-up focused on remaining active backlog items (dedup semantics docs validation, platform hardening checklist closure, and paper-trading analytics follow-up scoping) without strategy/runtime behavior changes unless explicitly approved.
+- Step 40 candidate: platform/documentation hardening follow-up focused on remaining active backlog items (dedup semantics docs validation, platform hardening checklist closure, and paper-trading analytics follow-up scoping) without strategy/runtime behavior changes unless explicitly approved.

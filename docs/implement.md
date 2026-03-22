@@ -21,7 +21,6 @@ Provide a consistent execution workflow for long-horizon Codex contributions.
 6. Update `docs/status.md` with what was completed, what was validated, and the next approved task.
 7. Commit with a clear milestone/task summary.
 
-
 ## Step 15 implementation note (structured observability JSON)
 - Add nullable `runs.error_summary_json` and `runs.delivery_summary_json` via migration.
 - Keep legacy text `error_summary` and category text summaries unchanged for backward compatibility.
@@ -32,7 +31,6 @@ Provide a consistent execution workflow for long-horizon Codex contributions.
 - Add a conservative root `pytest.ini` (`minversion`, `testpaths`, `addopts`) to stabilize test discovery from repository root across local and CI runs.
 - Add GitHub Actions test workflow at `.github/workflows/tests.yml` that runs on `pull_request` and `push` to `main` using `ubuntu-latest` + `actions/setup-python`.
 - Reuse existing dependency flow (`pip install -r requirements.txt`) and run `pytest` directly, avoiding extra tooling or runtime-path behavior changes.
-
 
 ## Step 17 implementation note (versioned daily summary payload + renderer separation)
 - Introduce a compact internal `build_daily_summary_payload_v1(...)` contract with `schema_version`, run identity/date, market, summary type, totals, and per-stock rows (`stock_id`, `stock_name`, `signal`).
@@ -64,8 +62,6 @@ Provide a consistent execution workflow for long-horizon Codex contributions.
 - Defer private-schema migration to a follow-up after initial RLS enablement is validated.
 - Record exact next migration scope (start with `public.runs`) and required rollback/verification notes before expanding to other tables.
 
-
-
 ## Step 20 implementation note (paper-trading decision ledger / decision record v1)
 - Add a new persistence table for paper-trading decision records with explicit AI-vs-human separation fields (`signal_action` vs `human_decision`) plus `stock_id` and `stock_name` for analytics-grade traceability.
 - Add a small application helper/model layer that validates required decision fields before insert.
@@ -84,3 +80,17 @@ Provide a consistent execution workflow for long-horizon Codex contributions.
 - Apply the display policy to representative command surfaces first (`/runs`, `/runner_status`, `/risk_review`, `/pnl_review`) and avoid broad refactors.
 - Keep scope guardrails explicit in message copy/comments: paper trading + decision support only, no autonomous real-money execution.
 - Prefer deterministic, scan-friendly operator wording (`*_hkt` fields, explicit status/result/reason rows) and preserve existing strategy/paper-trading decision logic.
+
+## Step 44 implementation note (docs/deployment/config hardening)
+- Documentation scope only: align status wording with merged reality for Steps 40–43 and normalize backlog state markers.
+- Keep topology explicit in system-of-record docs:
+  - `telegram-webhook` service handles inbound operator commands.
+  - `paper-daily-runner` service handles scheduled batch execution.
+- Keep schedule language explicit: business target is 20:00 HKT; Railway scheduler is UTC (`0 12 * * *` baseline).
+- Keep market-data policy explicit: `MARKET_DATA_PROVIDER=yfinance` is current production baseline; `mock` is for local/test deterministic workflows, not production.
+- Keep human-facing display policy explicit: operator/review outputs show HKT labels; storage/logging semantics remain unchanged.
+- Keep operator command surfaces explicitly read-only review surfaces (decision support only).
+- Separate deployment ownership in docs:
+  - **GitHub:** branch protection/CI/check governance.
+  - **Railway:** service split, cron ownership, runtime secrets/env management.
+- Guardrails: no runtime logic changes, no new API integration, no strategy change, no schema refactor.

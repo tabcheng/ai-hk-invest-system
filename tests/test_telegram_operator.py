@@ -77,6 +77,8 @@ def test_build_runs_command_message_handles_empty_rows():
 def test_handle_runs_command_returns_usage_on_invalid_parameter(monkeypatch):
     monkeypatch.setenv("TELEGRAM_CHAT_ID", "chat-1")
     response = handle_telegram_operator_command(object(), _build_update("/runs 99d"))
+    assert "Command: /runs" in response
+    assert "Status: failed." in response
     assert "Days must be between 1 and 30" in response
 
 
@@ -84,6 +86,8 @@ def test_handle_runs_command_returns_usage_on_malformed_tokens(monkeypatch):
     monkeypatch.setenv("TELEGRAM_CHAT_ID", "chat-1")
     response_text = handle_telegram_operator_command(object(), _build_update("/runs foo"))
     response_numeric_without_suffix = handle_telegram_operator_command(object(), _build_update("/runs 7"))
+    assert "Command: /runs" in response_text
+    assert "Status: failed." in response_text
     assert "Unsupported command" in response_text
     assert "Unsupported command" in response_numeric_without_suffix
 
@@ -171,6 +175,8 @@ def test_handle_risk_review_command_returns_usage_when_run_id_missing(monkeypatc
 
     response = handle_telegram_operator_command(object(), _build_update("/risk_review"))
 
+    assert "Command: /risk_review" in response
+    assert "Status: failed." in response
     assert "Usage: /risk_review [run_id]" in response
 
 
@@ -179,6 +185,8 @@ def test_handle_risk_review_command_rejects_invalid_run_id_format(monkeypatch):
 
     response = handle_telegram_operator_command(object(), _build_update("/risk_review abc"))
 
+    assert "Command: /risk_review" in response
+    assert "Status: failed." in response
     assert "Invalid run_id format" in response
 
 

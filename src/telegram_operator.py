@@ -172,6 +172,20 @@ def _build_operator_message(
     return "\n".join(lines)
 
 
+def _build_usage_error_message(*, command_label: str, error_text: str) -> str:
+    """
+    Keep validation/usage failures in the same operator-facing response contract.
+
+    Guardrail: parsing/validation errors are expected operator input paths and
+    should stay easy to scan with the same `Command` + `Status` + `Reason` shape.
+    """
+    return _build_operator_message(
+        command_label=command_label,
+        status="failed",
+        reason=error_text.rstrip("."),
+    )
+
+
 def _format_runner_status_message(latest_summary_row: dict[str, Any]) -> str:
     """Build operator-facing response for `/runner_status` from latest persisted run."""
     started_at = _parse_iso_datetime(latest_summary_row.get("created_at"), field_name="created_at")
@@ -341,7 +355,7 @@ def handle_telegram_operator_command(client: Any, update: dict[str, Any]) -> str
             try:
                 days = _parse_runs_days(text)
             except ValueError as exc:
-                return str(exc)
+                return _build_usage_error_message(command_label="/runs", error_text=str(exc))
             runs = list_recent_runs(client, days=days, limit=_DEFAULT_LIMIT)
             return build_runs_command_message(runs, days=days)
 
@@ -395,7 +409,7 @@ def handle_telegram_operator_command(client: Any, update: dict[str, Any]) -> str
                 "Telegram /risk_review failed during parsing: "
                 f"chat_id={chat_id} user_id={user_id} error={exc}"
             )
-            return str(exc)
+            return _build_usage_error_message(command_label="/risk_review", error_text=str(exc))
 
         print(
             "Telegram /risk_review requested: "

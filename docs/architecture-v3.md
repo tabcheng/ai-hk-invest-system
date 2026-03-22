@@ -56,7 +56,8 @@ The platform is designed as an **AI investment firm operating model** with stric
 - Observability is best-effort; failures in run tracking should not corrupt core signal-generation execution.
 
 ### 3) Data ingestion layer
-- Market price series retrieval for configured HK tickers.
+- Market price series retrieval for configured HK tickers now flows through a provider boundary (`MarketDataProvider`) so data-source adapters are replaceable.
+- v1 provider contract supports only minimal capabilities (`get_daily_ohlcv`, `get_latest_price`, `get_symbol_metadata`) and keeps scope out of full ingestion orchestration.
 - Input constraints and missing-data pathways preserved (`NO_DATA`, `INSUFFICIENT_DATA`).
 
 ### 4) Signal intelligence layer
@@ -88,7 +89,9 @@ The platform is designed as an **AI investment firm operating model** with stric
 - `main.py`: process entrypoint.
 - `src/app.py`: top-level run orchestration.
 - `src/config.py`: environment/config loading.
-- `src/data.py`: market data retrieval and normalization.
+- `src/data.py`: provider-resolved market data retrieval helpers and boundary entrypoint.
+- `src/market_data/provider.py`: provider protocol + symbol metadata contract.
+- `src/market_data/providers.py`: provider registry (`yfinance`, `mock`), symbol normalization assumptions, and adapter implementations.
 - `src/signals.py`: strategy decision logic.
 - `src/db.py`: signal persistence and DB access utilities.
 - `src/runs.py`: run lifecycle persistence.

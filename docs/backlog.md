@@ -7,7 +7,7 @@ Prioritization:
 
 ## Active backlog (pending)
 
-### P1 — Step 41+ candidates (small, reviewable, verifiable)
+### P1 — Step 42+ candidates (small, reviewable, verifiable)
 1. **Platform hardening follow-up (Step 42A candidate)**
    - Close/verify manual controls documented in Step 19/19B (GitHub branch protection, Railway worker posture, Supabase backup/RLS checklist).
    - Keep repo changes documentation-first unless explicit runtime/platform mutation is approved.
@@ -35,6 +35,8 @@ Prioritization:
 
 ## Completed backlog (archived)
 
+- Step 42 completed: market data provider boundary v1 added (provider protocol, registry-based selection via `MARKET_DATA_PROVIDER`, default `yfinance`, deterministic `mock` adapter), with scoped docs/test updates and no live-trading/broker integration expansion.
+- Step 42 review hardening completed: yfinance latest-price lookup now compensates for exclusive end-date semantics, and provider selection now rejects blank `MARKET_DATA_PROVIDER` values with explicit fail-fast validation.
 - Step 37 completed: dedicated daily-runner entrypoint introduced (`python -m src.daily_runner`), with HKT business schedule baseline formally documented (target 20:00 HKT; Railway UTC cron `0 12 * * *`).
 - Step 38 completed: daily runner observability/logging now emits consistent execution summary fields (`started_at`, `finished_at`, `duration_seconds`, `status`, `entrypoint`, `schedule_basis`) for both success and failure paths, with safe failure summary and focused runner tests for summary content + exit codes.
 - Step 38 review hotfix completed: failure `error_summary` normalization now collapses multiline/irregular whitespace before truncation so runner failure summaries stay single-line and easier to review in log systems.

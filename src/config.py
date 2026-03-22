@@ -10,6 +10,16 @@ STOCK_METADATA = {
 }
 
 
+# Minimal v1 provider selection knob for Railway/local runtime.
+# Guardrail: provider controls data-source adapter only; this does not authorize
+# live broker connectivity or real-money auto execution.
+DEFAULT_MARKET_DATA_PROVIDER = "yfinance"
+
+
+def get_market_data_provider_name() -> str:
+    return os.getenv("MARKET_DATA_PROVIDER", DEFAULT_MARKET_DATA_PROVIDER)
+
+
 def get_supabase_client() -> Client:
     url = os.getenv("SUPABASE_URL")
     key = os.getenv("SUPABASE_KEY")

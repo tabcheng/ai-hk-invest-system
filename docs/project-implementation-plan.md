@@ -4,7 +4,8 @@
 This document aligns:
 - strategic intent (`docs/spec.md`),
 - execution truth (`docs/status.md`),
-- pending/completed work (`docs/backlog.md`).
+- pending/completed work (`docs/backlog.md`),
+- deployment ownership boundaries (GitHub vs Railway).
 
 It is intentionally concise and optimized for small-step execution.
 
@@ -16,38 +17,44 @@ Documentation foundation, signal framework, dedup/run observability baseline, ru
 ### Steps 13–20 ✅
 Traceability hardening, structured observability telemetry, CI test gating, notification schema guardrails, platform baseline docs, Supabase access-model clarification, and decision ledger v1 are complete.
 
-### Steps 21–29 ✅ (repo-confirmed; acceptance may need human confirmation)
-- Step 21: paper position/PnL foundation.
-- Step 22: paper risk guardrails v1 (+ follow-up fixes).
-- Step 23: risk observability / decision-support record v1.
-- Step 24: paper-risk review summarizer.
-- Step 25: operator-facing paper-risk CLI.
-- Step 26: beginner paper-risk runbook.
-- Step 27: beginner Telegram troubleshooting runbook.
-- Step 28: beginner daily review summary helper.
-- Step 29: Telegram outcomes quick-reference.
+### Steps 21–44 ✅
+Paper-trading review/read-surface expansion, Telegram operator workflow hardening, dual-service deployment documentation, HKT display policy, market-data provider boundary, and docs consistency hardening are complete and reflected as merged/completed in `docs/status.md`.
 
-## Current implementation state
-- Runtime behavior is stable and still human-in-the-loop.
-- Paper-trading + decision record + risk review surfaces exist in baseline v1 form.
-- Operator docs are present for core paper-risk and Telegram troubleshooting tasks.
-- Human-facing Telegram operator timestamp display is normalized to HKT on key review surfaces, with storage/log timestamp semantics preserved.
-- Platform hardening execution still includes manual checklist items outside repo code.
+## Current implementation state (operator/developer view)
+- Runtime remains human-in-the-loop and paper-trading only.
+- Telegram operator commands are read-only review surfaces (`/runs`, `/runner_status`, `/risk_review`, `/pnl_review`, `/help`).
+- Service topology is dual-service, same repository:
+  - **webhook service**: long-running Telegram ingress (`python -m src.telegram_webhook_server`).
+  - **runner service**: scheduled batch runner (`python -m src.daily_runner`, Railway cron in UTC).
+- Business schedule baseline is **20:00 HKT**, currently mapped to Railway cron `0 12 * * *`.
+- `MARKET_DATA_PROVIDER` boundary is active with default `yfinance`; `mock` exists for local/test determinism and should not be treated as production feed configuration.
+- Human-facing operator timestamps are displayed in HKT; persisted/logged timestamps remain raw storage semantics (UTC/ISO).
+
+## Deployment/config ownership split (must stay explicit)
+
+### GitHub responsibilities
+- Branch protection + required reviews + required status checks (`tests`).
+- CI workflow integrity and dependency/update governance.
+- Secret scanning / push protection posture.
+- Source-of-truth documentation in `docs/`.
+
+### Railway responsibilities
+- Runtime service topology (separate webhook and runner services).
+- Runner schedule ownership (UTC cron mapped from HKT baseline).
+- Runtime environment variables and secret injection (Supabase, Telegram, provider selection, allowlists).
+- Process-level runtime/log observation for operator troubleshooting.
 
 ## Next small-step candidates (do not over-plan)
+1. **Step 45 candidate — Dedup semantics documentation validation**
+   - Consolidate operator-facing wording/examples for `sent` / `skipped` / `deduped` / `failed`.
+   - Keep scope docs-first unless a runtime defect is proven.
 
-### Step 44 candidate set (choose one small slice first)
-1. **Docs + operations closure slice (recommended first)**
-   - Reconcile open manual platform checklist items with explicit `done/unknown` markers.
-   - Acceptance target: no contradiction across `status/backlog/plan`.
+2. **Step 46 candidate — Platform checklist evidence pass**
+   - Refresh explicit evidence checkpoints for GitHub/Railway/Supabase manual controls.
+   - No runtime or strategy logic changes.
 
-2. **Notification clarity + dedup semantics slice**
-   - Tighten wording/examples for `sent/skipped/deduped/failed` and stock label clarity (`stock_name + stock_id`).
-   - Acceptance target: operator-facing docs read consistently with runtime behavior.
-
-3. **Paper-trading analytics follow-up scoping slice**
-   - Define one minimal analytics increment with data dependencies and validation plan (no broad implementation yet).
-   - Acceptance target: reviewable Step 45-ready spec.
+3. **Step 47 candidate — Paper-trading analytics scope note**
+   - Define one minimal analytics increment and validation rubric (no broad implementation).
 
 ## Planning guardrails
 - Keep each step small, testable, and reviewable.

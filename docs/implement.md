@@ -94,3 +94,15 @@ Provide a consistent execution workflow for long-horizon Codex contributions.
   - **GitHub:** branch protection/CI/check governance.
   - **Railway:** service split, cron ownership, runtime secrets/env management.
 - Guardrails: no runtime logic changes, no new API integration, no strategy change, no schema refactor.
+
+
+## Step 45 implementation note (dedup/delivery semantics docs validation)
+- Scope is documentation validation/clarification only; runtime behavior, queueing, retry framework, schema, and strategy logic stay unchanged.
+- Document current Telegram/operator-facing delivery reality in plain language:
+  - command reply behavior (operator commands are synchronous webhook-triggered sendMessage replies),
+  - runner summary behavior (best-effort + dedup-aware daily summary),
+  - review-response behavior (`/risk_review`, `/pnl_review`, `/runner_status`, `/runs` are read-only and bounded),
+  - retry/rerun/duplicate scenarios and why some duplicates are expected in best-effort flows.
+- Keep operator expectation explicit: what is normal, what duplicate patterns are expected, and what conditions should be tracked as follow-up.
+- Record unresolved delivery/dedup follow-ups in `docs/backlog.md` with clear active vs completed separation.
+- Guardrail reminder: decision support + paper trading only, no autonomous real-money execution.

@@ -92,6 +92,11 @@ The platform is designed as an **AI investment firm operating model** with stric
 
 ### 7) Delivery + operator layer
 - Telegram daily summary is best-effort/non-blocking.
+- Daily-summary dedup identity is date/target/message_type/status based; message wording updates do not alter dedup identity.
+- Retry/rerun semantics are intentionally best-effort:
+  - no SENT marker yet -> rerun may deliver another summary;
+  - SENT marker exists -> rerun should dedup-skip;
+  - dedup-read/write failure -> system degrades to send-attempt path to avoid blocking core run flow.
 - Operator command surfaces are read-only review surfaces:
   - `/runs`
   - `/runner_status`

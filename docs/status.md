@@ -56,6 +56,7 @@
 - Step 43 human-facing display policy: Telegram/review operator-facing timestamp outputs are now normalized to Hong Kong Time (`Asia/Hong_Kong`) at render-time boundary, with explicit `HKT` labeling for readability and timezone context.
 - Step 43 boundary hardening: timestamp conversion is display-only (`/runs`, `/runner_status`, `/risk_review`, `/pnl_review`) and does not alter persistence/log storage semantics (UTC/ISO raw values remain unchanged in storage paths).
 - Step 43 operator clarity hardening: representative Telegram operator replies now include clearer intent context (for example read-only review wording, paper-trading scope reminder, and HKT-labeled fields such as `started_at_hkt`, `finished_at_hkt`, `valuation_timestamp_hkt`, `run_started_at_hkt`).
+- Step 45 docs validation: documented Telegram/operator-facing delivery semantics reality (command replies, runner summary delivery, review response behavior, retry/rerun/duplicate cases), clarified operator expectation for normal vs expected-duplicate vs suspicious patterns, and refreshed backlog follow-ups with docs-only scope (no runtime behavior change).
 - No autonomous live-money execution is enabled; human remains final decision-maker.
 - Deploy/config stability note: Railway/Railpack build previously failed when defaulting to Python `3.13.12` (mise install failure path); repository now pins Python to `3.12.9` via `.python-version` as a deploy stability guardrail (no strategy/paper-trading/signal-flow logic change).
 
@@ -63,9 +64,9 @@
 - Milestone 1 (Documentation Foundation): completed.
 - Milestone 2 (Signal framework + modularization/test baseline): completed.
 - Milestone 3 (Paper-trading v1): completed.
-- Milestone 4 (Controlled production hardening): in-progress, with Steps 19–44 completed and follow-up hardening/documentation validation still pending.
+- Milestone 4 (Controlled production hardening): in-progress, with Steps 19–45 completed and follow-up hardening/documentation validation still pending.
 
-## Step 21–44 status ledger (Step 44 docs/deployment/backlog consistency hardening)
+## Step 21–45 status ledger (Step 45 dedup/delivery semantics docs validation)
 
 | Step | Goal | Primary deliverable(s) | Status |
 |---|---|---|---|
@@ -101,9 +102,10 @@
 | 42 | Market data provider boundary v1 | Provider protocol/registry (`MARKET_DATA_PROVIDER`) + `yfinance` default + deterministic `mock` provider | **Completed (merged).** Current production default remains `yfinance`; `mock` is local/test-oriented. |
 | 43 | Human-facing HKT timestamp normalization + operator clarity hardening | Display-layer HKT normalization for operator/review commands with storage semantics unchanged | **Completed (merged).** |
 | 44 | Status/docs/backlog consistency + deployment/config hardening docs | Align status wording with merge reality; clarify webhook vs runner topology, HKT baseline, provider/mock policy, read-only review surfaces, and GitHub vs Railway responsibilities | **Completed (merged in-repo docs state).** Runtime behavior/API/schema/strategy unchanged. |
+| 45 | Dedup/delivery semantics documentation validation + operator expectation clarification | Document current Telegram/operator delivery reality (dedup/retry/rerun/duplicate semantics), define operator expectation baseline, and update backlog/state for unresolved follow-ups | **Completed (merged in-repo docs state).** Docs-only clarification; runtime/API/schema/strategy unchanged. |
 
 ## Known unknowns / needs confirmation
 - Production platform settings (GitHub/Railway/Supabase project posture) still require periodic manual verification outside repository files.
 
 ## Next approved task candidate
-- Step 45 candidate: dedup/delivery semantics documentation validation + operator wording examples consolidation (docs-only unless an explicit runtime bug is discovered).
+- Step 46 candidate: delivery semantics observability evidence pass (operator checklist + validation plan, docs-first unless a concrete runtime defect is proven).

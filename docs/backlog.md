@@ -8,9 +8,9 @@ Prioritization:
 ## Active backlog (pending)
 
 ### P0
-1. **Step 45 candidate — Dedup/delivery semantics documentation validation**
-   - Consolidate operator-facing wording/examples for `sent`, `skipped`, `deduped`, `failed`.
-   - Keep scope docs-first; runtime changes only if a concrete defect is proven.
+1. **Step 46 candidate — Delivery semantics observability evidence pass (docs + validation plan)**
+   - Add a small operator runbook/checklist for validating `runs.delivery_summary_json` against observed Telegram outcomes (`sent` / `failed` / `skipped`).
+   - Keep docs/validation scope only unless a concrete runtime defect is confirmed.
 
 ### P1
 1. **Platform hardening evidence pass (GitHub / Railway / Supabase)**
@@ -31,12 +31,13 @@ Prioritization:
 
 ## Completed backlog (archived)
 
-### Recently completed (Steps 40–44)
+### Recently completed (Steps 40–45)
 - **Step 40 completed:** normalized operator response shape for `/runs`, `/runner_status`, `/risk_review` and centralized HTML-safe rendering contract.
 - **Step 41 completed:** added read-only paper position/PnL snapshot helper and `/pnl_review` operator command, including input/correctness hardening.
 - **Step 42 completed:** added market-data provider boundary (`MARKET_DATA_PROVIDER`) with `yfinance` baseline and deterministic `mock` provider.
 - **Step 43 completed:** normalized operator/review human-facing timestamp display to HKT while preserving storage/log timestamp semantics.
 - **Step 44 completed:** aligned merged/completed documentation status for Steps 40–43, hardened deployment/config documentation clarity (webhook vs runner topology, HKT schedule baseline, provider/mock policy, GitHub vs Railway responsibilities), and normalized backlog wording/state.
+- **Step 45 completed:** validated and documented current Telegram/operator-facing dedup + delivery semantics reality (command replies, runner summaries, review responses, retry/rerun/duplicate expectations), clarified operator expectation baseline, and refreshed backlog follow-ups without runtime behavior changes.
 
 ### Earlier completed foundations
 - Step 1–12 baseline (documentation foundation, signal framework, dedup, run lifecycle, modularization, tests, Telegram MVP/hardening).

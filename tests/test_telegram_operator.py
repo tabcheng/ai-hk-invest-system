@@ -504,3 +504,13 @@ def test_handle_pnl_review_command_failure_is_sanitized(monkeypatch):
     assert "Status: failed." in response
     assert "internal review snapshot error" in response
     assert "exploded" not in response
+
+
+def test_handle_pnl_review_command_rejects_extra_tokens(monkeypatch):
+    monkeypatch.setenv("TELEGRAM_CHAT_ID", "chat-1")
+
+    response = handle_telegram_operator_command(object(), _build_update("/pnl_review now"))
+
+    assert "Command: /pnl_review" in response
+    assert "Status: failed." in response
+    assert "Use /pnl_review with no extra arguments" in response

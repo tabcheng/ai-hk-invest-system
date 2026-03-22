@@ -107,6 +107,17 @@ def _parse_risk_review_run_id(command_text: str) -> int:
     return run_id
 
 
+def _parse_pnl_review_command(command_text: str) -> None:
+    """
+    Validate `/pnl_review` with no extra tokens.
+
+    Guardrail: malformed variants (for example `/pnl_review now`) should return
+    explicit usage guidance rather than being silently ignored.
+    """
+    if not _PNL_REVIEW_COMMAND_PATTERN.match(command_text or ""):
+        raise ValueError("Unsupported command. Use /pnl_review with no extra arguments.")
+
+
 def _normalize_run_time(row: dict[str, Any]) -> str:
     # Guardrail: `runs` operator output relies on stable schema fields only.
     # We intentionally use `created_at` (existing column) and avoid fallbacks to
@@ -382,7 +393,7 @@ def handle_telegram_operator_command(client: Any, update: dict[str, Any]) -> str
     is_runs_command = text.lower().startswith("/runs")
     is_runner_status_command = bool(_RUNNER_STATUS_COMMAND_PATTERN.match(text))
     is_risk_review_command = text.lower().startswith("/risk_review")
-    is_pnl_review_command = bool(_PNL_REVIEW_COMMAND_PATTERN.match(text))
+    is_pnl_review_command = text.lower().startswith("/pnl_review")
     if not (
         is_help_command
         or is_runs_command
@@ -463,6 +474,10 @@ def handle_telegram_operator_command(client: Any, update: dict[str, Any]) -> str
                 )
 
         if is_pnl_review_command:
+            try:
+                _parse_pnl_review_command(text)
+            except ValueError as exc:
+                return _build_usage_error_message(command_label="/pnl_review", error_text=str(exc))
             try:
                 snapshot = _get_paper_position_pnl_review_snapshot(client)
             except Exception as exc:

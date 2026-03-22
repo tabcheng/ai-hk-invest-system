@@ -912,3 +912,42 @@ def test_get_paper_position_pnl_review_snapshot_is_read_only_query_path():
     assert snapshot["closed_positions_count"] == 0
     assert snapshot["per_symbol"] == []
     assert all(method not in {"insert", "update", "upsert", "delete"} for _, method in calls)
+
+
+def test_get_paper_position_pnl_review_snapshot_sell_only_row_not_counted_as_closed():
+    class Result:
+        def __init__(self, data):
+            self.data = data
+
+    class Query:
+        def __init__(self, table_name):
+            self.table_name = table_name
+
+        def select(self, _columns):
+            return self
+
+        def order(self, *_args, **_kwargs):
+            return self
+
+        def limit(self, _n):
+            return self
+
+        def execute(self):
+            if self.table_name == "paper_trades":
+                return Result(
+                    [
+                        {"stock": "9999.HK", "action": "SELL", "quantity": 10, "price": 50.0, "realized_pnl": 0.0}
+                    ]
+                )
+            return Result([])
+
+    class Client:
+        def table(self, table_name):
+            return Query(table_name)
+
+    snapshot = get_paper_position_pnl_review_snapshot(Client())
+
+    assert snapshot["open_positions_count"] == 0
+    assert snapshot["closed_positions_count"] == 0
+    assert len(snapshot["per_symbol"]) == 1
+    assert snapshot["per_symbol"][0]["position_status"] == "FLAT"

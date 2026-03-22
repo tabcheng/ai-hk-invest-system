@@ -110,6 +110,7 @@ Minimum summary fields:
 - `total_realized_pnl`
 - `total_unrealized_pnl`
 - per-symbol summary (`stock`, optional `stock_name` when source is available)
+- Data-quality fallback: malformed SELL-only history may appear as per-symbol `position_status=FLAT` and is excluded from closed-position count.
 
 Current calculation/assumption definitions:
 - Average cost (`avg_cost`): weighted average BUY cost reconstructed from `paper_trades`.

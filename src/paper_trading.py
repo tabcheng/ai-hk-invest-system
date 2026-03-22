@@ -595,6 +595,11 @@ def get_paper_position_pnl_review_snapshot(client: Client) -> dict:
         .execute()
     ).data or []
     rebuilt_positions = _build_position_state_from_trade_rows(trade_rows)
+    opened_tickers = {
+        str(row.get("stock"))
+        for row in trade_rows
+        if str(row.get("action") or "") == "BUY" and row.get("stock") is not None
+    }
 
     persisted_open_rows = (
         client.table("paper_positions")
@@ -617,22 +622,48 @@ def get_paper_position_pnl_review_snapshot(client: Client) -> dict:
     ).data or []
     snapshot_date = latest_snapshot_rows[0].get("snapshot_date") if latest_snapshot_rows else None
 
+    def _safe_int(value: object, default: int = 0) -> int:
+        try:
+            if value is None:
+                return default
+            return int(value)
+        except (TypeError, ValueError):
+            return default
+
+    def _safe_float(value: object, default: float = 0.0) -> float:
+        try:
+            if value is None:
+                return default
+            return float(value)
+        except (TypeError, ValueError):
+            return default
+
     symbol_rows: list[dict] = []
     total_realized = 0.0
     total_unrealized = 0.0
-    for ticker in sorted(rebuilt_positions.keys()):
-        rebuilt = rebuilt_positions[ticker]
+    all_tickers = sorted(set(rebuilt_positions.keys()) | set(open_by_ticker.keys()))
+    for ticker in all_tickers:
+        rebuilt = rebuilt_positions.get(ticker, {})
         open_row = open_by_ticker.get(ticker)
-        quantity = int(open_row.get("quantity") if open_row is not None else rebuilt.get("quantity") or 0)
-        avg_cost = float(open_row.get("avg_cost") if open_row is not None else rebuilt.get("avg_cost") or 0.0)
-        last_price = float(
-            open_row.get("last_price") if open_row is not None else rebuilt.get("last_price") or avg_cost
+        quantity = _safe_int(
+            open_row.get("quantity") if open_row is not None else rebuilt.get("quantity"),
+            default=0,
         )
-        realized_pnl = float(
-            open_row.get("realized_pnl") if open_row is not None else rebuilt.get("realized_pnl") or 0.0
+        avg_cost = _safe_float(
+            open_row.get("avg_cost") if open_row is not None else rebuilt.get("avg_cost"),
+            default=0.0,
         )
-        unrealized_pnl = float(
-            open_row.get("unrealized_pnl") if open_row is not None else rebuilt.get("unrealized_pnl") or 0.0
+        last_price = _safe_float(
+            open_row.get("last_price") if open_row is not None else rebuilt.get("last_price"),
+            default=avg_cost,
+        )
+        realized_pnl = _safe_float(
+            open_row.get("realized_pnl") if open_row is not None else rebuilt.get("realized_pnl"),
+            default=0.0,
+        )
+        unrealized_pnl = _safe_float(
+            open_row.get("unrealized_pnl") if open_row is not None else rebuilt.get("unrealized_pnl"),
+            default=0.0,
         )
 
         total_realized += realized_pnl
@@ -646,7 +677,10 @@ def get_paper_position_pnl_review_snapshot(client: Client) -> dict:
                 "last_price": last_price,
                 "realized_pnl": realized_pnl,
                 "unrealized_pnl": unrealized_pnl,
-                "position_status": "OPEN" if quantity > 0 else "CLOSED",
+                # Closed-state guardrail: only classify as CLOSED when ticker has
+                # a historical BUY lineage. This avoids counting malformed
+                # SELL-only rows as valid closed positions.
+                "position_status": "OPEN" if quantity > 0 else ("CLOSED" if ticker in opened_tickers else "FLAT"),
                 "valuation_timestamp": (
                     open_row.get("updated_at")
                     if open_row is not None and open_row.get("updated_at")

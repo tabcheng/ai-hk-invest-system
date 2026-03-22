@@ -141,45 +141,86 @@ def _parse_iso_datetime(value: Any, *, field_name: str) -> datetime:
         raise ValueError(f"invalid {field_name}") from exc
 
 
-def _format_runner_status_message(latest_summary_row: dict[str, Any]) -> str:
-    """
-    Build operator-facing response for `/runner_status` from latest persisted run.
+def _escape_dynamic(value: Any) -> str:
+    """Escape dynamic Telegram message fields for HTML parse-mode safety."""
+    return html.escape(str(value), quote=False)
 
-    Traceability notes:
-    - `created_at` is treated as runner `started_at` because run records are
-      created when the daily workflow starts.
-    - Entry point + schedule basis are fixed constants from `src.daily_runner`,
-      so responses remain consistent with deployed runner contract.
+
+def _build_operator_message(
+    *,
+    command_label: str,
+    status: str,
+    reason: str | None = None,
+    result: str | None = None,
+    fields: list[tuple[str, Any]] | None = None,
+) -> str:
     """
+    Build operator-facing responses using one small shared contract.
+
+    Step 40 contract goals:
+    - keep command/status/result wording consistent across commands;
+    - keep key fields in deterministic `- key: value` lines for scanability;
+    - enforce centralized HTML-safe escaping for dynamic field rendering.
+    """
+    escaped_command_label = _escape_dynamic(command_label)
+    escaped_status = _escape_dynamic(status)
+    lines = [f"Command: {escaped_command_label}", f"Status: {escaped_status}."]
+    if result:
+        lines.append(f"Result: {_escape_dynamic(result)}")
+    if reason:
+        lines.append(f"Reason: {_escape_dynamic(reason)}")
+    for key, value in fields or []:
+        lines.append(f"- {key}: {_escape_dynamic(value)}")
+    return "\n".join(lines)
+
+
+def _build_usage_error_message(*, command_label: str, error_text: str) -> str:
+    """
+    Keep validation/usage failures in the same operator-facing response contract.
+
+    Guardrail: parsing/validation errors are expected operator input paths and
+    should stay easy to scan with the same `Command` + `Status` + `Reason` shape.
+    """
+    return _build_operator_message(
+        command_label=command_label,
+        status="failed",
+        reason=error_text.rstrip("."),
+    )
+
+
+def _format_runner_status_message(latest_summary_row: dict[str, Any]) -> str:
+    """Build operator-facing response for `/runner_status` from latest persisted run."""
     started_at = _parse_iso_datetime(latest_summary_row.get("created_at"), field_name="created_at")
     finished_raw = latest_summary_row.get("finished_at")
     finished_at: datetime | None = None
     if finished_raw:
         finished_at = _parse_iso_datetime(finished_raw, field_name="finished_at")
 
-    duration_seconds = "N/A"
+    duration_seconds: str | float = "N/A"
     if finished_at is not None:
         duration_value = max((finished_at - started_at).total_seconds(), 0.0)
-        duration_seconds = f"{round(duration_value, 6)}"
+        duration_seconds = round(duration_value, 6)
 
-    status = html.escape(str(latest_summary_row.get("status") or "UNKNOWN"))
-    run_id = html.escape(str(latest_summary_row.get("id", "N/A")))
     error_summary = (latest_summary_row.get("error_summary") or "").strip()
-    # Telegram replies use parse_mode="HTML"; escape dynamic failure text so
-    # persisted `<`, `>`, `&` in error_summary cannot break message parsing.
-    error_line = html.escape(error_summary) if error_summary else "None"
 
-    lines = [
-        f"Latest daily runner status (run_id={run_id}):",
-        f"- status: {status}",
-        f"- started_at: {started_at.isoformat()}",
-        f"- finished_at: {finished_at.isoformat() if finished_at else 'N/A'}",
-        f"- duration_seconds: {duration_seconds}",
-        f"- entrypoint: {ENTRYPOINT}",
-        f"- schedule_basis: {SCHEDULE_BASIS}",
-        f"- error_summary: {error_line}",
-    ]
-    return "\n".join(lines)
+    return _build_operator_message(
+        command_label="/runner_status",
+        status="completed",
+        result="latest daily runner summary",
+        fields=[
+            ("run_id", latest_summary_row.get("id", "N/A")),
+            ("runner_status", latest_summary_row.get("status") or "UNKNOWN"),
+            ("started_at", started_at.isoformat()),
+            ("finished_at", finished_at.isoformat() if finished_at else "N/A"),
+            ("duration_seconds", duration_seconds),
+            ("entrypoint", ENTRYPOINT),
+            ("schedule_basis", SCHEDULE_BASIS),
+            # `error_summary` can come from persistence and may include reserved
+            # HTML symbols. Rendering via `_build_operator_message` applies
+            # centralized escaping so all commands stay parse-safe by default.
+            ("error_summary", error_summary if error_summary else "None"),
+        ],
+    )
 
 
 def build_help_command_message() -> str:
@@ -209,32 +250,42 @@ def build_help_command_message() -> str:
 
 def build_runs_command_message(rows: list[dict[str, Any]], *, days: int) -> str:
     if not rows:
-        return f"No runs found in the last {days} day(s)."
+        return _build_operator_message(
+            command_label="/runs",
+            status="no data",
+            reason=f"no runs found in the last {days} day(s)",
+            fields=[("window_days", days)],
+        )
 
-    header = f"Recent runs (last {days} day(s), newest first):"
-    lines = [header]
-    for row in rows:
+    fields: list[tuple[str, Any]] = [("window_days", days), ("row_count", len(rows))]
+    for idx, row in enumerate(rows, start=1):
         run_id = row.get("id", "N/A")
         run_status = row.get("status") or "UNKNOWN"
         run_time = _normalize_run_time(row)
-        lines.append(f"- run_id={run_id} | time={run_time} | status={run_status}")
-    return "\n".join(lines)
+        fields.append((f"run_{idx}", f"run_id={run_id} | time={run_time} | status={run_status}"))
+
+    return _build_operator_message(
+        command_label="/runs",
+        status="completed",
+        result="recent runs listed (newest first)",
+        fields=fields,
+    )
 
 
 def _build_risk_review_command_message(*, run_id: int, risk_review: dict[str, Any]) -> str:
     """Return a compact operator-facing summary for synchronous risk review output."""
-    lines = [
-        f"Accepted: /risk_review run_id={run_id}.",
-        "Status: completed.",
-        (
-            "Result summary: "
-            f"executed_buys={int(risk_review.get('total_executed_buys') or 0)}, "
-            f"blocked_buys={int(risk_review.get('total_blocked_buys') or 0)}, "
-            f"warning_buys={int(risk_review.get('total_warning_buys') or 0)}, "
-            f"tickers={len(risk_review.get('per_ticker') or {})}."
-        ),
-    ]
-    return "\n".join(lines)
+    return _build_operator_message(
+        command_label="/risk_review",
+        status="completed",
+        result="paper risk review generated",
+        fields=[
+            ("run_id", run_id),
+            ("executed_buys", int(risk_review.get("total_executed_buys") or 0)),
+            ("blocked_buys", int(risk_review.get("total_blocked_buys") or 0)),
+            ("warning_buys", int(risk_review.get("total_warning_buys") or 0)),
+            ("tickers", len(risk_review.get("per_ticker") or {})),
+        ],
+    )
 
 
 def _get_caller_context(update: dict[str, Any]) -> tuple[str, str, str]:
@@ -291,7 +342,12 @@ def handle_telegram_operator_command(client: Any, update: dict[str, Any]) -> str
         f"chat_id={chat_id} user_id={user_id}"
     )
     if not auth_decision.get("authorized"):
-        return "Unauthorized: this command is restricted to the configured operator chat/user."
+        command_label = text.split()[0].lower() if text else "/unknown"
+        return _build_operator_message(
+            command_label=command_label,
+            status="unauthorized",
+            reason="this command is restricted to the configured operator chat/user",
+        )
 
     try:
         if is_help_command:
@@ -301,7 +357,7 @@ def handle_telegram_operator_command(client: Any, update: dict[str, Any]) -> str
             try:
                 days = _parse_runs_days(text)
             except ValueError as exc:
-                return str(exc)
+                return _build_usage_error_message(command_label="/runs", error_text=str(exc))
             runs = list_recent_runs(client, days=days, limit=_DEFAULT_LIMIT)
             return build_runs_command_message(runs, days=days)
 
@@ -316,17 +372,17 @@ def handle_telegram_operator_command(client: Any, update: dict[str, Any]) -> str
                     "Telegram /runner_status lookup failed: "
                     f"chat_id={chat_id} user_id={user_id} error={exc}"
                 )
-                return (
-                    "Accepted: /runner_status.\n"
-                    "Status: failed.\n"
-                    "Reason: internal status lookup error."
+                return _build_operator_message(
+                    command_label="/runner_status",
+                    status="failed",
+                    reason="internal status lookup error",
                 )
 
             if not latest_row:
-                return (
-                    "Accepted: /runner_status.\n"
-                    "Status: no data.\n"
-                    "Reason: no persisted daily runner summary available yet."
+                return _build_operator_message(
+                    command_label="/runner_status",
+                    status="no data",
+                    reason="no persisted daily runner summary available yet",
                 )
 
             try:
@@ -338,10 +394,10 @@ def handle_telegram_operator_command(client: Any, update: dict[str, Any]) -> str
                     "Telegram /runner_status formatting failed: "
                     f"chat_id={chat_id} user_id={user_id} error={exc}"
                 )
-                return (
-                    "Accepted: /runner_status.\n"
-                    "Status: failed.\n"
-                    "Reason: latest summary formatting error."
+                return _build_operator_message(
+                    command_label="/runner_status",
+                    status="failed",
+                    reason="latest summary formatting error",
                 )
 
         # /risk_review execution guardrail:
@@ -355,7 +411,7 @@ def handle_telegram_operator_command(client: Any, update: dict[str, Any]) -> str
                 "Telegram /risk_review failed during parsing: "
                 f"chat_id={chat_id} user_id={user_id} error={exc}"
             )
-            return str(exc)
+            return _build_usage_error_message(command_label="/risk_review", error_text=str(exc))
 
         print(
             "Telegram /risk_review requested: "
@@ -369,10 +425,11 @@ def handle_telegram_operator_command(client: Any, update: dict[str, Any]) -> str
                 "Telegram /risk_review failed during run lookup: "
                 f"run_id={run_id} chat_id={chat_id} user_id={user_id} error={exc!r}"
             )
-            return (
-                f"Accepted: /risk_review run_id={run_id}.\n"
-                "Status: failed.\n"
-                "Reason: internal review execution error. Please check service logs and retry."
+            return _build_operator_message(
+                command_label="/risk_review",
+                status="failed",
+                reason="internal review execution error. Please check service logs and retry",
+                fields=[("run_id", run_id)],
             )
 
         if not run_row:
@@ -380,7 +437,12 @@ def handle_telegram_operator_command(client: Any, update: dict[str, Any]) -> str
                 "Telegram /risk_review failed: "
                 f"run_id={run_id} chat_id={chat_id} user_id={user_id} reason=run_not_found"
             )
-            return f"Failed: run_id={run_id} not found. Use /runs to list recent runs."
+            return _build_operator_message(
+                command_label="/risk_review",
+                status="no data",
+                reason="run_id not found. Use /runs to list recent runs",
+                fields=[("run_id", run_id)],
+            )
 
         try:
             risk_review = _get_paper_risk_review(client, run_id=run_id)
@@ -389,10 +451,11 @@ def handle_telegram_operator_command(client: Any, update: dict[str, Any]) -> str
                 "Telegram /risk_review internal failure: "
                 f"run_id={run_id} chat_id={chat_id} user_id={user_id} error={exc!r}"
             )
-            return (
-                f"Accepted: /risk_review run_id={run_id}.\n"
-                "Status: failed.\n"
-                "Reason: internal review execution error. Please check service logs and retry."
+            return _build_operator_message(
+                command_label="/risk_review",
+                status="failed",
+                reason="internal review execution error. Please check service logs and retry",
+                fields=[("run_id", run_id)],
             )
 
         print(
@@ -406,4 +469,8 @@ def handle_telegram_operator_command(client: Any, update: dict[str, Any]) -> str
             "Telegram operator command internal failure: "
             f"text={text!r} chat_id={chat_id} user_id={user_id} error={exc!r}"
         )
-        return "Failed: internal command processing error. Please check service logs."
+        return _build_operator_message(
+            command_label=(text.split()[0].lower() if text else "/unknown"),
+            status="failed",
+            reason="internal command processing error. Please check service logs",
+        )

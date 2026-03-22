@@ -7,8 +7,8 @@ Prioritization:
 
 ## Active backlog (pending)
 
-### P1 — Step 40+ candidates (small, reviewable, verifiable)
-1. **Platform hardening follow-up (Step 41A candidate)**
+### P1 — Step 41+ candidates (small, reviewable, verifiable)
+1. **Platform hardening follow-up (Step 42A candidate)**
    - Close/verify manual controls documented in Step 19/19B (GitHub branch protection, Railway worker posture, Supabase backup/RLS checklist).
    - Keep repo changes documentation-first unless explicit runtime/platform mutation is approved.
 
@@ -44,6 +44,9 @@ Prioritization:
 - Step 39 review hotfix completed: `/runner_status` now HTML-escapes additional dynamic metadata (`status`, `run_id`) to further harden Telegram HTML parse-mode reply safety.
 - Step 40 completed: normalized operator response formatting for `/runs`, `/runner_status`, `/risk_review` into a shared command/status/result/reason/detail shape and centralized dynamic-field HTML-safe rendering contract with focused consistency/safety test updates.
 - Step 40 review hotfix completed: extended HTML-safe rendering contract to header-level dynamic fields (`command_label`, `status`, `result`, `reason`) so malformed command labels cannot break Telegram HTML parse-mode replies.
+- Step 41 completed: added read-only paper position/PnL review snapshot helper and Telegram operator `/pnl_review` command with safe failure handling, per-symbol summary output, and docs updates for metric definitions and valuation assumptions.
+- Step 41 review hardening completed: `/pnl_review` now returns explicit usage guidance on malformed extra arguments, and snapshot closed-position counting now excludes SELL-only malformed history from closed totals.
+- Step 41 correctness hotfix completed: snapshot replay ordering now follows `trade_date` then `id` (matching position-refresh contract) so rerun/backfill `id` drift does not skew position/PnL review output.
 
 ### Foundation + runtime hardening
 - Step 1–12 baseline (documentation foundation, signal framework, dedup, run lifecycle, modularization, tests, Telegram MVP/hardening).

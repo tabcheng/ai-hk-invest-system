@@ -99,6 +99,32 @@ Simulation run must emit:
 3. Non-trade event log (e.g., HOLD/NO_DATA/INSUFFICIENT_DATA/cash constraint/cap reached).
 4. Summary metrics (total return, win rate on closed trades, max drawdown, turnover count).
 
+## Position / PnL review snapshot v1 (operator read-only surface)
+- A read-only review snapshot is available for operator inspection of paper-trading state.
+- Current operator surface: Telegram `/pnl_review`.
+- This path is observability-only and must not mutate simulated orders, positions, or decision records.
+
+Minimum summary fields:
+- `open_positions_count`
+- `closed_positions_count`
+- `total_realized_pnl`
+- `total_unrealized_pnl`
+- per-symbol summary (`stock`, optional `stock_name` when source is available)
+- Data-quality fallback: malformed SELL-only history may appear as per-symbol `position_status=FLAT` and is excluded from closed-position count.
+
+Current calculation/assumption definitions:
+- Replay ordering contract (refresh/review consistency): reconstruct position state by chronological ordering on `trade_date` with `id` as tie-breaker (not `id`-only ordering).
+- Average cost (`avg_cost`): weighted average BUY cost reconstructed from `paper_trades`.
+- Realized PnL: cumulative sum of persisted SELL-side `realized_pnl` in trade ledger replay.
+- Unrealized PnL: `(last_price - avg_cost) * quantity` for symbols with open quantity.
+- Price source / valuation timestamp:
+  - Open symbols: `paper_positions.last_price` (latest refreshed state).
+  - Closed symbols fallback: last replayed trade price when no open position exists.
+  - Snapshot-level `valuation_timestamp`: latest `paper_daily_snapshots.snapshot_date`.
+
+Traceability limitation (current v1):
+- `stock_name` is not guaranteed in current read path schema and may be `null`/`N/A`.
+
 ## Governance constraints
 - Paper trading is evaluation infrastructure, not permission for live automation.
 - Human review remains mandatory for all real-money decisions.

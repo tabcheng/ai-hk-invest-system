@@ -162,11 +162,13 @@ def _build_operator_message(
     - keep key fields in deterministic `- key: value` lines for scanability;
     - enforce centralized HTML-safe escaping for dynamic field rendering.
     """
-    lines = [f"Command: {command_label}", f"Status: {status}."]
+    escaped_command_label = _escape_dynamic(command_label)
+    escaped_status = _escape_dynamic(status)
+    lines = [f"Command: {escaped_command_label}", f"Status: {escaped_status}."]
     if result:
-        lines.append(f"Result: {result}")
+        lines.append(f"Result: {_escape_dynamic(result)}")
     if reason:
-        lines.append(f"Reason: {reason}")
+        lines.append(f"Reason: {_escape_dynamic(reason)}")
     for key, value in fields or []:
         lines.append(f"- {key}: {_escape_dynamic(value)}")
     return "\n".join(lines)

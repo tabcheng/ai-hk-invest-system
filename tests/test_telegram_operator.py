@@ -1,6 +1,7 @@
 import re
 
 from src.telegram_operator import (
+    _build_operator_message,
     build_help_command_message,
     build_runs_command_message,
     handle_telegram_operator_command,
@@ -35,6 +36,28 @@ def test_handle_runs_command_rejects_unauthorized_chat(monkeypatch):
     response = handle_telegram_operator_command(object(), _build_update("/runs", chat_id="chat-other"))
     assert "Command: /runs" in response
     assert "Status: unauthorized." in response
+
+
+def test_handle_runs_command_unauthorized_malformed_label_is_html_escaped(monkeypatch):
+    monkeypatch.setenv("TELEGRAM_CHAT_ID", "chat-allowed")
+    response = handle_telegram_operator_command(object(), _build_update("/runs<bad>", chat_id="chat-other"))
+    assert "Command: /runs&lt;bad&gt;" in response
+    assert "Command: /runs<bad>" not in response
+
+
+def test_operator_message_header_fields_are_html_escaped():
+    response = _build_operator_message(
+        command_label="/cmd<bad>",
+        status="failed<&>",
+        result="done > now",
+        reason="check <this> & retry",
+        fields=[("sample", "ok")],
+    )
+    assert "Command: /cmd&lt;bad&gt;" in response
+    assert "Status: failed&lt;&amp;&gt;." in response
+    assert "Result: done &gt; now" in response
+    assert "Reason: check &lt;this&gt; &amp; retry" in response
+    assert "Command: /cmd<bad>" not in response
 
 
 def test_handle_runs_command_supports_days_parameter(monkeypatch):

@@ -45,6 +45,16 @@ def test_handle_runs_command_unauthorized_malformed_label_is_html_escaped(monkey
     assert "Command: /runs<bad>" not in response
 
 
+def test_handle_runs_command_internal_failure_malformed_label_is_html_escaped(monkeypatch):
+    monkeypatch.setenv("TELEGRAM_CHAT_ID", "chat-1")
+    monkeypatch.setattr("src.telegram_operator._parse_runs_days", lambda _text: (_ for _ in ()).throw(RuntimeError("boom")))
+    response = handle_telegram_operator_command(object(), _build_update("/runs<bad>"))
+    assert "Command: /runs&lt;bad&gt;" in response
+    assert "Status: failed." in response
+    assert "internal command processing error" in response
+    assert "Command: /runs<bad>" not in response
+
+
 def test_operator_message_header_fields_are_html_escaped():
     response = _build_operator_message(
         command_label="/cmd<bad>",

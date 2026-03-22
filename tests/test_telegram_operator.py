@@ -28,6 +28,7 @@ def test_handle_runs_command_defaults_to_5d(monkeypatch):
     assert "Status: completed." in response
     assert "- window_days: 5" in response
     assert "run_id=12" in response
+    assert "2026-03-20 09:02:03 HKT" in response
     assert "status=SUCCESS" in response
 
 
@@ -189,6 +190,7 @@ def test_handle_risk_review_command_allowlisted_user_and_valid_run_id(monkeypatc
     assert "Command: /risk_review" in response
     assert "Status: completed." in response
     assert "- run_id: 12345" in response
+    assert "- run_started_at_hkt: 2026-03-21 08:00:00 HKT" in response
     assert "- executed_buys: 2" in response
     assert "- blocked_buys: 1" in response
     assert "- warning_buys: 1" in response
@@ -292,8 +294,8 @@ def test_handle_runner_status_command_allowlisted_user_success(monkeypatch):
     assert "Status: completed." in response
     assert "- runner_status: SUCCESS" in response
     assert "- run_id: 2001" in response
-    assert "- started_at: 2026-03-21T12:00:00+00:00" in response
-    assert "- finished_at: 2026-03-21T12:00:05+00:00" in response
+    assert "- started_at_hkt: 2026-03-21 20:00:00 HKT" in response
+    assert "- finished_at_hkt: 2026-03-21 20:00:05 HKT" in response
     assert "- duration_seconds: 5.0" in response
     assert "- entrypoint: python -m src.daily_runner" in response
     assert "HKT 20:00" in response
@@ -372,8 +374,8 @@ def test_handle_runner_status_command_normalizes_naive_timestamps_as_utc(monkeyp
 
     response = handle_telegram_operator_command(object(), _build_update("/runner_status"))
 
-    assert "- started_at: 2026-03-21T12:00:00+00:00" in response
-    assert "- finished_at: 2026-03-21T12:00:07+00:00" in response
+    assert "- started_at_hkt: 2026-03-21 20:00:00 HKT" in response
+    assert "- finished_at_hkt: 2026-03-21 20:00:07 HKT" in response
     assert "- duration_seconds: 7.0" in response
 
 
@@ -478,6 +480,8 @@ def test_handle_pnl_review_command_success(monkeypatch):
     assert "- closed_positions_count: 1" in response
     assert "- total_realized_pnl_hkd: 382.0" in response
     assert "- total_unrealized_pnl_hkd: 1000.0" in response
+    assert "- valuation_timestamp_hkt: 2026-03-22 00:00:00 HKT (date-based)" in response
+    assert "paper-trading decision support only" in response
     assert "stock=0011.HK" in response
     assert "name=N/A" in response
     assert "stock=0700.HK" in response

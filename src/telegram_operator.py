@@ -5,6 +5,7 @@ import os
 import re
 from datetime import datetime, timezone
 from typing import Any
+from zoneinfo import ZoneInfo
 
 from src.daily_runner import ENTRYPOINT, SCHEDULE_BASIS
 from src.runs import get_latest_run_execution_summary, get_run_by_id, list_recent_runs
@@ -17,6 +18,7 @@ _HELP_COMMAND_PATTERN = re.compile(r"^/(?:help|h)\s*$", re.IGNORECASE)
 _DEFAULT_DAYS = 5
 _MAX_DAYS = 30
 _DEFAULT_LIMIT = 50
+_HKT_TZ = ZoneInfo("Asia/Hong_Kong")
 
 
 def _parse_allowed_user_ids(raw_value: str | None) -> set[str]:
@@ -119,17 +121,43 @@ def _parse_pnl_review_command(command_text: str) -> None:
 
 
 def _normalize_run_time(row: dict[str, Any]) -> str:
+    # Human-facing display policy:
+    # - Operator-facing time text is always rendered in HKT for consistency.
+    # - Storage/log semantics stay unchanged (persisted UTC/ISO is parsed only
+    #   at display boundary and never mutated by this formatter).
+    #
     # Guardrail: `runs` operator output relies on stable schema fields only.
     # We intentionally use `created_at` (existing column) and avoid fallbacks to
     # non-guaranteed fields so malformed schema assumptions do not break `/runs`.
     raw = row.get("created_at")
-    if not raw:
+    return _format_display_timestamp_hkt(raw, field_name="created_at")
+
+
+def _format_display_timestamp_hkt(raw_value: Any, *, field_name: str) -> str:
+    """
+    Render operator-facing timestamps in `Asia/Hong_Kong` at display boundary.
+
+    Timestamp boundary contract:
+    - Parse persisted/raw values defensively for read surfaces only.
+    - Keep storage semantics untouched (no write-back/no normalization side effects).
+    - Show explicit `HKT` suffix so operators know timezone context quickly.
+    """
+    if not raw_value:
         return "N/A"
+    if isinstance(raw_value, datetime):
+        parsed = raw_value if raw_value.tzinfo else raw_value.replace(tzinfo=timezone.utc)
+        return f"{parsed.astimezone(_HKT_TZ).strftime('%Y-%m-%d %H:%M:%S')} HKT"
+
+    raw_text = str(raw_value).strip()
+    # Date-only value should be treated as a business-date label, not as UTC
+    # midnight instant, to avoid surprising +08:00 clock shifts in operator view.
+    if re.fullmatch(r"\d{4}-\d{2}-\d{2}", raw_text):
+        return f"{raw_text} 00:00:00 HKT (date-based)"
     try:
-        parsed = datetime.fromisoformat(str(raw).replace("Z", "+00:00"))
-        return parsed.astimezone(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+        parsed = _parse_iso_datetime(raw_value, field_name=field_name)
+        return f"{parsed.astimezone(_HKT_TZ).strftime('%Y-%m-%d %H:%M:%S')} HKT"
     except ValueError:
-        return str(raw)
+        return raw_text
 
 
 def _parse_iso_datetime(value: Any, *, field_name: str) -> datetime:
@@ -218,12 +246,17 @@ def _format_runner_status_message(latest_summary_row: dict[str, Any]) -> str:
     return _build_operator_message(
         command_label="/runner_status",
         status="completed",
-        result="latest daily runner summary",
+        result="latest daily runner summary (display timezone: HKT)",
         fields=[
             ("run_id", latest_summary_row.get("id", "N/A")),
             ("runner_status", latest_summary_row.get("status") or "UNKNOWN"),
-            ("started_at", started_at.isoformat()),
-            ("finished_at", finished_at.isoformat() if finished_at else "N/A"),
+            ("started_at_hkt", _format_display_timestamp_hkt(started_at, field_name="created_at")),
+            (
+                "finished_at_hkt",
+                _format_display_timestamp_hkt(finished_at, field_name="finished_at")
+                if finished_at
+                else "N/A",
+            ),
             ("duration_seconds", duration_seconds),
             ("entrypoint", ENTRYPOINT),
             ("schedule_basis", SCHEDULE_BASIS),
@@ -285,14 +318,23 @@ def build_runs_command_message(rows: list[dict[str, Any]], *, days: int) -> str:
     )
 
 
-def _build_risk_review_command_message(*, run_id: int, risk_review: dict[str, Any]) -> str:
+def _build_risk_review_command_message(
+    *,
+    run_id: int,
+    risk_review: dict[str, Any],
+    run_created_at: Any,
+) -> str:
     """Return a compact operator-facing summary for synchronous risk review output."""
     return _build_operator_message(
         command_label="/risk_review",
         status="completed",
-        result="paper risk review generated",
+        result="paper risk review generated (read-only)",
         fields=[
             ("run_id", run_id),
+            (
+                "run_started_at_hkt",
+                _format_display_timestamp_hkt(run_created_at, field_name="created_at"),
+            ),
             ("executed_buys", int(risk_review.get("total_executed_buys") or 0)),
             ("blocked_buys", int(risk_review.get("total_blocked_buys") or 0)),
             ("warning_buys", int(risk_review.get("total_warning_buys") or 0)),
@@ -344,8 +386,12 @@ def _build_pnl_review_command_message(snapshot: dict[str, Any]) -> str:
         ("closed_positions_count", int(snapshot.get("closed_positions_count") or 0)),
         ("total_realized_pnl_hkd", round(float(snapshot.get("total_realized_pnl") or 0.0), 2)),
         ("total_unrealized_pnl_hkd", round(float(snapshot.get("total_unrealized_pnl") or 0.0), 2)),
-        ("valuation_timestamp", snapshot.get("valuation_timestamp") or "N/A"),
+        (
+            "valuation_timestamp_hkt",
+            _format_display_timestamp_hkt(snapshot.get("valuation_timestamp"), field_name="valuation_timestamp"),
+        ),
         ("per_symbol_count", len(per_symbol)),
+        ("review_scope", "paper-trading decision support only; no real-money execution"),
     ]
     for idx, row in enumerate(per_symbol[:10], start=1):
         fields.append(
@@ -555,7 +601,11 @@ def handle_telegram_operator_command(client: Any, update: dict[str, Any]) -> str
             f"run_id={run_id} chat_id={chat_id} user_id={user_id} "
             "status=completed"
         )
-        return _build_risk_review_command_message(run_id=run_id, risk_review=risk_review)
+        return _build_risk_review_command_message(
+            run_id=run_id,
+            risk_review=risk_review,
+            run_created_at=run_row.get("created_at"),
+        )
     except Exception as exc:
         print(
             "Telegram operator command internal failure: "

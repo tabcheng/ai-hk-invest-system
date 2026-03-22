@@ -78,3 +78,9 @@ Provide a consistent execution workflow for long-horizon Codex contributions.
 - Add a deterministic `mock` provider for local development and tests; keep `yfinance` as default provider.
 - Add minimal provider selection config using env var `MARKET_DATA_PROVIDER` (for Railway/local), with fail-fast validation on unsupported provider names.
 - Guardrails: provider work is paper-trading/decision-support only, no broker integration, no live-money execution, and no large ingestion-pipeline expansion in this step.
+
+## Step 43 implementation note (human-facing HKT display + operator clarity hardening)
+- Normalize human-facing/operator-facing timestamp display to HKT (`Asia/Hong_Kong`) at render time only (Telegram replies, review/status summaries); keep persisted/log/raw timestamps unchanged.
+- Apply the display policy to representative command surfaces first (`/runs`, `/runner_status`, `/risk_review`, `/pnl_review`) and avoid broad refactors.
+- Keep scope guardrails explicit in message copy/comments: paper trading + decision support only, no autonomous real-money execution.
+- Prefer deterministic, scan-friendly operator wording (`*_hkt` fields, explicit status/result/reason rows) and preserve existing strategy/paper-trading decision logic.

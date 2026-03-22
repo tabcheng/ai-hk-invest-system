@@ -31,11 +31,12 @@ Traceability hardening, structured observability telemetry, CI test gating, noti
 - Runtime behavior is stable and still human-in-the-loop.
 - Paper-trading + decision record + risk review surfaces exist in baseline v1 form.
 - Operator docs are present for core paper-risk and Telegram troubleshooting tasks.
+- Human-facing Telegram operator timestamp display is normalized to HKT on key review surfaces, with storage/log timestamp semantics preserved.
 - Platform hardening execution still includes manual checklist items outside repo code.
 
 ## Next small-step candidates (do not over-plan)
 
-### Step 31 candidate set (choose one small slice first)
+### Step 44 candidate set (choose one small slice first)
 1. **Docs + operations closure slice (recommended first)**
    - Reconcile open manual platform checklist items with explicit `done/unknown` markers.
    - Acceptance target: no contradiction across `status/backlog/plan`.
@@ -46,7 +47,7 @@ Traceability hardening, structured observability telemetry, CI test gating, noti
 
 3. **Paper-trading analytics follow-up scoping slice**
    - Define one minimal analytics increment with data dependencies and validation plan (no broad implementation yet).
-   - Acceptance target: reviewable Step 32-ready spec.
+   - Acceptance target: reviewable Step 45-ready spec.
 
 ## Planning guardrails
 - Keep each step small, testable, and reviewable.

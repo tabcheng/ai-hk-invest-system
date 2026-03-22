@@ -52,6 +52,7 @@
 - Step 41 correctness hotfix: paper position/PnL snapshot replay ordering now matches position-refresh contract (`trade_date` then `id`) to prevent rerun/backfill `id` drift from skewing quantity/avg-cost/realized-PnL/closed-count outputs.
 - Step 42 market-data boundary v1: signal data reads now go through a provider abstraction (`MarketDataProvider`) with registry-based selection (`MARKET_DATA_PROVIDER`, default `yfinance`) and a deterministic `mock` provider for local/test usage.
 - Step 42 review hardening: yfinance latest-price adapter now compensates for exclusive `end` semantics by requesting `end_date + 1 day`; provider registry now fail-fast rejects blank `MARKET_DATA_PROVIDER` values with explicit error messaging.
+- Step 42 correctness hotfix: provider contract now explicitly defines inclusive `end_date`; yfinance compensation is centralized in `get_daily_ohlcv` so daily signal generation path (`fetch_market_data`) also includes latest available bar and avoids one-day-late BUY/SELL decisions.
 - No autonomous live-money execution is enabled; human remains final decision-maker.
 - Deploy/config stability note: Railway/Railpack build previously failed when defaulting to Python `3.13.12` (mise install failure path); repository now pins Python to `3.12.9` via `.python-version` as a deploy stability guardrail (no strategy/paper-trading/signal-flow logic change).
 

@@ -28,7 +28,13 @@ class MarketDataProvider(Protocol):
     """
 
     def get_daily_ohlcv(self, symbol: str, start_date: date, end_date: date) -> pd.DataFrame:
-        """Return daily OHLCV rows with Date index and Open/High/Low/Close/Volume columns."""
+        """Return daily OHLCV rows with an inclusive `end_date` window.
+
+        Contract semantics:
+        - `start_date` and `end_date` are both inclusive at provider boundary.
+        - Source adapters with exclusive-end APIs must compensate internally so
+          callers observe one consistent window contract.
+        """
 
     def get_latest_price(self, symbol: str) -> float | None:
         """Return latest available close/mark price for symbol, or None when unavailable."""

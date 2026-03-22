@@ -58,6 +58,7 @@ The platform is designed as an **AI investment firm operating model** with stric
 ### 3) Data ingestion layer
 - Market price series retrieval for configured HK tickers now flows through a provider boundary (`MarketDataProvider`) so data-source adapters are replaceable.
 - v1 provider contract supports only minimal capabilities (`get_daily_ohlcv`, `get_latest_price`, `get_symbol_metadata`) and keeps scope out of full ingestion orchestration.
+- Provider date-window contract is standardized as `start_date`/`end_date` inclusive; adapters for exclusive-end sources (for example yfinance) must compensate internally.
 - Input constraints and missing-data pathways preserved (`NO_DATA`, `INSUFFICIENT_DATA`).
 
 ### 4) Signal intelligence layer

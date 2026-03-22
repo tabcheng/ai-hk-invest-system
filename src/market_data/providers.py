@@ -39,10 +39,15 @@ class YFinanceMarketDataProvider:
 
     def get_daily_ohlcv(self, symbol: str, start_date: date, end_date: date) -> pd.DataFrame:
         normalized_symbol = normalize_symbol(symbol)
+        # Provider contract defines `end_date` as inclusive, but yfinance `end`
+        # is exclusive. Compensate once here so all upstream call sites
+        # (`fetch_market_data`, signal generation, latest-price read) share the
+        # same date-window behavior.
+        yfinance_end_exclusive = end_date + timedelta(days=1)
         data = yf.download(
             normalized_symbol,
             start=start_date.isoformat(),
-            end=end_date.isoformat(),
+            end=yfinance_end_exclusive.isoformat(),
             interval="1d",
             auto_adjust=False,
             progress=False,
@@ -66,12 +71,10 @@ class YFinanceMarketDataProvider:
 
     def get_latest_price(self, symbol: str) -> float | None:
         today = date.today()
-        # yfinance `end` is exclusive, so include one extra day to avoid
-        # dropping the most recent available daily bar in month-to-date lookups.
         history = self.get_daily_ohlcv(
             symbol,
             start_date=today.replace(day=1),
-            end_date=today + timedelta(days=1),
+            end_date=today,
         )
         if history.empty:
             return None

@@ -4,6 +4,7 @@ import pandas as pd
 import pytest
 
 from src import data
+from src.signals import get_signal_for_ticker
 from src.market_data.providers import (
     MockMarketDataProvider,
     YFinanceMarketDataProvider,
@@ -70,3 +71,71 @@ def test_yfinance_latest_price_extends_end_date_by_one_day(monkeypatch):
     assert captured["symbol"] == "0700.HK"
     assert captured["start"] == "2026-03-01"
     assert captured["end"] == "2026-03-23"
+
+
+def test_fetch_market_data_with_yfinance_includes_end_date_bar(monkeypatch):
+    captured: dict[str, str] = {}
+
+    def fake_download(symbol, start, end, interval, auto_adjust, progress):
+        captured["symbol"] = symbol
+        captured["start"] = start
+        captured["end"] = end
+        return pd.DataFrame(
+            [
+                {
+                    "Date": "2026-03-22",
+                    "Open": 100.0,
+                    "High": 101.0,
+                    "Low": 99.0,
+                    "Close": 100.5,
+                    "Volume": 1_000_000,
+                }
+            ]
+        ).set_index("Date")
+
+    monkeypatch.setattr("src.market_data.providers.yf.download", fake_download)
+    monkeypatch.setattr(
+        "src.data.date",
+        type("FakeDate", (), {"today": staticmethod(lambda: date(2026, 3, 22))}),
+    )
+
+    provider = YFinanceMarketDataProvider()
+    frame = data.fetch_market_data("0700.HK", provider=provider, lookback_days=1)
+
+    assert not frame.empty
+    assert float(frame["Close"].iloc[-1]) == 100.5
+    assert captured["start"] == "2026-03-21"
+    # Inclusive provider contract => yfinance request uses end_date + 1 day.
+    assert captured["end"] == "2026-03-23"
+
+
+def test_signal_path_not_one_day_late_with_yfinance_exclusive_end(monkeypatch):
+    def fake_download(symbol, start, end, interval, auto_adjust, progress):
+        if end == "2026-03-23":
+            closes = [100.0] * 199 + [300.0]
+        else:
+            closes = [100.0] * 200
+
+        rows = [
+            {
+                "Date": f"2026-03-{i + 1:02d}",
+                "Open": close,
+                "High": close,
+                "Low": close,
+                "Close": close,
+                "Volume": 1_000_000,
+            }
+            for i, close in enumerate(closes)
+        ]
+        return pd.DataFrame(rows).set_index("Date")
+
+    monkeypatch.setattr("src.market_data.providers.yf.download", fake_download)
+    monkeypatch.setattr(
+        "src.data.date",
+        type("FakeDate", (), {"today": staticmethod(lambda: date(2026, 3, 22))}),
+    )
+
+    signal = get_signal_for_ticker("0700.HK", provider=YFinanceMarketDataProvider())
+
+    # If the last bar were dropped by exclusive-end handling, this would be HOLD.
+    assert signal["signal"] == "BUY"

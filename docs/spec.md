@@ -66,3 +66,55 @@ Build a long-horizon AI-assisted Hong Kong stock investing system with disciplin
 5. **Operator command reply vs summary delivery distinction**
    - Verify command replies (`/runs`, `/runner_status`, `/risk_review`, `/pnl_review`, `/help`) are webhook-triggered read-only responses and can succeed/fail independently from daily summary send path.
    - Verify summary-delivery evidence is reviewed per run, while command-reply evidence is reviewed per inbound command event/log line.
+
+## Delivery Semantics Runtime Instrumentation Scoping (Step 47 proposal, docs-only)
+### System-of-record separation
+- **Current known gap (baseline reality):**
+  - dedup fallback activation (for example dedup check/persist failure -> send-attempt degradation) is primarily log-only evidence and is not consistently represented as first-class structured run-level fields.
+  - `runs.delivery_summary_json` has useful high-level outcome fields, but currently lacks phase-level and correlation-level detail needed for low-friction rerun/retry forensic review.
+  - Telegram observed outcome (message seen or not seen) and run record evidence still require manual correlation by date/run id/timestamp context.
+- **Scoping proposal (this step):**
+  - define a minimal future instrumentation candidate set that improves dedup/rerun/retry/fallback traceability without changing send-path semantics.
+  - prioritize candidates by observability value vs implementation risk and keep scope tightly bounded.
+- **Not-yet-approved runtime change:**
+  - no runtime implementation is approved in this step; all items below are proposal-only and require a dedicated future runtime step before code/schema changes.
+- **Future follow-up:**
+  - after explicit approval, implement only P0/P1 candidates first with focused validation against Telegram observed outcomes + `runs.delivery_summary_json` + runner logs.
+
+### Observability gap prioritization (current state)
+1. **P0 — Correlation gap across surfaces**
+   - Operators cannot reliably join Telegram outcome evidence to a specific delivery attempt/run-level lifecycle without manual timestamp matching.
+2. **P1 — Dedup fallback evidence gap**
+   - dedup check/persist fallback activation is not consistently queryable in one structured field and therefore increases incident triage effort.
+3. **P1 — Delivery phase progression visibility gap**
+   - current summary evidence emphasizes final outcome but under-represents intermediate phase transitions (prepare/check/persist/send/finalize) that explain why duplicates or skips occurred.
+4. **P2 — Attempt granularity gap**
+   - repeated attempts inside one run/rerun context lack a stable attempt identity surface that operators can quickly reference in docs/runbooks.
+
+### Minimal instrumentation candidates (proposal-only; no implementation here)
+| Candidate | Value | Risk / cost | Proposed priority | Scope notes |
+|---|---|---|---|---|
+| `correlation_id` | Creates one stable join key across run logs, delivery summary context, and Telegram observed troubleshooting notes; reduces manual matching overhead. | Low-to-medium risk (ID generation/propagation consistency). | **P0 recommend** | Start with per-run/per-delivery correlation, avoid global tracing framework in first increment. |
+| `message_delivery_attempt_id` | Distinguishes multiple attempts in rerun/retry context and supports deterministic incident references. | Medium risk (attempt lifecycle definition drift if over-scoped). | **P1 recommend** | Keep local to delivery path only; do not extend to full queue/retry architecture. |
+| `delivery_phase` | Makes phase progression explicit for auditability (`dedup_check`, `send_attempt`, `dedup_persist`, etc.). | Medium risk (phase vocabulary stability + backward compatibility expectations). | **P1 recommend** | Use small fixed enum set; avoid high-cardinality free-text stages. |
+| `dedup_check_result` | Converts dedup-read outcome from inference/log-only to structured evidence (hit/miss/error). | Low risk if represented as bounded values. | **P1 recommend** | Keep values compact and semantically stable. |
+| `dedup_persist_result` | Exposes whether SENT marker write succeeded/failed and clarifies duplicate-risk windows. | Low risk if bounded and optional. | **P1 recommend** | Critical for distinguishing expected duplicate-under-failure cases. |
+| `fallback_activated` | Binary signal to quickly separate normal path vs degraded path incidents. | Low risk, but semantics must be precise to avoid noisy false positives. | **P2 conditional** | Consider only if value cannot be fully inferred from `dedup_*_result`; avoid redundant fields. |
+
+### Candidates not currently recommended for first runtime increment
+- full queue/retry orchestration metadata expansion (out-of-scope for minimal increment).
+- Telegram send-path refactor to enforce exactly-once semantics (not required for current best-effort policy).
+- broad delivery summary schema redesign (higher migration/compatibility risk than needed for first observability step).
+
+### Explicit guardrails (Step 47)
+- Do **not** implement runtime instrumentation in this step.
+- Do **not** add DB migrations in this step.
+- Do **not** modify `delivery_summary_json` schema in this step.
+- Do **not** refactor Telegram send path in this step.
+- Do **not** introduce queue/retry framework changes in this step.
+- Do **not** change strategy logic in this step.
+- Continue paper-trading / decision-support governance only; no autonomous real-money execution.
+
+### Platform ownership for this step
+- **GitHub (changed in Step 47):** docs-only system-of-record updates for gaps, prioritization, candidate instrumentation scope, and guardrails.
+- **Railway (no change in Step 47):** no service topology, cron, runtime env var, webhook, or deployment-process modification is required.

@@ -85,6 +85,8 @@ def _build_delivery_summary_json(delivery_telemetry: dict | None) -> dict | None
         "success": bool(delivery_telemetry.get("success", False)),
         "channel": delivery_telemetry.get("channel"),
         "message_type": delivery_telemetry.get("message_type"),
+        "correlation_id": delivery_telemetry.get("correlation_id"),
+        "dedup_check_result": delivery_telemetry.get("dedup_check_result"),
         "telegram_message_id": delivery_telemetry.get("telegram_message_id"),
         "failure_reason": delivery_telemetry.get("failure_reason"),
         "skip_reason": delivery_telemetry.get("skip_reason"),

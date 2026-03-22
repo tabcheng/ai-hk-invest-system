@@ -377,6 +377,12 @@ def send_daily_run_summary_with_telemetry(
     total_equity = None
     equity_source = "none"
     target = os.getenv("TELEGRAM_CHAT_ID", "")
+    correlation_id = (
+        f"run-{run_id}-daily-summary-{run_date.isoformat()}"
+        if run_id is not None
+        else f"daily-summary-{run_date.isoformat()}"
+    )
+    dedup_check_result = "send_path"
 
     # Daily summary delivery is a single message-level attempt per run.
     # Telemetry must reflect attempt-level truth, not ticker-level fan-out.
@@ -386,6 +392,8 @@ def send_daily_run_summary_with_telemetry(
         "success": False,
         "channel": DELIVERY_CHANNEL_TELEGRAM,
         "message_type": DAILY_SUMMARY_MESSAGE_TYPE,
+        "correlation_id": correlation_id,
+        "dedup_check_result": dedup_check_result,
         "telegram_message_id": None,
         "failure_reason": None,
         "skip_reason": None,
@@ -409,6 +417,7 @@ def send_daily_run_summary_with_telemetry(
                 skipped = dict(base_telemetry)
                 skipped["success"] = True
                 skipped["skip_reason"] = "dedup_already_sent"
+                skipped["dedup_check_result"] = "dedup_skip"
                 skipped["counts"] = {
                     "attempts": 0,
                     "delivered": 0,
@@ -418,6 +427,7 @@ def send_daily_run_summary_with_telemetry(
                 return skipped
         except Exception as exc:
             print(f"Could not check notification dedup state: {exc}")
+            dedup_check_result = "dedup_check_fallback"
 
     if client is not None:
         try:
@@ -449,6 +459,7 @@ def send_daily_run_summary_with_telemetry(
     telemetry = dict(base_telemetry)
     telemetry["attempted"] = True
     telemetry["success"] = sent
+    telemetry["dedup_check_result"] = dedup_check_result
     telemetry["telegram_message_id"] = send_result.get("telegram_message_id")
     telemetry["failure_reason"] = send_result.get("failure_reason")
     telemetry["context"] = {

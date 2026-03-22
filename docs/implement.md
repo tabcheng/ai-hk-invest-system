@@ -146,3 +146,28 @@ Provide a consistent execution workflow for long-horizon Codex contributions.
 - Keep platform ownership split explicit:
   - **GitHub:** docs/system-of-record update only.
   - **Railway:** no topology/cron/runtime-env/config change required in this step.
+
+## Step 48 implementation note (delivery semantics minimal runtime instrumentation v1)
+- Scope is a minimal runtime observability increment only; preserve existing best-effort/non-blocking summary delivery behavior.
+- Implement only two telemetry fields in daily summary delivery telemetry + `runs.delivery_summary_json` projection:
+  - `correlation_id`,
+  - `dedup_check_result`.
+- Keep `dedup_check_result` semantics bounded and explicit:
+  - `send_path` (normal send attempt),
+  - `dedup_skip` (dedup marker already exists, skip send),
+  - `dedup_check_fallback` (dedup check failed, fallback to send attempt).
+- Keep correlation format deterministic and review-friendly so one value can be reused across logs/run records/operator troubleshooting notes.
+- Add focused tests for:
+  - normal send path,
+  - dedup skip path,
+  - dedup-check fallback path,
+  - delivery summary projection includes new fields.
+- Guardrails:
+  - no DB migration,
+  - no queue/retry framework introduction,
+  - no Telegram send-path refactor,
+  - no broad delivery summary schema redesign,
+  - no strategy/paper-trading logic changes.
+- Platform ownership split for this step:
+  - **GitHub:** runtime code + focused tests + docs/status/backlog/spec updates.
+  - **Railway:** no topology/cron/runtime-env/deployment mutation required.

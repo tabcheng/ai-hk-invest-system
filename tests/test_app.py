@@ -27,7 +27,7 @@ def test_paper_trading_skipped_when_any_ticker_fails(monkeypatch):
 
     monkeypatch.setattr(app, "run_paper_trading_for_today", fake_paper)
     monkeypatch.setattr(app, "update_run", lambda client, run_id, payload: updates.append(payload))
-    monkeypatch.setattr(app, "send_daily_run_summary_with_telemetry", lambda **kwargs: {"schema_version": 1, "attempted": True, "success": True, "channel": "telegram", "message_type": "DAILY_SUMMARY", "telegram_message_id": 321, "failure_reason": None, "skip_reason": None, "counts": {"attempts": 1, "delivered": 1, "failed": 0, "skipped": 0}, "context": {"ticker_count": 2}})
+    monkeypatch.setattr(app, "send_daily_run_summary_with_telemetry", lambda **kwargs: {"schema_version": 1, "attempted": True, "success": True, "channel": "telegram", "message_type": "DAILY_SUMMARY", "correlation_id": "run-124-daily-summary-2026-03-11", "dedup_check_result": "send_path", "telegram_message_id": 321, "failure_reason": None, "skip_reason": None, "counts": {"attempts": 1, "delivered": 1, "failed": 0, "skipped": 0}, "context": {"ticker_count": 2}})
 
     app.main()
 
@@ -62,7 +62,7 @@ def test_paper_trading_runs_when_all_tickers_succeed(monkeypatch):
 
     monkeypatch.setattr(app, "run_paper_trading_for_today", fake_paper)
     monkeypatch.setattr(app, "update_run", lambda client, run_id, payload: updates.append(payload))
-    monkeypatch.setattr(app, "send_daily_run_summary_with_telemetry", lambda **kwargs: {"schema_version": 1, "attempted": True, "success": True, "channel": "telegram", "message_type": "DAILY_SUMMARY", "telegram_message_id": 321, "failure_reason": None, "skip_reason": None, "counts": {"attempts": 1, "delivered": 1, "failed": 0, "skipped": 0}, "context": {"ticker_count": 2}})
+    monkeypatch.setattr(app, "send_daily_run_summary_with_telemetry", lambda **kwargs: {"schema_version": 1, "attempted": True, "success": True, "channel": "telegram", "message_type": "DAILY_SUMMARY", "correlation_id": "run-124-daily-summary-2026-03-11", "dedup_check_result": "send_path", "telegram_message_id": 321, "failure_reason": None, "skip_reason": None, "counts": {"attempts": 1, "delivered": 1, "failed": 0, "skipped": 0}, "context": {"ticker_count": 2}})
 
     app.main()
 
@@ -75,6 +75,8 @@ def test_paper_trading_runs_when_all_tickers_succeed(monkeypatch):
     assert payload["delivery_summary_json"]["schema_version"] == 1
     assert payload["delivery_summary_json"]["attempted"] is True
     assert payload["delivery_summary_json"]["message_type"] == "DAILY_SUMMARY"
+    assert payload["delivery_summary_json"]["correlation_id"] == "run-124-daily-summary-2026-03-11"
+    assert payload["delivery_summary_json"]["dedup_check_result"] == "send_path"
     assert payload["delivery_summary_json"]["counts"]["attempts"] == 1
     assert payload["delivery_summary_json"]["counts"]["delivered"] == 1
     assert payload["delivery_summary_json"]["context"]["summary_schema_version"] == 1
@@ -273,3 +275,26 @@ def test_decision_ledger_write_failure_is_non_blocking(monkeypatch):
     assert len(updates) == 1
     assert updates[0]["status"] == "SUCCESS"
     assert updates[0]["failed_tickers"] == 0
+
+
+def test_build_delivery_summary_json_includes_minimal_runtime_instrumentation_fields():
+    payload = app._build_delivery_summary_json(
+        {
+            "schema_version": 1,
+            "attempted": True,
+            "success": True,
+            "channel": "telegram",
+            "message_type": "DAILY_SUMMARY",
+            "correlation_id": "run-777-daily-summary-2026-03-11",
+            "dedup_check_result": "send_path",
+            "telegram_message_id": 321,
+            "failure_reason": None,
+            "skip_reason": None,
+            "counts": {"attempts": 1, "delivered": 1, "failed": 0, "skipped": 0},
+            "context": {"ticker_count": 2, "summary_schema_version": 1},
+        }
+    )
+
+    assert payload is not None
+    assert payload["correlation_id"] == "run-777-daily-summary-2026-03-11"
+    assert payload["dedup_check_result"] == "send_path"

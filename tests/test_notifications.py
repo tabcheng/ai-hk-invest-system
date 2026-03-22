@@ -379,6 +379,8 @@ def test_send_daily_run_summary_with_telemetry_models_single_attempt(monkeypatch
     assert telemetry["success"] is False
     assert telemetry["channel"] == "telegram"
     assert telemetry["message_type"] == "DAILY_SUMMARY"
+    assert telemetry["correlation_id"] == "daily-summary-2026-03-11"
+    assert telemetry["dedup_check_result"] == "send_path"
     assert telemetry["telegram_message_id"] is None
     assert telemetry["failure_reason"] == "http_500"
     assert telemetry["skip_reason"] is None
@@ -409,6 +411,8 @@ def test_send_daily_run_summary_with_telemetry_dedup_skip_is_not_failure(monkeyp
     assert telemetry["attempted"] is False
     assert telemetry["success"] is True
     assert telemetry["skip_reason"] == "dedup_already_sent"
+    assert telemetry["correlation_id"] == "run-401-daily-summary-2026-03-11"
+    assert telemetry["dedup_check_result"] == "dedup_skip"
     assert telemetry["failure_reason"] is None
     assert telemetry["counts"]["attempts"] == 0
     assert telemetry["counts"]["delivered"] == 0
@@ -444,6 +448,7 @@ def test_send_daily_run_summary_with_telemetry_success_counts(monkeypatch):
 
     assert telemetry["attempted"] is True
     assert telemetry["success"] is True
+    assert telemetry["dedup_check_result"] == "send_path"
     assert telemetry["counts"]["attempts"] == 1
     assert telemetry["counts"]["delivered"] == 1
     assert telemetry["counts"]["failed"] == 0
@@ -451,3 +456,39 @@ def test_send_daily_run_summary_with_telemetry_success_counts(monkeypatch):
     assert telemetry["telegram_message_id"] == 1234
     assert telemetry["context"]["ticker_count"] == 2
     assert telemetry["context"]["summary_schema_version"] == CURRENT_DAILY_SUMMARY_SCHEMA_VERSION
+
+
+def test_send_daily_run_summary_with_telemetry_marks_dedup_check_fallback(monkeypatch):
+    monkeypatch.setenv("TELEGRAM_CHAT_ID", "chat-fallback")
+    monkeypatch.setenv("TELEGRAM_BOT_TOKEN", "token")
+
+    fake_client = _FakeClient()
+
+    def raise_on_check(_client, _run_date, _target):
+        raise RuntimeError("dedup lookup unavailable")
+
+    def fake_send(_text):
+        return {
+            "delivered": True,
+            "channel": "telegram",
+            "telegram_message_id": 7001,
+            "failure_reason": None,
+        }
+
+    monkeypatch.setattr("src.notifications._has_sent_daily_summary", raise_on_check)
+    monkeypatch.setattr("src.notifications.send_telegram_message_with_result", fake_send)
+
+    telemetry = send_daily_run_summary_with_telemetry(
+        client=fake_client,
+        run_id=9001,
+        run_date=date(2026, 3, 11),
+        run_status="SUCCESS",
+        tickers=["0700.HK"],
+        signal_outcomes={"0700.HK": "BUY"},
+        paper_trade_count_today=1,
+    )
+
+    assert telemetry["attempted"] is True
+    assert telemetry["success"] is True
+    assert telemetry["correlation_id"] == "run-9001-daily-summary-2026-03-11"
+    assert telemetry["dedup_check_result"] == "dedup_check_fallback"

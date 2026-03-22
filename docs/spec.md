@@ -81,6 +81,25 @@ Build a long-horizon AI-assisted Hong Kong stock investing system with disciplin
 - **Future follow-up:**
   - after explicit approval, implement only P0/P1 candidates first with focused validation against Telegram observed outcomes + `runs.delivery_summary_json` + runner logs.
 
+## Delivery Semantics Minimal Runtime Instrumentation v1 (Step 48)
+### System-of-record separation
+- **Implemented minimal runtime scope (this step):**
+  - add `correlation_id` into daily summary delivery telemetry and persist into `runs.delivery_summary_json`.
+  - add `dedup_check_result` into daily summary delivery telemetry and persist into `runs.delivery_summary_json`.
+- **Bounded semantics (no behavior mutation):**
+  - `dedup_check_result=send_path` for normal send-attempt flow.
+  - `dedup_check_result=dedup_skip` when dedup marker indicates already sent and send is skipped.
+  - `dedup_check_result=dedup_check_fallback` when dedup check path fails and runtime degrades to best-effort send-attempt flow.
+- **Cross-surface traceability intent:**
+  - `correlation_id` is designed to align runner logs, `runs.delivery_summary_json`, and operator-observed Telegram outcomes during review/troubleshooting.
+- **Explicit non-goals preserved:**
+  - no DB migration,
+  - no queue/retry framework work,
+  - no Telegram send-path refactor,
+  - no broad `delivery_summary_json` redesign,
+  - no strategy logic change,
+  - no paper-trading logic change.
+
 ### Observability gap prioritization (current state)
 1. **P0 — Correlation gap across surfaces**
    - Operators cannot reliably join Telegram outcome evidence to a specific delivery attempt/run-level lifecycle without manual timestamp matching.

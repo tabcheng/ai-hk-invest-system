@@ -5,6 +5,7 @@ This document describes the minimal **Telegram inbound ingress foundation** for 
 - `/help`
 - `/h`
 - `/runs`
+- `/runner_status`
 - `/risk_review [run_id]`
 
 Guardrail:
@@ -106,6 +107,7 @@ In Railway service logs, verify these events when a command is received:
 2. `Telegram webhook command text: ...`
 3. `Telegram operator auth decision: ...`
 4. `Telegram /risk_review requested: ...` / `... completed` / `... failed` (for risk-review commands)
+   or `Telegram /runner_status ...` lookup/format failure diagnostics
 5. `Telegram sendMessage success: ...` (or failure reason)
 6. (if enabled) `Telegram webhook transport auth decision: ...`
 

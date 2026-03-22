@@ -53,3 +53,24 @@ def get_run_by_id(client: Any, run_id: int) -> dict[str, Any] | None:
     result = client.table("runs").select("id,status,created_at").eq("id", run_id).limit(1).execute()
     rows = list(result.data or [])
     return rows[0] if rows else None
+
+
+def get_latest_run_execution_summary(client: Any) -> dict[str, Any] | None:
+    """
+    Return the latest persisted run row for operator runner-status lookup.
+
+    Traceability guardrail:
+    - This read path uses the durable `runs` table (not log scraping) so operator
+      `/runner_status` responses are based on persisted run lifecycle metadata.
+    - The selected fields map directly to the execution summary response shape.
+    """
+
+    result = (
+        client.table("runs")
+        .select("id,status,created_at,finished_at,error_summary")
+        .order("created_at", desc=True)
+        .limit(1)
+        .execute()
+    )
+    rows = list(result.data or [])
+    return rows[0] if rows else None

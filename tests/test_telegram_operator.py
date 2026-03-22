@@ -95,6 +95,7 @@ def test_help_message_contains_guardrails_and_command_list():
     assert "no real-money auto execution" in message
     assert "/runs" in message
     assert "/runs [days]d" in message
+    assert "/runner_status" in message
     assert "/risk_review [run_id]" in message
     assert "/help" in message
     assert "/h" in message
@@ -214,3 +215,86 @@ def test_handle_risk_review_command_handles_run_lookup_failure_without_stack_tra
     assert "Status: failed." in response
     assert "internal review execution error" in response
     assert "lookup failed" not in response
+
+
+def test_handle_runner_status_command_allowlisted_user_success(monkeypatch):
+    monkeypatch.setenv("TELEGRAM_CHAT_ID", "chat-1")
+    monkeypatch.setenv("TELEGRAM_OPERATOR_ALLOWED_USER_IDS", "u-1")
+    monkeypatch.setattr(
+        "src.telegram_operator.get_latest_run_execution_summary",
+        lambda _client: {
+            "id": 2001,
+            "status": "SUCCESS",
+            "created_at": "2026-03-21T12:00:00+00:00",
+            "finished_at": "2026-03-21T12:00:05+00:00",
+            "error_summary": None,
+        },
+    )
+
+    response = handle_telegram_operator_command(object(), _build_update("/runner_status", user_id="u-1"))
+
+    assert "Latest daily runner status (run_id=2001):" in response
+    assert "- status: SUCCESS" in response
+    assert "- started_at: 2026-03-21T12:00:00+00:00" in response
+    assert "- finished_at: 2026-03-21T12:00:05+00:00" in response
+    assert "- duration_seconds: 5.0" in response
+    assert "- entrypoint: python -m src.daily_runner" in response
+    assert "HKT 20:00" in response
+    assert "- error_summary: None" in response
+
+
+def test_handle_runner_status_command_rejects_unauthorized_caller(monkeypatch):
+    monkeypatch.setenv("TELEGRAM_CHAT_ID", "chat-1")
+    monkeypatch.setenv("TELEGRAM_OPERATOR_ALLOWED_USER_IDS", "u-1")
+
+    response = handle_telegram_operator_command(object(), _build_update("/runner_status", user_id="u-9"))
+
+    assert "Unauthorized" in response
+
+
+def test_handle_runner_status_command_no_latest_summary(monkeypatch):
+    monkeypatch.setenv("TELEGRAM_CHAT_ID", "chat-1")
+    monkeypatch.setattr("src.telegram_operator.get_latest_run_execution_summary", lambda _client: None)
+
+    response = handle_telegram_operator_command(object(), _build_update("/runner_status"))
+
+    assert "Accepted: /runner_status." in response
+    assert "Status: no data." in response
+    assert "no persisted daily runner summary available yet" in response
+
+
+def test_handle_runner_status_command_failed_latest_summary_formatting(monkeypatch):
+    monkeypatch.setenv("TELEGRAM_CHAT_ID", "chat-1")
+    monkeypatch.setattr(
+        "src.telegram_operator.get_latest_run_execution_summary",
+        lambda _client: {
+            "id": 3001,
+            "status": "SUCCESS",
+            "created_at": "not-a-time",
+            "finished_at": "2026-03-21T12:00:05+00:00",
+            "error_summary": None,
+        },
+    )
+
+    response = handle_telegram_operator_command(object(), _build_update("/runner_status"))
+
+    assert "Accepted: /runner_status." in response
+    assert "Status: failed." in response
+    assert "latest summary formatting error" in response
+    assert "not-a-time" not in response
+
+
+def test_handle_runner_status_command_lookup_failure_path(monkeypatch):
+    monkeypatch.setenv("TELEGRAM_CHAT_ID", "chat-1")
+
+    def _raise_lookup_failure(_client):
+        raise RuntimeError("db timeout")
+
+    monkeypatch.setattr("src.telegram_operator.get_latest_run_execution_summary", _raise_lookup_failure)
+
+    response = handle_telegram_operator_command(object(), _build_update("/runner_status"))
+
+    assert "Accepted: /runner_status." in response
+    assert "Status: failed." in response
+    assert "internal status lookup error" in response
+    assert "db timeout" not in response

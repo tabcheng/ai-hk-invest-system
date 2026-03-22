@@ -5,10 +5,12 @@ import re
 from datetime import datetime, timezone
 from typing import Any
 
-from src.runs import get_run_by_id, list_recent_runs
+from src.daily_runner import ENTRYPOINT, SCHEDULE_BASIS
+from src.runs import get_latest_run_execution_summary, get_run_by_id, list_recent_runs
 
 _RUNS_COMMAND_PATTERN = re.compile(r"^/runs(?:\s+(\d+)d)?\s*$", re.IGNORECASE)
 _RISK_REVIEW_COMMAND_PATTERN = re.compile(r"^/risk_review(?:\s+(\S+))?\s*$", re.IGNORECASE)
+_RUNNER_STATUS_COMMAND_PATTERN = re.compile(r"^/runner_status\s*$", re.IGNORECASE)
 _HELP_COMMAND_PATTERN = re.compile(r"^/(?:help|h)\s*$", re.IGNORECASE)
 _DEFAULT_DAYS = 5
 _MAX_DAYS = 30
@@ -117,6 +119,60 @@ def _normalize_run_time(row: dict[str, Any]) -> str:
         return str(raw)
 
 
+def _parse_iso_datetime(value: Any, *, field_name: str) -> datetime:
+    """
+    Parse ISO timestamps from persistent run metadata for operator rendering.
+
+    Guardrail: strict parsing keeps operator output deterministic and allows
+    safe failure fallback when data shape is malformed/unexpected.
+    """
+    if not value:
+        raise ValueError(f"missing {field_name}")
+    try:
+        return datetime.fromisoformat(str(value).replace("Z", "+00:00")).astimezone(timezone.utc)
+    except ValueError as exc:
+        raise ValueError(f"invalid {field_name}") from exc
+
+
+def _format_runner_status_message(latest_summary_row: dict[str, Any]) -> str:
+    """
+    Build operator-facing response for `/runner_status` from latest persisted run.
+
+    Traceability notes:
+    - `created_at` is treated as runner `started_at` because run records are
+      created when the daily workflow starts.
+    - Entry point + schedule basis are fixed constants from `src.daily_runner`,
+      so responses remain consistent with deployed runner contract.
+    """
+    started_at = _parse_iso_datetime(latest_summary_row.get("created_at"), field_name="created_at")
+    finished_raw = latest_summary_row.get("finished_at")
+    finished_at: datetime | None = None
+    if finished_raw:
+        finished_at = _parse_iso_datetime(finished_raw, field_name="finished_at")
+
+    duration_seconds = "N/A"
+    if finished_at is not None:
+        duration_value = max((finished_at - started_at).total_seconds(), 0.0)
+        duration_seconds = f"{round(duration_value, 6)}"
+
+    status = str(latest_summary_row.get("status") or "UNKNOWN")
+    run_id = latest_summary_row.get("id", "N/A")
+    error_summary = (latest_summary_row.get("error_summary") or "").strip()
+    error_line = error_summary if error_summary else "None"
+
+    lines = [
+        f"Latest daily runner status (run_id={run_id}):",
+        f"- status: {status}",
+        f"- started_at: {started_at.isoformat()}",
+        f"- finished_at: {finished_at.isoformat() if finished_at else 'N/A'}",
+        f"- duration_seconds: {duration_seconds}",
+        f"- entrypoint: {ENTRYPOINT}",
+        f"- schedule_basis: {SCHEDULE_BASIS}",
+        f"- error_summary: {error_line}",
+    ]
+    return "\n".join(lines)
+
+
 def build_help_command_message() -> str:
     """
     Return a compact bilingual operator help message for Telegram command discoverability.
@@ -134,6 +190,7 @@ def build_help_command_message() -> str:
             "Commands:",
             "- /runs : List recent run IDs from the last 5 days (最近 5 日 run 記錄).",
             "- /runs [days]d : Query a custom window, e.g. /runs 7d (自訂查詢日數).",
+            "- /runner_status : Show latest daily runner execution summary (最新 runner 狀態摘要).",
             "- /risk_review [run_id] : Run paper-trading risk review for one run (查看單次 run 風險回顧).",
             "- /help : Show this operator usage guide (顯示操作說明).",
             "- /h : Alias of /help (與 /help 相同).",
@@ -208,8 +265,9 @@ def handle_telegram_operator_command(client: Any, update: dict[str, Any]) -> str
 
     is_help_command = bool(_HELP_COMMAND_PATTERN.match(text))
     is_runs_command = text.lower().startswith("/runs")
+    is_runner_status_command = bool(_RUNNER_STATUS_COMMAND_PATTERN.match(text))
     is_risk_review_command = text.lower().startswith("/risk_review")
-    if not (is_help_command or is_runs_command or is_risk_review_command):
+    if not (is_help_command or is_runs_command or is_runner_status_command or is_risk_review_command):
         return None
 
     print(
@@ -237,6 +295,45 @@ def handle_telegram_operator_command(client: Any, update: dict[str, Any]) -> str
                 return str(exc)
             runs = list_recent_runs(client, days=days, limit=_DEFAULT_LIMIT)
             return build_runs_command_message(runs, days=days)
+
+        if is_runner_status_command:
+            # Authorization already completed above. Keep this lookup path narrow
+            # and read-only so it remains a low-latency operator observability
+            # query that does not affect webhook process stability.
+            try:
+                latest_row = get_latest_run_execution_summary(client)
+            except Exception as exc:
+                print(
+                    "Telegram /runner_status lookup failed: "
+                    f"chat_id={chat_id} user_id={user_id} error={exc}"
+                )
+                return (
+                    "Accepted: /runner_status.\n"
+                    "Status: failed.\n"
+                    "Reason: internal status lookup error."
+                )
+
+            if not latest_row:
+                return (
+                    "Accepted: /runner_status.\n"
+                    "Status: no data.\n"
+                    "Reason: no persisted daily runner summary available yet."
+                )
+
+            try:
+                return _format_runner_status_message(latest_row)
+            except Exception as exc:
+                # Safe operator response: never expose internal traceback/raw
+                # exception detail in Telegram, while keeping details in logs.
+                print(
+                    "Telegram /runner_status formatting failed: "
+                    f"chat_id={chat_id} user_id={user_id} error={exc}"
+                )
+                return (
+                    "Accepted: /runner_status.\n"
+                    "Status: failed.\n"
+                    "Reason: latest summary formatting error."
+                )
 
         # /risk_review execution guardrail:
         # - Parse and validate run_id early.

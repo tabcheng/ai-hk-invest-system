@@ -91,6 +91,40 @@ def test_handle_webhook_update_sanitizes_command_handler_exception(monkeypatch):
     assert "simulated operator handler crash" not in sent["text"]
 
 
+def test_handle_webhook_update_runner_status_lookup_failure_does_not_crash(monkeypatch):
+    sent = {}
+
+    def _fake_send(chat_id: str, text: str):
+        sent["chat_id"] = chat_id
+        sent["text"] = text
+        return {
+            "delivered": True,
+            "channel": "telegram",
+            "telegram_message_id": 89,
+            "failure_reason": None,
+        }
+
+    monkeypatch.setenv("TELEGRAM_CHAT_ID", "chat-1")
+    monkeypatch.setattr(
+        "src.telegram_operator.get_latest_run_execution_summary",
+        lambda _client: (_ for _ in ()).throw(RuntimeError("query down")),
+    )
+
+    code, payload = handle_telegram_webhook_update(
+        client=object(),
+        update=_build_update("/runner_status"),
+        reply_sender=_fake_send,
+    )
+
+    assert code == 200
+    assert payload["handled"] is True
+    assert payload["replied"] is True
+    assert sent["chat_id"] == "chat-1"
+    assert "Status: failed." in sent["text"]
+    assert "internal status lookup error" in sent["text"]
+    assert "query down" not in sent["text"]
+
+
 def test_wsgi_route_dispatches_post_telegram_webhook(monkeypatch):
     monkeypatch.setattr("src.telegram_webhook_server._load_supabase_client", lambda: object())
     monkeypatch.setattr(

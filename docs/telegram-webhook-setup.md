@@ -7,6 +7,7 @@ This document describes the minimal **Telegram inbound ingress foundation** for 
 - `/runs`
 - `/runner_status`
 - `/risk_review [run_id]`
+- `/pnl_review`
 
 Guardrail:
 - This webhook path only bridges inbound Telegram commands to existing operator command handlers.
@@ -26,7 +27,7 @@ To improve consistency/readability, operator command replies now use a shared me
 Implementation note:
 - This is a small helper-level contract (not a framework rewrite).
 - Dynamic fields loaded from runtime/database content are centrally HTML-escaped before rendering.
-- Current aligned commands include `/runs`, `/runner_status`, and `/risk_review`.
+- Current aligned commands include `/runs`, `/runner_status`, `/risk_review`, and `/pnl_review`.
 
 ## Inbound integration status (repo-confirmed)
 Before Step 34A:
@@ -121,7 +122,8 @@ In Railway service logs, verify these events when a command is received:
 1. `Telegram webhook request received.`
 2. `Telegram webhook command text: ...`
 3. `Telegram operator auth decision: ...`
-4. `Telegram /risk_review requested: ...` / `... completed` / `... failed` (for risk-review commands)
+4. `Telegram /risk_review requested: ...` / `... completed` / `... failed` (for risk-review commands),
+   `Telegram /pnl_review ...` snapshot diagnostics,
    or `Telegram /runner_status ...` lookup/format failure diagnostics
 5. `Telegram sendMessage success: ...` (or failure reason)
 6. (if enabled) `Telegram webhook transport auth decision: ...`

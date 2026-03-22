@@ -10,6 +10,7 @@ from src.paper_trading import (
     _fetch_prior_state,
     _refresh_paper_positions_from_trades,
     get_paper_daily_review_summary_for_run,
+    get_paper_position_pnl_review_snapshot,
     get_paper_risk_review_for_run,
     get_paper_portfolio_summary,
     simulate_day,
@@ -809,3 +810,105 @@ def test_get_paper_daily_review_summary_for_run_handles_missing_snapshot_and_no_
         "No BUY trades were executed in this run.",
     ]
     assert summary["portfolio_change_summary"] is None
+
+
+def test_get_paper_position_pnl_review_snapshot_builds_open_closed_and_totals():
+    class Result:
+        def __init__(self, data):
+            self.data = data
+
+    class Query:
+        def __init__(self, table_name):
+            self.table_name = table_name
+
+        def select(self, _columns):
+            return self
+
+        def order(self, *_args, **_kwargs):
+            return self
+
+        def limit(self, _n):
+            return self
+
+        def execute(self):
+            if self.table_name == "paper_trades":
+                return Result(
+                    [
+                        {"stock": "0700.HK", "action": "BUY", "quantity": 100, "price": 100.0, "realized_pnl": 0.0},
+                        {"stock": "0011.HK", "action": "BUY", "quantity": 50, "price": 80.0, "realized_pnl": 0.0},
+                        {"stock": "0011.HK", "action": "SELL", "quantity": 50, "price": 88.0, "realized_pnl": 382.0},
+                    ]
+                )
+            if self.table_name == "paper_positions":
+                return Result(
+                    [
+                        {
+                            "ticker": "0700.HK",
+                            "quantity": 100,
+                            "avg_cost": 100.0,
+                            "last_price": 110.0,
+                            "unrealized_pnl": 1000.0,
+                            "realized_pnl": 0.0,
+                            "updated_at": "2026-03-22T12:00:00+00:00",
+                        }
+                    ]
+                )
+            if self.table_name == "paper_daily_snapshots":
+                return Result([{"snapshot_date": "2026-03-22"}])
+            return Result([])
+
+    class Client:
+        def table(self, table_name):
+            return Query(table_name)
+
+    snapshot = get_paper_position_pnl_review_snapshot(Client())
+
+    assert snapshot["open_positions_count"] == 1
+    assert snapshot["closed_positions_count"] == 1
+    assert snapshot["total_realized_pnl"] == 382.0
+    assert snapshot["total_unrealized_pnl"] == 1000.0
+    assert snapshot["valuation_timestamp"] == "2026-03-22"
+    assert [row["stock"] for row in snapshot["per_symbol"]] == ["0011.HK", "0700.HK"]
+    assert snapshot["per_symbol"][0]["position_status"] == "CLOSED"
+    assert snapshot["per_symbol"][0]["stock_name"] is None
+    assert snapshot["per_symbol"][1]["position_status"] == "OPEN"
+
+
+def test_get_paper_position_pnl_review_snapshot_is_read_only_query_path():
+    calls: list[tuple[str, str]] = []
+
+    class Result:
+        def __init__(self, data):
+            self.data = data
+
+    class Query:
+        def __init__(self, table_name):
+            self.table_name = table_name
+
+        def select(self, _columns):
+            calls.append((self.table_name, "select"))
+            return self
+
+        def order(self, *_args, **_kwargs):
+            calls.append((self.table_name, "order"))
+            return self
+
+        def limit(self, _n):
+            calls.append((self.table_name, "limit"))
+            return self
+
+        def execute(self):
+            calls.append((self.table_name, "execute"))
+            return Result([])
+
+    class Client:
+        def table(self, table_name):
+            calls.append((table_name, "table"))
+            return Query(table_name)
+
+    snapshot = get_paper_position_pnl_review_snapshot(Client())
+
+    assert snapshot["open_positions_count"] == 0
+    assert snapshot["closed_positions_count"] == 0
+    assert snapshot["per_symbol"] == []
+    assert all(method not in {"insert", "update", "upsert", "delete"} for _, method in calls)

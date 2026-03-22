@@ -142,6 +142,7 @@ def test_help_message_contains_guardrails_and_command_list():
     assert "/runs [days]d" in message
     assert "/runner_status" in message
     assert "/risk_review [run_id]" in message
+    assert "/pnl_review" in message
     assert "/help" in message
     assert "/h" in message
 
@@ -432,3 +433,74 @@ def test_operator_command_responses_share_consistent_shape(monkeypatch):
     for response in responses:
         assert "Command: /" in response
         assert "Status:" in response
+
+
+def test_handle_pnl_review_command_success(monkeypatch):
+    monkeypatch.setenv("TELEGRAM_CHAT_ID", "chat-1")
+    monkeypatch.setattr(
+        "src.telegram_operator._get_paper_position_pnl_review_snapshot",
+        lambda _client: {
+            "open_positions_count": 1,
+            "closed_positions_count": 1,
+            "total_realized_pnl": 382.0,
+            "total_unrealized_pnl": 1000.0,
+            "valuation_timestamp": "2026-03-22",
+            "per_symbol": [
+                {
+                    "stock": "0011.HK",
+                    "stock_name": None,
+                    "position_status": "CLOSED",
+                    "quantity": 0,
+                    "avg_cost": 80.0,
+                    "last_price": 88.0,
+                    "realized_pnl": 382.0,
+                    "unrealized_pnl": 0.0,
+                },
+                {
+                    "stock": "0700.HK",
+                    "stock_name": "Tencent",
+                    "position_status": "OPEN",
+                    "quantity": 100,
+                    "avg_cost": 100.0,
+                    "last_price": 110.0,
+                    "realized_pnl": 0.0,
+                    "unrealized_pnl": 1000.0,
+                },
+            ],
+        },
+    )
+
+    response = handle_telegram_operator_command(object(), _build_update("/pnl_review"))
+
+    assert "Command: /pnl_review" in response
+    assert "Status: completed." in response
+    assert "- open_positions_count: 1" in response
+    assert "- closed_positions_count: 1" in response
+    assert "- total_realized_pnl_hkd: 382.0" in response
+    assert "- total_unrealized_pnl_hkd: 1000.0" in response
+    assert "stock=0011.HK" in response
+    assert "name=N/A" in response
+    assert "stock=0700.HK" in response
+
+
+def test_handle_pnl_review_command_rejects_unauthorized(monkeypatch):
+    monkeypatch.setenv("TELEGRAM_CHAT_ID", "chat-allowed")
+    response = handle_telegram_operator_command(object(), _build_update("/pnl_review", chat_id="chat-other"))
+    assert "Command: /pnl_review" in response
+    assert "Status: unauthorized." in response
+
+
+def test_handle_pnl_review_command_failure_is_sanitized(monkeypatch):
+    monkeypatch.setenv("TELEGRAM_CHAT_ID", "chat-1")
+
+    def _raise_error(_client):
+        raise RuntimeError("snapshot exploded")
+
+    monkeypatch.setattr("src.telegram_operator._get_paper_position_pnl_review_snapshot", _raise_error)
+
+    response = handle_telegram_operator_command(object(), _build_update("/pnl_review"))
+
+    assert "Command: /pnl_review" in response
+    assert "Status: failed." in response
+    assert "internal review snapshot error" in response
+    assert "exploded" not in response

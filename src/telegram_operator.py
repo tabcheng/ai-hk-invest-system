@@ -12,6 +12,7 @@ from src.runs import get_latest_run_execution_summary, get_run_by_id, list_recen
 _RUNS_COMMAND_PATTERN = re.compile(r"^/runs(?:\s+(\d+)d)?\s*$", re.IGNORECASE)
 _RISK_REVIEW_COMMAND_PATTERN = re.compile(r"^/risk_review(?:\s+(\S+))?\s*$", re.IGNORECASE)
 _RUNNER_STATUS_COMMAND_PATTERN = re.compile(r"^/runner_status\s*$", re.IGNORECASE)
+_PNL_REVIEW_COMMAND_PATTERN = re.compile(r"^/pnl_review\s*$", re.IGNORECASE)
 _HELP_COMMAND_PATTERN = re.compile(r"^/(?:help|h)\s*$", re.IGNORECASE)
 _DEFAULT_DAYS = 5
 _MAX_DAYS = 30
@@ -242,6 +243,7 @@ def build_help_command_message() -> str:
             "- /runs [days]d : Query a custom window, e.g. /runs 7d (自訂查詢日數).",
             "- /runner_status : Show latest daily runner execution summary (最新 runner 狀態摘要).",
             "- /risk_review [run_id] : Run paper-trading risk review for one run (查看單次 run 風險回顧).",
+            "- /pnl_review : Show paper position/PnL review snapshot (查看持倉與盈虧摘要).",
             "- /help : Show this operator usage guide (顯示操作說明).",
             "- /h : Alias of /help (與 /help 相同).",
         ]
@@ -306,6 +308,59 @@ def _get_paper_risk_review(client: Any, *, run_id: int) -> dict[str, Any]:
     return get_paper_risk_review_for_run(client, run_id=run_id)
 
 
+def _get_paper_position_pnl_review_snapshot(client: Any) -> dict[str, Any]:
+    """
+    Lazy-load read-only position/PnL review dependency for command isolation.
+
+    Guardrail: this command path must remain review-only and cannot mutate any
+    simulated orders/positions/decisions.
+    """
+    from src.paper_trading import get_paper_position_pnl_review_snapshot
+
+    return get_paper_position_pnl_review_snapshot(client)
+
+
+def _build_pnl_review_command_message(snapshot: dict[str, Any]) -> str:
+    """
+    Build compact Telegram output for paper position/PnL review snapshot.
+
+    To keep operator replies bounded, only the first 10 per-symbol rows are
+    rendered in detail while preserving total symbol count in a separate field.
+    """
+    per_symbol = snapshot.get("per_symbol") or []
+    fields: list[tuple[str, Any]] = [
+        ("open_positions_count", int(snapshot.get("open_positions_count") or 0)),
+        ("closed_positions_count", int(snapshot.get("closed_positions_count") or 0)),
+        ("total_realized_pnl_hkd", round(float(snapshot.get("total_realized_pnl") or 0.0), 2)),
+        ("total_unrealized_pnl_hkd", round(float(snapshot.get("total_unrealized_pnl") or 0.0), 2)),
+        ("valuation_timestamp", snapshot.get("valuation_timestamp") or "N/A"),
+        ("per_symbol_count", len(per_symbol)),
+    ]
+    for idx, row in enumerate(per_symbol[:10], start=1):
+        fields.append(
+            (
+                f"symbol_{idx}",
+                (
+                    f"stock={row.get('stock')} | name={row.get('stock_name') or 'N/A'} "
+                    f"| status={row.get('position_status')} | qty={row.get('quantity')} "
+                    f"| avg_cost={float(row.get('avg_cost') or 0.0):.4f} "
+                    f"| last_price={float(row.get('last_price') or 0.0):.4f} "
+                    f"| realized={float(row.get('realized_pnl') or 0.0):.2f} "
+                    f"| unrealized={float(row.get('unrealized_pnl') or 0.0):.2f}"
+                ),
+            )
+        )
+    if len(per_symbol) > 10:
+        fields.append(("note", "showing first 10 symbols only"))
+
+    return _build_operator_message(
+        command_label="/pnl_review",
+        status="completed",
+        result="paper trading position/pnl review snapshot generated",
+        fields=fields,
+    )
+
+
 def handle_telegram_operator_command(client: Any, update: dict[str, Any]) -> str | None:
     """
     Parse and handle Telegram operator commands.
@@ -327,7 +382,14 @@ def handle_telegram_operator_command(client: Any, update: dict[str, Any]) -> str
     is_runs_command = text.lower().startswith("/runs")
     is_runner_status_command = bool(_RUNNER_STATUS_COMMAND_PATTERN.match(text))
     is_risk_review_command = text.lower().startswith("/risk_review")
-    if not (is_help_command or is_runs_command or is_runner_status_command or is_risk_review_command):
+    is_pnl_review_command = bool(_PNL_REVIEW_COMMAND_PATTERN.match(text))
+    if not (
+        is_help_command
+        or is_runs_command
+        or is_runner_status_command
+        or is_risk_review_command
+        or is_pnl_review_command
+    ):
         return None
 
     print(
@@ -399,6 +461,21 @@ def handle_telegram_operator_command(client: Any, update: dict[str, Any]) -> str
                     status="failed",
                     reason="latest summary formatting error",
                 )
+
+        if is_pnl_review_command:
+            try:
+                snapshot = _get_paper_position_pnl_review_snapshot(client)
+            except Exception as exc:
+                print(
+                    "Telegram /pnl_review execution failed: "
+                    f"chat_id={chat_id} user_id={user_id} error={exc!r}"
+                )
+                return _build_operator_message(
+                    command_label="/pnl_review",
+                    status="failed",
+                    reason="internal review snapshot error",
+                )
+            return _build_pnl_review_command_message(snapshot)
 
         # /risk_review execution guardrail:
         # - Parse and validate run_id early.

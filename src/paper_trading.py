@@ -573,6 +573,98 @@ def get_paper_portfolio_summary(client: Client) -> dict:
     }
 
 
+def get_paper_position_pnl_review_snapshot(client: Client) -> dict:
+    """
+    Build a read-only paper-trading position/PnL review snapshot.
+
+    Data-flow and guardrail notes:
+    - Reads from persisted `paper_trades`, `paper_positions`, and latest
+      `paper_daily_snapshots` rows only; this function performs no writes.
+    - Closed-position count is derived from full trade-ledger reconstruction:
+      tickers with net quantity `0` after replay are treated as currently closed.
+    - Per-symbol summary prioritizes `paper_positions` values for open positions
+      and falls back to trade-ledger reconstruction for closed symbols.
+    - Stock-name traceability is currently limited by available schema in this
+      read path; output keeps `stock_name=None` until a dedicated name source is
+      approved/documented.
+    """
+    trade_rows = (
+        client.table("paper_trades")
+        .select("stock,action,quantity,price,realized_pnl,id")
+        .order("id")
+        .execute()
+    ).data or []
+    rebuilt_positions = _build_position_state_from_trade_rows(trade_rows)
+
+    persisted_open_rows = (
+        client.table("paper_positions")
+        .select("ticker,quantity,avg_cost,last_price,unrealized_pnl,realized_pnl,updated_at")
+        .order("ticker")
+        .execute()
+    ).data or []
+    open_by_ticker = {
+        str(row.get("ticker")): row
+        for row in persisted_open_rows
+        if row.get("ticker") is not None
+    }
+
+    latest_snapshot_rows = (
+        client.table("paper_daily_snapshots")
+        .select("snapshot_date")
+        .order("snapshot_date", desc=True)
+        .limit(1)
+        .execute()
+    ).data or []
+    snapshot_date = latest_snapshot_rows[0].get("snapshot_date") if latest_snapshot_rows else None
+
+    symbol_rows: list[dict] = []
+    total_realized = 0.0
+    total_unrealized = 0.0
+    for ticker in sorted(rebuilt_positions.keys()):
+        rebuilt = rebuilt_positions[ticker]
+        open_row = open_by_ticker.get(ticker)
+        quantity = int(open_row.get("quantity") if open_row is not None else rebuilt.get("quantity") or 0)
+        avg_cost = float(open_row.get("avg_cost") if open_row is not None else rebuilt.get("avg_cost") or 0.0)
+        last_price = float(
+            open_row.get("last_price") if open_row is not None else rebuilt.get("last_price") or avg_cost
+        )
+        realized_pnl = float(
+            open_row.get("realized_pnl") if open_row is not None else rebuilt.get("realized_pnl") or 0.0
+        )
+        unrealized_pnl = float(
+            open_row.get("unrealized_pnl") if open_row is not None else rebuilt.get("unrealized_pnl") or 0.0
+        )
+
+        total_realized += realized_pnl
+        total_unrealized += unrealized_pnl
+        symbol_rows.append(
+            {
+                "stock": ticker,
+                "stock_name": None,
+                "quantity": quantity,
+                "avg_cost": avg_cost,
+                "last_price": last_price,
+                "realized_pnl": realized_pnl,
+                "unrealized_pnl": unrealized_pnl,
+                "position_status": "OPEN" if quantity > 0 else "CLOSED",
+                "valuation_timestamp": (
+                    open_row.get("updated_at")
+                    if open_row is not None and open_row.get("updated_at")
+                    else snapshot_date
+                ),
+            }
+        )
+
+    return {
+        "open_positions_count": sum(1 for row in symbol_rows if row["position_status"] == "OPEN"),
+        "closed_positions_count": sum(1 for row in symbol_rows if row["position_status"] == "CLOSED"),
+        "total_realized_pnl": total_realized,
+        "total_unrealized_pnl": total_unrealized,
+        "valuation_timestamp": snapshot_date,
+        "per_symbol": symbol_rows,
+    }
+
+
 def _build_compact_rule_summary(risk_evaluation: dict) -> str:
     """Return a compact, stable one-line rule summary for review surfaces."""
     rule_rows = risk_evaluation.get("rule_results")

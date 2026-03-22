@@ -44,6 +44,9 @@
 - Step 40 review follow-up: `/runs` and `/risk_review` input-validation/usage failure replies now also emit the same shared response shape (instead of raw parser strings) to keep failure wording/layout consistency end-to-end.
 - Step 40 review hotfix (header HTML-safe rendering): `_build_operator_message` now HTML-escapes header-level dynamic values (`command_label`, `status`, `result`, `reason`) so malformed command text (for example `/runs<bad>`) cannot break Telegram HTML parse-mode reply delivery on unauthorized/internal-failure paths.
 - Step 40 review hardening: focused Telegram operator tests now assert shared message-shape consistency and HTML-safe dynamic rendering for command status and detail fields, while webhook-level non-crash behavior coverage remains in place.
+- Step 41 paper review snapshot v1: added read-only paper-trading position/PnL snapshot helper sourced from persisted `paper_trades`, `paper_positions`, and `paper_daily_snapshots` with explicit count/totals/per-symbol output.
+- Step 41 operator usability uplift: Telegram operator command surface now adds `/pnl_review` with allowlist/chat guardrail, safe failure response, and deterministic summary rows (open/closed counts, realized/unrealized totals, per-symbol lines).
+- Step 41 traceability note: current `/pnl_review` response includes stock id and uses `stock_name=N/A` when no dedicated stock-name source exists in current read-path schema.
 - No autonomous live-money execution is enabled; human remains final decision-maker.
 - Deploy/config stability note: Railway/Railpack build previously failed when defaulting to Python `3.13.12` (mise install failure path); repository now pins Python to `3.12.9` via `.python-version` as a deploy stability guardrail (no strategy/paper-trading/signal-flow logic change).
 
@@ -53,7 +56,7 @@
 - Milestone 3 (Paper-trading v1): completed.
 - Milestone 4 (Controlled production hardening): in-progress, with Steps 19–33 completed and follow-up hardening still pending.
 
-## Step 21–40 status ledger (Step 40 operator formatting + HTML-safe contract)
+## Step 21–41 status ledger (Step 41 paper position/PnL review snapshot v1)
 
 | Step | Goal | Primary deliverable(s) | Merge / acceptance status |
 |---|---|---|---|
@@ -85,10 +88,11 @@
 | 39-review-hotfix-html | `/runner_status` HTML-safe error-summary output | Escaped dynamic `error_summary` content for Telegram HTML parse mode safety, preventing reply parse failures from persisted special characters (`<`, `>`, `&`), and added focused coverage for escaped output correctness | **Repo evidence:** completed in this branch. **Merge:** pending PR merge. **Manual acceptance:** unknown / needs confirmation. |
 | 39-review-hotfix-html-followup | `/runner_status` additional dynamic-field HTML safety | Extended HTML escaping to dynamic `status` and `run_id` fields in `/runner_status` output to further reduce parse-mode fragility from irregular persisted metadata, with focused test coverage | **Repo evidence:** completed in this branch. **Merge:** pending PR merge. **Manual acceptance:** unknown / needs confirmation. |
 | 40 | Normalize operator response formatting + HTML-safe rendering contract | Added shared Telegram operator response contract for `/runs`, `/runner_status`, `/risk_review` (`Command`/`Status`/`Result`/`Reason` + deterministic fields), centralized dynamic-field HTML escaping helper, and focused tests for consistency/no-data/failure/unauthorized/HTML-safe output without changing command business logic or webhook flow | **Repo evidence:** completed in this branch. **Merge:** pending PR merge. **Manual acceptance:** unknown / needs confirmation. |
+| 41 | Paper trading position/PnL review snapshot v1 | Added read-only snapshot helper for open/closed counts, realized/unrealized totals, and per-symbol summaries; added Telegram `/pnl_review` command with guardrailed operator replies, safe error handling, and focused tests/docs for avg-cost/PnL/valuation assumptions | **Repo evidence:** completed in this branch. **Merge:** pending PR merge. **Manual acceptance:** unknown / needs confirmation. |
 
 ## Known unknowns / needs confirmation
 - Exact PR numbers and explicit human acceptance timestamps for Steps 21–29 are not derivable from repository files alone and need manual confirmation.
 - Production platform settings (GitHub/Railway/Supabase) still require periodic manual verification outside repo state.
 
 ## Next approved task candidate
-- Step 41 candidate: platform/documentation hardening follow-up focused on remaining active backlog items (dedup semantics docs validation, platform hardening checklist closure, and paper-trading analytics follow-up scoping) without strategy/runtime behavior changes unless explicitly approved.
+- Step 42 candidate: platform/documentation hardening follow-up focused on remaining active backlog items (dedup semantics docs validation, platform hardening checklist closure, and paper-trading analytics follow-up scoping) without strategy/runtime behavior changes unless explicitly approved.

@@ -69,6 +69,9 @@
 - Step 48 focused validation: tests now cover normal send, dedup skip, dedup-check fallback, and run-level delivery-summary projection of the new instrumentation fields.
 - Step 48 platform ownership clarification: GitHub includes code/tests/docs updates; Railway requires no topology/cron/env/deployment mutation.
 - Step 48 review hotfix: `tests/test_app.py` success-path telemetry fixture now includes `correlation_id` + `dedup_check_result` so delivery-summary projection assertions remain consistent with mocked telemetry payload shape.
+- Step 49 delivery semantics follow-up refinement (docs-only): post-Step-48 reassessment now narrows remaining observability ambiguity to dedup-persist evidence vs phase progression detail, with explicit comparison of `dedup_persist_result` and `delivery_phase`.
+- Step 49 single-slice recommendation: next runtime increment should implement `dedup_persist_result` only (defer `delivery_phase`), preserving bounded rollout and operator triage clarity.
+- Step 49 platform ownership clarification: GitHub changed docs/system-of-record artifacts only; Railway topology/cron/runtime env/deployment remain unchanged.
 - No autonomous live-money execution is enabled; human remains final decision-maker.
 - Deploy/config stability note: Railway/Railpack build previously failed when defaulting to Python `3.13.12` (mise install failure path); repository now pins Python to `3.12.9` via `.python-version` as a deploy stability guardrail (no strategy/paper-trading/signal-flow logic change).
 
@@ -76,9 +79,9 @@
 - Milestone 1 (Documentation Foundation): completed.
 - Milestone 2 (Signal framework + modularization/test baseline): completed.
 - Milestone 3 (Paper-trading v1): completed.
-- Milestone 4 (Controlled production hardening): in-progress, with Steps 19–48 completed and runtime hardening follow-ups still pending.
+- Milestone 4 (Controlled production hardening): in-progress, with Steps 19–49 completed and runtime hardening follow-ups still pending.
 
-## Step 21–48 status ledger (Step 48 delivery semantics minimal runtime instrumentation v1)
+## Step 21–49 status ledger (Step 49 delivery semantics follow-up instrumentation scope refinement)
 
 | Step | Goal | Primary deliverable(s) | Status |
 |---|---|---|---|
@@ -118,9 +121,10 @@
 | 46 | Delivery semantics observability evidence pass | Add scenario-based evidence checklist + operator validation guidance + observability gap analysis (known reality vs evidence vs unresolved gaps vs future follow-up), and sync system-of-record docs | **Completed (merged in-repo docs state).** Docs-only scope; no runtime behavior/API/schema/strategy/deployment topology change. |
 | 47 | Delivery semantics runtime instrumentation scoping proposal | Prioritize delivery observability gaps, evaluate minimal instrumentation candidates with value/risk/scope, codify explicit no-implementation guardrails, and sync docs/backlog ownership split (GitHub vs Railway) | **Completed (merged in-repo docs state).** Docs-only scope; no runtime behavior/API/schema/strategy/deployment topology change. |
 | 48 | Delivery semantics minimal runtime instrumentation v1 | Implement `correlation_id` + `dedup_check_result` in daily summary telemetry and `runs.delivery_summary_json` projection, add focused send/skip/fallback tests, and sync docs/backlog/status ownership notes | **Completed (merged in-repo runtime+docs state).** Minimal observability increment only; no DB migration, no queue/retry framework, no Telegram send-path refactor, no strategy/paper-trading logic or deployment topology change. |
+| 49 | Delivery semantics follow-up instrumentation scope refinement | Reassess post-Step-48 observability gaps, compare `dedup_persist_result` vs `delivery_phase` (value/risk/scope/complexity/operator payoff), select one next slice, and sync docs/backlog/status/implement with GitHub-vs-Railway ownership split | **Completed (merged in-repo docs state).** Docs-only scope; no runtime behavior change, no telemetry/schema mutation, no send-path refactor, no queue/retry framework, no strategy/paper-trading logic or deployment topology change. |
 
 ## Known unknowns / needs confirmation
 - Production platform settings (GitHub/Railway/Supabase project posture) still require periodic manual verification outside repository files.
 
 ## Next approved task candidate
-- Step 49 candidate: delivery semantics follow-up instrumentation scope refinement (evaluate one additional minimal field such as `dedup_persist_result` or `delivery_phase` while preserving best-effort/non-blocking behavior and no deployment mutation).
+- Step 50 candidate: delivery semantics minimal runtime instrumentation v2 to add `dedup_persist_result` as a single bounded field (defer `delivery_phase`), preserving best-effort/non-blocking behavior and no deployment mutation.

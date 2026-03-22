@@ -8,10 +8,10 @@ Prioritization:
 ## Active backlog (pending)
 
 ### P0
-1. **Step 49 candidate — Delivery semantics follow-up instrumentation scope refinement**
-   - Evaluate whether to add one next minimal field from Step 47 candidates (for example `dedup_persist_result` or `delivery_phase`) based on Step 48 evidence value.
-   - Keep rollout bounded to observability surfaces; do not alter delivery best-effort semantics or strategy logic.
-   - Include focused validation plan across Telegram observed outcomes, runner logs, and `runs.delivery_summary_json`.
+1. **Step 50 candidate — Delivery semantics minimal runtime instrumentation v2 (`dedup_persist_result`)**
+   - Implement one additional bounded telemetry field: `dedup_persist_result`.
+   - Keep semantics compact and operator-meaningful (for example persist success/failure/skip style outcomes), and keep delivery behavior best-effort/non-blocking.
+   - Add focused validation for normal persist success and persist-failure fallback evidence projection in `runs.delivery_summary_json`.
 
 ### P1
 1. **Platform hardening evidence pass (GitHub / Railway / Supabase)**
@@ -42,6 +42,7 @@ Prioritization:
 - **Step 46 completed:** added delivery semantics observability evidence checklist, operator validation guidance, and explicit observability gap analysis (known behavior vs verifiable evidence vs unresolved gaps vs future follow-up), with docs-only scope and no runtime behavior changes.
 - **Step 47 completed:** documented delivery semantics runtime instrumentation scoping proposal, prioritized observability gaps, classified candidate fields by value/risk/priority, and codified explicit no-implementation/no-migration/no-refactor guardrails (GitHub docs-only; Railway unchanged).
 - **Step 48 completed:** implemented minimal runtime delivery instrumentation (`correlation_id`, `dedup_check_result`) with bounded semantics (`send_path`, `dedup_skip`, `dedup_check_fallback`), added focused tests for normal-send/dedup-skip/fallback + delivery summary projection, and updated docs/system-of-record artifacts (GitHub changed; Railway unchanged).
+- **Step 49 completed:** performed post-Step-48 delivery observability gap reassessment, compared `dedup_persist_result` vs `delivery_phase` (value/risk/scope/complexity/operator payoff), selected one single next slice recommendation (`dedup_persist_result`), and synchronized docs/implement/backlog/status with explicit GitHub-vs-Railway ownership split (docs-only, Railway unchanged).
 
 ### Earlier completed foundations
 - Step 1–12 baseline (documentation foundation, signal framework, dedup, run lifecycle, modularization, tests, Telegram MVP/hardening).

@@ -3,7 +3,7 @@
 ## Purpose and scope
 This document defines the **v3 architecture baseline** for the long-horizon AI-assisted Hong Kong equity system, with emphasis on maintainability, traceability, and system-of-record quality.
 
-This architecture baseline includes runtime/documentation updates through Step 48 while preserving paper-trading/decision-support guardrails.
+This architecture baseline includes runtime/documentation updates through Step 49 while preserving paper-trading/decision-support guardrails.
 
 ## Core philosophy
 The platform is designed as an **AI investment firm operating model** with strict role separation:
@@ -117,12 +117,12 @@ The platform is designed as an **AI investment firm operating model** with stric
 - Current gap: there is no fully automated cross-surface correlation artifact yet; operators still perform manual evidence matching (run id/date/timestamp context).
 - Deferred follow-up: stronger runtime instrumentation/correlation should be implemented only in a later explicitly approved runtime step.
 
-#### Runtime instrumentation baseline (Step 48)
-- **Current known gaps:** dedup fallback evidence remains partly log-only, phase-level delivery progression is under-specified in structured records, and Telegram observed outcomes still require manual join against run/timestamp context.
-- **Implemented minimal fields:** daily summary telemetry now includes `correlation_id` and `dedup_check_result`, and both flow into `runs.delivery_summary_json`.
-- **Bounded dedup check result semantics:** `send_path` (normal), `dedup_skip` (already-sent marker hit), `dedup_check_fallback` (dedup check failure with degraded send-attempt path).
+#### Runtime instrumentation baseline (Steps 48–49)
+- **Current known gaps after Step 48:** dedup check outcomes are now structured, but SENT-marker persist success/failure remains the highest-friction ambiguity; phase progression detail is still useful but secondary.
+- **Implemented minimal fields (Step 48):** daily summary telemetry includes `correlation_id` and `dedup_check_result`, both projected into `runs.delivery_summary_json`.
+- **Bounded dedup check semantics:** `send_path` (normal), `dedup_skip` (already-sent marker hit), `dedup_check_fallback` (dedup check failure with degraded send-attempt path).
+- **Step 49 refinement decision (docs-only):** compare `dedup_persist_result` vs `delivery_phase`, then recommend a single next runtime slice — prioritize `dedup_persist_result` first and defer `delivery_phase`.
 - **Scope intentionally unchanged:** no DB migration, no send-path refactor, no queue/retry framework, no strategy or paper-trading logic mutation.
-- **Future follow-up direction:** if additional runtime instrumentation is approved, keep increments small (for example one additional dedup/delivery-phase field at a time) and preserve current best-effort semantics.
 
 ### 8) Human decision layer
 - Human reviews outputs and retains final real-money decision authority.

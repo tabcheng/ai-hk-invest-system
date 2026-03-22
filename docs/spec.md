@@ -100,40 +100,36 @@ Build a long-horizon AI-assisted Hong Kong stock investing system with disciplin
   - no strategy logic change,
   - no paper-trading logic change.
 
-### Observability gap prioritization (current state)
-1. **P0 — Correlation gap across surfaces**
-   - Operators cannot reliably join Telegram outcome evidence to a specific delivery attempt/run-level lifecycle without manual timestamp matching.
-2. **P1 — Dedup fallback evidence gap**
-   - dedup check/persist fallback activation is not consistently queryable in one structured field and therefore increases incident triage effort.
-3. **P1 — Delivery phase progression visibility gap**
-   - current summary evidence emphasizes final outcome but under-represents intermediate phase transitions (prepare/check/persist/send/finalize) that explain why duplicates or skips occurred.
-4. **P2 — Attempt granularity gap**
-   - repeated attempts inside one run/rerun context lack a stable attempt identity surface that operators can quickly reference in docs/runbooks.
+## Delivery Semantics Follow-up Scope Refinement (Step 49, docs-only)
+### Post-Step-48 gap reassessment
+1. **Correlation gap is narrowed but not eliminated.**
+   - `correlation_id` now improves run/log/summary joins, but root-cause attribution for duplicate-risk windows still depends on whether dedup marker persistence succeeded.
+2. **Dedup write-path evidence remains the highest-confidence missing signal.**
+   - `dedup_check_result` explains read/check outcomes, but operators still infer dedup-persist success/failure indirectly from mixed logs + observed Telegram outcomes.
+3. **Phase-level progression remains useful but currently secondary.**
+   - richer phase telemetry can improve narrative readability, yet the highest triage friction after Step 48 is still SENT-marker write certainty.
 
-### Minimal instrumentation candidates (proposal-only; no implementation here)
-| Candidate | Value | Risk / cost | Proposed priority | Scope notes |
-|---|---|---|---|---|
-| `correlation_id` | Creates one stable join key across run logs, delivery summary context, and Telegram observed troubleshooting notes; reduces manual matching overhead. | Low-to-medium risk (ID generation/propagation consistency). | **P0 recommend** | Start with per-run/per-delivery correlation, avoid global tracing framework in first increment. |
-| `message_delivery_attempt_id` | Distinguishes multiple attempts in rerun/retry context and supports deterministic incident references. | Medium risk (attempt lifecycle definition drift if over-scoped). | **P1 recommend** | Keep local to delivery path only; do not extend to full queue/retry architecture. |
-| `delivery_phase` | Makes phase progression explicit for auditability (`dedup_check`, `send_attempt`, `dedup_persist`, etc.). | Medium risk (phase vocabulary stability + backward compatibility expectations). | **P1 recommend** | Use small fixed enum set; avoid high-cardinality free-text stages. |
-| `dedup_check_result` | Converts dedup-read outcome from inference/log-only to structured evidence (hit/miss/error). | Low risk if represented as bounded values. | **P1 recommend** | Keep values compact and semantically stable. |
-| `dedup_persist_result` | Exposes whether SENT marker write succeeded/failed and clarifies duplicate-risk windows. | Low risk if bounded and optional. | **P1 recommend** | Critical for distinguishing expected duplicate-under-failure cases. |
-| `fallback_activated` | Binary signal to quickly separate normal path vs degraded path incidents. | Low risk, but semantics must be precise to avoid noisy false positives. | **P2 conditional** | Consider only if value cannot be fully inferred from `dedup_*_result`; avoid redundant fields. |
+### Candidate comparison: `dedup_persist_result` vs `delivery_phase`
+| Candidate | Value | Risk | Scope | Implementation complexity | Operator usability payoff |
+|---|---|---|---|---|---|
+| `dedup_persist_result` | Adds direct evidence for SENT-marker write success/failure and clarifies expected duplicate-under-failure windows. | Low-to-medium risk: semantics must stay bounded (for example `persist_ok`, `persist_failed`, `persist_skipped`) and should avoid overlap with existing fields. | Single-field telemetry increment in existing delivery summary context; no send-path semantics change. | **Lower**: small enum + projection wiring + focused tests; no broad phase contract design required. | **High immediate payoff** for on-call/operator triage because duplicate suspicion can be quickly separated into expected-under-failure vs anomalous behavior. |
+| `delivery_phase` | Improves narrative traceability by exposing progression stages (`dedup_check`, `send_attempt`, `dedup_persist`, etc.). | Medium risk: phase taxonomy drift, backward-compat expectations, and potential over-expansion pressure in later steps. | Requires phase vocabulary/ordering contract decisions and careful docs/test alignment to keep stability. | **Medium**: needs schema vocabulary decisions + multi-phase emission coverage + compatibility policy. | **Medium payoff**: helpful for deeper diagnostics but less decisive than persist-result for immediate duplicate triage. |
 
-### Candidates not currently recommended for first runtime increment
-- full queue/retry orchestration metadata expansion (out-of-scope for minimal increment).
-- Telegram send-path refactor to enforce exactly-once semantics (not required for current best-effort policy).
-- broad delivery summary schema redesign (higher migration/compatibility risk than needed for first observability step).
+### Single next-slice recommendation
+- **Recommend next implementation slice: `dedup_persist_result` only.**
+  - Rationale: highest signal-to-scope ratio after Step 48, directly addresses remaining dedup observability ambiguity, and keeps implementation bounded.
+- **Defer `delivery_phase` as a subsequent candidate (not parallelized with next slice).**
+  - Revisit only after `dedup_persist_result` evidence proves insufficient for operator workflows.
 
-### Explicit guardrails (Step 47)
-- Do **not** implement runtime instrumentation in this step.
-- Do **not** add DB migrations in this step.
-- Do **not** modify `delivery_summary_json` schema in this step.
-- Do **not** refactor Telegram send path in this step.
-- Do **not** introduce queue/retry framework changes in this step.
-- Do **not** change strategy logic in this step.
+### Step 49 guardrails (unchanged)
+- This step is docs/spec/refinement only; **no runtime implementation**.
+- **No new telemetry field is added in this step** (recommendation only).
+- **No schema change** and **no DB migration**.
+- **No Telegram send-path refactor**.
+- **No queue/retry framework introduction**.
+- **No strategy or paper-trading logic change**.
 - Continue paper-trading / decision-support governance only; no autonomous real-money execution.
 
 ### Platform ownership for this step
-- **GitHub (changed in Step 47):** docs-only system-of-record updates for gaps, prioritization, candidate instrumentation scope, and guardrails.
-- **Railway (no change in Step 47):** no service topology, cron, runtime env var, webhook, or deployment-process modification is required.
+- **GitHub (changed in Step 49):** docs-only updates for post-Step-48 gap reassessment, candidate comparison, and single-slice recommendation.
+- **Railway (no change in Step 49):** no service topology, cron, runtime env var, webhook, or deployment-process modification is required.

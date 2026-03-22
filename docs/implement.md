@@ -171,3 +171,15 @@ Provide a consistent execution workflow for long-horizon Codex contributions.
 - Platform ownership split for this step:
   - **GitHub:** runtime code + focused tests + docs/status/backlog/spec updates.
   - **Railway:** no topology/cron/runtime-env/deployment mutation required.
+
+## Step 49 implementation note (delivery semantics follow-up scope refinement)
+- Scope is docs-only reassessment/refinement after Step 48; do not implement runtime changes in this step.
+- Reassess remaining delivery observability gaps with Step 48 now in place (`correlation_id` + `dedup_check_result`).
+- Compare exactly two next-slice candidates with explicit value/risk/scope/complexity/operator-payoff analysis:
+  - `dedup_persist_result`,
+  - `delivery_phase`.
+- Make one single next runtime recommendation only (no parallel implementation tracks).
+- Keep all guardrails explicit: no runtime behavior change, no new telemetry field this step, no schema migration, no Telegram send-path refactor, no queue/retry framework, no strategy logic change.
+- Keep platform ownership split explicit:
+  - **GitHub:** docs/system-of-record updates only.
+  - **Railway:** no topology/cron/runtime-env/deployment mutation required.

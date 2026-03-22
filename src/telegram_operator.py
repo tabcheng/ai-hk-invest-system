@@ -129,7 +129,13 @@ def _parse_iso_datetime(value: Any, *, field_name: str) -> datetime:
     if not value:
         raise ValueError(f"missing {field_name}")
     try:
-        return datetime.fromisoformat(str(value).replace("Z", "+00:00")).astimezone(timezone.utc)
+        parsed = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+        if parsed.tzinfo is None:
+            # Guardrail: persisted timestamps should be timezone-aware; when a
+            # naive value appears unexpectedly, normalize as UTC to keep
+            # operator output deterministic across host timezones.
+            parsed = parsed.replace(tzinfo=timezone.utc)
+        return parsed.astimezone(timezone.utc)
     except ValueError as exc:
         raise ValueError(f"invalid {field_name}") from exc
 

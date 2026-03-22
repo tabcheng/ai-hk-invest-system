@@ -1,7 +1,7 @@
 # Project Status
 
 ## Last reviewed date
-2026-03-21
+2026-03-22
 
 ## Current production behavior (repo-confirmed)
 - Scheduled runner entrypoint now supports dedicated module execution via `python -m src.daily_runner` (with `main.py` retained as backward-compatible wrapper), while orchestration remains in modular runtime code under `src/`.
@@ -36,6 +36,7 @@
 - Step 38 review hardening: failure `error_summary` normalization now strips multiline/irregular whitespace into single-line text before truncation to keep log lines safe/consistent; focused test coverage now includes normalization + truncation behavior.
 - Step 39 operator usability uplift: Telegram operator command surface now adds `/runner_status` with allowlisted chat/user gating and safe reply behavior for success/no-data/lookup-failure/format-failure paths.
 - Step 39 traceability hardening: `/runner_status` reads latest runner metadata from durable `runs` persistence (`id,status,created_at,finished_at,error_summary`) and renders required summary fields (`status`, `started_at`, `finished_at`, `duration_seconds`, `entrypoint`, `schedule_basis`, `error_summary`) without exposing raw internal exceptions.
+- Step 39 review hardening: `/runner_status` timestamp parsing now normalizes unexpected naive ISO timestamps as UTC for deterministic operator output across environments.
 - No autonomous live-money execution is enabled; human remains final decision-maker.
 - Deploy/config stability note: Railway/Railpack build previously failed when defaulting to Python `3.13.12` (mise install failure path); repository now pins Python to `3.12.9` via `.python-version` as a deploy stability guardrail (no strategy/paper-trading/signal-flow logic change).
 
@@ -73,6 +74,7 @@
 | 38 | Daily runner execution summary + observability hardening | Standardized runner lifecycle logs (`started`/`completed`/`failed`) and added deterministic execution summary payload (`started_at`, `finished_at`, `duration_seconds`, `status`, `entrypoint`, `schedule_basis`, failure-only safe `error_summary`) with focused tests for success/failure summaries and exit codes | **Repo evidence:** completed in this branch. **Merge:** pending PR merge. **Manual acceptance:** unknown / needs confirmation. |
 | 38-review-hotfix | Daily runner failure summary normalization hardening | Normalized failure summary whitespace to single-line safe text before truncation, reducing multi-line/log-format noise risk, and added focused helper coverage to assert normalization + max-length truncation behavior | **Repo evidence:** completed in this branch. **Merge:** pending PR merge. **Manual acceptance:** unknown / needs confirmation. |
 | 39 | Add Telegram `/runner_status` operator command | Added allowlisted `/runner_status` handler backed by latest persisted `runs` metadata lookup, deterministic/safe execution summary formatting, fallback responses for no-data and failure paths, and focused tests for auth/no-data/format-failure/lookup-failure plus webhook non-crash behavior | **Repo evidence:** completed in this branch. **Merge:** pending PR merge. **Manual acceptance:** unknown / needs confirmation. |
+| 39-review-hotfix | `/runner_status` timezone-normalization hardening | Normalized naive persisted timestamps to UTC during operator summary formatting to avoid environment-dependent timezone drift and added focused coverage for naive timestamp rendering + duration output stability | **Repo evidence:** completed in this branch. **Merge:** pending PR merge. **Manual acceptance:** unknown / needs confirmation. |
 
 ## Known unknowns / needs confirmation
 - Exact PR numbers and explicit human acceptance timestamps for Steps 21–29 are not derivable from repository files alone and need manual confirmation.

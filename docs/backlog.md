@@ -39,6 +39,7 @@ Prioritization:
 - Step 38 completed: daily runner observability/logging now emits consistent execution summary fields (`started_at`, `finished_at`, `duration_seconds`, `status`, `entrypoint`, `schedule_basis`) for both success and failure paths, with safe failure summary and focused runner tests for summary content + exit codes.
 - Step 38 review hotfix completed: failure `error_summary` normalization now collapses multiline/irregular whitespace before truncation so runner failure summaries stay single-line and easier to review in log systems.
 - Step 39 completed: Telegram operator `/runner_status` command added with allowlist auth gating, latest persisted run-summary lookup, safe fallback/failure responses, and focused operator/webhook non-crash coverage.
+- Step 39 review hotfix completed: `/runner_status` naive timestamp parsing now normalizes to UTC so operator summary times and duration remain deterministic across runtime environments.
 
 ### Foundation + runtime hardening
 - Step 1–12 baseline (documentation foundation, signal framework, dedup, run lifecycle, modularization, tests, Telegram MVP/hardening).

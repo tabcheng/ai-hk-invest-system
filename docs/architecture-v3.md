@@ -105,6 +105,18 @@ The platform is designed as an **AI investment firm operating model** with stric
   - `/help` / `/h`
 - Human-facing display policy: operator timestamps are rendered in HKT (`*_hkt` labels where applicable).
 
+#### Observability evidence baseline (Step 46 docs)
+- Primary evidence for delivery semantics validation is cross-surface:
+  1. Telegram observed messages,
+  2. `runs.delivery_summary_json`,
+  3. runner logs (`execution_summary` + lifecycle lines),
+  4. relevant `runs` records.
+- Command-reply observability and daily-summary observability are related but distinct:
+  - command replies are webhook-triggered per inbound command event;
+  - daily summaries are runner-triggered per run lifecycle.
+- Current gap: there is no fully automated cross-surface correlation artifact yet; operators still perform manual evidence matching (run id/date/timestamp context).
+- Deferred follow-up: stronger runtime instrumentation/correlation should be implemented only in a later explicitly approved runtime step.
+
 ### 8) Human decision layer
 - Human reviews outputs and retains final real-money decision authority.
 

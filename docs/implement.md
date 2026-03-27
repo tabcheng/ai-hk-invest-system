@@ -19,6 +19,7 @@ Provide a consistent execution workflow for long-horizon Codex contributions.
 4. Run validation checks defined in `docs/plans.md`.
 5. If any validation fails, stop and repair before taking new scope.
 6. Commit with a clear milestone/task summary.
+7. Open PR and complete review/merge per repository governance.
 
 ## Post-merge acceptance workflow
 1. After merge, execute dual acceptance checks and record outcomes:

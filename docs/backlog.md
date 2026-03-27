@@ -8,22 +8,23 @@ Prioritization:
 ## Active backlog (pending)
 
 ### P0
-1. **Step 52 candidate — Platform hardening evidence pass (GitHub / Railway / Supabase)**
-   - Refresh manual verification checklist evidence for branch protection, CI checks, scheduler posture, runtime secret hygiene, and Supabase backup/RLS posture.
-   - Keep runtime behavior unchanged.
+1. **Step 54 candidate — Paper-trading analytics follow-up scoping**
+   - Define one minimal analytics increment (metrics + dependencies + validation rubric) without broad implementation.
+   - Keep runtime behavior unchanged and preserve decision-support/paper-trading boundary.
 
 ### P1
-1. **Paper-trading analytics follow-up scoping**
-   - Define one minimal analytics increment (metrics + dependencies + validation plan) without broad implementation.
-
-2. **Telegram command registration follow-up (optional)**
+1. **Telegram command registration follow-up (optional)**
    - Decide whether to add bot command registration (`setMyCommands`) for discoverability.
    - Keep this isolated from strategy and paper-trading logic.
 
-3. **Delivery semantics phase narrative instrumentation (`delivery_phase`)**
+2. **Delivery semantics phase narrative instrumentation (`delivery_phase`)**
    - Re-evaluate whether a compact `delivery_phase` enum still adds enough operator triage value beyond current fields (`correlation_id`, `dedup_check_result`, `dedup_persist_result`).
    - Keep scope bounded and avoid broad telemetry redesign; preserve current best-effort/non-blocking delivery behavior.
    - If approved later, require focused tests and explicit backward-compatible projection semantics.
+
+3. **Platform evidence cadence + artifact capture follow-up (GitHub / Railway / Supabase)**
+   - Define a lightweight recurring manual verification cadence (for example monthly/after critical config changes) and where to store dated evidence snapshots/screenshots.
+   - Keep this as documentation/process hardening first; do not trigger infra refactor or runtime topology changes without a separate approved step.
 
 ### P2
 - Expand deterministic replay/integration fixtures for multi-day paper-trading scenarios.
@@ -32,7 +33,7 @@ Prioritization:
 
 ## Completed backlog (archived)
 
-### Recently completed (Steps 40–51)
+### Recently completed (Steps 40–53)
 - **Step 40 completed:** normalized operator response shape for `/runs`, `/runner_status`, `/risk_review` and centralized HTML-safe rendering contract.
 - **Step 41 completed:** added read-only paper position/PnL snapshot helper and `/pnl_review` operator command, including input/correctness hardening.
 - **Step 42 completed:** added market-data provider boundary (`MARKET_DATA_PROVIDER`) with `yfinance` baseline and deterministic `mock` provider.
@@ -46,6 +47,8 @@ Prioritization:
 - **Step 50 completed:** implemented minimal runtime delivery instrumentation v2 by adding `dedup_persist_result` (`persisted` / `persist_failed` / `not_applicable`) in summary telemetry and `runs.delivery_summary_json` projection, added focused tests for persist success/failure and dedup-skip N/A semantics, and updated docs/system-of-record artifacts (GitHub changed; Railway unchanged).
 - **Step 50 review hotfix completed:** test harness now injects local stubs for optional runtime packages (`requests`, `supabase`, `pandas`, `yfinance`) in `tests/conftest.py` so focused test execution is not blocked by sandbox package-install restrictions (runtime behavior unchanged).
 - **Step 51 completed (docs-only):** formalized mandatory post-merge dual acceptance workflow (`Post-merge QA Check` + `Post-merge Domain Check`), codified blocker vs backlog-follow-up triage, and normalized wording discipline so `docs/status.md` is merge/acceptance truth while `docs/backlog.md` tracks only pending follow-ups.
+- **Step 52 completed:** fixed test-harness pandas stub coverage so market-data/signals tests have required fallback API surface only when pandas is unavailable.
+- **Step 53 completed (docs-only):** delivered a minimal platform hardening evidence pass summary/checklist for GitHub/Railway/Supabase with explicit `repo-confirmed` vs `manual verification required` vs `backlog follow-up` separation, and synced status/project-plan records without runtime/deployment topology changes.
 
 ### Earlier completed foundations
 - Step 1–12 baseline (documentation foundation, signal framework, dedup, run lifecycle, modularization, tests, Telegram MVP/hardening).

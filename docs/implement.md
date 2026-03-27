@@ -239,3 +239,15 @@ Provide a consistent execution workflow for long-horizon Codex contributions.
 - Keep platform ownership explicit for this step:
   - **GitHub:** docs-only updates.
   - **Railway:** no topology/cron/runtime-env/deployment mutation required.
+
+## Step 53 implementation note (platform hardening evidence pass; docs-only)
+- Scope is evidence/checklist review + docs synchronization only; no runtime or topology mutation.
+- Produce a minimal, verifiable platform evidence summary across GitHub/Railway/Supabase with explicit classification:
+  - `repo-confirmed`,
+  - `manual verification required`,
+  - `backlog follow-up`.
+- Keep manual-vs-repo boundary explicit:
+  - repo files can confirm workflow/docs contracts,
+  - platform UI/console settings (branch protection, cron attachment, backup/RLS live posture, secret injection state) remain manual verification.
+- Record non-blocking gaps as backlog follow-up items instead of starting broad infra refactors in this step.
+- Preserve AI HK investing-system boundary: paper-trading/decision-support only, no autonomous real-money execution.

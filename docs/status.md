@@ -92,6 +92,7 @@
 - Step 50 platform ownership clarification: GitHub includes runtime/tests/docs updates for bounded telemetry increment; Railway requires no topology/cron/runtime env/deployment mutation.
 - Step 50 review hardening: test harness now installs lightweight local stubs (`requests`, `supabase`, `pandas`, `yfinance`) in `tests/conftest.py` so focused tests can run in constrained environments without external package installation, while production runtime dependency expectations remain unchanged.
 - Step 51 post-merge governance formalization (docs-only): dual acceptance workflow is now explicit and mandatory after every merge (`Post-merge QA Check` + `Post-merge Domain Check`) with blocker vs backlog-follow-up triage criteria and status/backlog wording discipline.
+- Step 52 test-harness pandas stub coverage fix: `tests/conftest.py` now gates pandas stubbing on actual package availability and provides a minimal, test-scoped pandas compatibility surface (`date_range`, `DataFrame(...)`, `.empty`, rolling mean, indexing helpers) so market-data/signals tests run correctly in constrained CI environments.
 - No autonomous live-money execution is enabled; human remains final decision-maker.
 - Deploy/config stability note: Railway/Railpack build previously failed when defaulting to Python `3.13.12` (mise install failure path); repository now pins Python to `3.12.9` via `.python-version` as a deploy stability guardrail (no strategy/paper-trading/signal-flow logic change).
 
@@ -101,7 +102,7 @@
 - Milestone 3 (Paper-trading v1): completed.
 - Milestone 4 (Controlled production hardening): in-progress, with Steps 19–51 completed and runtime hardening follow-ups still pending.
 
-## Step 21–51 status ledger (Step 51 post-merge dual acceptance workflow formalization)
+## Step 21–52 status ledger (Step 52 test-harness pandas stub coverage fix)
 
 | Step | Goal | Primary deliverable(s) | Status |
 |---|---|---|---|
@@ -145,9 +146,10 @@
 | 50 | Delivery semantics minimal runtime instrumentation v2 | Add one bounded telemetry field `dedup_persist_result` (`persisted`/`persist_failed`/`not_applicable`) to summary telemetry and `runs.delivery_summary_json` projection, add focused tests, and sync docs/backlog/status/implement with GitHub-vs-Railway ownership split | **Completed (merged in-repo runtime+docs state).** Single-field observability increment only; no `delivery_phase`, no DB migration, no queue/retry framework, no Telegram send-path refactor, no strategy/paper-trading logic or deployment topology change. |
 | 50-review-hotfix | Step 50 testability hardening in constrained environments | Add `tests/conftest.py` import-time dependency stubs for optional runtime packages (`requests`, `supabase`, `pandas`, `yfinance`) so focused Step 50 tests execute without network/package-install preconditions | **Completed (merged in-repo test-harness state).** Test-environment-only adjustment; production runtime behavior, Telegram delivery semantics, strategy logic, and deployment topology unchanged. |
 | 51 | Formalize post-merge dual acceptance workflow in docs and status discipline | Update AGENTS/plans/implement/status/backlog/project-plan docs to mandate Post-merge QA + Post-merge Domain checks, define blocker vs backlog-follow-up triage, and codify status-vs-backlog wording roles (`repo merge completed`, `manual platform acceptance completed`, `docs maintenance follow-up`) | **Completed (merged in-repo docs state).** Docs-only governance formalization; no runtime behavior/API/schema/strategy/deployment change. |
+| 52 | Test-harness pandas stub coverage fix for market-data/signals tests | Update `tests/conftest.py` pandas fallback shim to cover required API surface (`date_range`, `DataFrame(...)`, `.empty`, rolling mean, indexing) and only activate when pandas is unavailable | **Completed (merged in-repo test-harness state).** Test-only harness correction; production runtime behavior/API/schema/strategy/paper-trading/deployment topology unchanged. |
 
 ## Known unknowns / needs confirmation
 - Production platform settings (GitHub/Railway/Supabase project posture) still require periodic manual verification outside repository files.
 
 ## Next approved task candidate
-- Step 52 candidate: execute platform hardening evidence pass (GitHub/Railway/Supabase) with refreshed manual control checklist artifacts; keep runtime behavior unchanged.
+- Step 53 candidate: execute platform hardening evidence pass (GitHub/Railway/Supabase) with refreshed manual control checklist artifacts; keep runtime behavior unchanged.

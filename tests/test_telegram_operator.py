@@ -640,6 +640,34 @@ def test_handle_outcome_review_command_empty_window_wording(monkeypatch):
     assert "- note: no closed paper trades in review window" in response
 
 
+def test_handle_outcome_review_command_empty_window_uses_default_wording_when_summary_note_missing(monkeypatch):
+    monkeypatch.setenv("TELEGRAM_CHAT_ID", "chat-1")
+    monkeypatch.setattr(
+        "src.telegram_operator._get_paper_trade_outcome_summary",
+        lambda _client, *, recent_days=None: {
+            "window_days": recent_days,
+            "window_basis": "exit trade_date of paired closed trades; window anchored to latest available trade_date in snapshot",
+            "closed_trade_count": 0,
+            "win_count": 0,
+            "loss_count": 0,
+            "flat_count": 0,
+            "win_rate": None,
+            "win_rate_denominator": "win_count / closed_trade_count",
+            "median_holding_days": None,
+            "p75_holding_days": None,
+            "max_holding_days": None,
+            "top_realized_winners": [],
+            "top_realized_losers": [],
+            "review_boundary_note": "review/diagnostic only; paper-trading decision support only",
+        },
+    )
+
+    response = handle_telegram_operator_command(object(), _build_update("/outcome_review"))
+
+    assert "Command: /outcome_review" in response
+    assert "- note: no closed paper trades in review window" in response
+
+
 def test_handle_outcome_review_command_with_days_success(monkeypatch):
     monkeypatch.setenv("TELEGRAM_CHAT_ID", "chat-1")
     seen = {}

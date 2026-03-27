@@ -504,7 +504,7 @@ def _build_outcome_review_command_message(summary: dict[str, Any]) -> str:
         fields.append(
             (
                 "note",
-                str(summary.get("empty_window_message") or "no matching records in review window (closed paper trades)"),
+                str(summary.get("empty_window_message") or "no closed paper trades in review window"),
             )
         )
 

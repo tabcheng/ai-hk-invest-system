@@ -237,3 +237,42 @@ Required limitation statements in docs:
 - No large analytics implementation in this step.
 - No deployment topology/runtime behavior changes.
 - No Telegram wording backlog changes mixed into this scope.
+
+## Paper-trade outcome summary implementation (Step 55, bounded runtime slice)
+### Implemented review surface (single minimal surface)
+- Added one read-only Telegram operator command: `/outcome_review`.
+- Command returns deterministic closed-trade outcome summary from persisted `paper_trades` only.
+- This is a bounded review/diagnostic surface; it does not mutate strategy, ledger, or execution state.
+
+### Deterministic implementation contract
+- **Closed paper trades only:** open inventory is excluded from all outcome denominators.
+- **Pairing order:** BUY/SELL replay is deterministic by `trade_date`, then `id`, with FIFO lot matching within ticker.
+- **Stable ordering + tie-break:**
+  - Top winners: cumulative realized PnL desc, then ticker asc.
+  - Top losers: cumulative realized PnL asc, then ticker asc.
+- **Empty-window behavior:** explicit `closed_trade_count=0`, `win_rate=N/A`, and clear no-closed-trades note.
+- **Denominator-safe wording:** output carries explicit formula label `win_count / closed_trade_count`.
+
+### Minimum metric output contract (implemented)
+- `closed_trade_count`
+- `win_count`
+- `loss_count`
+- `flat_count`
+- `win_rate` (or `N/A` when denominator is zero)
+- `median_holding_days`
+- `p75_holding_days`
+- `max_holding_days`
+- `top_realized_winners`
+- `top_realized_losers`
+
+### Step 55 explicit non-goals preserved
+- No strategy rule change.
+- No real-money execution behavior.
+- No attribution redesign.
+- No benchmark/regime overlays.
+- No DB schema migration.
+- No deployment topology change.
+
+### Platform ownership for this step
+- **GitHub (changed in Step 55):** bounded helper/service logic, focused tests, operator command wiring, and docs synchronization.
+- **Railway (no change in Step 55):** no service split, cron, env-variable contract, webhook topology, or deployment-process change required.

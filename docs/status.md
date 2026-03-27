@@ -3,6 +3,21 @@
 ## Last reviewed date
 2026-03-27
 
+## Post-merge acceptance + wording discipline (system-of-record)
+- Every merged step must complete two mandatory acceptance checks:
+  1. **Post-merge QA Check** — verify output/function correctness, success/error path clarity, and display/docs/tests consistency.
+  2. **Post-merge Domain Check** — verify AI HK investing-system alignment, paper-trading/decision-support-only boundary, and calculation/interpretation risk posture.
+- Triage classification:
+  - **Blocker:** correctness/safety/domain-boundary issue requiring fix before acceptance closure.
+  - **Backlog follow-up:** non-blocking improvement item; track in `docs/backlog.md`.
+- Wording discipline to reduce ambiguity:
+  - `docs/status.md` records merge completion truth + acceptance outcomes (`repo merge completed`, `manual platform acceptance completed`).
+  - `docs/backlog.md` records pending follow-up work only (including docs maintenance follow-up), not canonical merge-state truth.
+- Recommended status wording template per merged step:
+  - `repo merge completed: yes/no`
+  - `manual platform acceptance completed: yes/no`
+  - `docs maintenance follow-up: none` or `tracked in docs/backlog.md #<item>`
+
 ## Current production behavior (repo-confirmed)
 - Scheduled runner entrypoint now supports dedicated module execution via `python -m src.daily_runner` (with `main.py` retained as backward-compatible wrapper), while orchestration remains in modular runtime code under `src/`.
 - Daily signal persistence remains idempotent on `(date, stock)` and supports rerun-safe behavior.
@@ -76,6 +91,7 @@
 - Step 50 focused validation: tests now cover normal send + persist success, send success + persist failure, dedup-skip N/A semantics, and delivery summary projection shape including `correlation_id`, `dedup_check_result`, and `dedup_persist_result`.
 - Step 50 platform ownership clarification: GitHub includes runtime/tests/docs updates for bounded telemetry increment; Railway requires no topology/cron/runtime env/deployment mutation.
 - Step 50 review hardening: test harness now installs lightweight local stubs (`requests`, `supabase`, `pandas`, `yfinance`) in `tests/conftest.py` so focused tests can run in constrained environments without external package installation, while production runtime dependency expectations remain unchanged.
+- Step 51 post-merge governance formalization (docs-only): dual acceptance workflow is now explicit and mandatory after every merge (`Post-merge QA Check` + `Post-merge Domain Check`) with blocker vs backlog-follow-up triage criteria and status/backlog wording discipline.
 - No autonomous live-money execution is enabled; human remains final decision-maker.
 - Deploy/config stability note: Railway/Railpack build previously failed when defaulting to Python `3.13.12` (mise install failure path); repository now pins Python to `3.12.9` via `.python-version` as a deploy stability guardrail (no strategy/paper-trading/signal-flow logic change).
 
@@ -83,9 +99,9 @@
 - Milestone 1 (Documentation Foundation): completed.
 - Milestone 2 (Signal framework + modularization/test baseline): completed.
 - Milestone 3 (Paper-trading v1): completed.
-- Milestone 4 (Controlled production hardening): in-progress, with Steps 19–50 completed and runtime hardening follow-ups still pending.
+- Milestone 4 (Controlled production hardening): in-progress, with Steps 19–51 completed and runtime hardening follow-ups still pending.
 
-## Step 21–50 status ledger (Step 50 delivery semantics minimal runtime instrumentation v2)
+## Step 21–51 status ledger (Step 51 post-merge dual acceptance workflow formalization)
 
 | Step | Goal | Primary deliverable(s) | Status |
 |---|---|---|---|
@@ -128,9 +144,10 @@
 | 49 | Delivery semantics follow-up instrumentation scope refinement | Reassess post-Step-48 observability gaps, compare `dedup_persist_result` vs `delivery_phase` (value/risk/scope/complexity/operator payoff), select one next slice, and sync docs/backlog/status/implement with GitHub-vs-Railway ownership split | **Completed (merged in-repo docs state).** Docs-only scope; no runtime behavior change, no telemetry/schema mutation, no send-path refactor, no queue/retry framework, no strategy/paper-trading logic or deployment topology change. |
 | 50 | Delivery semantics minimal runtime instrumentation v2 | Add one bounded telemetry field `dedup_persist_result` (`persisted`/`persist_failed`/`not_applicable`) to summary telemetry and `runs.delivery_summary_json` projection, add focused tests, and sync docs/backlog/status/implement with GitHub-vs-Railway ownership split | **Completed (merged in-repo runtime+docs state).** Single-field observability increment only; no `delivery_phase`, no DB migration, no queue/retry framework, no Telegram send-path refactor, no strategy/paper-trading logic or deployment topology change. |
 | 50-review-hotfix | Step 50 testability hardening in constrained environments | Add `tests/conftest.py` import-time dependency stubs for optional runtime packages (`requests`, `supabase`, `pandas`, `yfinance`) so focused Step 50 tests execute without network/package-install preconditions | **Completed (merged in-repo test-harness state).** Test-environment-only adjustment; production runtime behavior, Telegram delivery semantics, strategy logic, and deployment topology unchanged. |
+| 51 | Formalize post-merge dual acceptance workflow in docs and status discipline | Update AGENTS/plans/implement/status/backlog/project-plan docs to mandate Post-merge QA + Post-merge Domain checks, define blocker vs backlog-follow-up triage, and codify status-vs-backlog wording roles (`repo merge completed`, `manual platform acceptance completed`, `docs maintenance follow-up`) | **Completed (merged in-repo docs state).** Docs-only governance formalization; no runtime behavior/API/schema/strategy/deployment change. |
 
 ## Known unknowns / needs confirmation
 - Production platform settings (GitHub/Railway/Supabase project posture) still require periodic manual verification outside repository files.
 
 ## Next approved task candidate
-- Step 51 candidate: evaluate whether compact `delivery_phase` instrumentation is still needed after Step 50 (`dedup_persist_result`) and, if approved, implement as a tightly bounded telemetry-only increment with focused tests and no deployment mutation.
+- Step 52 candidate: execute platform hardening evidence pass (GitHub/Railway/Supabase) with refreshed manual control checklist artifacts; keep runtime behavior unchanged.

@@ -86,7 +86,7 @@ def test_handle_runs_command_supports_days_parameter(monkeypatch):
     assert seen["days"] == 7
     assert "Command: /runs" in response
     assert "Status: no data." in response
-    assert "Reason: no runs found in the last 7 day(s)" in response
+    assert "Reason: no matching records in the last 7 day(s)" in response
 
 
 def test_handle_runs_command_enforces_allowed_users_when_configured(monkeypatch):
@@ -105,7 +105,7 @@ def test_build_runs_command_message_handles_empty_rows():
     message = build_runs_command_message([], days=5)
     assert "Command: /runs" in message
     assert "Status: no data." in message
-    assert "Reason: no runs found in the last 5 day(s)" in message
+    assert "Reason: no matching records in the last 5 day(s)" in message
 
 
 def test_handle_runs_command_returns_usage_on_invalid_parameter(monkeypatch):
@@ -113,7 +113,8 @@ def test_handle_runs_command_returns_usage_on_invalid_parameter(monkeypatch):
     response = handle_telegram_operator_command(object(), _build_update("/runs 99d"))
     assert "Command: /runs" in response
     assert "Status: failed." in response
-    assert "Days must be between 1 and 30" in response
+    assert "Invalid input: days must be between 1 and 30" in response
+    assert "Usage: /runs [days]d" in response
 
 
 def test_handle_runs_command_returns_usage_on_malformed_tokens(monkeypatch):
@@ -122,8 +123,8 @@ def test_handle_runs_command_returns_usage_on_malformed_tokens(monkeypatch):
     response_numeric_without_suffix = handle_telegram_operator_command(object(), _build_update("/runs 7"))
     assert "Command: /runs" in response_text
     assert "Status: failed." in response_text
-    assert "Unsupported command" in response_text
-    assert "Unsupported command" in response_numeric_without_suffix
+    assert "Usage: /runs or /runs [days]d" in response_text
+    assert "Usage: /runs or /runs [days]d" in response_numeric_without_suffix
 
 
 def test_handle_help_and_h_alias_return_same_message(monkeypatch):
@@ -223,7 +224,8 @@ def test_handle_risk_review_command_rejects_invalid_run_id_format(monkeypatch):
 
     assert "Command: /risk_review" in response
     assert "Status: failed." in response
-    assert "Invalid run_id format" in response
+    assert "Invalid input: run_id must be a positive integer" in response
+    assert "Usage: /risk_review [run_id]" in response
 
 
 def test_handle_risk_review_command_rejects_nonexistent_run(monkeypatch):
@@ -234,7 +236,7 @@ def test_handle_risk_review_command_rejects_nonexistent_run(monkeypatch):
 
     assert "Command: /risk_review" in response
     assert "Status: no data." in response
-    assert "Reason: run_id not found. Use /runs to list recent runs" in response
+    assert "Reason: no matching records: run_id not found. Use /runs to list recent runs" in response
     assert "- run_id: 99999" in response
 
 
@@ -319,7 +321,7 @@ def test_handle_runner_status_command_no_latest_summary(monkeypatch):
 
     assert "Command: /runner_status" in response
     assert "Status: no data." in response
-    assert "no persisted daily runner summary available yet" in response
+    assert "no matching records: persisted daily runner summary is not available yet" in response
 
 
 def test_handle_runner_status_command_failed_latest_summary_formatting(monkeypatch):
@@ -482,9 +484,8 @@ def test_handle_pnl_review_command_success(monkeypatch):
     assert "- total_unrealized_pnl_hkd: 1000.0" in response
     assert "- valuation_timestamp_hkt: 2026-03-22 00:00:00 HKT (date-based)" in response
     assert "paper-trading decision support only" in response
-    assert "stock=0011.HK" in response
-    assert "name=N/A" in response
-    assert "stock=0700.HK" in response
+    assert "stock_id=0011.HK | name_unavailable" in response
+    assert "stock_name=Tencent | stock_id=0700.HK" in response
 
 
 def test_handle_pnl_review_command_rejects_unauthorized(monkeypatch):
@@ -517,7 +518,53 @@ def test_handle_pnl_review_command_rejects_extra_tokens(monkeypatch):
 
     assert "Command: /pnl_review" in response
     assert "Status: failed." in response
-    assert "Use /pnl_review with no extra arguments" in response
+    assert "Usage: /pnl_review" in response
+
+
+def test_handle_pnl_review_command_no_data_wording_when_snapshot_empty(monkeypatch):
+    monkeypatch.setenv("TELEGRAM_CHAT_ID", "chat-1")
+    monkeypatch.setattr(
+        "src.telegram_operator._get_paper_position_pnl_review_snapshot",
+        lambda _client: {
+            "open_positions_count": 0,
+            "closed_positions_count": 0,
+            "total_realized_pnl": 0.0,
+            "total_unrealized_pnl": 0.0,
+            "valuation_timestamp": "2026-03-22",
+            "per_symbol": [],
+        },
+    )
+
+    response = handle_telegram_operator_command(object(), _build_update("/pnl_review"))
+
+    assert "Command: /pnl_review" in response
+    assert "Status: completed." in response
+    assert "- note: no matching records in current snapshot" in response
+
+
+def test_handle_outcome_review_command_stock_display_prefers_name_when_available(monkeypatch):
+    monkeypatch.setenv("TELEGRAM_CHAT_ID", "chat-1")
+    monkeypatch.setattr(
+        "src.telegram_operator._get_paper_trade_outcome_summary",
+        lambda _client, *, recent_days=None: {
+            "window_days": recent_days,
+            "window_basis": "exit trade_date of paired closed trades; window anchored to latest available trade_date in snapshot",
+            "closed_trade_count": 1,
+            "win_count": 1,
+            "loss_count": 0,
+            "flat_count": 0,
+            "win_rate": 1.0,
+            "win_rate_denominator": "win_count / closed_trade_count",
+            "median_holding_days": 1.0,
+            "p75_holding_days": 1,
+            "max_holding_days": 1,
+            "top_realized_winners": [{"stock": "0005.HK", "stock_name": "HSBC", "realized_pnl": 18.0}],
+            "top_realized_losers": [],
+            "review_boundary_note": "review/diagnostic only; paper-trading decision support only",
+        },
+    )
+    response = handle_telegram_operator_command(object(), _build_update("/outcome_review"))
+    assert "stock_name=HSBC | stock_id=0005.HK | realized_pnl=18.00" in response
 
 
 def test_help_message_includes_outcome_review_command():
@@ -561,8 +608,8 @@ def test_handle_outcome_review_command_success(monkeypatch):
     assert "- window_basis: exit trade_date of paired closed trades" in response
     assert "- closed_trade_count: 3" in response
     assert "- win_rate: 33.33%" in response
-    assert "- winner_1: stock=0005.HK | realized_pnl=88.00" in response
-    assert "- loser_1: stock=0700.HK | realized_pnl=-23.00" in response
+    assert "- winner_1: stock_id=0005.HK | name_unavailable | realized_pnl=88.00" in response
+    assert "- loser_1: stock_id=0700.HK | name_unavailable | realized_pnl=-23.00" in response
 
 
 def test_handle_outcome_review_command_empty_window_wording(monkeypatch):
@@ -629,7 +676,8 @@ def test_handle_outcome_review_command_rejects_invalid_window_input(monkeypatch)
     response = handle_telegram_operator_command(object(), _build_update("/outcome_review abc"))
     assert "Command: /outcome_review" in response
     assert "Status: failed." in response
-    assert "Invalid days format" in response
+    assert "Invalid input: days must be an integer" in response
+    assert "Usage: /outcome_review [days]" in response
 
 
 def test_handle_outcome_review_command_rejects_out_of_range_window_input(monkeypatch):
@@ -637,4 +685,5 @@ def test_handle_outcome_review_command_rejects_out_of_range_window_input(monkeyp
     response = handle_telegram_operator_command(object(), _build_update("/outcome_review 0"))
     assert "Command: /outcome_review" in response
     assert "Status: failed." in response
-    assert "Days must be between 1 and 365" in response
+    assert "Invalid input: days must be between 1 and 365" in response
+    assert "Usage: /outcome_review [days]" in response

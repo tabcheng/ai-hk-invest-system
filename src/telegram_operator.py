@@ -76,7 +76,7 @@ def get_operator_auth_decision(update: dict[str, Any]) -> dict[str, Any]:
 def _parse_runs_days(command_text: str) -> int:
     match = _RUNS_COMMAND_PATTERN.match(command_text or "")
     if not match:
-        raise ValueError("Unsupported command. Use /runs or /runs [days]d, e.g. /runs 5d.")
+        raise ValueError("Usage: /runs or /runs [days]d (e.g. /runs 5d).")
 
     days_group = match.group(1)
     if not days_group:
@@ -84,7 +84,7 @@ def _parse_runs_days(command_text: str) -> int:
 
     days = int(days_group)
     if days <= 0 or days > _MAX_DAYS:
-        raise ValueError(f"Days must be between 1 and {_MAX_DAYS}. Example: /runs 5d.")
+        raise ValueError(f"Invalid input: days must be between 1 and {_MAX_DAYS}. Usage: /runs [days]d (e.g. /runs 5d).")
     return days
 
 
@@ -97,18 +97,18 @@ def _parse_risk_review_run_id(command_text: str) -> int:
     """
     match = _RISK_REVIEW_COMMAND_PATTERN.match(command_text or "")
     if not match:
-        raise ValueError("Unsupported command. Use /risk_review [run_id], e.g. /risk_review 12345.")
+        raise ValueError("Usage: /risk_review [run_id] (e.g. /risk_review 12345).")
 
     run_id_token = (match.group(1) or "").strip()
     if not run_id_token:
-        raise ValueError("Usage: /risk_review [run_id], e.g. /risk_review 12345.")
+        raise ValueError("Usage: /risk_review [run_id] (e.g. /risk_review 12345).")
 
     if not run_id_token.isdigit():
-        raise ValueError("Invalid run_id format. Use a positive integer, e.g. /risk_review 12345.")
+        raise ValueError("Invalid input: run_id must be a positive integer. Usage: /risk_review [run_id] (e.g. /risk_review 12345).")
 
     run_id = int(run_id_token)
     if run_id <= 0:
-        raise ValueError("Invalid run_id format. Use a positive integer, e.g. /risk_review 12345.")
+        raise ValueError("Invalid input: run_id must be a positive integer. Usage: /risk_review [run_id] (e.g. /risk_review 12345).")
     return run_id
 
 
@@ -120,7 +120,7 @@ def _parse_pnl_review_command(command_text: str) -> None:
     explicit usage guidance rather than being silently ignored.
     """
     if not _PNL_REVIEW_COMMAND_PATTERN.match(command_text or ""):
-        raise ValueError("Unsupported command. Use /pnl_review with no extra arguments.")
+        raise ValueError("Usage: /pnl_review")
 
 
 def _parse_outcome_review_command(command_text: str) -> int | None:
@@ -133,21 +133,17 @@ def _parse_outcome_review_command(command_text: str) -> int | None:
     """
     match = _OUTCOME_REVIEW_COMMAND_PATTERN.match(command_text or "")
     if not match:
-        raise ValueError(
-            "Unsupported command. Use /outcome_review or /outcome_review [days], e.g. /outcome_review 30."
-        )
+        raise ValueError("Usage: /outcome_review [days] (e.g. /outcome_review 30).")
     days_token = (match.group(1) or "").strip()
     if not days_token:
         return None
     if not days_token.isdigit():
-        raise ValueError(
-            "Invalid days format. Use /outcome_review [days] with integer days, e.g. /outcome_review 30."
-        )
+        raise ValueError("Invalid input: days must be an integer. Usage: /outcome_review [days] (e.g. /outcome_review 30).")
     days = int(days_token)
     if days < _OUTCOME_REVIEW_MIN_DAYS or days > _OUTCOME_REVIEW_MAX_DAYS:
         raise ValueError(
-            f"Days must be between {_OUTCOME_REVIEW_MIN_DAYS} and {_OUTCOME_REVIEW_MAX_DAYS}. "
-            "Example: /outcome_review 30."
+            f"Invalid input: days must be between {_OUTCOME_REVIEW_MIN_DAYS} and {_OUTCOME_REVIEW_MAX_DAYS}. "
+            "Usage: /outcome_review [days] (e.g. /outcome_review 30)."
         )
     return days
 
@@ -260,6 +256,20 @@ def _build_usage_error_message(*, command_label: str, error_text: str) -> str:
     )
 
 
+def _format_stock_display(*, stock_id: Any, stock_name: Any) -> str:
+    """
+    Operator stock-display policy:
+    - Prefer `stock_name + stock_id` when both are available.
+    - Fallback explicitly when name is unavailable (do not imply a name exists).
+    """
+    normalized_id = str(stock_id).strip() if stock_id is not None else ""
+    normalized_name = str(stock_name).strip() if stock_name is not None else ""
+    stock_id_text = normalized_id or "unknown"
+    if normalized_name:
+        return f"stock_name={normalized_name} | stock_id={stock_id_text}"
+    return f"stock_id={stock_id_text} | name_unavailable"
+
+
 def _format_runner_status_message(latest_summary_row: dict[str, Any]) -> str:
     """Build operator-facing response for `/runner_status` from latest persisted run."""
     started_at = _parse_iso_datetime(latest_summary_row.get("created_at"), field_name="created_at")
@@ -332,7 +342,7 @@ def build_runs_command_message(rows: list[dict[str, Any]], *, days: int) -> str:
         return _build_operator_message(
             command_label="/runs",
             status="no data",
-            reason=f"no runs found in the last {days} day(s)",
+            reason=f"no matching records in the last {days} day(s)",
             fields=[("window_days", days)],
         )
 
@@ -427,11 +437,12 @@ def _build_pnl_review_command_message(snapshot: dict[str, Any]) -> str:
         ("review_scope", "paper-trading decision support only; no real-money execution"),
     ]
     for idx, row in enumerate(per_symbol[:10], start=1):
+        stock_display = _format_stock_display(stock_id=row.get("stock"), stock_name=row.get("stock_name"))
         fields.append(
             (
                 f"symbol_{idx}",
                 (
-                    f"stock={row.get('stock')} | name={row.get('stock_name') or 'N/A'} "
+                    f"{stock_display} "
                     f"| status={row.get('position_status')} | qty={row.get('quantity')} "
                     f"| avg_cost={float(row.get('avg_cost') or 0.0):.4f} "
                     f"| last_price={float(row.get('last_price') or 0.0):.4f} "
@@ -440,6 +451,8 @@ def _build_pnl_review_command_message(snapshot: dict[str, Any]) -> str:
                 ),
             )
         )
+    if not per_symbol:
+        fields.append(("note", "no matching records in current snapshot"))
     if len(per_symbol) > 10:
         fields.append(("note", "showing first 10 symbols only"))
 
@@ -488,12 +501,33 @@ def _build_outcome_review_command_message(summary: dict[str, Any]) -> str:
         ("review_boundary", str(summary.get("review_boundary_note") or "review/diagnostic only")),
     ]
     if closed_trade_count == 0:
-        fields.append(("note", str(summary.get("empty_window_message") or "no closed paper trades in review window")))
+        fields.append(
+            (
+                "note",
+                str(summary.get("empty_window_message") or "no matching records in review window (closed paper trades)"),
+            )
+        )
 
     for idx, row in enumerate(top_winners[:5], start=1):
-        fields.append((f"winner_{idx}", f"stock={row.get('stock')} | realized_pnl={float(row.get('realized_pnl') or 0.0):.2f}"))
+        fields.append(
+            (
+                f"winner_{idx}",
+                (
+                    f"{_format_stock_display(stock_id=row.get('stock'), stock_name=row.get('stock_name'))} "
+                    f"| realized_pnl={float(row.get('realized_pnl') or 0.0):.2f}"
+                ),
+            )
+        )
     for idx, row in enumerate(top_losers[:5], start=1):
-        fields.append((f"loser_{idx}", f"stock={row.get('stock')} | realized_pnl={float(row.get('realized_pnl') or 0.0):.2f}"))
+        fields.append(
+            (
+                f"loser_{idx}",
+                (
+                    f"{_format_stock_display(stock_id=row.get('stock'), stock_name=row.get('stock_name'))} "
+                    f"| realized_pnl={float(row.get('realized_pnl') or 0.0):.2f}"
+                ),
+            )
+        )
 
     return _build_operator_message(
         command_label="/outcome_review",
@@ -588,7 +622,7 @@ def handle_telegram_operator_command(client: Any, update: dict[str, Any]) -> str
                 return _build_operator_message(
                     command_label="/runner_status",
                     status="no data",
-                    reason="no persisted daily runner summary available yet",
+                    reason="no matching records: persisted daily runner summary is not available yet",
                 )
 
             try:
@@ -684,7 +718,7 @@ def handle_telegram_operator_command(client: Any, update: dict[str, Any]) -> str
             return _build_operator_message(
                 command_label="/risk_review",
                 status="no data",
-                reason="run_id not found. Use /runs to list recent runs",
+                reason="no matching records: run_id not found. Use /runs to list recent runs",
                 fields=[("run_id", run_id)],
             )
 

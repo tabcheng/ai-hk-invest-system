@@ -8,10 +8,10 @@ Prioritization:
 ## Active backlog (pending)
 
 ### P0
-1. **Step 50 candidate — Delivery semantics minimal runtime instrumentation v2 (`dedup_persist_result`)**
-   - Implement one additional bounded telemetry field: `dedup_persist_result`.
-   - Keep semantics compact and operator-meaningful (for example persist success/failure/skip style outcomes), and keep delivery behavior best-effort/non-blocking.
-   - Add focused validation for normal persist success and persist-failure fallback evidence projection in `runs.delivery_summary_json`.
+1. **Step 51 candidate — Delivery semantics phase narrative instrumentation (`delivery_phase`)**
+   - Evaluate whether adding a compact `delivery_phase` enum improves operator triage beyond current fields (`correlation_id`, `dedup_check_result`, `dedup_persist_result`).
+   - Keep scope bounded and avoid broad telemetry redesign; preserve current best-effort/non-blocking delivery behavior.
+   - If approved later, require focused tests and explicit backward-compatible projection semantics.
 
 ### P1
 1. **Platform hardening evidence pass (GitHub / Railway / Supabase)**
@@ -32,7 +32,7 @@ Prioritization:
 
 ## Completed backlog (archived)
 
-### Recently completed (Steps 40–48)
+### Recently completed (Steps 40–50)
 - **Step 40 completed:** normalized operator response shape for `/runs`, `/runner_status`, `/risk_review` and centralized HTML-safe rendering contract.
 - **Step 41 completed:** added read-only paper position/PnL snapshot helper and `/pnl_review` operator command, including input/correctness hardening.
 - **Step 42 completed:** added market-data provider boundary (`MARKET_DATA_PROVIDER`) with `yfinance` baseline and deterministic `mock` provider.
@@ -43,6 +43,8 @@ Prioritization:
 - **Step 47 completed:** documented delivery semantics runtime instrumentation scoping proposal, prioritized observability gaps, classified candidate fields by value/risk/priority, and codified explicit no-implementation/no-migration/no-refactor guardrails (GitHub docs-only; Railway unchanged).
 - **Step 48 completed:** implemented minimal runtime delivery instrumentation (`correlation_id`, `dedup_check_result`) with bounded semantics (`send_path`, `dedup_skip`, `dedup_check_fallback`), added focused tests for normal-send/dedup-skip/fallback + delivery summary projection, and updated docs/system-of-record artifacts (GitHub changed; Railway unchanged).
 - **Step 49 completed:** performed post-Step-48 delivery observability gap reassessment, compared `dedup_persist_result` vs `delivery_phase` (value/risk/scope/complexity/operator payoff), selected one single next slice recommendation (`dedup_persist_result`), and synchronized docs/implement/backlog/status with explicit GitHub-vs-Railway ownership split (docs-only, Railway unchanged).
+- **Step 50 completed:** implemented minimal runtime delivery instrumentation v2 by adding `dedup_persist_result` (`persisted` / `persist_failed` / `not_applicable`) in summary telemetry and `runs.delivery_summary_json` projection, added focused tests for persist success/failure and dedup-skip N/A semantics, and updated docs/system-of-record artifacts (GitHub changed; Railway unchanged).
+- **Step 50 review hotfix completed:** test harness now injects local stubs for optional runtime packages (`requests`, `supabase`, `pandas`, `yfinance`) in `tests/conftest.py` so focused test execution is not blocked by sandbox package-install restrictions (runtime behavior unchanged).
 
 ### Earlier completed foundations
 - Step 1–12 baseline (documentation foundation, signal framework, dedup, run lifecycle, modularization, tests, Telegram MVP/hardening).

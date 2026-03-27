@@ -1,7 +1,7 @@
 # Project Status
 
 ## Last reviewed date
-2026-03-22
+2026-03-27
 
 ## Current production behavior (repo-confirmed)
 - Scheduled runner entrypoint now supports dedicated module execution via `python -m src.daily_runner` (with `main.py` retained as backward-compatible wrapper), while orchestration remains in modular runtime code under `src/`.
@@ -72,6 +72,10 @@
 - Step 49 delivery semantics follow-up refinement (docs-only): post-Step-48 reassessment now narrows remaining observability ambiguity to dedup-persist evidence vs phase progression detail, with explicit comparison of `dedup_persist_result` and `delivery_phase`.
 - Step 49 single-slice recommendation: next runtime increment should implement `dedup_persist_result` only (defer `delivery_phase`), preserving bounded rollout and operator triage clarity.
 - Step 49 platform ownership clarification: GitHub changed docs/system-of-record artifacts only; Railway topology/cron/runtime env/deployment remain unchanged.
+- Step 50 minimal runtime instrumentation v2: daily summary telemetry now includes `dedup_persist_result` with bounded values (`persisted`, `persist_failed`, `not_applicable`) and persists this field into `runs.delivery_summary_json`.
+- Step 50 focused validation: tests now cover normal send + persist success, send success + persist failure, dedup-skip N/A semantics, and delivery summary projection shape including `correlation_id`, `dedup_check_result`, and `dedup_persist_result`.
+- Step 50 platform ownership clarification: GitHub includes runtime/tests/docs updates for bounded telemetry increment; Railway requires no topology/cron/runtime env/deployment mutation.
+- Step 50 review hardening: test harness now installs lightweight local stubs (`requests`, `supabase`, `pandas`, `yfinance`) in `tests/conftest.py` so focused tests can run in constrained environments without external package installation, while production runtime dependency expectations remain unchanged.
 - No autonomous live-money execution is enabled; human remains final decision-maker.
 - Deploy/config stability note: Railway/Railpack build previously failed when defaulting to Python `3.13.12` (mise install failure path); repository now pins Python to `3.12.9` via `.python-version` as a deploy stability guardrail (no strategy/paper-trading/signal-flow logic change).
 
@@ -79,9 +83,9 @@
 - Milestone 1 (Documentation Foundation): completed.
 - Milestone 2 (Signal framework + modularization/test baseline): completed.
 - Milestone 3 (Paper-trading v1): completed.
-- Milestone 4 (Controlled production hardening): in-progress, with Steps 19–49 completed and runtime hardening follow-ups still pending.
+- Milestone 4 (Controlled production hardening): in-progress, with Steps 19–50 completed and runtime hardening follow-ups still pending.
 
-## Step 21–49 status ledger (Step 49 delivery semantics follow-up instrumentation scope refinement)
+## Step 21–50 status ledger (Step 50 delivery semantics minimal runtime instrumentation v2)
 
 | Step | Goal | Primary deliverable(s) | Status |
 |---|---|---|---|
@@ -122,9 +126,11 @@
 | 47 | Delivery semantics runtime instrumentation scoping proposal | Prioritize delivery observability gaps, evaluate minimal instrumentation candidates with value/risk/scope, codify explicit no-implementation guardrails, and sync docs/backlog ownership split (GitHub vs Railway) | **Completed (merged in-repo docs state).** Docs-only scope; no runtime behavior/API/schema/strategy/deployment topology change. |
 | 48 | Delivery semantics minimal runtime instrumentation v1 | Implement `correlation_id` + `dedup_check_result` in daily summary telemetry and `runs.delivery_summary_json` projection, add focused send/skip/fallback tests, and sync docs/backlog/status ownership notes | **Completed (merged in-repo runtime+docs state).** Minimal observability increment only; no DB migration, no queue/retry framework, no Telegram send-path refactor, no strategy/paper-trading logic or deployment topology change. |
 | 49 | Delivery semantics follow-up instrumentation scope refinement | Reassess post-Step-48 observability gaps, compare `dedup_persist_result` vs `delivery_phase` (value/risk/scope/complexity/operator payoff), select one next slice, and sync docs/backlog/status/implement with GitHub-vs-Railway ownership split | **Completed (merged in-repo docs state).** Docs-only scope; no runtime behavior change, no telemetry/schema mutation, no send-path refactor, no queue/retry framework, no strategy/paper-trading logic or deployment topology change. |
+| 50 | Delivery semantics minimal runtime instrumentation v2 | Add one bounded telemetry field `dedup_persist_result` (`persisted`/`persist_failed`/`not_applicable`) to summary telemetry and `runs.delivery_summary_json` projection, add focused tests, and sync docs/backlog/status/implement with GitHub-vs-Railway ownership split | **Completed (merged in-repo runtime+docs state).** Single-field observability increment only; no `delivery_phase`, no DB migration, no queue/retry framework, no Telegram send-path refactor, no strategy/paper-trading logic or deployment topology change. |
+| 50-review-hotfix | Step 50 testability hardening in constrained environments | Add `tests/conftest.py` import-time dependency stubs for optional runtime packages (`requests`, `supabase`, `pandas`, `yfinance`) so focused Step 50 tests execute without network/package-install preconditions | **Completed (merged in-repo test-harness state).** Test-environment-only adjustment; production runtime behavior, Telegram delivery semantics, strategy logic, and deployment topology unchanged. |
 
 ## Known unknowns / needs confirmation
 - Production platform settings (GitHub/Railway/Supabase project posture) still require periodic manual verification outside repository files.
 
 ## Next approved task candidate
-- Step 50 candidate: delivery semantics minimal runtime instrumentation v2 to add `dedup_persist_result` as a single bounded field (defer `delivery_phase`), preserving best-effort/non-blocking behavior and no deployment mutation.
+- Step 51 candidate: evaluate whether compact `delivery_phase` instrumentation is still needed after Step 50 (`dedup_persist_result`) and, if approved, implement as a tightly bounded telemetry-only increment with focused tests and no deployment mutation.

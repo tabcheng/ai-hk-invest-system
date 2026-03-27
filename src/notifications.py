@@ -383,6 +383,7 @@ def send_daily_run_summary_with_telemetry(
         else f"daily-summary-{run_date.isoformat()}"
     )
     dedup_check_result = "send_path"
+    dedup_persist_result = "not_applicable"
 
     # Daily summary delivery is a single message-level attempt per run.
     # Telemetry must reflect attempt-level truth, not ticker-level fan-out.
@@ -394,6 +395,7 @@ def send_daily_run_summary_with_telemetry(
         "message_type": DAILY_SUMMARY_MESSAGE_TYPE,
         "correlation_id": correlation_id,
         "dedup_check_result": dedup_check_result,
+        "dedup_persist_result": dedup_persist_result,
         "telegram_message_id": None,
         "failure_reason": None,
         "skip_reason": None,
@@ -453,13 +455,16 @@ def send_daily_run_summary_with_telemetry(
     if sent and client is not None and target:
         try:
             _record_daily_summary_sent(client, run_date, target, run_id)
+            dedup_persist_result = "persisted"
         except Exception as exc:
             print(f"Could not persist notification dedup marker: {exc}")
+            dedup_persist_result = "persist_failed"
 
     telemetry = dict(base_telemetry)
     telemetry["attempted"] = True
     telemetry["success"] = sent
     telemetry["dedup_check_result"] = dedup_check_result
+    telemetry["dedup_persist_result"] = dedup_persist_result
     telemetry["telegram_message_id"] = send_result.get("telegram_message_id")
     telemetry["failure_reason"] = send_result.get("failure_reason")
     telemetry["context"] = {

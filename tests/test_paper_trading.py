@@ -1200,3 +1200,68 @@ def test_get_paper_trade_outcome_summary_skips_malformed_trade_dates():
     assert summary["closed_trade_count"] == 1
     assert summary["win_count"] == 1
     assert summary["median_holding_days"] == 1.0
+
+
+def test_get_paper_trade_outcome_summary_filters_by_recent_days_window():
+    class Result:
+        def __init__(self, data):
+            self.data = data
+
+    class Query:
+        def select(self, _columns):
+            return self
+
+        def order(self, *_args, **_kwargs):
+            return self
+
+        def execute(self):
+            return Result(
+                [
+                    {"stock": "0005.HK", "action": "BUY", "quantity": 100, "realized_pnl": 0.0, "trade_date": "2026-03-10", "id": 1},
+                    {"stock": "0005.HK", "action": "SELL", "quantity": 100, "realized_pnl": 100.0, "trade_date": "2026-03-11", "id": 2},
+                    {"stock": "0700.HK", "action": "BUY", "quantity": 100, "realized_pnl": 0.0, "trade_date": "2026-03-20", "id": 3},
+                    {"stock": "0700.HK", "action": "SELL", "quantity": 100, "realized_pnl": -30.0, "trade_date": "2026-03-22", "id": 4},
+                ]
+            )
+
+    class Client:
+        def table(self, _table_name):
+            return Query()
+
+    summary = get_paper_trade_outcome_summary(Client(), recent_days=3)
+    assert summary["window_days"] == 3
+    assert summary["closed_trade_count"] == 1
+    assert summary["win_count"] == 0
+    assert summary["loss_count"] == 1
+    assert summary["top_realized_losers"] == [{"stock": "0700.HK", "realized_pnl": -30.0}]
+
+
+def test_get_paper_trade_outcome_summary_window_keeps_cross_boundary_pairing():
+    class Result:
+        def __init__(self, data):
+            self.data = data
+
+    class Query:
+        def select(self, _columns):
+            return self
+
+        def order(self, *_args, **_kwargs):
+            return self
+
+        def execute(self):
+            return Result(
+                [
+                    {"stock": "0005.HK", "action": "BUY", "quantity": 100, "realized_pnl": 0.0, "trade_date": "2026-03-01", "id": 1},
+                    {"stock": "0005.HK", "action": "SELL", "quantity": 100, "realized_pnl": 90.0, "trade_date": "2026-03-22", "id": 2},
+                ]
+            )
+
+    class Client:
+        def table(self, _table_name):
+            return Query()
+
+    summary = get_paper_trade_outcome_summary(Client(), recent_days=3)
+    assert summary["closed_trade_count"] == 1
+    assert summary["win_count"] == 1
+    assert summary["loss_count"] == 0
+    assert summary["top_realized_winners"] == [{"stock": "0005.HK", "realized_pnl": 90.0}]

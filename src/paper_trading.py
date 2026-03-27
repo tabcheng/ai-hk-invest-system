@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from collections import defaultdict
 from dataclasses import dataclass
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 from math import ceil, floor
 
 from supabase import Client
@@ -752,7 +752,9 @@ def _parse_trade_date(value: object) -> date | None:
         return None
 
 
-def get_paper_trade_outcome_summary(client: Client, *, top_n: int = 5) -> dict:
+def get_paper_trade_outcome_summary(
+    client: Client, *, top_n: int = 5, recent_days: int | None = None
+) -> dict:
     """
     Build a read-only deterministic closed-paper-trade outcome summary.
 
@@ -771,6 +773,8 @@ def get_paper_trade_outcome_summary(client: Client, *, top_n: int = 5) -> dict:
 
     buy_lots_by_ticker: dict[str, list[dict]] = defaultdict(list)
     closed_trade_rows: list[dict] = []
+    valid_trade_days = [_parse_trade_date(row.get("trade_date")) for row in trade_rows]
+    latest_trade_day = max((day for day in valid_trade_days if day is not None), default=None)
 
     for row in trade_rows:
         ticker = str(row.get("stock") or "").strip()
@@ -827,6 +831,20 @@ def get_paper_trade_outcome_summary(client: Client, *, top_n: int = 5) -> dict:
             if int(lot["remaining_qty"]) <= 0:
                 lots.pop(0)
 
+    if recent_days is not None and latest_trade_day is not None:
+        # Windowing is applied after deterministic BUY/SELL pairing so exits in
+        # the selected window still keep their true entry linkage even when the
+        # corresponding BUY occurred before window start.
+        window_start_day = latest_trade_day - timedelta(days=recent_days - 1)
+        closed_trade_rows = [
+            row
+            for row in closed_trade_rows
+            if _parse_trade_date(row.get("exit_date")) is not None
+            and _parse_trade_date(row.get("exit_date")) >= window_start_day
+        ]
+    elif recent_days is not None and latest_trade_day is None:
+        closed_trade_rows = []
+
     closed_trade_count = len(closed_trade_rows)
     holding_days_values = [int(row["holding_days"]) for row in closed_trade_rows]
     outcome_epsilon = 1e-9
@@ -860,6 +878,10 @@ def get_paper_trade_outcome_summary(client: Client, *, top_n: int = 5) -> dict:
 
     win_rate = float(win_count / closed_trade_count) if closed_trade_count > 0 else None
     return {
+        "window_days": recent_days,
+        "window_basis": (
+            "exit trade_date of paired closed trades; window anchored to latest available trade_date in snapshot"
+        ),
         "closed_trade_count": closed_trade_count,
         "win_count": win_count,
         "loss_count": loss_count,

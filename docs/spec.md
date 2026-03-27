@@ -276,3 +276,36 @@ Required limitation statements in docs:
 ### Platform ownership for this step
 - **GitHub (changed in Step 55):** bounded helper/service logic, focused tests, operator command wiring, and docs synchronization.
 - **Railway (no change in Step 55):** no service split, cron, env-variable contract, webhook topology, or deployment-process change required.
+
+## Outcome review windowing + runbook alignment (Step 56, bounded runtime slice)
+### Implemented review-surface increment (minimal grammar)
+- `/outcome_review` keeps existing default behavior (all available rows in current snapshot).
+- `/outcome_review <days>` adds an optional bounded integer review window.
+
+### Window contract (deterministic, read-only)
+- Window anchor is the latest available `paper_trades.trade_date` in the fetched snapshot.
+- Closed-trade inclusion basis is paired exit `trade_date` (`SELL` side of each deterministic closed trade).
+- When `<days>` is provided, include closed trades where `exit trade_date >= anchor - (days - 1)`.
+- Pairing contract remains unchanged: deterministic BUY/SELL replay by `trade_date`, then `id`, with FIFO lot matching per ticker.
+
+### Input validation contract
+- Accepted `<days>` range: `1..365` (inclusive).
+- Non-integer token returns explicit usage error.
+- Out-of-range integer returns explicit bounded-range usage error.
+
+### Output wording continuity requirements
+- Keep denominator-safe wording (`win_count / closed_trade_count`) unchanged.
+- Keep explicit empty-window wording (`no closed paper trades in review window`) unchanged under window filter.
+- Keep review boundary note (`review/diagnostic only; paper-trading decision support only`) unchanged.
+
+### Step 56 explicit non-goals preserved
+- No analytics-type expansion.
+- No attribution redesign.
+- No benchmark/regime overlays.
+- No DB schema migration.
+- No Telegram command-registration changes.
+- No Railway deployment topology changes.
+
+### Platform ownership for this step
+- **GitHub (changed in Step 56):** bounded command parsing, read-only window filter wiring, focused tests, and docs wording alignment.
+- **Railway (no change in Step 56):** no service split/cron/env/webhook/deployment-process mutation required.

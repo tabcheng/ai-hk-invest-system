@@ -106,6 +106,13 @@
 - Step 55 Post-merge QA Check: pass — focused tests cover empty-window/no-closed-trades, deterministic pairing/order, flat handling, denominator-safe win-rate behavior, and top-contributor tie-break stability.
 - Step 55 Post-merge Domain Check: pass — AI HK investing-system alignment and paper-trading-only boundary preserved; interpretation-risk remains documented and output avoids causal/automation claims.
 - Step 55 review hotfix: outcome summary date parsing now defensively skips malformed `trade_date` rows instead of failing the whole review path; percentile rank calculation now uses explicit `ceil(...)` nearest-rank math for readability without behavior expansion.
+- Step 56 outcome review windowing increment: `/outcome_review` now supports minimal optional bounded grammar (`/outcome_review <days>`) while preserving no-argument default behavior.
+- Step 56 deterministic window contract: optional window filter is read-only, anchored to latest available `paper_trades.trade_date` in the fetched snapshot, and applied on paired closed-trade exit `trade_date` so cross-boundary entry lots remain correctly paired.
+- Step 56 wording/guardrail continuity: empty-window wording, denominator-safe formula labeling, and review-boundary note are preserved under windowed and non-windowed paths.
+- Step 56 docs/help/runbook alignment: operator help text now documents `/outcome_review [days]`, Telegram troubleshooting runbook adds quick usage/window-basis note, and spec/backlog/status wording is synchronized for bounded scope with unchanged analytics/pairing contracts.
+- Step 56 platform ownership clarification: GitHub changed bounded command parsing/filtering/tests/docs only; Railway service topology/cron/env/webhook/deployment process remains unchanged.
+- Step 56 Post-merge QA Check: pass — focused tests cover no-argument default path, valid window success path, invalid token handling, out-of-range window handling, empty-window wording under window metadata, and help text synchronization.
+- Step 56 Post-merge Domain Check: pass — AI HK investing-system decision-support boundary preserved; no analytics-scope expansion, no pairing-contract mutation, no autonomous execution semantics introduced.
 - Step 54 Post-merge QA Check (docs-only scope): pass — scope remains documentation-only, output contract/rubric wording is explicit, and system-of-record docs stay aligned with no runtime behavior mutation.
 - Step 54 Post-merge Domain Check (docs-only scope): pass — AI HK investing-system alignment and paper-trading/decision-support-only boundary remain intact; interpretation-risk and limitation statements are explicitly recorded.
 - No autonomous live-money execution is enabled; human remains final decision-maker.
@@ -115,9 +122,9 @@
 - Milestone 1 (Documentation Foundation): completed.
 - Milestone 2 (Signal framework + modularization/test baseline): completed.
 - Milestone 3 (Paper-trading v1): completed.
-- Milestone 4 (Controlled production hardening): in-progress, with Steps 19–54 completed and runtime hardening follow-ups still pending.
+- Milestone 4 (Controlled production hardening): in-progress, with Steps 19–56 completed and runtime hardening follow-ups still pending.
 
-## Step 21–55 status ledger (Step 55 paper-trade outcome summary implementation)
+## Step 21–56 status ledger (Step 56 outcome review windowing + runbook alignment)
 
 | Step | Goal | Primary deliverable(s) | Status |
 |---|---|---|---|
@@ -167,9 +174,10 @@
 | 54-review-hardening | Paper-trading analytics scoping rubric precision pass | Tighten metric-definition contract (denominator clarity, flat outcome handling, ranking basis/tie-break, simplified pairing limitation wording) to reduce future implementation ambiguity | **Completed (merged in-repo docs state).** Docs-only wording hardening; no runtime/API/schema/strategy/paper-trading/deployment topology change. |
 | 55 | Paper-trade outcome summary implementation (bounded) | Implement read-only closed-trade outcome summary helper + `/outcome_review` operator surface with deterministic pairing/order, empty-window + denominator-safe wording, stable top-contributor tie-break, and focused tests | **Completed (merged in-repo runtime+docs state).** Bounded analytics/review increment only; no DB migration, no strategy-rule change, no attribution redesign, no real-money execution path, no deployment topology change. |
 | 55-review-hotfix | Step 55 robustness/readability hardening | Defensive `trade_date` parsing skip for malformed historical rows + explicit nearest-rank percentile math (`ceil`) + focused malformed-date test coverage | **Completed (merged in-repo runtime+docs state).** Read-only analytics hardening only; no schema/deployment/strategy/real-money behavior change. |
+| 56 | Outcome review windowing + runbook alignment (bounded) | Add minimal `/outcome_review <days>` optional windowing with bounded integer validation, deterministic `trade_date` window filtering, focused tests, and help/spec/status/backlog wording sync | **Completed (merged in-repo runtime+docs state).** Bounded read-only review enhancement only; no analytics-scope expansion, no pairing-contract change, no schema/deployment topology change. |
 
 ## Known unknowns / needs confirmation
 - Production platform settings (GitHub/Railway/Supabase project posture) still require periodic manual verification outside repository files.
 
 ## Next approved task candidate
-- Step 56 candidate: evaluate bounded `/outcome_review` optional windowing and operator runbook alignment without expanding analytics scope or changing deployment topology.
+- Step 57 candidate: evaluate docs-first operator examples/telemetry wording refinements for `/outcome_review` window metadata without expanding analytics scope or changing deployment topology.

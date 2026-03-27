@@ -10,6 +10,11 @@ Use this checklist in order. Stop when you find the answer.
 
 For a quick outcome-to-action map, see `docs/operator-quick-reference-telegram-outcomes.md`.
 
+Operator command quick check (read-only):
+- `/outcome_review` → full closed-trade outcome snapshot in current data view.
+- `/outcome_review <days>` → bounded window view (integer days, 1..365).
+- Window basis: paired closed-trade exit `trade_date`, with window anchor on the latest available `paper_trades.trade_date` in the fetched snapshot.
+
 ---
 
 ## Quick outcomes (what happened?)

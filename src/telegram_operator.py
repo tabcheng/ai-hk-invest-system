@@ -14,11 +14,13 @@ _RUNS_COMMAND_PATTERN = re.compile(r"^/runs(?:\s+(\d+)d)?\s*$", re.IGNORECASE)
 _RISK_REVIEW_COMMAND_PATTERN = re.compile(r"^/risk_review(?:\s+(\S+))?\s*$", re.IGNORECASE)
 _RUNNER_STATUS_COMMAND_PATTERN = re.compile(r"^/runner_status\s*$", re.IGNORECASE)
 _PNL_REVIEW_COMMAND_PATTERN = re.compile(r"^/pnl_review\s*$", re.IGNORECASE)
-_OUTCOME_REVIEW_COMMAND_PATTERN = re.compile(r"^/outcome_review\s*$", re.IGNORECASE)
+_OUTCOME_REVIEW_COMMAND_PATTERN = re.compile(r"^/outcome_review(?:\s+(\S+))?\s*$", re.IGNORECASE)
 _HELP_COMMAND_PATTERN = re.compile(r"^/(?:help|h)\s*$", re.IGNORECASE)
 _DEFAULT_DAYS = 5
 _MAX_DAYS = 30
 _DEFAULT_LIMIT = 50
+_OUTCOME_REVIEW_MIN_DAYS = 1
+_OUTCOME_REVIEW_MAX_DAYS = 365
 _HKT_TZ = ZoneInfo("Asia/Hong_Kong")
 
 
@@ -121,10 +123,33 @@ def _parse_pnl_review_command(command_text: str) -> None:
         raise ValueError("Unsupported command. Use /pnl_review with no extra arguments.")
 
 
-def _parse_outcome_review_command(command_text: str) -> None:
-    """Validate `/outcome_review` with no extra tokens."""
-    if not _OUTCOME_REVIEW_COMMAND_PATTERN.match(command_text or ""):
-        raise ValueError("Unsupported command. Use /outcome_review with no extra arguments.")
+def _parse_outcome_review_command(command_text: str) -> int | None:
+    """
+    Parse `/outcome_review` with optional bounded integer days window.
+
+    Grammar:
+    - /outcome_review
+    - /outcome_review <days>
+    """
+    match = _OUTCOME_REVIEW_COMMAND_PATTERN.match(command_text or "")
+    if not match:
+        raise ValueError(
+            "Unsupported command. Use /outcome_review or /outcome_review [days], e.g. /outcome_review 30."
+        )
+    days_token = (match.group(1) or "").strip()
+    if not days_token:
+        return None
+    if not days_token.isdigit():
+        raise ValueError(
+            "Invalid days format. Use /outcome_review [days] with integer days, e.g. /outcome_review 30."
+        )
+    days = int(days_token)
+    if days < _OUTCOME_REVIEW_MIN_DAYS or days > _OUTCOME_REVIEW_MAX_DAYS:
+        raise ValueError(
+            f"Days must be between {_OUTCOME_REVIEW_MIN_DAYS} and {_OUTCOME_REVIEW_MAX_DAYS}. "
+            "Example: /outcome_review 30."
+        )
+    return days
 
 
 def _normalize_run_time(row: dict[str, Any]) -> str:
@@ -295,7 +320,7 @@ def build_help_command_message() -> str:
             "- /runner_status : Show latest daily runner execution summary (最新 runner 狀態摘要).",
             "- /risk_review [run_id] : Run paper-trading risk review for one run (查看單次 run 風險回顧).",
             "- /pnl_review : Show paper position/PnL review snapshot (查看持倉與盈虧摘要).",
-            "- /outcome_review : Show closed-trade outcome summary (查看平倉結果摘要).",
+            "- /outcome_review [days] : Show closed-trade outcome summary (查看平倉結果摘要，可選天數視窗).",
             "- /help : Show this operator usage guide (顯示操作說明).",
             "- /h : Alias of /help (與 /help 相同).",
         ]
@@ -426,11 +451,11 @@ def _build_pnl_review_command_message(snapshot: dict[str, Any]) -> str:
     )
 
 
-def _get_paper_trade_outcome_summary(client: Any) -> dict[str, Any]:
+def _get_paper_trade_outcome_summary(client: Any, *, recent_days: int | None = None) -> dict[str, Any]:
     """Lazy-load closed-trade outcome summary dependency for command isolation."""
     from src.paper_trading import get_paper_trade_outcome_summary
 
-    return get_paper_trade_outcome_summary(client)
+    return get_paper_trade_outcome_summary(client, recent_days=recent_days)
 
 
 def _build_outcome_review_command_message(summary: dict[str, Any]) -> str:
@@ -442,6 +467,14 @@ def _build_outcome_review_command_message(summary: dict[str, Any]) -> str:
     win_rate_text = "N/A (closed_trade_count=0)" if win_rate is None else f"{round(float(win_rate) * 100, 2)}%"
 
     fields: list[tuple[str, Any]] = [
+        ("window_days", summary.get("window_days") or "all"),
+        (
+            "window_basis",
+            str(
+                summary.get("window_basis")
+                or "exit trade_date of paired closed trades; window anchored to latest available trade_date in snapshot"
+            ),
+        ),
         ("closed_trade_count", closed_trade_count),
         ("win_count", int(summary.get("win_count") or 0)),
         ("loss_count", int(summary.get("loss_count") or 0)),
@@ -594,11 +627,11 @@ def handle_telegram_operator_command(client: Any, update: dict[str, Any]) -> str
 
         if is_outcome_review_command:
             try:
-                _parse_outcome_review_command(text)
+                outcome_review_days = _parse_outcome_review_command(text)
             except ValueError as exc:
                 return _build_usage_error_message(command_label="/outcome_review", error_text=str(exc))
             try:
-                summary = _get_paper_trade_outcome_summary(client)
+                summary = _get_paper_trade_outcome_summary(client, recent_days=outcome_review_days)
             except Exception as exc:
                 print(
                     "Telegram /outcome_review execution failed: "

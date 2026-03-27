@@ -8,9 +8,10 @@ Prioritization:
 ## Active backlog (pending)
 
 ### P0
-1. **Step 54 candidate — Paper-trading analytics follow-up scoping**
-   - Define one minimal analytics increment (metrics + dependencies + validation rubric) without broad implementation.
-   - Keep runtime behavior unchanged and preserve decision-support/paper-trading boundary.
+1. **Step 55 candidate — Paper-trade outcome summary implementation (bounded)**
+   - Implement the Step 54-scoped minimal analytics slice: closed-trade `win/loss + holding-period` summary.
+   - Keep scope read-only and deterministic; no strategy change, no deployment/runtime topology change.
+   - Include focused tests for empty-window handling, deterministic pairing/order, and denominator-safe metrics wording.
 
 ### P1
 1. **Telegram command registration follow-up (optional)**
@@ -26,14 +27,20 @@ Prioritization:
    - Define a lightweight recurring manual verification cadence (for example monthly/after critical config changes) and where to store dated evidence snapshots/screenshots.
    - Keep this as documentation/process hardening first; do not trigger infra refactor or runtime topology changes without a separate approved step.
 
+4. **Decision-to-outcome attribution linkage follow-up (analytics)**
+   - Evaluate a bounded linkage model between `paper_trade_decisions` records and subsequent closed-trade outcomes.
+   - Keep this as a follow-up design/implementation candidate only after Step 55 confirms baseline utility.
+   - Preserve decision-support guardrails; do not introduce autonomous execution semantics.
+
 ### P2
 - Expand deterministic replay/integration fixtures for multi-day paper-trading scenarios.
 - Improve failure-path coverage for DB/notification/run-finalization edge cases.
 - Track lightweight runtime health metrics (duration, per-ticker latency, failure ratio) in a scoped step.
+- Add market-relative/context overlays for analytics interpretation (for example benchmark comparison or regime tags) only after baseline outcome summary is stable.
 
 ## Completed backlog (archived)
 
-### Recently completed (Steps 40–53)
+### Recently completed (Steps 40–54)
 - **Step 40 completed:** normalized operator response shape for `/runs`, `/runner_status`, `/risk_review` and centralized HTML-safe rendering contract.
 - **Step 41 completed:** added read-only paper position/PnL snapshot helper and `/pnl_review` operator command, including input/correctness hardening.
 - **Step 42 completed:** added market-data provider boundary (`MARKET_DATA_PROVIDER`) with `yfinance` baseline and deterministic `mock` provider.
@@ -49,6 +56,8 @@ Prioritization:
 - **Step 51 completed (docs-only):** formalized mandatory post-merge dual acceptance workflow (`Post-merge QA Check` + `Post-merge Domain Check`), codified blocker vs backlog-follow-up triage, and normalized wording discipline so `docs/status.md` is merge/acceptance truth while `docs/backlog.md` tracks only pending follow-ups.
 - **Step 52 completed:** fixed test-harness pandas stub coverage so market-data/signals tests have required fallback API surface only when pandas is unavailable.
 - **Step 53 completed (docs-only):** delivered a minimal platform hardening evidence pass summary/checklist for GitHub/Railway/Supabase with explicit `repo-confirmed` vs `manual verification required` vs `backlog follow-up` separation, and synced status/project-plan records without runtime/deployment topology changes.
+- **Step 54 completed (docs-only):** scoped one minimal paper-trading analytics increment (`win/loss and holding-period summary` for closed paper trades), documented operator questions/data dependencies/sufficiency gaps, and defined validation rubric + interpretation-risk/limitation guardrails without implementation/runtime changes.
+- **Step 54 review hardening completed (docs-only):** tightened metric-definition precision (`flat_count`, `win_rate` denominator/N/A handling, deterministic ranking basis/tie-break, simplified pairing limitation wording) so Step 55 implementation can stay bounded and less ambiguous.
 
 ### Earlier completed foundations
 - Step 1–12 baseline (documentation foundation, signal framework, dedup, run lifecycle, modularization, tests, Telegram MVP/hardening).

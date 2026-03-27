@@ -159,3 +159,81 @@ Build a long-horizon AI-assisted Hong Kong stock investing system with disciplin
 ### Platform ownership for this step
 - **GitHub (changed in Step 50):** runtime code + focused tests + docs/backlog/status/system-of-record updates for `dedup_persist_result`.
 - **Railway (no change in Step 50):** no service topology, cron, runtime env var, webhook, or deployment-process modification is required.
+
+## Paper-trading analytics follow-up scoping (Step 54, docs-only)
+### Selected minimal increment
+- **Increment chosen:** `win/loss and holding-period summary` for **closed paper trades only**.
+- **Reason for selection:** this slice is directly useful for strategy performance review, can be computed from existing persisted paper-trading records, and stays within a minimal docs-first scope without changing runtime behavior.
+
+### Operator/reviewer questions this increment answers
+1. For already-closed paper trades, how often did outcomes finish positive vs negative?
+2. What is the typical holding period before exits (median/p50, p75, max)?
+3. Which symbols contribute the largest realized wins/losses in the review window?
+4. Is current observed outcome quality concentrated in a few names or broadly distributed?
+
+### Current-feasible-now data dependencies
+Primary dependency (sufficient for the minimal increment):
+- `paper_trades`
+  - `stock`, `action`, `trade_date`, `quantity`, `price`, `realized_pnl`, `run_id`, `id`.
+  - Use BUY/SELL replay pairing per ticker with deterministic ordering (`trade_date`, then `id`) to derive closed-trade outcomes and holding days.
+
+Optional context join (not required for minimal metric computation):
+- `paper_trade_decisions`
+  - `run_id`, `stock_id`, `signal_action`, `human_decision`, `paper_trade_status`, `created_at`.
+  - Can annotate review slices later, but **not required** for Step 54 minimal output.
+
+Already sufficient now:
+- Closed-trade realized PnL and action chronology are available from `paper_trades`.
+- Deterministic replay ordering contract already exists in current paper-trading review logic.
+
+Insufficient now (explicitly deferred as future follow-up, no scope expansion in this step):
+- No explicit benchmark/alpha context (cannot conclude market-relative skill).
+- No transaction-cost stress scenarios beyond current deterministic fee model.
+- No dedicated lifecycle linkage between specific decision-ledger rows and eventual closed-trade outcomes for full decision-to-outcome attribution.
+- No regime labeling (trend/range/high-volatility buckets) for context-specific interpretation.
+
+### Minimal metric definitions (for future implementation contract)
+- **Review scope:** closed trades only (open positions are excluded from win/loss and holding-period denominator).
+- **Closed-trade unit:** one completed round-trip derived from deterministic BUY->SELL pairing in replay order (`trade_date`, then `id`) within each ticker stream.
+- **Core metrics:**
+  - `closed_trade_count`: number of paired closed trades in window.
+  - `win_count`: number of closed trades with `realized_pnl > 0`.
+  - `loss_count`: number of closed trades with `realized_pnl < 0`.
+  - `flat_count`: number of closed trades with `realized_pnl == 0` (must be shown explicitly to avoid denominator ambiguity).
+  - `win_rate`: `win_count / closed_trade_count` (when `closed_trade_count > 0`; else report `N/A`).
+  - `median_holding_days`: median calendar-day span from entry BUY date to exit SELL date for each closed trade.
+  - `p75_holding_days`, `max_holding_days`: distribution context for tail risk/readability.
+- **Top contributors view (bounded):**
+  - Top realized winners/losers are ranked by cumulative realized PnL contribution in the selected window, with explicit count limit (for example top 5 each side).
+
+### Validation rubric (docs-only acceptance target for future implementation step)
+Usefulness validation:
+1. Operator can answer win/loss ratio and median holding period for a selected review window without manual ledger reconstruction.
+2. Output includes at least: `closed_trade_count`, `win_count`, `loss_count`, `win_rate`, `median_holding_days`, and top realized winners/losers.
+3. Results are deterministic for the same database snapshot (stable ordering + stable pairing contract).
+
+Output clarity validation:
+- All percentages and counts use explicit denominator labels (for example `win_rate = win_count / closed_trade_count`).
+- Empty-window behavior is explicit (`closed_trade_count=0` with clear “no closed trades in window” wording).
+- Date window/timezone basis is explicitly stated in output docs (storage UTC semantics, review display semantics noted).
+- Output includes explicit note that `flat_count` exists and why `win_count + loss_count` may be smaller than `closed_trade_count`.
+- Top winners/losers section states ranking basis (`realized_pnl`) and tie-break policy (stable deterministic ordering).
+
+Interpretation-risk reminders required in operator-facing docs:
+- Win rate alone is insufficient; must be read together with payoff magnitude and holding-period distribution.
+- Small sample windows are unstable and can be misleading.
+- Results are paper-trading evidence, not proof of live-trading profitability.
+- Concentrated gains/losses in a few symbols can distort aggregate conclusions.
+
+Required limitation statements in docs:
+- This increment is review/diagnostic only and must not alter strategy decisions or execution behavior.
+- No real-money execution or recommendation automation is introduced.
+- No causal claim is made between AI signal quality and realized outcomes without broader attribution controls.
+- Round-trip pairing is a simplified review model and should not be interpreted as tax/accounting-grade lot matching.
+
+### Step 54 non-goals (explicit)
+- No strategy rule changes.
+- No real-money execution path changes.
+- No large analytics implementation in this step.
+- No deployment topology/runtime behavior changes.
+- No Telegram wording backlog changes mixed into this scope.

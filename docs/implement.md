@@ -18,12 +18,20 @@ Provide a consistent execution workflow for long-horizon Codex contributions.
 3. Implement only the scoped change for that task.
 4. Run validation checks defined in `docs/plans.md`.
 5. If any validation fails, stop and repair before taking new scope.
-6. After merge, execute dual acceptance checks and record outcomes:
+6. Commit with a clear milestone/task summary.
+
+## Post-merge acceptance workflow
+1. After merge, execute dual acceptance checks and record outcomes:
    - **Post-merge QA Check** (output/function behavior, success+error path clarity, display/docs/tests consistency).
    - **Post-merge Domain Check** (AI HK investing-system alignment, paper-trading/decision-support boundary, calculation/interpretation risk).
-7. Update `docs/status.md` with what was completed, acceptance outcomes, blocker/backlog classification, and the next approved task.
-   - Use explicit wording keys to reduce ambiguity: `repo merge completed`, `manual platform acceptance completed`, `docs maintenance follow-up`.
-8. Commit with a clear milestone/task summary.
+2. Update `docs/status.md` with:
+   - merge completion + acceptance outcomes,
+   - blocker/backlog classification,
+   - next approved task.
+3. Use explicit wording keys to reduce ambiguity:
+   - `repo merge completed`,
+   - `manual platform acceptance completed`,
+   - `docs maintenance follow-up`.
 
 ## Step 15 implementation note (structured observability JSON)
 - Add nullable `runs.error_summary_json` and `runs.delivery_summary_json` via migration.

@@ -97,6 +97,10 @@
 - Step 53 GitHub evidence posture: repo confirms CI workflow (`.github/workflows/tests.yml`) and ownership expectations docs, while branch protection / required reviewers / required status-check enforcement remains manual verification on the GitHub settings UI.
 - Step 53 Railway evidence posture: repo confirms dual-service split, cron baseline (`0 12 * * *` UTC => 20:00 HKT), and env/secret variable documentation; actual service settings and secret values remain manual verification on Railway project/service settings.
 - Step 53 Supabase evidence posture: repo confirms backend-only access-model intent and staged RLS hardening plan documentation, but backup posture, current RLS enablement/policies, and production role/key exposure require manual verification in Supabase dashboard/SQL editor.
+- Step 54 paper-trading analytics follow-up scoping (docs-only): selected one minimal increment (`win/loss and holding-period summary` for closed paper trades), defined operator questions, current-feasible data dependencies, insufficient-data follow-ups, validation rubric, interpretation-risk reminders, and explicit non-goals without runtime/deployment changes.
+- Step 54 review hardening (docs-only): clarified minimal metric formulas/denominators (`flat_count`, `win_rate` N/A handling), deterministic top-contributor ranking basis/tie-break policy, and simplified round-trip pairing limitation wording to reduce analytics interpretation ambiguity.
+- Step 54 Post-merge QA Check (docs-only scope): pass — scope remains documentation-only, output contract/rubric wording is explicit, and system-of-record docs stay aligned with no runtime behavior mutation.
+- Step 54 Post-merge Domain Check (docs-only scope): pass — AI HK investing-system alignment and paper-trading/decision-support-only boundary remain intact; interpretation-risk and limitation statements are explicitly recorded.
 - No autonomous live-money execution is enabled; human remains final decision-maker.
 - Deploy/config stability note: Railway/Railpack build previously failed when defaulting to Python `3.13.12` (mise install failure path); repository now pins Python to `3.12.9` via `.python-version` as a deploy stability guardrail (no strategy/paper-trading/signal-flow logic change).
 
@@ -104,9 +108,9 @@
 - Milestone 1 (Documentation Foundation): completed.
 - Milestone 2 (Signal framework + modularization/test baseline): completed.
 - Milestone 3 (Paper-trading v1): completed.
-- Milestone 4 (Controlled production hardening): in-progress, with Steps 19–53 completed and runtime hardening follow-ups still pending.
+- Milestone 4 (Controlled production hardening): in-progress, with Steps 19–54 completed and runtime hardening follow-ups still pending.
 
-## Step 21–53 status ledger (Step 53 platform hardening evidence pass)
+## Step 21–54 status ledger (Step 54 paper-trading analytics follow-up scoping)
 
 | Step | Goal | Primary deliverable(s) | Status |
 |---|---|---|---|
@@ -152,9 +156,11 @@
 | 51 | Formalize post-merge dual acceptance workflow in docs and status discipline | Update AGENTS/plans/implement/status/backlog/project-plan docs to mandate Post-merge QA + Post-merge Domain checks, define blocker vs backlog-follow-up triage, and codify status-vs-backlog wording roles (`repo merge completed`, `manual platform acceptance completed`, `docs maintenance follow-up`) | **Completed (merged in-repo docs state).** Docs-only governance formalization; no runtime behavior/API/schema/strategy/deployment change. |
 | 52 | Test-harness pandas stub coverage fix for market-data/signals tests | Update `tests/conftest.py` pandas fallback shim to cover required API surface (`date_range`, `DataFrame(...)`, `.empty`, rolling mean, indexing) and only activate when pandas is unavailable | **Completed (merged in-repo test-harness state).** Test-only harness correction; production runtime behavior/API/schema/strategy/paper-trading/deployment topology unchanged. |
 | 53 | Platform hardening evidence pass (GitHub / Railway / Supabase) | Add docs-first evidence summary + manual verification checklist with explicit classification (`repo-confirmed`, `manual verification required`, `backlog follow-up`) and sync status/backlog/project-plan records | **Completed (merged in-repo docs state).** Docs-only evidence refresh; no runtime behavior/API/schema/strategy/paper-trading/deployment topology change. |
+| 54 | Paper-trading analytics follow-up scoping | Define one minimal paper-trading analytics increment (`win/loss and holding-period summary` for closed trades), dependency map, validation rubric, interpretation-risk reminders, and non-goals with docs-first bounded scope | **Completed (merged in-repo docs state).** Docs-only scoping; no runtime behavior/API/schema/strategy/paper-trading/deployment topology change. |
+| 54-review-hardening | Paper-trading analytics scoping rubric precision pass | Tighten metric-definition contract (denominator clarity, flat outcome handling, ranking basis/tie-break, simplified pairing limitation wording) to reduce future implementation ambiguity | **Completed (merged in-repo docs state).** Docs-only wording hardening; no runtime/API/schema/strategy/paper-trading/deployment topology change. |
 
 ## Known unknowns / needs confirmation
 - Production platform settings (GitHub/Railway/Supabase project posture) still require periodic manual verification outside repository files.
 
 ## Next approved task candidate
-- Step 54 candidate: paper-trading analytics follow-up scoping (define one minimal increment + validation rubric) with docs-first bounded scope and no broad implementation.
+- Step 55 candidate: implement a bounded read-only paper-trade outcome summary slice (from Step 54 scope) with focused tests and no strategy/runtime topology change.

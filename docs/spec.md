@@ -309,3 +309,28 @@ Required limitation statements in docs:
 ### Platform ownership for this step
 - **GitHub (changed in Step 56):** bounded command parsing, read-only window filter wiring, focused tests, and docs wording alignment.
 - **Railway (no change in Step 56):** no service split/cron/env/webhook/deployment-process mutation required.
+
+## Operator surface consistency + wording normalization (Step 57, bounded runtime slice)
+### Scope boundary (existing commands only)
+- Reviewed and minimally normalized wording/output consistency for:
+  - `/runs`
+  - `/runner_status`
+  - `/risk_review`
+  - `/pnl_review`
+  - `/outcome_review`
+- No new command, no analytics expansion, no strategy/paper-trading logic mutation, no DB schema change, and no Telegram command-registration change.
+
+### Stock display policy (operator-facing contract)
+- Prefer `stock_name + stock_id` when both are available.
+- Explicit fallback when stock name is unavailable: `stock_id=<id> | name_unavailable`.
+- Never imply stock name exists when source data does not provide it.
+- Keep implementation bounded to existing response rendering paths (no market metadata integration work in this step).
+
+### Wording normalization contract
+- **Usage/invalid input:** normalize to explicit `Usage: ...` plus bounded `Invalid input: ...` reason where applicable.
+- **No-data/empty-window:** normalize around `no matching records ...` phrasing while preserving command-specific context.
+- **Review boundary/denominator safety:** preserve existing outcome-review denominator-safe formula wording and review-boundary statement.
+
+### Platform ownership for this step
+- **GitHub (changed in Step 57):** bounded Telegram operator rendering/parsing wording updates, focused tests, and docs synchronization.
+- **Railway (no change in Step 57):** no topology, cron, env-var contract, webhook routing, or deployment-process change required.

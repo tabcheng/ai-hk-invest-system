@@ -8,9 +8,9 @@ Prioritization:
 ## Active backlog (pending)
 
 ### P0
-1. **Step 57 candidate — Outcome review telemetry/readability follow-up (docs-first scoping)**
-   - Re-evaluate whether `/outcome_review` window metadata wording needs additional operator examples after Step 56 rollout.
-   - Keep analytics scope/pairing contract unchanged unless separately approved.
+1. **Step 58 candidate — Operator runbook examples alignment follow-up (docs-only)**
+   - Re-check whether operator runbooks need compact before/after examples for normalized `/runs`, `/runner_status`, `/risk_review`, `/pnl_review`, `/outcome_review` wording.
+   - Keep runtime behavior unchanged unless separately approved.
 
 ### P1
 1. **Telegram command registration follow-up (optional)**
@@ -60,6 +60,7 @@ Prioritization:
 - **Step 55 completed:** implemented bounded closed-trade outcome summary helper + `/outcome_review` operator surface with deterministic BUY/SELL pairing (`trade_date`, `id`), denominator-safe wording, explicit empty-window behavior, stable top-contributor tie-break, focused tests, and docs sync (GitHub changed; Railway unchanged).
 - **Step 55 review hotfix completed:** hardened outcome review robustness by skipping malformed `trade_date` rows (instead of failing review output), clarified nearest-rank percentile math via `ceil(...)`, and added focused malformed-date coverage.
 - **Step 56 completed:** added bounded optional review window grammar (`/outcome_review <days>`), deterministic exit-`trade_date` window filtering anchored to latest available snapshot `trade_date`, explicit invalid/out-of-range usage errors, and focused tests/docs alignment (GitHub changed; Railway unchanged).
+- **Step 57 completed:** performed bounded operator-surface consistency/wording normalization for `/runs`, `/runner_status`, `/risk_review`, `/pnl_review`, `/outcome_review`, including stock-display fallback policy (`stock_name + stock_id` preferred; `stock_id=<id> | name_unavailable` fallback), normalized usage/invalid-input wording, normalized no-data phrasing, focused tests, and docs sync (GitHub changed; Railway unchanged).
 
 ### Earlier completed foundations
 - Step 1–12 baseline (documentation foundation, signal framework, dedup, run lifecycle, modularization, tests, Telegram MVP/hardening).

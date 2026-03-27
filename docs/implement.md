@@ -18,8 +18,12 @@ Provide a consistent execution workflow for long-horizon Codex contributions.
 3. Implement only the scoped change for that task.
 4. Run validation checks defined in `docs/plans.md`.
 5. If any validation fails, stop and repair before taking new scope.
-6. Update `docs/status.md` with what was completed, what was validated, and the next approved task.
-7. Commit with a clear milestone/task summary.
+6. After merge, execute dual acceptance checks and record outcomes:
+   - **Post-merge QA Check** (output/function behavior, success+error path clarity, display/docs/tests consistency).
+   - **Post-merge Domain Check** (AI HK investing-system alignment, paper-trading/decision-support boundary, calculation/interpretation risk).
+7. Update `docs/status.md` with what was completed, acceptance outcomes, blocker/backlog classification, and the next approved task.
+   - Use explicit wording keys to reduce ambiguity: `repo merge completed`, `manual platform acceptance completed`, `docs maintenance follow-up`.
+8. Commit with a clear milestone/task summary.
 
 ## Step 15 implementation note (structured observability JSON)
 - Add nullable `runs.error_summary_json` and `runs.delivery_summary_json` via migration.
@@ -210,4 +214,19 @@ Provide a consistent execution workflow for long-horizon Codex contributions.
   - no strategy/paper-trading logic changes.
 - Platform ownership split for this step:
   - **GitHub:** runtime code + focused tests + docs/system-of-record updates.
+  - **Railway:** no topology/cron/runtime-env/deployment mutation required.
+
+## Step 51 implementation note (post-merge dual acceptance workflow formalization; docs-only)
+- Scope is docs governance formalization only; no runtime behavior/API/schema/strategy changes.
+- Formalize merge-after acceptance as two mandatory checks for every future merged step:
+  - **Post-merge QA Check**: verify new output/function works as intended, success/error path wording is clear, and display/docs/tests stay consistent.
+  - **Post-merge Domain Check**: verify alignment with AI-assisted HK investing-system mainline, ensure paper-trading/decision-support-only boundary remains intact, and screen for calculation/interpretation risk.
+- Define triage discipline:
+  - **Blocker:** materially incorrect output/logic, missing critical error handling, domain-boundary breach, or high-risk interpretation/calculation issue.
+  - **Backlog follow-up:** non-blocking clarity/readability/docs-maintenance or observability improvements with no immediate correctness/safety breach.
+- Define wording discipline between docs:
+  - `docs/status.md` records merged/completed state + acceptance outcomes.
+  - `docs/backlog.md` records only remaining actionable follow-ups (not merged completion truth).
+- Keep platform ownership explicit for this step:
+  - **GitHub:** docs-only updates.
   - **Railway:** no topology/cron/runtime-env/deployment mutation required.

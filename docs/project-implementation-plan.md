@@ -17,8 +17,8 @@ Documentation foundation, signal framework, dedup/run observability baseline, ru
 ### Steps 13–20 ✅
 Traceability hardening, structured observability telemetry, CI test gating, notification schema guardrails, platform baseline docs, Supabase access-model clarification, and decision ledger v1 are complete.
 
-### Steps 21–44 ✅
-Paper-trading review/read-surface expansion, Telegram operator workflow hardening, dual-service deployment documentation, HKT display policy, market-data provider boundary, and docs consistency hardening are complete and reflected as merged/completed in `docs/status.md`.
+### Steps 21–51 ✅
+Paper-trading review/read-surface expansion, Telegram operator workflow hardening, dual-service deployment documentation, HKT display policy, market-data provider boundary, delivery-semantics observability hardening through `dedup_persist_result`, and post-merge dual acceptance governance formalization are complete and reflected as merged/completed in `docs/status.md`.
 
 ## Current implementation state (operator/developer view)
 - Runtime remains human-in-the-loop and paper-trading only.
@@ -44,17 +44,33 @@ Paper-trading review/read-surface expansion, Telegram operator workflow hardenin
 - Runtime environment variables and secret injection (Supabase, Telegram, provider selection, allowlists).
 - Process-level runtime/log observation for operator troubleshooting.
 
-## Next small-step candidates (do not over-plan)
-1. **Step 45 candidate — Dedup semantics documentation validation**
-   - Consolidate operator-facing wording/examples for `sent` / `skipped` / `deduped` / `failed`.
-   - Keep scope docs-first unless a runtime defect is proven.
+## Post-merge dual acceptance discipline (required for every merged step)
+1. **Post-merge QA Check (mandatory)**
+   - Verify new output/function behavior matches expected intent.
+   - Verify success path and error path are both explicit and understandable.
+   - Verify display, docs, and tests remain consistent with each other.
+2. **Post-merge Domain Check (mandatory)**
+   - Verify alignment with AI-assisted Hong Kong investing-system mainline intent.
+   - Verify paper-trading / decision-support-only boundary remains intact.
+   - Verify no unacceptable calculation/interpretation risk is introduced.
+3. **Triage outcome discipline**
+   - **Blocker:** correctness/safety/domain-boundary breach; must be resolved before acceptance closes.
+   - **Backlog follow-up:** non-blocking improvement item; record in `docs/backlog.md`.
+4. **System-of-record wording discipline**
+   - `docs/status.md`: merged completion truth + acceptance result wording.
+   - `docs/backlog.md`: pending follow-up work only; never the canonical merged-state record.
 
-2. **Step 46 candidate — Platform checklist evidence pass**
+## Next small-step candidates (do not over-plan)
+1. **Step 52 candidate — Platform hardening evidence pass**
    - Refresh explicit evidence checkpoints for GitHub/Railway/Supabase manual controls.
    - No runtime or strategy logic changes.
 
-3. **Step 47 candidate — Paper-trading analytics scope note**
+2. **Step 53 candidate — Paper-trading analytics follow-up scoping**
    - Define one minimal analytics increment and validation rubric (no broad implementation).
+
+3. **Step 54 candidate — Telegram command registration decision note**
+   - Decide whether to add `setMyCommands` for discoverability.
+   - Keep isolated from strategy and paper-trading logic.
 
 ## Planning guardrails
 - Keep each step small, testable, and reviewable.

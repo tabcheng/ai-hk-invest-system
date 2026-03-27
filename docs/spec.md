@@ -133,3 +133,29 @@ Build a long-horizon AI-assisted Hong Kong stock investing system with disciplin
 ### Platform ownership for this step
 - **GitHub (changed in Step 49):** docs-only updates for post-Step-48 gap reassessment, candidate comparison, and single-slice recommendation.
 - **Railway (no change in Step 49):** no service topology, cron, runtime env var, webhook, or deployment-process modification is required.
+
+## Delivery Semantics Minimal Runtime Instrumentation v2 (Step 50)
+### System-of-record separation
+- **Implemented minimal runtime scope (this step):**
+  - add `dedup_persist_result` into daily summary delivery telemetry and persist into `runs.delivery_summary_json`.
+- **Bounded semantics (no behavior mutation):**
+  - `dedup_persist_result=persisted` when Telegram summary delivery succeeds and SENT dedup marker persistence succeeds.
+  - `dedup_persist_result=persist_failed` when Telegram summary delivery succeeds but SENT dedup marker persistence fails.
+  - `dedup_persist_result=not_applicable` when no dedup marker persistence attempt is applicable (for example dedup-skip path, send failure, or no persistence target/client context).
+- **Summary projection contract (operator triage baseline):**
+  - app-side `runs.delivery_summary_json` projection carries:
+    - `correlation_id`,
+    - `dedup_check_result`,
+    - `dedup_persist_result`.
+- **Explicit non-goals preserved:**
+  - no `delivery_phase`,
+  - no DB migration,
+  - no queue/retry framework work,
+  - no Telegram send-path refactor,
+  - no broad telemetry redesign,
+  - no strategy logic change,
+  - no paper-trading logic change.
+
+### Platform ownership for this step
+- **GitHub (changed in Step 50):** runtime code + focused tests + docs/backlog/status/system-of-record updates for `dedup_persist_result`.
+- **Railway (no change in Step 50):** no service topology, cron, runtime env var, webhook, or deployment-process modification is required.

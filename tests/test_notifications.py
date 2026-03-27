@@ -381,6 +381,7 @@ def test_send_daily_run_summary_with_telemetry_models_single_attempt(monkeypatch
     assert telemetry["message_type"] == "DAILY_SUMMARY"
     assert telemetry["correlation_id"] == "daily-summary-2026-03-11"
     assert telemetry["dedup_check_result"] == "send_path"
+    assert telemetry["dedup_persist_result"] == "not_applicable"
     assert telemetry["telegram_message_id"] is None
     assert telemetry["failure_reason"] == "http_500"
     assert telemetry["skip_reason"] is None
@@ -413,6 +414,7 @@ def test_send_daily_run_summary_with_telemetry_dedup_skip_is_not_failure(monkeyp
     assert telemetry["skip_reason"] == "dedup_already_sent"
     assert telemetry["correlation_id"] == "run-401-daily-summary-2026-03-11"
     assert telemetry["dedup_check_result"] == "dedup_skip"
+    assert telemetry["dedup_persist_result"] == "not_applicable"
     assert telemetry["failure_reason"] is None
     assert telemetry["counts"]["attempts"] == 0
     assert telemetry["counts"]["delivered"] == 0
@@ -449,6 +451,7 @@ def test_send_daily_run_summary_with_telemetry_success_counts(monkeypatch):
     assert telemetry["attempted"] is True
     assert telemetry["success"] is True
     assert telemetry["dedup_check_result"] == "send_path"
+    assert telemetry["dedup_persist_result"] == "not_applicable"
     assert telemetry["counts"]["attempts"] == 1
     assert telemetry["counts"]["delivered"] == 1
     assert telemetry["counts"]["failed"] == 0
@@ -456,6 +459,40 @@ def test_send_daily_run_summary_with_telemetry_success_counts(monkeypatch):
     assert telemetry["telegram_message_id"] == 1234
     assert telemetry["context"]["ticker_count"] == 2
     assert telemetry["context"]["summary_schema_version"] == CURRENT_DAILY_SUMMARY_SCHEMA_VERSION
+
+
+def test_send_daily_run_summary_with_telemetry_marks_persisted_on_success(monkeypatch):
+    monkeypatch.setenv("TELEGRAM_CHAT_ID", "chat-persisted")
+    monkeypatch.setenv("TELEGRAM_BOT_TOKEN", "token")
+
+    fake_client = _FakeClient()
+
+    def fake_send(_text):
+        return {
+            "delivered": True,
+            "channel": "telegram",
+            "telegram_message_id": 4321,
+            "failure_reason": None,
+        }
+
+    monkeypatch.setattr("src.notifications.send_telegram_message_with_result", fake_send)
+
+    telemetry = send_daily_run_summary_with_telemetry(
+        client=fake_client,
+        run_id=5001,
+        run_date=date(2026, 3, 11),
+        run_status="SUCCESS",
+        tickers=["0700.HK", "0388.HK"],
+        signal_outcomes={"0700.HK": "BUY", "0388.HK": "HOLD"},
+        paper_trade_count_today=1,
+    )
+
+    assert telemetry["attempted"] is True
+    assert telemetry["success"] is True
+    assert telemetry["correlation_id"] == "run-5001-daily-summary-2026-03-11"
+    assert telemetry["dedup_check_result"] == "send_path"
+    assert telemetry["dedup_persist_result"] == "persisted"
+    assert fake_client.inserts
 
 
 def test_send_daily_run_summary_with_telemetry_marks_dedup_check_fallback(monkeypatch):
@@ -492,3 +529,41 @@ def test_send_daily_run_summary_with_telemetry_marks_dedup_check_fallback(monkey
     assert telemetry["success"] is True
     assert telemetry["correlation_id"] == "run-9001-daily-summary-2026-03-11"
     assert telemetry["dedup_check_result"] == "dedup_check_fallback"
+    assert telemetry["dedup_persist_result"] == "persisted"
+
+
+def test_send_daily_run_summary_with_telemetry_marks_persist_failure(monkeypatch):
+    monkeypatch.setenv("TELEGRAM_CHAT_ID", "chat-persist-failure")
+    monkeypatch.setenv("TELEGRAM_BOT_TOKEN", "token")
+
+    fake_client = _FakeClient()
+
+    def fake_send(_text):
+        return {
+            "delivered": True,
+            "channel": "telegram",
+            "telegram_message_id": 5111,
+            "failure_reason": None,
+        }
+
+    def raise_on_record(*_args, **_kwargs):
+        raise RuntimeError("persist unavailable")
+
+    monkeypatch.setattr("src.notifications.send_telegram_message_with_result", fake_send)
+    monkeypatch.setattr("src.notifications._record_daily_summary_sent", raise_on_record)
+
+    telemetry = send_daily_run_summary_with_telemetry(
+        client=fake_client,
+        run_id=6001,
+        run_date=date(2026, 3, 11),
+        run_status="SUCCESS",
+        tickers=["0700.HK"],
+        signal_outcomes={"0700.HK": "BUY"},
+        paper_trade_count_today=1,
+    )
+
+    assert telemetry["attempted"] is True
+    assert telemetry["success"] is True
+    assert telemetry["correlation_id"] == "run-6001-daily-summary-2026-03-11"
+    assert telemetry["dedup_check_result"] == "send_path"
+    assert telemetry["dedup_persist_result"] == "persist_failed"

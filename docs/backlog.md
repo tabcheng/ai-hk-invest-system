@@ -8,10 +8,10 @@ Prioritization:
 ## Active backlog (pending)
 
 ### P0
-1. **Step 55 candidate — Paper-trade outcome summary implementation (bounded)**
-   - Implement the Step 54-scoped minimal analytics slice: closed-trade `win/loss + holding-period` summary.
-   - Keep scope read-only and deterministic; no strategy change, no deployment/runtime topology change.
-   - Include focused tests for empty-window handling, deterministic pairing/order, and denominator-safe metrics wording.
+1. **Step 56 candidate — Outcome review windowing + runbook alignment (bounded)**
+   - Evaluate adding a minimal optional review window parameter (for example recent N days) to `/outcome_review` without expanding analytics scope.
+   - Keep deterministic pairing/tie-break contracts unchanged and retain explicit denominator-safe/empty-window wording.
+   - Update operator runbook snippets only if wording drift appears after Step 55 adoption.
 
 ### P1
 1. **Telegram command registration follow-up (optional)**
@@ -58,6 +58,8 @@ Prioritization:
 - **Step 53 completed (docs-only):** delivered a minimal platform hardening evidence pass summary/checklist for GitHub/Railway/Supabase with explicit `repo-confirmed` vs `manual verification required` vs `backlog follow-up` separation, and synced status/project-plan records without runtime/deployment topology changes.
 - **Step 54 completed (docs-only):** scoped one minimal paper-trading analytics increment (`win/loss and holding-period summary` for closed paper trades), documented operator questions/data dependencies/sufficiency gaps, and defined validation rubric + interpretation-risk/limitation guardrails without implementation/runtime changes.
 - **Step 54 review hardening completed (docs-only):** tightened metric-definition precision (`flat_count`, `win_rate` denominator/N/A handling, deterministic ranking basis/tie-break, simplified pairing limitation wording) so Step 55 implementation can stay bounded and less ambiguous.
+- **Step 55 completed:** implemented bounded closed-trade outcome summary helper + `/outcome_review` operator surface with deterministic BUY/SELL pairing (`trade_date`, `id`), denominator-safe wording, explicit empty-window behavior, stable top-contributor tie-break, focused tests, and docs sync (GitHub changed; Railway unchanged).
+- **Step 55 review hotfix completed:** hardened outcome review robustness by skipping malformed `trade_date` rows (instead of failing review output), clarified nearest-rank percentile math via `ceil(...)`, and added focused malformed-date coverage.
 
 ### Earlier completed foundations
 - Step 1–12 baseline (documentation foundation, signal framework, dedup, run lifecycle, modularization, tests, Telegram MVP/hardening).

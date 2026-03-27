@@ -518,3 +518,70 @@ def test_handle_pnl_review_command_rejects_extra_tokens(monkeypatch):
     assert "Command: /pnl_review" in response
     assert "Status: failed." in response
     assert "Use /pnl_review with no extra arguments" in response
+
+
+def test_help_message_includes_outcome_review_command():
+    message = build_help_command_message()
+    assert "/outcome_review" in message
+
+
+def test_handle_outcome_review_command_success(monkeypatch):
+    monkeypatch.setenv("TELEGRAM_CHAT_ID", "chat-1")
+    monkeypatch.setattr(
+        "src.telegram_operator._get_paper_trade_outcome_summary",
+        lambda _client: {
+            "closed_trade_count": 3,
+            "win_count": 1,
+            "loss_count": 1,
+            "flat_count": 1,
+            "win_rate": 1 / 3,
+            "win_rate_denominator": "win_count / closed_trade_count",
+            "median_holding_days": 2.0,
+            "p75_holding_days": 4,
+            "max_holding_days": 5,
+            "top_realized_winners": [{"stock": "0005.HK", "realized_pnl": 88.0}],
+            "top_realized_losers": [{"stock": "0700.HK", "realized_pnl": -23.0}],
+            "review_boundary_note": "review/diagnostic only; paper-trading decision support only",
+        },
+    )
+    response = handle_telegram_operator_command(object(), _build_update("/outcome_review"))
+    assert "Command: /outcome_review" in response
+    assert "Status: completed." in response
+    assert "- closed_trade_count: 3" in response
+    assert "- win_rate: 33.33%" in response
+    assert "- winner_1: stock=0005.HK | realized_pnl=88.00" in response
+    assert "- loser_1: stock=0700.HK | realized_pnl=-23.00" in response
+
+
+def test_handle_outcome_review_command_empty_window_wording(monkeypatch):
+    monkeypatch.setenv("TELEGRAM_CHAT_ID", "chat-1")
+    monkeypatch.setattr(
+        "src.telegram_operator._get_paper_trade_outcome_summary",
+        lambda _client: {
+            "closed_trade_count": 0,
+            "win_count": 0,
+            "loss_count": 0,
+            "flat_count": 0,
+            "win_rate": None,
+            "win_rate_denominator": "win_count / closed_trade_count",
+            "median_holding_days": None,
+            "p75_holding_days": None,
+            "max_holding_days": None,
+            "top_realized_winners": [],
+            "top_realized_losers": [],
+            "empty_window_message": "no closed paper trades in review window",
+            "review_boundary_note": "review/diagnostic only; paper-trading decision support only",
+        },
+    )
+    response = handle_telegram_operator_command(object(), _build_update("/outcome_review"))
+    assert "Command: /outcome_review" in response
+    assert "- win_rate: N/A (closed_trade_count=0)" in response
+    assert "- note: no closed paper trades in review window" in response
+
+
+def test_handle_outcome_review_command_rejects_extra_tokens(monkeypatch):
+    monkeypatch.setenv("TELEGRAM_CHAT_ID", "chat-1")
+    response = handle_telegram_operator_command(object(), _build_update("/outcome_review now"))
+    assert "Command: /outcome_review" in response
+    assert "Status: failed." in response
+    assert "Use /outcome_review with no extra arguments" in response

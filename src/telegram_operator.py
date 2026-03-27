@@ -14,6 +14,7 @@ _RUNS_COMMAND_PATTERN = re.compile(r"^/runs(?:\s+(\d+)d)?\s*$", re.IGNORECASE)
 _RISK_REVIEW_COMMAND_PATTERN = re.compile(r"^/risk_review(?:\s+(\S+))?\s*$", re.IGNORECASE)
 _RUNNER_STATUS_COMMAND_PATTERN = re.compile(r"^/runner_status\s*$", re.IGNORECASE)
 _PNL_REVIEW_COMMAND_PATTERN = re.compile(r"^/pnl_review\s*$", re.IGNORECASE)
+_OUTCOME_REVIEW_COMMAND_PATTERN = re.compile(r"^/outcome_review\s*$", re.IGNORECASE)
 _HELP_COMMAND_PATTERN = re.compile(r"^/(?:help|h)\s*$", re.IGNORECASE)
 _DEFAULT_DAYS = 5
 _MAX_DAYS = 30
@@ -118,6 +119,12 @@ def _parse_pnl_review_command(command_text: str) -> None:
     """
     if not _PNL_REVIEW_COMMAND_PATTERN.match(command_text or ""):
         raise ValueError("Unsupported command. Use /pnl_review with no extra arguments.")
+
+
+def _parse_outcome_review_command(command_text: str) -> None:
+    """Validate `/outcome_review` with no extra tokens."""
+    if not _OUTCOME_REVIEW_COMMAND_PATTERN.match(command_text or ""):
+        raise ValueError("Unsupported command. Use /outcome_review with no extra arguments.")
 
 
 def _normalize_run_time(row: dict[str, Any]) -> str:
@@ -288,6 +295,7 @@ def build_help_command_message() -> str:
             "- /runner_status : Show latest daily runner execution summary (最新 runner 狀態摘要).",
             "- /risk_review [run_id] : Run paper-trading risk review for one run (查看單次 run 風險回顧).",
             "- /pnl_review : Show paper position/PnL review snapshot (查看持倉與盈虧摘要).",
+            "- /outcome_review : Show closed-trade outcome summary (查看平倉結果摘要).",
             "- /help : Show this operator usage guide (顯示操作說明).",
             "- /h : Alias of /help (與 /help 相同).",
         ]
@@ -418,6 +426,50 @@ def _build_pnl_review_command_message(snapshot: dict[str, Any]) -> str:
     )
 
 
+def _get_paper_trade_outcome_summary(client: Any) -> dict[str, Any]:
+    """Lazy-load closed-trade outcome summary dependency for command isolation."""
+    from src.paper_trading import get_paper_trade_outcome_summary
+
+    return get_paper_trade_outcome_summary(client)
+
+
+def _build_outcome_review_command_message(summary: dict[str, Any]) -> str:
+    """Build compact Telegram output for closed-trade outcome review summary."""
+    top_winners = summary.get("top_realized_winners") or []
+    top_losers = summary.get("top_realized_losers") or []
+    closed_trade_count = int(summary.get("closed_trade_count") or 0)
+    win_rate = summary.get("win_rate")
+    win_rate_text = "N/A (closed_trade_count=0)" if win_rate is None else f"{round(float(win_rate) * 100, 2)}%"
+
+    fields: list[tuple[str, Any]] = [
+        ("closed_trade_count", closed_trade_count),
+        ("win_count", int(summary.get("win_count") or 0)),
+        ("loss_count", int(summary.get("loss_count") or 0)),
+        ("flat_count", int(summary.get("flat_count") or 0)),
+        ("win_rate", win_rate_text),
+        ("win_rate_formula", str(summary.get("win_rate_denominator") or "win_count / closed_trade_count")),
+        ("median_holding_days", summary.get("median_holding_days") if closed_trade_count > 0 else "N/A"),
+        ("p75_holding_days", summary.get("p75_holding_days") if closed_trade_count > 0 else "N/A"),
+        ("max_holding_days", summary.get("max_holding_days") if closed_trade_count > 0 else "N/A"),
+        ("review_scope", "closed paper trades only"),
+        ("review_boundary", str(summary.get("review_boundary_note") or "review/diagnostic only")),
+    ]
+    if closed_trade_count == 0:
+        fields.append(("note", str(summary.get("empty_window_message") or "no closed paper trades in review window")))
+
+    for idx, row in enumerate(top_winners[:5], start=1):
+        fields.append((f"winner_{idx}", f"stock={row.get('stock')} | realized_pnl={float(row.get('realized_pnl') or 0.0):.2f}"))
+    for idx, row in enumerate(top_losers[:5], start=1):
+        fields.append((f"loser_{idx}", f"stock={row.get('stock')} | realized_pnl={float(row.get('realized_pnl') or 0.0):.2f}"))
+
+    return _build_operator_message(
+        command_label="/outcome_review",
+        status="completed",
+        result="closed-trade outcome summary generated",
+        fields=fields,
+    )
+
+
 def handle_telegram_operator_command(client: Any, update: dict[str, Any]) -> str | None:
     """
     Parse and handle Telegram operator commands.
@@ -440,12 +492,14 @@ def handle_telegram_operator_command(client: Any, update: dict[str, Any]) -> str
     is_runner_status_command = bool(_RUNNER_STATUS_COMMAND_PATTERN.match(text))
     is_risk_review_command = text.lower().startswith("/risk_review")
     is_pnl_review_command = text.lower().startswith("/pnl_review")
+    is_outcome_review_command = text.lower().startswith("/outcome_review")
     if not (
         is_help_command
         or is_runs_command
         or is_runner_status_command
         or is_risk_review_command
         or is_pnl_review_command
+        or is_outcome_review_command
     ):
         return None
 
@@ -537,6 +591,25 @@ def handle_telegram_operator_command(client: Any, update: dict[str, Any]) -> str
                     reason="internal review snapshot error",
                 )
             return _build_pnl_review_command_message(snapshot)
+
+        if is_outcome_review_command:
+            try:
+                _parse_outcome_review_command(text)
+            except ValueError as exc:
+                return _build_usage_error_message(command_label="/outcome_review", error_text=str(exc))
+            try:
+                summary = _get_paper_trade_outcome_summary(client)
+            except Exception as exc:
+                print(
+                    "Telegram /outcome_review execution failed: "
+                    f"chat_id={chat_id} user_id={user_id} error={exc!r}"
+                )
+                return _build_operator_message(
+                    command_label="/outcome_review",
+                    status="failed",
+                    reason="internal outcome summary error",
+                )
+            return _build_outcome_review_command_message(summary)
 
         # /risk_review execution guardrail:
         # - Parse and validate run_id early.

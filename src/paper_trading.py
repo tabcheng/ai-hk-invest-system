@@ -1,8 +1,9 @@
 from __future__ import annotations
 
+from collections import defaultdict
 from dataclasses import dataclass
 from datetime import date, datetime, timezone
-from math import floor
+from math import ceil, floor
 
 from supabase import Client
 
@@ -700,6 +701,182 @@ def get_paper_position_pnl_review_snapshot(client: Client) -> dict:
         "total_unrealized_pnl": total_unrealized,
         "valuation_timestamp": snapshot_date,
         "per_symbol": symbol_rows,
+    }
+
+
+def _compute_median(values: list[int]) -> float | None:
+    if not values:
+        return None
+    sorted_values = sorted(values)
+    mid = len(sorted_values) // 2
+    if len(sorted_values) % 2 == 1:
+        return float(sorted_values[mid])
+    return float(sorted_values[mid - 1] + sorted_values[mid]) / 2.0
+
+
+def _compute_nearest_rank_percentile(values: list[int], percentile: float) -> int | None:
+    """
+    Compute nearest-rank percentile with deterministic tie handling.
+
+    We use the docs-scoped deterministic contract (stable sorting + fixed rank
+    rule), not interpolation, so the same snapshot always yields identical
+    output on all environments.
+    """
+    if not values:
+        return None
+    if percentile <= 0:
+        return min(values)
+    if percentile >= 1:
+        return max(values)
+    sorted_values = sorted(values)
+    rank = max(ceil(len(sorted_values) * percentile), 1)
+    return int(sorted_values[rank - 1])
+
+
+def _parse_trade_date(value: object) -> date | None:
+    """
+    Parse trade date values from persisted rows defensively.
+
+    Guardrail: review surfaces should remain robust against irregular historical
+    rows; malformed date values are skipped rather than crashing operator output.
+    """
+    if value is None:
+        return None
+    raw_text = str(value).strip()
+    if not raw_text:
+        return None
+    date_token = raw_text.split("T", 1)[0]
+    try:
+        return date.fromisoformat(date_token)
+    except ValueError:
+        return None
+
+
+def get_paper_trade_outcome_summary(client: Client, *, top_n: int = 5) -> dict:
+    """
+    Build a read-only deterministic closed-paper-trade outcome summary.
+
+    Scope and boundary contract:
+    - Closed paper trades only (BUY->SELL pairing); open quantity is excluded.
+    - Review/diagnostic output only; no strategy or execution behavior changes.
+    - Deterministic pairing order: (`trade_date`, `id`) within each ticker.
+    """
+    trade_rows = (
+        client.table("paper_trades")
+        .select("stock,action,quantity,realized_pnl,trade_date,id")
+        .order("trade_date")
+        .order("id")
+        .execute()
+    ).data or []
+
+    buy_lots_by_ticker: dict[str, list[dict]] = defaultdict(list)
+    closed_trade_rows: list[dict] = []
+
+    for row in trade_rows:
+        ticker = str(row.get("stock") or "").strip()
+        action = str(row.get("action") or "").strip().upper()
+        if not ticker or action not in {"BUY", "SELL"}:
+            continue
+
+        quantity = int(row.get("quantity") or 0)
+        if quantity <= 0:
+            continue
+        trade_id = int(row.get("id") or 0)
+        trade_day = _parse_trade_date(row.get("trade_date"))
+        if trade_day is None:
+            continue
+
+        if action == "BUY":
+            buy_lots_by_ticker[ticker].append(
+                {"remaining_qty": quantity, "entry_date": trade_day, "entry_trade_id": trade_id}
+            )
+            continue
+
+        remaining_sell_qty = quantity
+        sell_realized = float(row.get("realized_pnl") or 0.0)
+        allocated_realized = 0.0
+        matched_qty_total = 0
+        lots = buy_lots_by_ticker[ticker]
+
+        while remaining_sell_qty > 0 and lots:
+            lot = lots[0]
+            matched_qty = min(int(lot["remaining_qty"]), remaining_sell_qty)
+            remaining_sell_qty -= matched_qty
+            lot["remaining_qty"] = int(lot["remaining_qty"]) - matched_qty
+            matched_qty_total += matched_qty
+
+            if quantity == matched_qty_total:
+                realized_piece = sell_realized - allocated_realized
+            else:
+                realized_piece = sell_realized * (matched_qty / quantity)
+                allocated_realized += realized_piece
+
+            holding_days = max((trade_day - lot["entry_date"]).days, 0)
+            closed_trade_rows.append(
+                {
+                    "ticker": ticker,
+                    "entry_date": lot["entry_date"].isoformat(),
+                    "exit_date": trade_day.isoformat(),
+                    "entry_trade_id": int(lot["entry_trade_id"]),
+                    "exit_trade_id": trade_id,
+                    "quantity": matched_qty,
+                    "holding_days": holding_days,
+                    "realized_pnl": float(realized_piece),
+                }
+            )
+            if int(lot["remaining_qty"]) <= 0:
+                lots.pop(0)
+
+    closed_trade_count = len(closed_trade_rows)
+    holding_days_values = [int(row["holding_days"]) for row in closed_trade_rows]
+    outcome_epsilon = 1e-9
+    win_count = sum(1 for row in closed_trade_rows if float(row["realized_pnl"]) > outcome_epsilon)
+    loss_count = sum(1 for row in closed_trade_rows if float(row["realized_pnl"]) < -outcome_epsilon)
+    flat_count = closed_trade_count - win_count - loss_count
+
+    realized_by_ticker: dict[str, float] = defaultdict(float)
+    for row in closed_trade_rows:
+        realized_by_ticker[str(row["ticker"])] += float(row["realized_pnl"])
+
+    ranked_realized = sorted(
+        realized_by_ticker.items(),
+        key=lambda item: (-item[1], item[0]),
+    )
+    top_winners = [
+        {"stock": ticker, "realized_pnl": float(realized)}
+        for ticker, realized in ranked_realized
+        if realized > outcome_epsilon
+    ][: max(top_n, 0)]
+
+    ranked_losses = sorted(
+        realized_by_ticker.items(),
+        key=lambda item: (item[1], item[0]),
+    )
+    top_losers = [
+        {"stock": ticker, "realized_pnl": float(realized)}
+        for ticker, realized in ranked_losses
+        if realized < -outcome_epsilon
+    ][: max(top_n, 0)]
+
+    win_rate = float(win_count / closed_trade_count) if closed_trade_count > 0 else None
+    return {
+        "closed_trade_count": closed_trade_count,
+        "win_count": win_count,
+        "loss_count": loss_count,
+        "flat_count": flat_count,
+        "win_rate": win_rate,
+        "win_rate_denominator": "win_count / closed_trade_count",
+        "median_holding_days": _compute_median(holding_days_values),
+        "p75_holding_days": _compute_nearest_rank_percentile(holding_days_values, 0.75),
+        "max_holding_days": (max(holding_days_values) if holding_days_values else None),
+        "top_realized_winners": top_winners,
+        "top_realized_losers": top_losers,
+        "empty_window_message": (
+            "no closed paper trades in review window"
+            if closed_trade_count == 0
+            else None
+        ),
+        "review_boundary_note": "review/diagnostic only; paper-trading decision support only",
     }
 
 

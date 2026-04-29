@@ -65,8 +65,9 @@
 - Action: verify scheduler/service health and retry later.
 
 **Handle invalid input / usage output**
-- Command takes no extra token.
-- If extra text is provided and usage/invalid message appears, rerun as exact `/runner_status`.
+- Only exact `/runner_status` is supported.
+- Malformed variants (for example `/runner_status now`) may be ignored as unrecognized commands, not return explicit usage/invalid-input text.
+- Retry using exact `/runner_status`.
 
 **Boundary note**
 - Operational health check only; no strategy mutation or execution.
@@ -85,8 +86,9 @@
 - Use together with `/runs` to confirm target run exists and is intended.
 
 **Interpret no-data output**
-- "no matching records" can mean run id exists but has no matching review rows in current data view.
-- Action: confirm run id from `/runs`; if still empty, treat as data-availability follow-up.
+- "no matching records" means the provided `run_id` was not found in current query scope.
+- Action: run `/runs` first, pick a valid run id, then retry `/risk_review <run_id>`.
+- If a run exists but internal review generation fails, treat it as a failed/internal-error path (not a no-data interpretation path).
 
 **Handle invalid input / usage output**
 - If `Invalid input` + `Usage: /risk_review <run_id>` appears, provide one integer run id and retry.

@@ -29,6 +29,11 @@ Prioritization:
    - Keep this as a follow-up design/implementation candidate only after Step 55 confirms baseline utility.
    - Preserve decision-support guardrails; do not introduce autonomous execution semantics.
 
+5. **Telegram output language option (future)**
+   - Add configurable Telegram output language support, initially `zh-HK` and `en`.
+   - Suggested rollout: apply first to `/daily_review`, then expand to other commands.
+   - Not in Step 60 scope: no localization implementation in this step.
+
 ### P2
 - Expand deterministic replay/integration fixtures for multi-day paper-trading scenarios.
 - Improve failure-path coverage for DB/notification/run-finalization edge cases.
@@ -37,7 +42,7 @@ Prioritization:
 
 ## Completed backlog (archived)
 
-### Recently completed (Steps 40–59)
+### Recently completed (Steps 40–60)
 - **Step 40 completed:** normalized operator response shape for `/runs`, `/runner_status`, `/risk_review` and centralized HTML-safe rendering contract.
 - **Step 41 completed:** added read-only paper position/PnL snapshot helper and `/pnl_review` operator command, including input/correctness hardening.
 - **Step 42 completed:** added market-data provider boundary (`MARKET_DATA_PROVIDER`) with `yfinance` baseline and deterministic `mock` provider.
@@ -61,6 +66,7 @@ Prioritization:
 - **Step 57 completed:** performed bounded operator-surface consistency/wording normalization for `/runs`, `/runner_status`, `/risk_review`, `/pnl_review`, `/outcome_review`, including stock-display fallback policy (`stock_name + stock_id` preferred; `stock_id=<id> | name_unavailable` fallback), normalized usage/invalid-input wording, normalized no-data phrasing, focused tests, and docs sync (GitHub changed; Railway unchanged).
 - **Step 58 completed (docs-only):** added `docs/operator-runbook.md` with compact normal/no-data/invalid-input interpretation examples for `/runs`, `/runner_status`, `/risk_review`, `/pnl_review`, `/outcome_review`, `/outcome_review <days>`, and explicitly documented Step 57 stock-display fallback policy; runtime behavior unchanged (GitHub changed; Railway unchanged).
 - **Step 59 completed:** added read-only `/daily_review` Telegram operator command as a compact daily operator review packet MVP that aggregates section-level status from existing review surfaces (`runner_status`, latest run id, pnl snapshot availability, outcome summary availability), with partial no-data/internal-error tolerance, focused tests (success/partial-no-data/helper-error/unauthorized/help inclusion), and docs sync across runbook/spec/status/backlog (GitHub changed; Railway unchanged).
+- **Step 60 completed:** upgraded read-only `/daily_review` usability by adding `business_date_hkt`, `latest_run_time_hkt`, `daily_review_health`, `next_action_hint`, and `detail_commands` (including `/risk_review <run_id>` when available), while preserving section-scoped no-data/internal-error tolerance and command-level completion behavior; added focused tests and docs synchronization (GitHub changed; Railway unchanged).
 
 ### Earlier completed foundations
 - Step 1–12 baseline (documentation foundation, signal framework, dedup, run lifecycle, modularization, tests, Telegram MVP/hardening).

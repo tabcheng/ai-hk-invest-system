@@ -17,8 +17,8 @@ Documentation foundation, signal framework, dedup/run observability baseline, ru
 ### Steps 13–20 ✅
 Traceability hardening, structured observability telemetry, CI test gating, notification schema guardrails, platform baseline docs, Supabase access-model clarification, and decision ledger v1 are complete.
 
-### Steps 21–54 ✅
-Paper-trading review/read-surface expansion, Telegram operator workflow hardening, dual-service deployment documentation, HKT display policy, market-data provider boundary, delivery-semantics observability hardening through `dedup_persist_result`, post-merge dual acceptance governance formalization, platform evidence-pass documentation, and minimal paper-trading analytics follow-up scoping are complete and reflected as merged/completed in `docs/status.md`.
+### Steps 21–61 ✅
+Paper-trading review/read-surface expansion, Telegram operator workflow hardening, dual-service deployment documentation, HKT display policy, market-data provider boundary, delivery-semantics observability hardening through `dedup_persist_result`, post-merge dual acceptance governance formalization, platform evidence-pass documentation, paper-trade outcome review usability increments, and Step 61 Human Decision Journal Contract v1 (docs-first) are complete and reflected as merged/completed in `docs/status.md`.
 
 ## Current implementation state (operator/developer view)
 - Runtime remains human-in-the-loop and paper-trading only.
@@ -61,15 +61,16 @@ Paper-trading review/read-surface expansion, Telegram operator workflow hardenin
    - `docs/backlog.md`: pending follow-up work only; never the canonical merged-state record.
 
 ## Next small-step candidates (do not over-plan)
-1. **Step 55 candidate — Paper-trade outcome summary implementation (bounded)**
-   - Implement the Step 54-scoped minimal analytics increment (`win/loss + holding-period` summary for closed paper trades) as a read-only review slice.
-   - Keep implementation small with focused tests and no strategy/runtime topology change.
+1. **Step 62 candidate — `/decision_note` runtime MVP (bounded)**
+   - Implement Step 61 contract as the smallest runtime slice.
+   - Prefer run-level journaling first if stock-level expands scope; include stock-level only if still bounded.
+   - Keep command strictly journaling-only (no trade execution semantics).
 
-2. **Step 56 candidate — Telegram command registration decision note**
+2. **Telegram command registration follow-up (optional)**
    - Decide whether to add `setMyCommands` for discoverability.
    - Keep isolated from strategy and paper-trading logic.
 
-3. **Step 57 candidate — Platform evidence cadence/process follow-up**
+3. **Platform evidence cadence/process follow-up**
    - Define lightweight recurring manual verification cadence and evidence artifact location policy.
    - Keep docs/process scope only unless a separate infra/runtime step is explicitly approved.
 

@@ -345,3 +345,106 @@ Required limitation statements in docs:
   - when available: `stock_name=<name> | stock_id=<id>`
   - fallback: `stock_id=<id> | name_unavailable`
 - Runbook examples remain read-only interpretation guidance and do not authorize runtime behavior changes, Telegram command behavior changes, or real-money execution.
+
+
+## Human Decision Journal Contract v1 (Step 61, docs-first)
+### Purpose
+- Record human operator decisions after reviewing `/daily_review`, `/risk_review`, `/pnl_review`, `/outcome_review`, and/or multi-stock signals from the same run.
+- Preserve decision context, reason, operator confidence, and source command for later audit/review.
+- Support later auditability, bias/behavior review, outcome comparison, and strategy performance review.
+- This contract is **decision journaling only** and does **not** trigger any order execution.
+
+### Decision scopes
+- `scope=run`: one human decision for the whole run context.
+- `scope=stock`: one human decision for a specific stock within a run.
+
+Example intents (future runtime command shape, not implemented in Step 61):
+- Run-level: `/decision_note scope=run run_id=321 human_action=observe confidence=medium note=Daily review checked; no action.`
+- Stock-level: `/decision_note scope=stock run_id=321 stock_id=0700.HK system_signal=buy_signal human_action=investigate confidence=low note=Need risk review first.`
+
+### Separate system suggestion vs human decision
+- `system_signal`: what system/paper strategy suggested.
+- `human_action`: what human operator decided to do with that suggestion.
+
+Allowed `system_signal` values (if provided):
+- `buy_signal`
+- `sell_signal`
+- `hold_signal`
+- `block_signal`
+- `watch_signal`
+- `none`
+
+Allowed `human_action` values:
+- `observe`
+- `investigate`
+- `accept_signal`
+- `reject_signal`
+- `hold_watch`
+- `skip`
+
+### Confidence + reason-tag semantics
+Recommended optional fields:
+- `confidence`: `low` / `medium` / `high`
+- `reason_tag`: one or more of `risk_unclear`, `runner_failed`, `valuation_unclear`, `market_context_unclear`, `signal_aligned`, `signal_conflict`, `insufficient_data`, `learning_note`.
+
+Clarifications:
+- `confidence` is operator self-assessment, not model certainty.
+- `reason_tag` exists to support later bias/behavior review and process learning.
+
+### Source context contract
+Required:
+- `source_command` (for example `/daily_review`, `/risk_review`, `/pnl_review`, `/outcome_review`).
+
+Optional future context fields:
+- `related_daily_review_health`
+- `related_pnl_snapshot_status`
+- `related_outcome_summary_status`
+- `latest_run_time_hkt`
+
+### Outcome linkage (future review linkage only)
+Future linkage fields:
+- `later_outcome_link`
+- `outcome_review_window`
+- `paper_pnl_after_decision`
+- `outcome_label` (`improved` / `worsened` / `neutral` / `unknown`)
+
+Clarification: no outcome computation is implemented in this step.
+
+### Guardrails (must remain explicit)
+- `system_signal` is not live execution.
+- `human_action` is not live execution.
+- `accept_signal` means accepted for paper-trading review/decision-journal context only.
+- No broker integration.
+- No market-order placement.
+- No real-money automatic execution.
+- Human operator remains final decision-maker.
+- Avoid raw `buy`/`sell` as `human_action` names.
+
+### Required fields for future `/decision_note` MVP
+Required for all entries: `scope`, `run_id`, `human_action`, `note`, `created_at`, `source_command`.
+Required only when `scope=stock`: `stock_id`.
+Recommended: `system_signal`, `confidence`, `reason_tag`.
+
+### Validation rules (future runtime contract)
+- `scope` must be `run` or `stock`.
+- `run_id` must be a positive integer.
+- `stock_id` is required when `scope=stock`.
+- `human_action` must be in allowed list.
+- `system_signal` must be in allowed list if provided.
+- `confidence` must be `low`/`medium`/`high` if provided.
+- `note` must be non-empty.
+- Command intent is decision journaling only, not execution.
+- Raw `buy`/`sell` action names are not allowed for `human_action`.
+
+### Future storage concept (proposal only, no migration in Step 61)
+Proposed table: `human_decision_journal_entries` with draft columns:
+`id`, `created_at`, `scope`, `run_id`, `stock_id` (nullable for run scope), `stock_name` (nullable), `system_signal` (nullable), `human_action`, `confidence` (nullable), `reason_tag` (nullable), `note`, `source_command`, `operator_user_id_hash_or_label`, `related_daily_review_health` (nullable), `related_pnl_snapshot_status` (nullable), `related_outcome_summary_status` (nullable), `later_outcome_link` (nullable), `metadata` (nullable).
+
+### Step 61 explicit non-goals
+- No runtime `/decision_note` command implementation.
+- No runtime code changes.
+- No DB migration/schema change.
+- No Railway topology/cron/env/webhook/deployment changes.
+- No strategy logic change.
+- No paper-trading calculation change.
+- No autonomous execution/broker integration.

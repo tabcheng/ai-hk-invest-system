@@ -133,6 +133,11 @@
 - Step 60 Post-merge QA Check: pass — focused tests cover new daily-review fields, success path, partial no-data health status, helper internal-error health status, and malformed `/daily_review now` usage behavior.
 - Step 60 Post-merge Domain Check: pass — AI HK investing-system alignment preserved; `/daily_review` health/hint fields are review-readiness signals only, command remains read-only decision support, and no autonomous live-money execution semantics are introduced.
 - Step 60 follow-up health-rule refinement: `/daily_review` now treats latest runner status `failed`/`unknown` as `attention_needed` even when pnl/outcome sections are available, and `next_action_hint` explicitly points to `/runner_status`, `/runs`, and logs when runner readiness needs attention.
+- Step 61 Human Decision Journal Contract v1 (docs-only): defined minimum decision-journal contract for future `/decision_note` covering run-level and stock-level scope, required/recommended fields, value vocabularies (`system_signal`, `human_action`, `confidence`, `reason_tag`), validation rules, outcome-linkage placeholders, and explicit non-execution guardrails.
+- Step 61 platform ownership clarification: GitHub changed docs only (`docs/spec.md`, `docs/operator-runbook.md`, `docs/status.md`, `docs/backlog.md`, `docs/strategy-spec.md`, `docs/project-implementation-plan.md`); Railway service topology/cron/env/webhook/deployment settings remain unchanged.
+- Step 61 Post-merge QA Check: pass — docs-only scope verified for contract completeness and cross-doc consistency; no runtime behavior/test/schema mutation.
+- Step 61 Post-merge Domain Check: pass — AI HK investing-system alignment preserved; paper-trading decision-support boundary and human-final-decision governance remain explicit; no autonomous live-money execution semantics introduced.
+
 - Step 54 Post-merge QA Check (docs-only scope): pass — scope remains documentation-only, output contract/rubric wording is explicit, and system-of-record docs stay aligned with no runtime behavior mutation.
 - Step 54 Post-merge Domain Check (docs-only scope): pass — AI HK investing-system alignment and paper-trading/decision-support-only boundary remain intact; interpretation-risk and limitation statements are explicitly recorded.
 - No autonomous live-money execution is enabled; human remains final decision-maker.
@@ -144,7 +149,7 @@
 - Milestone 3 (Paper-trading v1): completed.
 - Milestone 4 (Controlled production hardening): in-progress, with Steps 19–60 completed and runtime hardening follow-ups still pending.
 
-## Step 21–60 status ledger (Step 60 /daily_review v2 usability)
+## Step 21–61 status ledger (Step 61 Human Decision Journal Contract v1)
 
 | Step | Goal | Primary deliverable(s) | Status |
 |---|---|---|---|
@@ -199,9 +204,10 @@
 | 58 | Operator runbook examples alignment for normalized Telegram command output (docs-only) | Add/update operator runbook examples for `/runs`, `/runner_status`, `/risk_review`, `/pnl_review`, `/outcome_review` normal/no-data/invalid-input interpretations + Step 57 stock-display policy documentation sync across spec/status/backlog | **Completed (merged in-repo docs state).** Docs-only scope; no runtime behavior/test/schema/strategy/deployment topology change. |
 | 59 | Daily operator review packet MVP | Add read-only `/daily_review` Telegram command that aggregates short section statuses (`runner_status`, `latest_run_id`, `pnl_snapshot`, `outcome_summary`) with partial no-data/internal-error tolerance, plus focused tests and docs sync | **Completed (merged in-repo runtime+docs state).** Bounded operator review aggregation only; no strategy logic/paper-trading calculation/DB schema/deployment topology mutation. |
 | 60 | `/daily_review` v2 usability | Add read-only operator-review usability fields (`business_date_hkt`, `latest_run_time_hkt`, `daily_review_health`, `next_action_hint`, `detail_commands`) with deterministic section-status-based health rules, while preserving command-level completion and section-scoped failure tolerance | **Completed (merged in-repo runtime+docs state).** Bounded operator usability enhancement only; no DB schema/strategy logic/paper-trading calculation/Railway topology mutation. |
+| 61 | Human Decision Journal Contract v1 (docs-first) | Define minimum future `/decision_note` contract for run-level + stock-level decision journaling, including required/recommended fields, allowed vocabularies, validation rules, non-execution guardrails, and future storage concept; synchronize runbook/backlog/plan/status docs | **Completed (merged in-repo docs state).** Docs-only scope; no runtime code/schema/strategy/deployment topology mutation. |
 
 ## Known unknowns / needs confirmation
 - Production platform settings (GitHub/Railway/Supabase project posture) still require periodic manual verification outside repository files.
 
 ## Next approved task candidate
-- Step 61 candidate: Telegram output language option scoping (`zh-HK`/`en`) starting with `/daily_review` (design/docs first; no runtime rollout until explicitly approved).
+- Step 62 candidate: `/decision_note` runtime MVP (smallest bounded slice; run-level first if needed, add stock-level only when bounded; preserve paper-trading and human-final-decision boundary).

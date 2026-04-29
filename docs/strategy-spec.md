@@ -65,3 +65,9 @@ Operational implication: defer directional decision until sufficient history is 
 
 ## Change control
 Any semantic change to signal definitions must be documented here first and implemented only in a separately approved runtime task.
+
+
+## Human decision journal alignment (Step 61 docs-only)
+- Future decision-journal records must keep `system_signal` (strategy suggestion) separate from `human_action` (operator decision).
+- Decision-journal vocabulary avoids raw `buy`/`sell` human-action naming to prevent confusion with execution semantics.
+- This alignment is governance/documentation only in Step 61; no runtime strategy logic or execution behavior changes.

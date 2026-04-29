@@ -210,12 +210,14 @@
 ## Future contract preview: `/decision_note` (Step 61 docs-first, not implemented)
 - Step 61 只定義 contract，不提供 runtime command。
 - Scope: `run` and `stock` (stock scope requires `stock_id`).
-- Required fields: `scope`, `run_id`, `human_action`, `note`, `source_command`, `created_at`.
+- User-supplied required fields: `scope`, `run_id`, `human_action`, `note`, `source_command` (+ `stock_id` when `scope=stock`).
+- System-generated required fields: `created_at` (record creation time) and `operator_user_id_hash_or_label` when available/applicable.
+- Operator should not manually provide `created_at` in Telegram command text.
 - Recommended fields: `system_signal`, `confidence`, `reason_tag`.
 - `system_signal` values: `buy_signal`, `sell_signal`, `hold_signal`, `block_signal`, `watch_signal`, `none`.
 - `human_action` values: `observe`, `investigate`, `accept_signal`, `reject_signal`, `hold_watch`, `skip`.
 - `confidence`: `low`, `medium`, `high`.
 - Guardrails: no broker integration/no market order/no auto real-money execution; `accept_signal` is journaling context only; human remains final decision-maker.
 - Future examples (not available now):
-  - `/decision_note scope=run run_id=321 human_action=observe confidence=medium note=Daily review checked.`
-  - `/decision_note scope=stock run_id=321 stock_id=0700.HK system_signal=buy_signal human_action=investigate confidence=low note=Need risk review first.`
+  - `/decision_note scope=run run_id=321 source_command=/daily_review human_action=observe confidence=medium note=Daily review checked.`
+  - `/decision_note scope=stock run_id=321 stock_id=0700.HK source_command=/risk_review system_signal=buy_signal human_action=investigate confidence=low note=Need risk review first.`

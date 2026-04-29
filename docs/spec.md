@@ -24,7 +24,7 @@ Build a long-horizon AI-assisted Hong Kong stock investing system with disciplin
   - **No prior SENT marker:** a rerun can deliver another summary message for the same date.
   - **Prior SENT marker present:** later rerun is expected to be dedup-skipped (`skip_reason=dedup_already_sent`).
   - **Dedup check/persist failure:** system degrades gracefully to send-attempt path (possible duplicate delivery), then records observability for follow-up.
-- Operator commands (`/runs`, `/runner_status`, `/risk_review`, `/pnl_review`, `/help`) are read-only review surfaces and do not mutate strategy, paper-trading decisions, or execution state.
+- Operator commands (`/runs`, `/runner_status`, `/risk_review`, `/pnl_review`, `/outcome_review`, `/help`) are read-only review surfaces and do not mutate strategy, paper-trading decisions, or execution state.
 - This phase remains paper-trading/decision-support only. No autonomous real-money execution is authorized.
 
 ## Operator Expectation Baseline
@@ -334,3 +334,11 @@ Required limitation statements in docs:
 ### Platform ownership for this step
 - **GitHub (changed in Step 57):** bounded Telegram operator rendering/parsing wording updates, focused tests, and docs synchronization.
 - **Railway (no change in Step 57):** no topology, cron, env-var contract, webhook routing, or deployment-process change required.
+
+
+## Operator runbook examples baseline (Step 58, docs-only)
+- Operator runbook examples are now explicitly aligned with Step 57 normalized wording for normal/no-data/invalid-input paths.
+- `/pnl_review` command-output examples must follow stock-display fallback policy exactly:
+  - when available: `stock_name=<name> | stock_id=<id>`
+  - fallback: `stock_id=<id> | name_unavailable`
+- Runbook examples remain read-only interpretation guidance and do not authorize runtime behavior changes, Telegram command behavior changes, or real-money execution.

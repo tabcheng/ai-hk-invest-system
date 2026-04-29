@@ -1,7 +1,7 @@
 # Project Status
 
 ## Last reviewed date
-2026-03-27
+2026-04-29
 
 ## Post-merge acceptance + wording discipline (system-of-record)
 - Every merged step must complete two mandatory acceptance checks:
@@ -119,6 +119,11 @@
 - Step 57 platform ownership clarification: GitHub changed bounded operator rendering/parsing/tests/docs only; Railway topology/cron/env/webhook/deployment process remains unchanged.
 - Step 57 Post-merge QA Check: pass — focused tests cover usage/invalid-input wording updates, no-data/empty-window wording, stock-display fallback behavior, and backward-compatible success paths.
 - Step 57 Post-merge Domain Check: pass — AI HK investing-system alignment and paper-trading decision-support boundary preserved; no strategy logic/DB schema/deployment topology mutation introduced.
+- Step 58 operator runbook examples alignment (docs-only): added `docs/operator-runbook.md` covering compact interpretation examples for `/runs`, `/runner_status`, `/risk_review <run_id>`, `/pnl_review`, `/outcome_review`, `/outcome_review <days>` across normal/no-data/invalid-input paths with paper-trading decision-support boundary reminders.
+- Step 58 stock display policy documentation alignment: runbook/spec now explicitly records Step 57 rendering policy (`stock_name=<name> | stock_id=<id>` preferred; fallback `stock_id=<id> | name_unavailable`) and prohibits implying missing stock names.
+- Step 58 platform ownership clarification: GitHub changed docs only (`docs/operator-runbook.md`, status/backlog/spec synchronization); Railway service/cron/env/webhook/deployment process remains unchanged.
+- Step 58 Post-merge QA Check: pass — docs-only scope verified against Step 57 normalized wording requirements (normal/no-data/invalid-input example coverage and stock-display fallback policy consistency) with no runtime/test behavior mutation.
+- Step 58 Post-merge Domain Check: pass — AI HK investing-system alignment and paper-trading/decision-support boundary preserved; no autonomous live-money execution semantics introduced.
 - Step 54 Post-merge QA Check (docs-only scope): pass — scope remains documentation-only, output contract/rubric wording is explicit, and system-of-record docs stay aligned with no runtime behavior mutation.
 - Step 54 Post-merge Domain Check (docs-only scope): pass — AI HK investing-system alignment and paper-trading/decision-support-only boundary remain intact; interpretation-risk and limitation statements are explicitly recorded.
 - No autonomous live-money execution is enabled; human remains final decision-maker.
@@ -128,9 +133,9 @@
 - Milestone 1 (Documentation Foundation): completed.
 - Milestone 2 (Signal framework + modularization/test baseline): completed.
 - Milestone 3 (Paper-trading v1): completed.
-- Milestone 4 (Controlled production hardening): in-progress, with Steps 19–57 completed and runtime hardening follow-ups still pending.
+- Milestone 4 (Controlled production hardening): in-progress, with Steps 19–58 completed and runtime hardening follow-ups still pending.
 
-## Step 21–57 status ledger (Step 57 operator surface consistency normalization)
+## Step 21–58 status ledger (Step 58 operator runbook examples alignment)
 
 | Step | Goal | Primary deliverable(s) | Status |
 |---|---|---|---|
@@ -182,9 +187,10 @@
 | 55-review-hotfix | Step 55 robustness/readability hardening | Defensive `trade_date` parsing skip for malformed historical rows + explicit nearest-rank percentile math (`ceil`) + focused malformed-date test coverage | **Completed (merged in-repo runtime+docs state).** Read-only analytics hardening only; no schema/deployment/strategy/real-money behavior change. |
 | 56 | Outcome review windowing + runbook alignment (bounded) | Add minimal `/outcome_review <days>` optional windowing with bounded integer validation, deterministic `trade_date` window filtering, focused tests, and help/spec/status/backlog wording sync | **Completed (merged in-repo runtime+docs state).** Bounded read-only review enhancement only; no analytics-scope expansion, no pairing-contract change, no schema/deployment topology change. |
 | 57 | Operator surface consistency check + wording normalization (bounded) | Perform minimal consistency/wording normalization for `/runs`, `/runner_status`, `/risk_review`, `/pnl_review`, `/outcome_review`, apply explicit stock-display fallback policy, add focused tests, and sync docs/spec/status/backlog | **Completed (merged in-repo runtime+docs state).** Bounded operator-clarity increment only; no new commands/analytics type, no strategy logic change, no DB schema change, no deployment topology change. |
+| 58 | Operator runbook examples alignment for normalized Telegram command output (docs-only) | Add/update operator runbook examples for `/runs`, `/runner_status`, `/risk_review`, `/pnl_review`, `/outcome_review` normal/no-data/invalid-input interpretations + Step 57 stock-display policy documentation sync across spec/status/backlog | **Completed (merged in-repo docs state).** Docs-only scope; no runtime behavior/test/schema/strategy/deployment topology change. |
 
 ## Known unknowns / needs confirmation
 - Production platform settings (GitHub/Railway/Supabase project posture) still require periodic manual verification outside repository files.
 
 ## Next approved task candidate
-- Step 58 candidate: docs-only operator runbook examples alignment for normalized Step 57 command wording/output (no runtime behavior change).
+- Step 59 candidate: operator runbook cross-link and onboarding flow tidy-up (docs-only, no runtime behavior change).

@@ -8,7 +8,11 @@ Prioritization:
 ## Active backlog (pending)
 
 ### P0
-- None at this time.
+1. **Step 62 candidate — `/decision_note` runtime MVP**
+   - Implement smallest bounded runtime slice for Step 61 contract.
+   - Prefer run-level first if stock-level scope grows too large; include stock-level only if still bounded.
+   - Preserve paper-trading and human-final-decision boundary.
+   - Keep journaling-only behavior (no execution semantics, no broker/live-trading integration).
 
 ### P1
 1. **Telegram command registration follow-up (optional)**

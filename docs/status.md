@@ -148,7 +148,7 @@
 - Milestone 1 (Documentation Foundation): completed.
 - Milestone 2 (Signal framework + modularization/test baseline): completed.
 - Milestone 3 (Paper-trading v1): completed.
-- Milestone 4 (Controlled production hardening): in-progress, with Steps 19–60 completed and runtime hardening follow-ups still pending.
+- Milestone 4 (Controlled production hardening): in-progress, with Steps 19–61 completed and runtime hardening follow-ups still pending.
 
 ## Step 21–61 status ledger (Step 61 Human Decision Journal Contract v1)
 

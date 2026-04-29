@@ -464,3 +464,5 @@ Proposed table: `human_decision_journal_entries` with draft columns:
 - No strategy logic change.
 - No paper-trading calculation change.
 - No autonomous execution/broker integration.
+
+- Step 62 runtime adds `/decision_note` run-level MVP (scope=run only), journaling-only boundary, no execution/no real-money trading.

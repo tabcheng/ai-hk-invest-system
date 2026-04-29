@@ -394,9 +394,9 @@ def build_help_command_message() -> str:
             "- /risk_review [run_id] : Run paper-trading risk review for one run (查看單次 run 風險回顧).",
             "- /pnl_review : Show paper position/PnL review snapshot (查看持倉與盈虧摘要).",
             "- /outcome_review [days] : Show closed-trade outcome summary (查看平倉結果摘要，可選天數視窗).",
-            "- /daily_review : Show daily operator review packet MVP (每日操作員快速檢視封包).
-            - /decision_note scope=run run_id=<id> source_command=<cmd> human_action=<action> note=<text> :
-              Record run-level human decision journal entry (journaling only).",
+            "- /daily_review : Show daily operator review packet MVP (每日操作員快速檢視封包).",
+            "- /decision_note scope=run run_id=<id> source_command=<cmd> human_action=<action> note=<text> : "
+            "Record run-level human decision journal entry (journaling only).",
             "- /help : Show this operator usage guide (顯示操作說明).",
             "- /h : Alias of /help (與 /help 相同).",
         ]

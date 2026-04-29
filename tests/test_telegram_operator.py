@@ -593,9 +593,14 @@ def test_handle_daily_review_command_success(monkeypatch):
     assert "Command: /daily_review" in response
     assert "Status: completed." in response
     assert "- runner_status: success" in response
+    assert "- business_date_hkt: " in response
     assert "- latest_run_id: 321" in response
+    assert "- latest_run_time_hkt: 2026-04-29 08:00:00 HKT" in response
     assert "- pnl_snapshot: available" in response
     assert "- outcome_summary: available" in response
+    assert "- daily_review_health: ok" in response
+    assert "- next_action_hint: Review detail commands before making any human decision." in response
+    assert "- detail_commands: /runner_status, /runs, /pnl_review, /outcome_review, /risk_review 321" in response
 
 
 def test_handle_daily_review_command_partial_no_data(monkeypatch):
@@ -614,8 +619,10 @@ def test_handle_daily_review_command_partial_no_data(monkeypatch):
     assert "Status: completed." in response
     assert "- runner_status: no data" in response
     assert "- latest_run_id: N/A" in response
+    assert "- latest_run_time_hkt: N/A" in response
     assert "- pnl_snapshot: available" in response
     assert "- outcome_summary: available" in response
+    assert "- daily_review_health: attention_needed" in response
 
 
 def test_handle_daily_review_command_helper_internal_error(monkeypatch):
@@ -637,6 +644,8 @@ def test_handle_daily_review_command_helper_internal_error(monkeypatch):
     assert "- runner_status: failed" in response
     assert "- pnl_snapshot: internal error" in response
     assert "- outcome_summary: internal error" in response
+    assert "- daily_review_health: internal_error" in response
+    assert "- next_action_hint: Check service logs and run detailed commands." in response
 
 
 def test_handle_daily_review_command_rejects_unauthorized(monkeypatch):

@@ -549,14 +549,17 @@ def _build_daily_review_command_message(client: Any) -> str:
     """Build short daily operator review packet (MVP, read-only aggregation)."""
     runner_status_result = "no data"
     latest_run_id = "N/A"
+    latest_run_time_hkt = "N/A"
     pnl_snapshot = "internal error"
     outcome_summary = "internal error"
+    business_date_hkt = datetime.now(timezone.utc).astimezone(_HKT_TZ).date().isoformat()
 
     try:
         latest_row = get_latest_run_execution_summary(client)
         if latest_row:
             latest_run_id = latest_row.get("id") or "N/A"
             runner_status_result = str(latest_row.get("status") or "unknown").lower()
+            latest_run_time_hkt = _format_display_timestamp_hkt(latest_row.get("created_at"), field_name="created_at")
     except Exception:
         print("Telegram /daily_review runner status helper failed")
         runner_status_result = "internal error"
@@ -580,16 +583,37 @@ def _build_daily_review_command_message(client: Any) -> str:
         print("Telegram /daily_review outcome summary helper failed")
         outcome_summary = "internal error"
 
+    section_values = [runner_status_result, pnl_snapshot, outcome_summary]
+    has_internal_error = any(value == "internal error" for value in section_values)
+    has_no_data = any(value in {"no data", "no matching records", "no closed trades"} for value in section_values)
+    if has_internal_error:
+        daily_review_health = "internal_error"
+        next_action_hint = "Check service logs and run detailed commands."
+    elif has_no_data:
+        daily_review_health = "attention_needed"
+        next_action_hint = "Check detailed command output and confirm whether no-data is expected."
+    else:
+        daily_review_health = "ok"
+        next_action_hint = "Review detail commands before making any human decision."
+
+    detail_commands = ["/runner_status", "/runs", "/pnl_review", "/outcome_review"]
+    if str(latest_run_id) != "N/A":
+        detail_commands.append(f"/risk_review {latest_run_id}")
+
     return _build_operator_message(
         command_label="/daily_review",
         status="completed",
         result="daily operator review packet generated",
         fields=[
+            ("business_date_hkt", business_date_hkt),
             ("runner_status", runner_status_result),
             ("latest_run_id", latest_run_id),
+            ("latest_run_time_hkt", latest_run_time_hkt),
             ("pnl_snapshot", pnl_snapshot),
             ("outcome_summary", outcome_summary),
-            ("recommended_next_steps", "if any section is internal error/no data, run detailed review commands and check logs"),
+            ("daily_review_health", daily_review_health),
+            ("next_action_hint", next_action_hint),
+            ("detail_commands", ", ".join(detail_commands)),
             ("boundary", "paper-trading decision support only; no real-money execution"),
         ],
     )

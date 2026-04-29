@@ -128,6 +128,10 @@
 - Step 59 platform ownership clarification: GitHub changed command wiring/tests/docs only (`src/telegram_operator.py`, `tests/test_telegram_operator.py`, `docs/operator-runbook.md`, `docs/spec.md`, `docs/status.md`, `docs/backlog.md`); Railway service topology/cron/env/webhook/deployment settings remain unchanged.
 - Step 59 Post-merge QA Check: pass — focused tests cover `/daily_review` success path, partial no-data path, helper internal-error path, unauthorized gating parity, and `/help` command-list inclusion.
 - Step 59 Post-merge Domain Check: pass — AI HK investing-system alignment preserved; output remains paper-trading decision-support only, does not generate autonomous buy/sell decisions, and introduces no real-money execution semantics.
+- Step 60 `/daily_review` v2 usability: added `business_date_hkt`, `latest_run_time_hkt`, deterministic `daily_review_health` (`ok`/`attention_needed`/`internal_error`), `next_action_hint`, and `detail_commands` (`/runner_status`, `/runs`, `/pnl_review`, `/outcome_review`, plus `/risk_review <run_id>` when latest run exists) while keeping output read-only and section-scoped error/no-data tolerance.
+- Step 60 platform ownership clarification: GitHub changed bounded operator command/tests/docs only (`src/telegram_operator.py`, `tests/test_telegram_operator.py`, `docs/operator-runbook.md`, `docs/spec.md`, `docs/status.md`, `docs/backlog.md`); Railway service topology/cron/env/webhook/deployment settings remain unchanged.
+- Step 60 Post-merge QA Check: pass — focused tests cover new daily-review fields, success path, partial no-data health status, helper internal-error health status, and malformed `/daily_review now` usage behavior.
+- Step 60 Post-merge Domain Check: pass — AI HK investing-system alignment preserved; `/daily_review` health/hint fields are review-readiness signals only, command remains read-only decision support, and no autonomous live-money execution semantics are introduced.
 - Step 54 Post-merge QA Check (docs-only scope): pass — scope remains documentation-only, output contract/rubric wording is explicit, and system-of-record docs stay aligned with no runtime behavior mutation.
 - Step 54 Post-merge Domain Check (docs-only scope): pass — AI HK investing-system alignment and paper-trading/decision-support-only boundary remain intact; interpretation-risk and limitation statements are explicitly recorded.
 - No autonomous live-money execution is enabled; human remains final decision-maker.
@@ -137,9 +141,9 @@
 - Milestone 1 (Documentation Foundation): completed.
 - Milestone 2 (Signal framework + modularization/test baseline): completed.
 - Milestone 3 (Paper-trading v1): completed.
-- Milestone 4 (Controlled production hardening): in-progress, with Steps 19–58 completed and runtime hardening follow-ups still pending.
+- Milestone 4 (Controlled production hardening): in-progress, with Steps 19–60 completed and runtime hardening follow-ups still pending.
 
-## Step 21–59 status ledger (Step 59 daily operator review packet MVP)
+## Step 21–60 status ledger (Step 60 /daily_review v2 usability)
 
 | Step | Goal | Primary deliverable(s) | Status |
 |---|---|---|---|
@@ -193,9 +197,10 @@
 | 57 | Operator surface consistency check + wording normalization (bounded) | Perform minimal consistency/wording normalization for `/runs`, `/runner_status`, `/risk_review`, `/pnl_review`, `/outcome_review`, apply explicit stock-display fallback policy, add focused tests, and sync docs/spec/status/backlog | **Completed (merged in-repo runtime+docs state).** Bounded operator-clarity increment only; no new commands/analytics type, no strategy logic change, no DB schema change, no deployment topology change. |
 | 58 | Operator runbook examples alignment for normalized Telegram command output (docs-only) | Add/update operator runbook examples for `/runs`, `/runner_status`, `/risk_review`, `/pnl_review`, `/outcome_review` normal/no-data/invalid-input interpretations + Step 57 stock-display policy documentation sync across spec/status/backlog | **Completed (merged in-repo docs state).** Docs-only scope; no runtime behavior/test/schema/strategy/deployment topology change. |
 | 59 | Daily operator review packet MVP | Add read-only `/daily_review` Telegram command that aggregates short section statuses (`runner_status`, `latest_run_id`, `pnl_snapshot`, `outcome_summary`) with partial no-data/internal-error tolerance, plus focused tests and docs sync | **Completed (merged in-repo runtime+docs state).** Bounded operator review aggregation only; no strategy logic/paper-trading calculation/DB schema/deployment topology mutation. |
+| 60 | `/daily_review` v2 usability | Add read-only operator-review usability fields (`business_date_hkt`, `latest_run_time_hkt`, `daily_review_health`, `next_action_hint`, `detail_commands`) with deterministic section-status-based health rules, while preserving command-level completion and section-scoped failure tolerance | **Completed (merged in-repo runtime+docs state).** Bounded operator usability enhancement only; no DB schema/strategy logic/paper-trading calculation/Railway topology mutation. |
 
 ## Known unknowns / needs confirmation
 - Production platform settings (GitHub/Railway/Supabase project posture) still require periodic manual verification outside repository files.
 
 ## Next approved task candidate
-- Step 60 candidate: `/daily_review` runbook cross-link and troubleshooting FAQ tidy-up (docs-only, no runtime behavior change).
+- Step 61 candidate: Telegram output language option scoping (`zh-HK`/`en`) starting with `/daily_review` (design/docs first; no runtime rollout until explicitly approved).

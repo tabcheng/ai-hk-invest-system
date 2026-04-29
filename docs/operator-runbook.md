@@ -182,11 +182,15 @@
 - Retry using exact `/daily_review`.
 
 **Interpret normal output**
+- `business_date_hkt`: 今日 review packet 的 HKT business date（display-only，不改任何 persisted storage semantics）。
 - `runner_status`: latest runner 狀態（`success/failed/no data/internal error`）。
 - `latest_run_id`: 最新 run id（若無則 `N/A`）。
+- `latest_run_time_hkt`: latest run 的建立時間（HKT）；若無 latest run 則 `N/A`。
 - `pnl_snapshot`: 紙上交易持倉/盈虧摘要可用性（`available/no matching records/internal error`）。
 - `outcome_summary`: 平倉結果摘要可用性（`available/no closed trades/internal error`）。
-- `recommended_next_steps`: 若有 no-data/internal-error，改跑對應細節命令排查。
+- `daily_review_health`: readiness/data-availability health（`ok/attention_needed/internal_error`），不是投資建議或買賣信號。
+- `next_action_hint`: 根據 section 狀態給 operator 的 follow-up 提示，不提供 buy/sell/hold 決策。
+- `detail_commands`: `/runner_status`, `/runs`, `/pnl_review`, `/outcome_review`；若有 latest run 會包含 `/risk_review <run_id>`。
 
 **Interpret partial no-data output**
 - 任何單一 section 顯示 `no data` 或 `no matching records` 屬可接受情境，不代表整個 command 失敗。
@@ -196,4 +200,5 @@
 - Action: 依建議改跑 `/runner_status`、`/pnl_review`、`/outcome_review` 並查 logs。
 
 **Boundary note**
-- 僅限 paper-trading decision support；不提供自動買賣決策，不涉及 real-money execution。
+- `/daily_review` 為 read-only operator review command。
+- 僅限 paper-trading decision support；health/hint 欄位只代表 review readiness，不提供自動買賣決策，不涉及 real-money execution。

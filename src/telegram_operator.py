@@ -8,6 +8,7 @@ from typing import Any
 from zoneinfo import ZoneInfo
 
 from src.daily_runner import ENTRYPOINT, SCHEDULE_BASIS
+from src.human_decision_journal import ALLOWED_HUMAN_ACTIONS, ALLOWED_SOURCE_COMMANDS, record_run_level_decision_note
 from src.runs import get_latest_run_execution_summary, get_run_by_id, list_recent_runs
 
 _RUNS_COMMAND_PATTERN = re.compile(r"^/runs(?:\s+(\d+)d)?\s*$", re.IGNORECASE)
@@ -16,6 +17,7 @@ _RUNNER_STATUS_COMMAND_PATTERN = re.compile(r"^/runner_status\s*$", re.IGNORECAS
 _PNL_REVIEW_COMMAND_PATTERN = re.compile(r"^/pnl_review\s*$", re.IGNORECASE)
 _OUTCOME_REVIEW_COMMAND_PATTERN = re.compile(r"^/outcome_review(?:\s+(\S+))?\s*$", re.IGNORECASE)
 _DAILY_REVIEW_COMMAND_PATTERN = re.compile(r"^/daily_review\s*$", re.IGNORECASE)
+_DECISION_NOTE_COMMAND_PATTERN = re.compile(r"^/decision_note(?:\s+(.*))?$", re.IGNORECASE)
 _HELP_COMMAND_PATTERN = re.compile(r"^/(?:help|h)\s*$", re.IGNORECASE)
 _DEFAULT_DAYS = 5
 _MAX_DAYS = 30
@@ -149,6 +151,66 @@ def _parse_outcome_review_command(command_text: str) -> int | None:
     return days
 
 
+
+
+def _parse_decision_note_command(command_text: str) -> dict[str, Any]:
+    match = _DECISION_NOTE_COMMAND_PATTERN.match(command_text or "")
+    if not match:
+        raise ValueError(
+            "Usage: /decision_note scope=run run_id=123 source_command=/daily_review human_action=observe note=Daily review checked."
+        )
+    args_text = (match.group(1) or "").strip()
+    if not args_text:
+        raise ValueError(
+            "Invalid input: missing scope. Usage: /decision_note scope=run run_id=123 source_command=/daily_review human_action=observe note=Daily review checked."
+        )
+
+    parsed: dict[str, str] = {}
+    note_match = re.search(r"\bnote=(.*)$", args_text)
+    leading = args_text
+    if note_match:
+        parsed["note"] = note_match.group(1).strip()
+        leading = args_text[: note_match.start()].strip()
+    for token in leading.split():
+        if "=" not in token:
+            raise ValueError(
+                "Malformed command: expected key=value tokens. Usage: /decision_note scope=run run_id=123 source_command=/daily_review human_action=observe note=Daily review checked."
+            )
+        key, value = token.split("=", 1)
+        parsed[key.strip().lower()] = value.strip()
+
+    scope = parsed.get("scope", "").strip().lower()
+    if not scope:
+        raise ValueError("Invalid input: missing scope.")
+    if scope == "stock":
+        raise ValueError("stock-level decision journal is not implemented yet; no execution performed")
+    if scope != "run":
+        raise ValueError("Invalid input: unsupported scope. Only scope=run is supported in Step 62; no execution performed")
+
+    run_id_token = parsed.get("run_id", "").strip()
+    if not run_id_token:
+        raise ValueError("Invalid input: missing run_id.")
+    if not run_id_token.isdigit() or int(run_id_token) <= 0:
+        raise ValueError("Invalid input: run_id must be a positive integer.")
+    run_id = int(run_id_token)
+
+    source_command = parsed.get("source_command", "").strip()
+    if not source_command:
+        raise ValueError("Invalid input: missing source_command.")
+    if source_command not in ALLOWED_SOURCE_COMMANDS:
+        raise ValueError("Invalid input: unsupported source_command.")
+
+    human_action = parsed.get("human_action", "").strip()
+    if not human_action:
+        raise ValueError("Invalid input: missing human_action.")
+    if human_action not in ALLOWED_HUMAN_ACTIONS:
+        raise ValueError("Invalid input: unsupported human_action.")
+
+    note = parsed.get("note", "").strip()
+    if not note:
+        raise ValueError("Invalid input: note must not be empty.")
+
+    return {"scope": scope, "run_id": run_id, "source_command": source_command, "human_action": human_action, "note": note}
 def _parse_daily_review_command(command_text: str) -> None:
     """Validate `/daily_review` with no extra tokens."""
     if not _DAILY_REVIEW_COMMAND_PATTERN.match(command_text or ""):
@@ -339,6 +401,8 @@ def build_help_command_message() -> str:
             "- /pnl_review : Show paper position/PnL review snapshot (查看持倉與盈虧摘要).",
             "- /outcome_review [days] : Show closed-trade outcome summary (查看平倉結果摘要，可選天數視窗).",
             "- /daily_review : Show daily operator review packet MVP (每日操作員快速檢視封包).",
+            "- /decision_note scope=run run_id=123 source_command=/daily_review human_action=observe note=Daily review checked. : "
+            "Record run-level human decision journal entry (journaling only; no execution).",
             "- /help : Show this operator usage guide (顯示操作說明).",
             "- /h : Alias of /help (與 /help 相同).",
         ]
@@ -647,6 +711,7 @@ def handle_telegram_operator_command(client: Any, update: dict[str, Any]) -> str
     is_pnl_review_command = text.lower().startswith("/pnl_review")
     is_outcome_review_command = text.lower().startswith("/outcome_review")
     is_daily_review_command = text.lower().startswith("/daily_review")
+    is_decision_note_command = text.lower().startswith("/decision_note")
     if not (
         is_help_command
         or is_runs_command
@@ -655,6 +720,7 @@ def handle_telegram_operator_command(client: Any, update: dict[str, Any]) -> str
         or is_pnl_review_command
         or is_outcome_review_command
         or is_daily_review_command
+        or is_decision_note_command
     ):
         return None
 
@@ -772,6 +838,37 @@ def handle_telegram_operator_command(client: Any, update: dict[str, Any]) -> str
             except ValueError as exc:
                 return _build_usage_error_message(command_label="/daily_review", error_text=str(exc))
             return _build_daily_review_command_message(client)
+
+        if is_decision_note_command:
+            try:
+                parsed = _parse_decision_note_command(text)
+            except ValueError as exc:
+                return _build_usage_error_message(command_label="/decision_note", error_text=str(exc))
+            try:
+                user_id_for_journal = auth_decision.get("user_id") or None
+                record_run_level_decision_note(
+                    client,
+                    run_id=parsed["run_id"],
+                    source_command=parsed["source_command"],
+                    human_action=parsed["human_action"],
+                    note=parsed["note"],
+                    operator_user_id_hash_or_label=user_id_for_journal,
+                )
+            except Exception as exc:
+                print(f"Telegram /decision_note persistence failed: chat_id={chat_id} user_id={user_id} error={exc!r}")
+                return _build_operator_message(command_label="/decision_note", status="failed", reason="internal decision journal persistence error")
+            return _build_operator_message(
+                command_label="/decision_note",
+                status="completed",
+                result="human decision journal entry recorded",
+                fields=[
+                    ("run_id", parsed["run_id"]),
+                    ("scope", parsed["scope"]),
+                    ("human_action", parsed["human_action"]),
+                    ("source_command", parsed["source_command"]),
+                    ("journal_boundary", "journaling only; no execution; no real-money trading"),
+                ],
+            )
 
         # /risk_review execution guardrail:
         # - Parse and validate run_id early.

@@ -825,3 +825,65 @@ def test_handle_outcome_review_command_rejects_out_of_range_window_input(monkeyp
     assert "Status: failed." in response
     assert "Invalid input: days must be between 1 and 365" in response
     assert "Usage: /outcome_review [days]" in response
+
+def test_decision_note_success_run_level(monkeypatch):
+    monkeypatch.setenv("TELEGRAM_CHAT_ID", "chat-1")
+    seen = {}
+
+    def _fake_record(_client, **kwargs):
+        seen.update(kwargs)
+        return {"id": 1}
+
+    monkeypatch.setattr("src.telegram_operator.record_run_level_decision_note", _fake_record)
+    response = handle_telegram_operator_command(
+        object(),
+        _build_update("/decision_note scope=run run_id=321 source_command=/daily_review human_action=observe note=Daily review checked."),
+    )
+    assert "Status: completed." in response
+    assert "human decision journal entry recorded" in response
+    assert "- run_id: 321" in response
+    assert seen["run_id"] == 321
+
+
+def test_decision_note_invalid_run_id(monkeypatch):
+    monkeypatch.setenv("TELEGRAM_CHAT_ID", "chat-1")
+    response = handle_telegram_operator_command(object(), _build_update("/decision_note scope=run run_id=abc source_command=/daily_review human_action=observe note=ok"))
+    assert "Command: /decision_note" in response and "run_id must be a positive integer" in response
+
+
+def test_decision_note_invalid_human_action(monkeypatch):
+    monkeypatch.setenv("TELEGRAM_CHAT_ID", "chat-1")
+    response = handle_telegram_operator_command(object(), _build_update("/decision_note scope=run run_id=1 source_command=/daily_review human_action=buy note=ok"))
+    assert "unsupported human_action" in response
+
+
+def test_decision_note_unsupported_source_command(monkeypatch):
+    monkeypatch.setenv("TELEGRAM_CHAT_ID", "chat-1")
+    response = handle_telegram_operator_command(object(), _build_update("/decision_note scope=run run_id=1 source_command=/unknown human_action=observe note=ok"))
+    assert "unsupported source_command" in response
+
+
+def test_decision_note_scope_stock_not_implemented(monkeypatch):
+    monkeypatch.setenv("TELEGRAM_CHAT_ID", "chat-1")
+    response = handle_telegram_operator_command(object(), _build_update("/decision_note scope=stock run_id=1 source_command=/daily_review human_action=observe note=ok"))
+    assert "not implemented yet" in response and "no execution performed" in response
+
+
+def test_decision_note_unauthorized_does_not_write(monkeypatch):
+    monkeypatch.setenv("TELEGRAM_CHAT_ID", "chat-allowed")
+    called = {"n": 0}
+    monkeypatch.setattr("src.telegram_operator.record_run_level_decision_note", lambda *_a, **_k: called.__setitem__("n", called["n"] + 1))
+    response = handle_telegram_operator_command(object(), _build_update("/decision_note scope=run run_id=1 source_command=/daily_review human_action=observe note=ok", chat_id="other"))
+    assert "Status: unauthorized." in response
+    assert called["n"] == 0
+
+
+def test_decision_note_malformed_usage(monkeypatch):
+    monkeypatch.setenv("TELEGRAM_CHAT_ID", "chat-1")
+    response = handle_telegram_operator_command(object(), _build_update("/decision_note hello world"))
+    assert "Command: /decision_note" in response and "Malformed command" in response
+
+
+def test_help_includes_decision_note():
+    message = build_help_command_message()
+    assert "/decision_note" in message

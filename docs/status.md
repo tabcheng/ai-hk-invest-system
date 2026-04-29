@@ -212,3 +212,8 @@
 
 ## Next approved task candidate
 - Step 62 candidate: `/decision_note` runtime MVP (smallest bounded slice; run-level first if needed, add stock-level only when bounded; preserve paper-trading and human-final-decision boundary).
+
+- Step 62 `/decision_note` runtime MVP implemented (run-level only), with explicit journaling-only boundary and stock-level not-implemented response.
+- Step 62 platform ownership: GitHub runtime/tests/docs + Supabase table migration; Railway no change.
+- Step 62 Post-merge QA Check: pass (local focused tests for success/validation/auth/help coverage).
+- Step 62 Post-merge Domain Check: pass (decision-support journaling only; no execution/broker/live trading).

@@ -84,3 +84,5 @@ Prioritization:
   - Use `repo merge completed` and `manual platform acceptance completed` in `docs/status.md`.
   - Use `docs maintenance follow-up` only when opening a pending backlog item (not when declaring merge completion).
 - No backlog item authorizes autonomous live-money execution.
+
+- Step 62: add run-level `/decision_note` runtime MVP; defer stock-level journaling.

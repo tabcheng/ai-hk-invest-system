@@ -79,3 +79,5 @@ Paper-trading review/read-surface expansion, Telegram operator workflow hardenin
 - Preserve runtime behavior unless a step explicitly approves runtime change.
 - Do not introduce autonomous real-money execution.
 - Mark uncertain facts as `unknown / needs confirmation`.
+
+- Step 62 implementation (runtime): `/decision_note` run-level only with persistence + validation + tests.

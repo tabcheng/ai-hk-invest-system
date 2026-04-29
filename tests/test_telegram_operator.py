@@ -648,6 +648,26 @@ def test_handle_daily_review_command_helper_internal_error(monkeypatch):
     assert "- next_action_hint: Check service logs and run detailed commands." in response
 
 
+def test_handle_daily_review_command_runner_failed_sets_attention_needed(monkeypatch):
+    monkeypatch.setenv("TELEGRAM_CHAT_ID", "chat-1")
+    monkeypatch.setattr(
+        "src.telegram_operator.get_latest_run_execution_summary",
+        lambda _client: {"id": 100, "status": "FAILED", "created_at": "2026-04-29T00:00:00+00:00"},
+    )
+    monkeypatch.setattr(
+        "src.telegram_operator._get_paper_position_pnl_review_snapshot",
+        lambda _client: {"per_symbol": [{"stock": "0005.HK"}], "total_realized_pnl": 0.0, "total_unrealized_pnl": 0.0},
+    )
+    monkeypatch.setattr(
+        "src.telegram_operator._get_paper_trade_outcome_summary",
+        lambda _client, *, recent_days=None: {"closed_trade_count": 1},
+    )
+    response = handle_telegram_operator_command(object(), _build_update("/daily_review"))
+    assert "- runner_status: failed" in response
+    assert "- daily_review_health: attention_needed" in response
+    assert "- next_action_hint: Check /runner_status, /runs, and service logs if needed." in response
+
+
 def test_handle_daily_review_command_rejects_unauthorized(monkeypatch):
     monkeypatch.setenv("TELEGRAM_CHAT_ID", "chat-1")
     response = handle_telegram_operator_command(object(), _build_update("/daily_review", chat_id="chat-2"))

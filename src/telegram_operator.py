@@ -585,10 +585,14 @@ def _build_daily_review_command_message(client: Any) -> str:
 
     section_values = [runner_status_result, pnl_snapshot, outcome_summary]
     has_internal_error = any(value == "internal error" for value in section_values)
+    runner_attention_needed = runner_status_result in {"failed", "unknown"}
     has_no_data = any(value in {"no data", "no matching records", "no closed trades"} for value in section_values)
     if has_internal_error:
         daily_review_health = "internal_error"
         next_action_hint = "Check service logs and run detailed commands."
+    elif runner_attention_needed:
+        daily_review_health = "attention_needed"
+        next_action_hint = "Check /runner_status, /runs, and service logs if needed."
     elif has_no_data:
         daily_review_health = "attention_needed"
         next_action_hint = "Check detailed command output and confirm whether no-data is expected."

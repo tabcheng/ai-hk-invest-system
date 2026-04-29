@@ -145,6 +145,7 @@ def test_help_message_contains_guardrails_and_command_list():
     assert "/runner_status" in message
     assert "/risk_review [run_id]" in message
     assert "/pnl_review" in message
+    assert "/daily_review" in message
     assert "/help" in message
     assert "/h" in message
 
@@ -571,6 +572,86 @@ def test_help_message_includes_outcome_review_command():
     message = build_help_command_message()
     assert "/outcome_review" in message
     assert "/outcome_review [days]" in message
+    assert "/daily_review" in message
+
+
+def test_handle_daily_review_command_success(monkeypatch):
+    monkeypatch.setenv("TELEGRAM_CHAT_ID", "chat-1")
+    monkeypatch.setattr(
+        "src.telegram_operator.get_latest_run_execution_summary",
+        lambda _client: {"id": 321, "status": "SUCCESS", "created_at": "2026-04-29T00:00:00+00:00"},
+    )
+    monkeypatch.setattr(
+        "src.telegram_operator._get_paper_position_pnl_review_snapshot",
+        lambda _client: {"per_symbol": [{"stock": "0005.HK"}], "total_realized_pnl": 0.0, "total_unrealized_pnl": 0.0},
+    )
+    monkeypatch.setattr(
+        "src.telegram_operator._get_paper_trade_outcome_summary",
+        lambda _client, *, recent_days=None: {"closed_trade_count": 2},
+    )
+    response = handle_telegram_operator_command(object(), _build_update("/daily_review"))
+    assert "Command: /daily_review" in response
+    assert "Status: completed." in response
+    assert "- runner_status: success" in response
+    assert "- latest_run_id: 321" in response
+    assert "- pnl_snapshot: available" in response
+    assert "- outcome_summary: available" in response
+
+
+def test_handle_daily_review_command_partial_no_data(monkeypatch):
+    monkeypatch.setenv("TELEGRAM_CHAT_ID", "chat-1")
+    monkeypatch.setattr("src.telegram_operator.get_latest_run_execution_summary", lambda _client: None)
+    monkeypatch.setattr(
+        "src.telegram_operator._get_paper_position_pnl_review_snapshot",
+        lambda _client: {"per_symbol": [{"stock": "0005.HK"}], "total_realized_pnl": 0.0, "total_unrealized_pnl": 0.0},
+    )
+    monkeypatch.setattr(
+        "src.telegram_operator._get_paper_trade_outcome_summary",
+        lambda _client, *, recent_days=None: {"closed_trade_count": 1},
+    )
+    response = handle_telegram_operator_command(object(), _build_update("/daily_review"))
+    assert "Command: /daily_review" in response
+    assert "Status: completed." in response
+    assert "- runner_status: no data" in response
+    assert "- latest_run_id: N/A" in response
+    assert "- pnl_snapshot: available" in response
+    assert "- outcome_summary: available" in response
+
+
+def test_handle_daily_review_command_helper_internal_error(monkeypatch):
+    monkeypatch.setenv("TELEGRAM_CHAT_ID", "chat-1")
+    monkeypatch.setattr(
+        "src.telegram_operator.get_latest_run_execution_summary",
+        lambda _client: {"id": 99, "status": "FAILED", "created_at": "2026-04-29T00:00:00+00:00"},
+    )
+    monkeypatch.setattr(
+        "src.telegram_operator._get_paper_position_pnl_review_snapshot",
+        lambda _client: (_ for _ in ()).throw(RuntimeError("boom")),
+    )
+    monkeypatch.setattr(
+        "src.telegram_operator._get_paper_trade_outcome_summary",
+        lambda _client, *, recent_days=None: (_ for _ in ()).throw(RuntimeError("boom")),
+    )
+    response = handle_telegram_operator_command(object(), _build_update("/daily_review"))
+    assert "Status: completed." in response
+    assert "- runner_status: failed" in response
+    assert "- pnl_snapshot: internal error" in response
+    assert "- outcome_summary: internal error" in response
+
+
+def test_handle_daily_review_command_rejects_unauthorized(monkeypatch):
+    monkeypatch.setenv("TELEGRAM_CHAT_ID", "chat-1")
+    response = handle_telegram_operator_command(object(), _build_update("/daily_review", chat_id="chat-2"))
+    assert "Command: /daily_review" in response
+    assert "Status: unauthorized." in response
+
+
+def test_handle_daily_review_command_rejects_extra_tokens_with_usage(monkeypatch):
+    monkeypatch.setenv("TELEGRAM_CHAT_ID", "chat-1")
+    response = handle_telegram_operator_command(object(), _build_update("/daily_review now"))
+    assert "Command: /daily_review" in response
+    assert "Status: failed." in response
+    assert "Reason: Usage: /daily_review" in response
 
 
 def test_handle_outcome_review_command_success(monkeypatch):

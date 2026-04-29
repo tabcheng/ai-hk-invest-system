@@ -15,6 +15,7 @@ _RISK_REVIEW_COMMAND_PATTERN = re.compile(r"^/risk_review(?:\s+(\S+))?\s*$", re.
 _RUNNER_STATUS_COMMAND_PATTERN = re.compile(r"^/runner_status\s*$", re.IGNORECASE)
 _PNL_REVIEW_COMMAND_PATTERN = re.compile(r"^/pnl_review\s*$", re.IGNORECASE)
 _OUTCOME_REVIEW_COMMAND_PATTERN = re.compile(r"^/outcome_review(?:\s+(\S+))?\s*$", re.IGNORECASE)
+_DAILY_REVIEW_COMMAND_PATTERN = re.compile(r"^/daily_review\s*$", re.IGNORECASE)
 _HELP_COMMAND_PATTERN = re.compile(r"^/(?:help|h)\s*$", re.IGNORECASE)
 _DEFAULT_DAYS = 5
 _MAX_DAYS = 30
@@ -331,6 +332,7 @@ def build_help_command_message() -> str:
             "- /risk_review [run_id] : Run paper-trading risk review for one run (查看單次 run 風險回顧).",
             "- /pnl_review : Show paper position/PnL review snapshot (查看持倉與盈虧摘要).",
             "- /outcome_review [days] : Show closed-trade outcome summary (查看平倉結果摘要，可選天數視窗).",
+            "- /daily_review : Show daily operator review packet MVP (每日操作員快速檢視封包).",
             "- /help : Show this operator usage guide (顯示操作說明).",
             "- /h : Alias of /help (與 /help 相同).",
         ]
@@ -537,6 +539,53 @@ def _build_outcome_review_command_message(summary: dict[str, Any]) -> str:
     )
 
 
+def _build_daily_review_command_message(client: Any) -> str:
+    """Build short daily operator review packet (MVP, read-only aggregation)."""
+    runner_status_result = "no data"
+    latest_run_id = "N/A"
+    pnl_snapshot = "internal error"
+    outcome_summary = "internal error"
+
+    try:
+        latest_row = get_latest_run_execution_summary(client)
+        if latest_row:
+            latest_run_id = latest_row.get("id") or "N/A"
+            runner_status_result = str(latest_row.get("status") or "unknown").lower()
+    except Exception:
+        runner_status_result = "internal error"
+
+    try:
+        snapshot = _get_paper_position_pnl_review_snapshot(client)
+        has_pnl_rows = bool(snapshot.get("per_symbol"))
+        has_pnl_totals = any(
+            float(snapshot.get(key) or 0.0) != 0.0
+            for key in ("total_realized_pnl", "total_unrealized_pnl")
+        )
+        pnl_snapshot = "available" if has_pnl_rows or has_pnl_totals else "no matching records"
+    except Exception:
+        pnl_snapshot = "internal error"
+
+    try:
+        summary = _get_paper_trade_outcome_summary(client)
+        outcome_summary = "available" if int(summary.get("closed_trade_count") or 0) > 0 else "no closed trades"
+    except Exception:
+        outcome_summary = "internal error"
+
+    return _build_operator_message(
+        command_label="/daily_review",
+        status="completed",
+        result="daily operator review packet generated",
+        fields=[
+            ("runner_status", runner_status_result),
+            ("latest_run_id", latest_run_id),
+            ("pnl_snapshot", pnl_snapshot),
+            ("outcome_summary", outcome_summary),
+            ("recommended_next_steps", "if any section is internal error/no data, run detailed review commands and check logs"),
+            ("boundary", "paper-trading decision support only; no real-money execution"),
+        ],
+    )
+
+
 def handle_telegram_operator_command(client: Any, update: dict[str, Any]) -> str | None:
     """
     Parse and handle Telegram operator commands.
@@ -560,6 +609,7 @@ def handle_telegram_operator_command(client: Any, update: dict[str, Any]) -> str
     is_risk_review_command = text.lower().startswith("/risk_review")
     is_pnl_review_command = text.lower().startswith("/pnl_review")
     is_outcome_review_command = text.lower().startswith("/outcome_review")
+    is_daily_review_command = bool(_DAILY_REVIEW_COMMAND_PATTERN.match(text))
     if not (
         is_help_command
         or is_runs_command
@@ -567,6 +617,7 @@ def handle_telegram_operator_command(client: Any, update: dict[str, Any]) -> str
         or is_risk_review_command
         or is_pnl_review_command
         or is_outcome_review_command
+        or is_daily_review_command
     ):
         return None
 
@@ -677,6 +728,9 @@ def handle_telegram_operator_command(client: Any, update: dict[str, Any]) -> str
                     reason="internal outcome summary error",
                 )
             return _build_outcome_review_command_message(summary)
+
+        if is_daily_review_command:
+            return _build_daily_review_command_message(client)
 
         # /risk_review execution guardrail:
         # - Parse and validate run_id early.

@@ -8,6 +8,7 @@
   - `/pnl_review`
   - `/outcome_review`
   - `/outcome_review <days>`
+  - `/daily_review`
 - This is review-only guidance for paper-trading decision support; human remains final decision-maker.
 
 ## Global interpretation guardrails
@@ -165,3 +166,29 @@
 
 **Boundary note**
 - Paper-trading decision-support only; no autonomous live-money behavior.
+
+---
+
+## `/daily_review`
+**Purpose**
+- 快速生成每日 operator review packet（MVP），用短格式整合核心 read-only review surfaces。
+
+**Example command**
+- `/daily_review`
+
+**Interpret normal output**
+- `runner_status`: latest runner 狀態（`success/failed/no data/internal error`）。
+- `latest_run_id`: 最新 run id（若無則 `N/A`）。
+- `pnl_snapshot`: 紙上交易持倉/盈虧摘要可用性（`available/no matching records/internal error`）。
+- `outcome_summary`: 平倉結果摘要可用性（`available/no closed trades/internal error`）。
+- `recommended_next_steps`: 若有 no-data/internal-error，改跑對應細節命令排查。
+
+**Interpret partial no-data output**
+- 任何單一 section 顯示 `no data` 或 `no matching records` 屬可接受情境，不代表整個 command 失敗。
+
+**Interpret helper internal-error output**
+- 單一 helper 失敗時，packet 仍應 `Status: completed.`，該 section 顯示 `internal error`。
+- Action: 依建議改跑 `/runner_status`、`/pnl_review`、`/outcome_review` 並查 logs。
+
+**Boundary note**
+- 僅限 paper-trading decision support；不提供自動買賣決策，不涉及 real-money execution。

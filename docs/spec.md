@@ -25,6 +25,7 @@ Build a long-horizon AI-assisted Hong Kong stock investing system with disciplin
   - **Prior SENT marker present:** later rerun is expected to be dedup-skipped (`skip_reason=dedup_already_sent`).
   - **Dedup check/persist failure:** system degrades gracefully to send-attempt path (possible duplicate delivery), then records observability for follow-up.
 - Operator commands (`/runs`, `/runner_status`, `/risk_review`, `/pnl_review`, `/outcome_review`, `/help`) are read-only review surfaces and do not mutate strategy, paper-trading decisions, or execution state.
+- Operator command `/daily_review` provides a short daily operator review packet by aggregating existing read-only surfaces (`/runner_status`, `/pnl_review`, `/outcome_review`) into one compact status view; partial no-data/internal-error is section-scoped and should not fail the full packet unless command-level processing itself fails.
 - This phase remains paper-trading/decision-support only. No autonomous real-money execution is authorized.
 
 ## Operator Expectation Baseline

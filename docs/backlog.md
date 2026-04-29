@@ -37,7 +37,7 @@ Prioritization:
 
 ## Completed backlog (archived)
 
-### Recently completed (Steps 40–58)
+### Recently completed (Steps 40–59)
 - **Step 40 completed:** normalized operator response shape for `/runs`, `/runner_status`, `/risk_review` and centralized HTML-safe rendering contract.
 - **Step 41 completed:** added read-only paper position/PnL snapshot helper and `/pnl_review` operator command, including input/correctness hardening.
 - **Step 42 completed:** added market-data provider boundary (`MARKET_DATA_PROVIDER`) with `yfinance` baseline and deterministic `mock` provider.
@@ -60,6 +60,7 @@ Prioritization:
 - **Step 56 completed:** added bounded optional review window grammar (`/outcome_review <days>`), deterministic exit-`trade_date` window filtering anchored to latest available snapshot `trade_date`, explicit invalid/out-of-range usage errors, and focused tests/docs alignment (GitHub changed; Railway unchanged).
 - **Step 57 completed:** performed bounded operator-surface consistency/wording normalization for `/runs`, `/runner_status`, `/risk_review`, `/pnl_review`, `/outcome_review`, including stock-display fallback policy (`stock_name + stock_id` preferred; `stock_id=<id> | name_unavailable` fallback), normalized usage/invalid-input wording, normalized no-data phrasing, focused tests, and docs sync (GitHub changed; Railway unchanged).
 - **Step 58 completed (docs-only):** added `docs/operator-runbook.md` with compact normal/no-data/invalid-input interpretation examples for `/runs`, `/runner_status`, `/risk_review`, `/pnl_review`, `/outcome_review`, `/outcome_review <days>`, and explicitly documented Step 57 stock-display fallback policy; runtime behavior unchanged (GitHub changed; Railway unchanged).
+- **Step 59 completed:** added read-only `/daily_review` Telegram operator command as a compact daily operator review packet MVP that aggregates section-level status from existing review surfaces (`runner_status`, latest run id, pnl snapshot availability, outcome summary availability), with partial no-data/internal-error tolerance, focused tests (success/partial-no-data/helper-error/unauthorized/help inclusion), and docs sync across runbook/spec/status/backlog (GitHub changed; Railway unchanged).
 
 ### Earlier completed foundations
 - Step 1–12 baseline (documentation foundation, signal framework, dedup, run lifecycle, modularization, tests, Telegram MVP/hardening).

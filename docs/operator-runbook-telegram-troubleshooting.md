@@ -10,6 +10,8 @@ Use this checklist in order. Stop when you find the answer.
 
 For a quick outcome-to-action map, see `docs/operator-quick-reference-telegram-outcomes.md`.
 
+For normalized operator command output interpretation examples, see `docs/operator-runbook.md` (Step 58).
+
 Operator command quick check (read-only):
 - `/outcome_review` → full closed-trade outcome snapshot in current data view.
 - `/outcome_review <days>` → bounded window view (integer days, 1..365).

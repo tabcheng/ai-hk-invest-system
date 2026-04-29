@@ -552,6 +552,7 @@ def _build_daily_review_command_message(client: Any) -> str:
             latest_run_id = latest_row.get("id") or "N/A"
             runner_status_result = str(latest_row.get("status") or "unknown").lower()
     except Exception:
+        print("Telegram /daily_review runner status helper failed")
         runner_status_result = "internal error"
 
     try:
@@ -563,12 +564,14 @@ def _build_daily_review_command_message(client: Any) -> str:
         )
         pnl_snapshot = "available" if has_pnl_rows or has_pnl_totals else "no matching records"
     except Exception:
+        print("Telegram /daily_review pnl snapshot helper failed")
         pnl_snapshot = "internal error"
 
     try:
         summary = _get_paper_trade_outcome_summary(client)
         outcome_summary = "available" if int(summary.get("closed_trade_count") or 0) > 0 else "no closed trades"
     except Exception:
+        print("Telegram /daily_review outcome summary helper failed")
         outcome_summary = "internal error"
 
     return _build_operator_message(

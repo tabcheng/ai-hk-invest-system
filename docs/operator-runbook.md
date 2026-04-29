@@ -176,6 +176,11 @@
 **Example command**
 - `/daily_review`
 
+**Handle invalid input / usage output**
+- Only exact `/daily_review` is supported.
+- Extra-token variants (for example `/daily_review now`) are outside current command contract and may be ignored as unrecognized commands.
+- Retry using exact `/daily_review`.
+
 **Interpret normal output**
 - `runner_status`: latest runner 狀態（`success/failed/no data/internal error`）。
 - `latest_run_id`: 最新 run id（若無則 `N/A`）。

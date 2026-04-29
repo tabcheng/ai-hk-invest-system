@@ -156,10 +156,14 @@ def _parse_outcome_review_command(command_text: str) -> int | None:
 def _parse_decision_note_command(command_text: str) -> dict[str, Any]:
     match = _DECISION_NOTE_COMMAND_PATTERN.match(command_text or "")
     if not match:
-        raise ValueError("Usage: /decision_note scope=run run_id=<id> source_command=<cmd> human_action=<action> note=<text>")
+        raise ValueError(
+            "Usage: /decision_note scope=run run_id=123 source_command=/daily_review human_action=observe note=Daily review checked."
+        )
     args_text = (match.group(1) or "").strip()
     if not args_text:
-        raise ValueError("Invalid input: missing scope. Usage: /decision_note scope=run run_id=<id> source_command=<cmd> human_action=<action> note=<text>")
+        raise ValueError(
+            "Invalid input: missing scope. Usage: /decision_note scope=run run_id=123 source_command=/daily_review human_action=observe note=Daily review checked."
+        )
 
     parsed: dict[str, str] = {}
     note_match = re.search(r"\bnote=(.*)$", args_text)
@@ -169,7 +173,9 @@ def _parse_decision_note_command(command_text: str) -> dict[str, Any]:
         leading = args_text[: note_match.start()].strip()
     for token in leading.split():
         if "=" not in token:
-            raise ValueError("Malformed command: expected key=value tokens. Usage: /decision_note scope=run run_id=<id> source_command=<cmd> human_action=<action> note=<text>")
+            raise ValueError(
+                "Malformed command: expected key=value tokens. Usage: /decision_note scope=run run_id=123 source_command=/daily_review human_action=observe note=Daily review checked."
+            )
         key, value = token.split("=", 1)
         parsed[key.strip().lower()] = value.strip()
 
@@ -395,8 +401,8 @@ def build_help_command_message() -> str:
             "- /pnl_review : Show paper position/PnL review snapshot (查看持倉與盈虧摘要).",
             "- /outcome_review [days] : Show closed-trade outcome summary (查看平倉結果摘要，可選天數視窗).",
             "- /daily_review : Show daily operator review packet MVP (每日操作員快速檢視封包).",
-            "- /decision_note scope=run run_id=<id> source_command=<cmd> human_action=<action> note=<text> : "
-            "Record run-level human decision journal entry (journaling only).",
+            "- /decision_note scope=run run_id=123 source_command=/daily_review human_action=observe note=Daily review checked. : "
+            "Record run-level human decision journal entry (journaling only; no execution).",
             "- /help : Show this operator usage guide (顯示操作說明).",
             "- /h : Alias of /help (與 /help 相同).",
         ]

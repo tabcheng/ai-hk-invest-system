@@ -222,4 +222,4 @@
   - `/decision_note scope=run run_id=321 source_command=/daily_review human_action=observe confidence=medium note=Daily review checked.`
   - `/decision_note scope=stock run_id=321 stock_id=0700.HK source_command=/risk_review system_signal=buy_signal human_action=investigate confidence=low note=Need risk review first.`
 
-- /decision_note scope=run run_id=<id> source_command=<cmd> human_action=<action> note=<text> : Record run-level human decision journal entry only; no execution.
+- /decision_note scope=run run_id=123 source_command=/daily_review human_action=observe note=Daily review checked. : Record run-level human decision journal entry only; no execution.

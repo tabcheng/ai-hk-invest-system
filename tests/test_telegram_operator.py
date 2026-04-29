@@ -646,6 +646,14 @@ def test_handle_daily_review_command_rejects_unauthorized(monkeypatch):
     assert "Status: unauthorized." in response
 
 
+def test_handle_daily_review_command_rejects_extra_tokens_with_usage(monkeypatch):
+    monkeypatch.setenv("TELEGRAM_CHAT_ID", "chat-1")
+    response = handle_telegram_operator_command(object(), _build_update("/daily_review now"))
+    assert "Command: /daily_review" in response
+    assert "Status: failed." in response
+    assert "Reason: Usage: /daily_review" in response
+
+
 def test_handle_outcome_review_command_success(monkeypatch):
     monkeypatch.setenv("TELEGRAM_CHAT_ID", "chat-1")
     captured = {}

@@ -149,6 +149,12 @@ def _parse_outcome_review_command(command_text: str) -> int | None:
     return days
 
 
+def _parse_daily_review_command(command_text: str) -> None:
+    """Validate `/daily_review` with no extra tokens."""
+    if not _DAILY_REVIEW_COMMAND_PATTERN.match(command_text or ""):
+        raise ValueError("Usage: /daily_review")
+
+
 def _normalize_run_time(row: dict[str, Any]) -> str:
     # Human-facing display policy:
     # - Operator-facing time text is always rendered in HKT for consistency.
@@ -612,7 +618,7 @@ def handle_telegram_operator_command(client: Any, update: dict[str, Any]) -> str
     is_risk_review_command = text.lower().startswith("/risk_review")
     is_pnl_review_command = text.lower().startswith("/pnl_review")
     is_outcome_review_command = text.lower().startswith("/outcome_review")
-    is_daily_review_command = bool(_DAILY_REVIEW_COMMAND_PATTERN.match(text))
+    is_daily_review_command = text.lower().startswith("/daily_review")
     if not (
         is_help_command
         or is_runs_command
@@ -733,6 +739,10 @@ def handle_telegram_operator_command(client: Any, update: dict[str, Any]) -> str
             return _build_outcome_review_command_message(summary)
 
         if is_daily_review_command:
+            try:
+                _parse_daily_review_command(text)
+            except ValueError as exc:
+                return _build_usage_error_message(command_label="/daily_review", error_text=str(exc))
             return _build_daily_review_command_message(client)
 
         # /risk_review execution guardrail:

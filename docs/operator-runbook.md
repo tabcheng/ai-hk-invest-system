@@ -178,7 +178,7 @@
 
 **Handle invalid input / usage output**
 - Only exact `/daily_review` is supported.
-- Extra-token variants (for example `/daily_review now`) are outside current command contract and may be ignored as unrecognized commands.
+- Extra-token variants (for example `/daily_review now`) return explicit usage guidance: `Usage: /daily_review`.
 - Retry using exact `/daily_review`.
 
 **Interpret normal output**

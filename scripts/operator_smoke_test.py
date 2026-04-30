@@ -294,7 +294,9 @@ def _write_reports(
     guidance: str | None = None,
 ) -> None:
     supabase_status = supabase_result.status if supabase_result else "SKIPPED"
-    overall_pass = all(result.passed for result in results) and failure_reason is None and supabase_status != "FAIL"
+    transport_pass = all(result.passed for result in results) and failure_reason is None
+    supabase_pass = supabase_status != "FAIL"
+    overall_pass = transport_pass and supabase_pass
     supabase_payload = {
         "status": supabase_status,
         "table": "human_decision_journal_entries",
@@ -311,9 +313,11 @@ def _write_reports(
         "test_run_id": test_run_id,
         "overall_result": "PASS" if overall_pass else "FAIL",
         "overall_pass": overall_pass,
+        "transport_pass": transport_pass,
+        "supabase_pass": supabase_pass,
         "supabase_verification": supabase_payload,
         "guardrail_confirmation": "no broker/live-money execution detected",
-        "transport_verification": "PASS" if overall_pass else "FAIL",
+        "transport_verification": "PASS" if transport_pass else "FAIL",
         "response_text_verification": "SKIPPED_current_webhook_contract",
         "reason": failure_reason,
         "guidance": guidance,
@@ -360,7 +364,7 @@ def _write_reports(
             f"- supabase_guidance: `{supabase_payload['guidance'] or 'N/A'}`",
             f"- secrets_redacted: `{supabase_payload['secrets_redacted']}`",
             "- guardrail_confirmation: `no broker/live-money execution detected`",
-            f"- transport_verification: `{'PASS' if overall_pass else 'FAIL'}`",
+            f"- transport_verification: `{'PASS' if transport_pass else 'FAIL'}`",
             "- response_text_verification: `SKIPPED_current_webhook_contract`",
             f"- reason: `{failure_reason or 'N/A'}`",
             f"- guidance: `{guidance or 'N/A'}`",
@@ -430,6 +434,34 @@ def main() -> int:
             ],
             verify_supabase=args.verify_supabase == "true",
             qa_marker="N/A",
+        )
+        raise SmokeHarnessError(error_msg)
+    if args.verify_supabase == "true" and (
+        not os.getenv("SUPABASE_URL", "").strip() or not os.getenv("SUPABASE_SERVICE_ROLE_KEY", "").strip()
+    ):
+        error_msg = "verify_supabase=true requires SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY"
+        guidance = "Set both GitHub Actions secrets before running verify_supabase=true."
+        supabase_result = _verify_supabase_decision_note(args.test_run_id, "N/A")
+        _write_reports(
+            args.target,
+            args.test_run_id,
+            dt.datetime.now(dt.timezone.utc).isoformat(),
+            [
+                SmokeCaseResult(
+                    name="CONFIGURATION",
+                    command="N/A",
+                    passed=False,
+                    checks=[{"name": "supabase_required_env_vars_present", "passed": False}],
+                    response_snippet="",
+                    status_code=None,
+                    error=error_msg,
+                )
+            ],
+            verify_supabase=True,
+            qa_marker="N/A",
+            supabase_result=supabase_result,
+            failure_reason=error_msg,
+            guidance=guidance,
         )
         raise SmokeHarnessError(error_msg)
 

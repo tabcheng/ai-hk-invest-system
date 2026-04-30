@@ -226,8 +226,8 @@
 - Step 64 Post-merge Domain Check: pending post-merge review confirmation (expected scope remains QA-harness-only transport verification with no strategy/paper-trading/runtime execution-path mutation).
 - Step 65 Supabase verification layer for Operator Smoke Test: added optional DB persistence verification for `/decision_note` run-level journal row when `verify_supabase=true`, including per-run `qa_marker` injection and read-only Supabase query on `human_decision_journal_entries`; default `verify_supabase=false` remains `SKIPPED` with no DB requirement.
 - Step 65 platform ownership: GitHub changed script/tests/workflow/docs only; Supabase schema unchanged with read-only query usage only; Railway service topology/cron/env/webhook routing unchanged.
-- Step 65 Post-merge QA Check: pass — focused tests cover SKIPPED behavior, missing Supabase config failures, PASS/no-row FAIL/query-error FAIL outcomes, qa_marker command inclusion, secret redaction, Step 64 command coverage continuity, and response-text verification skip contract.
-- Step 65 Post-merge Domain Check: pass — smoke harness remains QA-only decision-support validation, `/decision_note` uses `human_action=observe` with explicit no-execution note, and no broker/real-money execution behavior is introduced.
+- Step 65 Post-merge QA Check: pending post-merge manual workflow acceptance with `verify_supabase=true`.
+- Step 65 Post-merge Domain Check: pending post-merge review confirmation.
 
 ## Next approved task candidate
 - Step 66 deferred: post-deploy acceptance checklist for Step 65 manual workflow evidence.

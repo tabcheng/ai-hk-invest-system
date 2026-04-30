@@ -131,7 +131,8 @@ def test_verify_supabase_true_missing_url_fails_with_report(tmp_path, monkeypatc
         lambda *args, **kwargs: (200, json.dumps({"ok": True, "handled": True, "replied": True, "send_result": {"delivered": True}})),
     )
     monkeypatch.setattr("sys.argv", ["operator_smoke_test.py", "--test-run-id", "31", "--verify-supabase", "true"])
-    assert smoke.main() == 1
+    with pytest.raises(smoke.SmokeHarnessError):
+        smoke.main()
     js = json.loads((tmp_path / "operator_smoke_report.json").read_text(encoding="utf-8"))
     assert js["supabase_verification"]["status"] == "FAIL"
     assert "SUPABASE_URL" in js["supabase_verification"]["reason"]
@@ -150,7 +151,8 @@ def test_verify_supabase_true_missing_service_role_key_fails_with_report(tmp_pat
         lambda *args, **kwargs: (200, json.dumps({"ok": True, "handled": True, "replied": True, "send_result": {"delivered": True}})),
     )
     monkeypatch.setattr("sys.argv", ["operator_smoke_test.py", "--test-run-id", "31", "--verify-supabase", "true"])
-    assert smoke.main() == 1
+    with pytest.raises(smoke.SmokeHarnessError):
+        smoke.main()
     js = json.loads((tmp_path / "operator_smoke_report.json").read_text(encoding="utf-8"))
     assert js["supabase_verification"]["status"] == "FAIL"
     assert "SUPABASE_SERVICE_ROLE_KEY" in js["supabase_verification"]["reason"]
@@ -232,3 +234,44 @@ def test_redact_no_secrets_printed(monkeypatch):
     assert "abc123" not in redacted
     assert "service-role-secret" not in redacted
     assert "[REDACTED]" in redacted
+
+
+def test_write_reports_transport_pass_supabase_fail_overall_fail(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    result = smoke.SmokeCaseResult(
+        name="A_help",
+        command="/help",
+        passed=True,
+        checks=[],
+        response_snippet="{}",
+        status_code=200,
+    )
+    supabase_result = smoke.SupabaseVerificationResult(
+        status="FAIL",
+        table="human_decision_journal_entries",
+        qa_marker="mk",
+        matched_rows_count=0,
+        reason="no row",
+    )
+    smoke._write_reports("production", "31", "2026-04-30T00:00:00+00:00", [result], True, "mk", supabase_result=supabase_result)
+    js = json.loads((tmp_path / "operator_smoke_report.json").read_text(encoding="utf-8"))
+    assert js["transport_verification"] == "PASS"
+    assert js["supabase_verification"]["status"] == "FAIL"
+    assert js["overall_result"] == "FAIL"
+
+
+def test_write_reports_transport_fail_supabase_skipped_overall_fail(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    result = smoke.SmokeCaseResult(
+        name="A_help",
+        command="/help",
+        passed=False,
+        checks=[],
+        response_snippet="{}",
+        status_code=500,
+    )
+    smoke._write_reports("production", "31", "2026-04-30T00:00:00+00:00", [result], False, "mk")
+    js = json.loads((tmp_path / "operator_smoke_report.json").read_text(encoding="utf-8"))
+    assert js["transport_verification"] == "FAIL"
+    assert js["supabase_verification"]["status"] == "SKIPPED"
+    assert js["overall_result"] == "FAIL"

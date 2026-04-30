@@ -11,7 +11,7 @@ on:
         description: Enter only the numeric run id, e.g. 31
         required: true
       verify_supabase:
-        description: Optional Supabase row verification (Step 63 default false)
+        description: Optional Supabase row verification for /decision_note persistence (default false)
         required: true
         default: "false"
 

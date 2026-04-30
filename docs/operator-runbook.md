@@ -224,7 +224,7 @@
 
 - /decision_note scope=run run_id=123 source_command=/daily_review human_action=observe note=Daily review checked. : Record run-level human decision journal entry only; no execution.
 
-## Step 64 manual Operator QA harness (GitHub Actions, expanded smoke coverage)
+## Step 65 manual Operator QA harness (GitHub Actions + optional Supabase verification)
 - Scope: manual QA harness only; not trading logic, not strategy changes, not paper-trading calculation changes.
 - Workflow: `.github/workflows/operator-smoke-test.yml` (manual `workflow_dispatch` only; no schedule/push/PR trigger).
 - Script: `scripts/operator_smoke_test.py` builds mock Telegram updates and POSTs to webhook test endpoint, then writes:
@@ -235,8 +235,8 @@
   - Variable: `OPERATOR_TEST_CHAT_ID`
   - Variable: `OPERATOR_TEST_USER_ID`
   - Secret (optional if webhook auth enabled): `OPERATOR_WEBHOOK_SECRET`
-  - Secret (optional, Step 64 default skipped): `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`
-- Step 64 smoke cases:
+  - Secret (required only when `verify_supabase=true`): `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`
+- Step 65 smoke cases:
   - Existing: `/help`, `/daily_review`, `/decision_note` run-level success, `/decision_note` stock-scope not-implemented, invalid `/decision_note`.
   - Expanded: `/runs`, `/runner_status`, `/risk_review <test_run_id>`, `/pnl_review`, `/outcome_review`.
 - Guardrails:
@@ -244,10 +244,12 @@
   - Verification focus is transport/delivery contract (`HTTP 200`, `ok=true`, `handled=true`, `replied=true`, `send_result.delivered=true` when available).
   - Response text verification is explicitly `SKIPPED_current_webhook_contract` under current webhook payload contract.
   - `--test-run-id` must be a positive integer (numeric only, e.g. `31`).
-  - Step 64 does not implement stock-level decision journal runtime.
-  - Step 65 keeps Supabase row verification as deferred scope.
+  - Harness generates a unique `qa_marker` and appends it into `/decision_note ... note=... marker=<qa_marker>` for this run.
+  - When `verify_supabase=true`, harness performs read-only query on `human_decision_journal_entries` and requires at least one matching row (`scope=run`, `run_id=<test_run_id>`, `source_command=/daily_review`, `human_action=observe`, `note` contains `qa_marker`).
+  - `SUPABASE_SERVICE_ROLE_KEY` is sensitive and must not be pasted in chat/source/log/report.
+  - Step 65 does not implement stock-level decision journal runtime.
   - Step 66 post-deploy acceptance checklist remains deferred scope.
-  - Step 67 scheduled daily health check remains future plan only (not implemented in Step 64).
+  - Step 67 scheduled daily health check remains future plan only (not implemented in Step 65).
   - QA harness is not trading logic and must not trigger broker/live-money execution.
 - Future governance note:
   - After Step 66, runtime/Telegram/DB project changes should include operator QA-harness consideration in acceptance flow.

@@ -83,7 +83,14 @@ def test_write_reports_contains_skipped_marker(tmp_path, monkeypatch):
         status_code=200,
     )
 
-    smoke._write_reports("production", "321", "2026-04-30T00:00:00+00:00", [result], verify_supabase=False)
+    smoke._write_reports(
+        "production",
+        "321",
+        "2026-04-30T00:00:00+00:00",
+        [result],
+        verify_supabase=False,
+        qa_marker="operator-smoke-qa",
+    )
 
     md = (tmp_path / "operator_smoke_report.md").read_text(encoding="utf-8")
     js = json.loads((tmp_path / "operator_smoke_report.json").read_text(encoding="utf-8"))
@@ -92,6 +99,7 @@ def test_write_reports_contains_skipped_marker(tmp_path, monkeypatch):
     assert "transport_verification" in md
     assert js["response_text_verification"] == "SKIPPED_current_webhook_contract"
     assert js["transport_verification"] == "PASS"
+    assert js["supabase_verification"]["status"] == "SKIPPED"
 
 
 def test_invalid_test_run_id_fails_fast_and_writes_report(tmp_path, monkeypatch):
@@ -110,6 +118,100 @@ def test_invalid_test_run_id_fails_fast_and_writes_report(tmp_path, monkeypatch)
     assert "positive integer" in js["guidance"]
 
 
+def test_verify_supabase_true_missing_url_fails_with_report(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("OPERATOR_WEBHOOK_TEST_URL", "https://example.com")
+    monkeypatch.setenv("OPERATOR_TEST_CHAT_ID", "1")
+    monkeypatch.setenv("OPERATOR_TEST_USER_ID", "2")
+    monkeypatch.delenv("SUPABASE_URL", raising=False)
+    monkeypatch.setenv("SUPABASE_SERVICE_ROLE_KEY", "super-secret")
+    monkeypatch.setattr(
+        smoke,
+        "_send_command",
+        lambda *args, **kwargs: (200, json.dumps({"ok": True, "handled": True, "replied": True, "send_result": {"delivered": True}})),
+    )
+    monkeypatch.setattr("sys.argv", ["operator_smoke_test.py", "--test-run-id", "31", "--verify-supabase", "true"])
+    with pytest.raises(smoke.SmokeHarnessError):
+        smoke.main()
+    js = json.loads((tmp_path / "operator_smoke_report.json").read_text(encoding="utf-8"))
+    assert js["supabase_verification"]["status"] == "FAIL"
+    assert "SUPABASE_URL" in js["supabase_verification"]["reason"]
+
+
+def test_verify_supabase_true_missing_service_role_key_fails_with_report(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("OPERATOR_WEBHOOK_TEST_URL", "https://example.com")
+    monkeypatch.setenv("OPERATOR_TEST_CHAT_ID", "1")
+    monkeypatch.setenv("OPERATOR_TEST_USER_ID", "2")
+    monkeypatch.setenv("SUPABASE_URL", "https://abc.supabase.co")
+    monkeypatch.delenv("SUPABASE_SERVICE_ROLE_KEY", raising=False)
+    monkeypatch.setattr(
+        smoke,
+        "_send_command",
+        lambda *args, **kwargs: (200, json.dumps({"ok": True, "handled": True, "replied": True, "send_result": {"delivered": True}})),
+    )
+    monkeypatch.setattr("sys.argv", ["operator_smoke_test.py", "--test-run-id", "31", "--verify-supabase", "true"])
+    with pytest.raises(smoke.SmokeHarnessError):
+        smoke.main()
+    js = json.loads((tmp_path / "operator_smoke_report.json").read_text(encoding="utf-8"))
+    assert js["supabase_verification"]["status"] == "FAIL"
+    assert "SUPABASE_SERVICE_ROLE_KEY" in js["supabase_verification"]["reason"]
+
+
+def test_supabase_verification_pass_with_matching_row(monkeypatch):
+    captured = {"url": ""}
+
+    class _Resp:
+        def __enter__(self): return self
+        def __exit__(self, exc_type, exc, tb): return False
+        def read(self): return b'[{"id":1}]'
+
+    monkeypatch.setenv("SUPABASE_URL", "https://abc.supabase.co")
+    monkeypatch.setenv("SUPABASE_SERVICE_ROLE_KEY", "super-secret")
+    def _fake_urlopen(req, timeout=30):
+        captured["url"] = req.full_url
+        return _Resp()
+    monkeypatch.setattr(smoke.request, "urlopen", _fake_urlopen)
+    result = smoke._verify_supabase_decision_note("31", "mk")
+    assert result.status == "PASS"
+    assert result.matched_rows_count == 1
+    assert "source_command=eq.%2Fdaily_review" in captured["url"]
+
+
+def test_supabase_verification_fail_when_no_rows(monkeypatch):
+    class _Resp:
+        def __enter__(self): return self
+        def __exit__(self, exc_type, exc, tb): return False
+        def read(self): return b'[]'
+
+    monkeypatch.setenv("SUPABASE_URL", "https://abc.supabase.co")
+    monkeypatch.setenv("SUPABASE_SERVICE_ROLE_KEY", "super-secret")
+    monkeypatch.setattr(smoke.request, "urlopen", lambda req, timeout=30: _Resp())
+    result = smoke._verify_supabase_decision_note("31", "mk")
+    assert result.status == "FAIL"
+    assert result.matched_rows_count == 0
+
+
+def test_supabase_query_error_is_redacted(monkeypatch):
+    monkeypatch.setenv("SUPABASE_URL", "https://abc.supabase.co")
+    monkeypatch.setenv("SUPABASE_SERVICE_ROLE_KEY", "super-secret")
+    monkeypatch.setattr(smoke.request, "urlopen", lambda req, timeout=30: (_ for _ in ()).throw(RuntimeError("key=super-secret")))
+    result = smoke._verify_supabase_decision_note("31", "mk")
+    assert result.status == "FAIL"
+    assert "super-secret" not in (result.guidance or "")
+    assert "[REDACTED]" in (result.guidance or "")
+
+
+def test_qa_marker_included_in_decision_note_command():
+    marker = "operator-smoke-20260430T000000Z-aaaaaa"
+    cmd = (
+        "/decision_note scope=run run_id=31 source_command=/daily_review "
+        f"human_action=observe note=QA smoke test only; no execution. marker={marker}"
+    )
+    cases = smoke._build_smoke_cases("31", cmd)
+    assert any(marker in command for _, command, _, _ in cases)
+
+
 def test_command_coverage_includes_step64_cases():
     cases = smoke._build_smoke_cases("31", "/decision_note scope=run run_id=31 source_command=/daily_review human_action=observe note=ok")
     commands = [command for _, command, _, _ in cases]
@@ -125,8 +227,53 @@ def test_command_coverage_includes_step64_cases():
 def test_redact_no_secrets_printed(monkeypatch):
     monkeypatch.setenv("OPERATOR_WEBHOOK_TEST_URL", "https://secret.example")
     monkeypatch.setenv("OPERATOR_WEBHOOK_SECRET", "abc123")
-    text = "url=https://secret.example token=abc123"
+    monkeypatch.setenv("SUPABASE_URL", "https://project.supabase.co")
+    monkeypatch.setenv("SUPABASE_SERVICE_ROLE_KEY", "service-role-secret")
+    text = "url=https://secret.example token=abc123 sb=https://project.supabase.co key=service-role-secret"
     redacted = smoke._redact(text)
     assert "https://secret.example" not in redacted
     assert "abc123" not in redacted
+    assert "https://project.supabase.co" not in redacted
+    assert "service-role-secret" not in redacted
     assert "[REDACTED]" in redacted
+
+
+def test_write_reports_transport_pass_supabase_fail_overall_fail(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    result = smoke.SmokeCaseResult(
+        name="A_help",
+        command="/help",
+        passed=True,
+        checks=[],
+        response_snippet="{}",
+        status_code=200,
+    )
+    supabase_result = smoke.SupabaseVerificationResult(
+        status="FAIL",
+        table="human_decision_journal_entries",
+        qa_marker="mk",
+        matched_rows_count=0,
+        reason="no row",
+    )
+    smoke._write_reports("production", "31", "2026-04-30T00:00:00+00:00", [result], True, "mk", supabase_result=supabase_result)
+    js = json.loads((tmp_path / "operator_smoke_report.json").read_text(encoding="utf-8"))
+    assert js["transport_verification"] == "PASS"
+    assert js["supabase_verification"]["status"] == "FAIL"
+    assert js["overall_result"] == "FAIL"
+
+
+def test_write_reports_transport_fail_supabase_skipped_overall_fail(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    result = smoke.SmokeCaseResult(
+        name="A_help",
+        command="/help",
+        passed=False,
+        checks=[],
+        response_snippet="{}",
+        status_code=500,
+    )
+    smoke._write_reports("production", "31", "2026-04-30T00:00:00+00:00", [result], False, "mk")
+    js = json.loads((tmp_path / "operator_smoke_report.json").read_text(encoding="utf-8"))
+    assert js["transport_verification"] == "FAIL"
+    assert js["supabase_verification"]["status"] == "SKIPPED"
+    assert js["overall_result"] == "FAIL"

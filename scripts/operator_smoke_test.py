@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Manual Telegram operator smoke test harness (Step 64 expanded coverage)."""
+"""Manual Telegram operator smoke test harness (Step 65 optional Supabase verification)."""
 
 from __future__ import annotations
 
@@ -7,9 +7,12 @@ import argparse
 import datetime as dt
 import json
 import os
+import random
 import re
+import string
 from dataclasses import asdict, dataclass
 from typing import Any
+from urllib.parse import quote
 from urllib import request
 from urllib.error import HTTPError, URLError
 
@@ -34,8 +37,19 @@ class SmokeHarnessError(RuntimeError):
     """Configuration or harness execution error."""
 
 
+@dataclass
+class SupabaseVerificationResult:
+    status: str
+    table: str
+    qa_marker: str
+    matched_rows_count: int
+    reason: str | None = None
+    guidance: str | None = None
+    secrets_redacted: bool = True
+
+
 def _redact(value: str) -> str:
-    for key in ("OPERATOR_WEBHOOK_TEST_URL", "OPERATOR_WEBHOOK_SECRET", "SUPABASE_SERVICE_ROLE_KEY"):
+    for key in ("OPERATOR_WEBHOOK_TEST_URL", "OPERATOR_WEBHOOK_SECRET", "SUPABASE_URL", "SUPABASE_SERVICE_ROLE_KEY"):
         secret = os.getenv(key, "")
         if secret:
             value = value.replace(secret, "[REDACTED]")
@@ -55,6 +69,101 @@ def _build_update(command: str, chat_id: str, user_id: str) -> dict[str, Any]:
             "entities": [{"offset": 0, "length": len(command.split()[0]), "type": "bot_command"}],
         },
     }
+
+
+def _build_qa_marker(timestamp: dt.datetime | None = None) -> str:
+    now = timestamp or dt.datetime.now(dt.timezone.utc)
+    suffix = "".join(random.choices(string.ascii_lowercase + string.digits, k=6))
+    return f"operator-smoke-{now.strftime('%Y%m%dT%H%M%SZ')}-{suffix}"
+
+
+def _verify_supabase_decision_note(test_run_id: str, qa_marker: str) -> SupabaseVerificationResult:
+    table_name = "human_decision_journal_entries"
+    supabase_url = os.getenv("SUPABASE_URL", "").strip()
+    service_role_key = os.getenv("SUPABASE_SERVICE_ROLE_KEY", "").strip()
+    if not supabase_url:
+        return SupabaseVerificationResult(
+            status="FAIL",
+            table=table_name,
+            qa_marker=qa_marker,
+            matched_rows_count=0,
+            reason="Missing required env var: SUPABASE_URL",
+            guidance="Set GitHub Actions secret SUPABASE_URL when verify_supabase=true.",
+        )
+    if not service_role_key:
+        return SupabaseVerificationResult(
+            status="FAIL",
+            table=table_name,
+            qa_marker=qa_marker,
+            matched_rows_count=0,
+            reason="Missing required env var: SUPABASE_SERVICE_ROLE_KEY",
+            guidance="Set GitHub Actions secret SUPABASE_SERVICE_ROLE_KEY when verify_supabase=true.",
+        )
+
+    encoded_marker = quote(qa_marker, safe="")
+    encoded_source_command = quote("/daily_review", safe="")
+    url = (
+        f"{supabase_url.rstrip('/')}/rest/v1/{table_name}"
+        f"?select=id&scope=eq.run&run_id=eq.{test_run_id}&source_command=eq.{encoded_source_command}"
+        f"&human_action=eq.observe&note=ilike.*{encoded_marker}*"
+    )
+    headers = {
+        "apikey": service_role_key,
+        "Authorization": f"Bearer {service_role_key}",
+        "Accept": "application/json",
+    }
+    req = request.Request(url, headers=headers, method="GET")
+    try:
+        with request.urlopen(req, timeout=30) as resp:
+            body = resp.read().decode("utf-8", errors="replace")
+    except Exception as exc:  # noqa: BLE001
+        return SupabaseVerificationResult(
+            status="FAIL",
+            table=table_name,
+            qa_marker=qa_marker,
+            matched_rows_count=0,
+            reason="Supabase verification query failed",
+            guidance=f"Check SUPABASE_URL/service role key and table access; error={_redact(str(exc))}",
+        )
+
+    try:
+        payload = json.loads(body)
+    except json.JSONDecodeError:
+        return SupabaseVerificationResult(
+            status="FAIL",
+            table=table_name,
+            qa_marker=qa_marker,
+            matched_rows_count=0,
+            reason="Supabase verification query returned non-JSON response",
+            guidance="Confirm Supabase REST endpoint and credentials are valid for read-only query.",
+        )
+
+    if not isinstance(payload, list):
+        return SupabaseVerificationResult(
+            status="FAIL",
+            table=table_name,
+            qa_marker=qa_marker,
+            matched_rows_count=0,
+            reason="Supabase verification query returned unexpected payload shape",
+            guidance="Expected list payload from PostgREST query; confirm table/API behavior.",
+        )
+
+    matched_rows_count = len(payload)
+    if matched_rows_count < 1:
+        return SupabaseVerificationResult(
+            status="FAIL",
+            table=table_name,
+            qa_marker=qa_marker,
+            matched_rows_count=0,
+            reason="No matching /decision_note row found in Supabase",
+            guidance="Confirm webhook command succeeded and note includes qa_marker for this run.",
+        )
+    return SupabaseVerificationResult(
+        status="PASS",
+        table=table_name,
+        qa_marker=qa_marker,
+        matched_rows_count=matched_rows_count,
+    )
 
 
 def _send_command(command: str, webhook_url: str, webhook_secret: str | None, chat_id: str, user_id: str) -> tuple[int, str]:
@@ -179,13 +288,24 @@ def _write_reports(
     timestamp_utc: str,
     results: list[SmokeCaseResult],
     verify_supabase: bool,
+    qa_marker: str,
+    supabase_result: SupabaseVerificationResult | None = None,
     failure_reason: str | None = None,
     guidance: str | None = None,
 ) -> None:
-    overall_pass = all(result.passed for result in results) and failure_reason is None
-    supabase_status = "SKIPPED"
-    if verify_supabase:
-        supabase_status = "SKIPPED"
+    supabase_status = supabase_result.status if supabase_result else "SKIPPED"
+    transport_pass = all(result.passed for result in results) and failure_reason is None
+    supabase_pass = supabase_status != "FAIL"
+    overall_pass = transport_pass and supabase_pass
+    supabase_payload = {
+        "status": supabase_status,
+        "table": "human_decision_journal_entries",
+        "qa_marker": qa_marker,
+        "matched_rows_count": supabase_result.matched_rows_count if supabase_result else 0,
+        "reason": supabase_result.reason if supabase_result else ("SKIPPED_verify_supabase_false" if not verify_supabase else None),
+        "guidance": supabase_result.guidance if supabase_result else ("No DB query performed because verify_supabase=false." if not verify_supabase else None),
+        "secrets_redacted": True,
+    }
 
     report_json = {
         "target": target,
@@ -193,12 +313,11 @@ def _write_reports(
         "test_run_id": test_run_id,
         "overall_result": "PASS" if overall_pass else "FAIL",
         "overall_pass": overall_pass,
-        "supabase_verification": {
-            "status": supabase_status,
-            "note": "Step 63 defers full row verification to Step 65 candidate.",
-        },
+        "transport_pass": transport_pass,
+        "supabase_pass": supabase_pass,
+        "supabase_verification": supabase_payload,
         "guardrail_confirmation": "no broker/live-money execution detected",
-        "transport_verification": "PASS" if overall_pass else "FAIL",
+        "transport_verification": "PASS" if transport_pass else "FAIL",
         "response_text_verification": "SKIPPED_current_webhook_contract",
         "reason": failure_reason,
         "guidance": guidance,
@@ -238,8 +357,14 @@ def _write_reports(
             "## Overall",
             f"- overall_result: `{'PASS' if overall_pass else 'FAIL'}`",
             f"- supabase_verification_status: `{supabase_status}`",
+            f"- supabase_table: `{supabase_payload['table']}`",
+            f"- qa_marker: `{qa_marker}`",
+            f"- matched_rows_count: `{supabase_payload['matched_rows_count']}`",
+            f"- supabase_reason: `{supabase_payload['reason'] or 'N/A'}`",
+            f"- supabase_guidance: `{supabase_payload['guidance'] or 'N/A'}`",
+            f"- secrets_redacted: `{supabase_payload['secrets_redacted']}`",
             "- guardrail_confirmation: `no broker/live-money execution detected`",
-            f"- transport_verification: `{'PASS' if overall_pass else 'FAIL'}`",
+            f"- transport_verification: `{'PASS' if transport_pass else 'FAIL'}`",
             "- response_text_verification: `SKIPPED_current_webhook_contract`",
             f"- reason: `{failure_reason or 'N/A'}`",
             f"- guidance: `{guidance or 'N/A'}`",
@@ -275,6 +400,7 @@ def main() -> int:
                 )
             ],
             verify_supabase=args.verify_supabase == "true",
+            qa_marker="N/A",
             failure_reason=error_msg,
             guidance=guidance,
         )
@@ -307,12 +433,42 @@ def main() -> int:
                 )
             ],
             verify_supabase=args.verify_supabase == "true",
+            qa_marker="N/A",
+        )
+        raise SmokeHarnessError(error_msg)
+    if args.verify_supabase == "true" and (
+        not os.getenv("SUPABASE_URL", "").strip() or not os.getenv("SUPABASE_SERVICE_ROLE_KEY", "").strip()
+    ):
+        error_msg = "verify_supabase=true requires SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY"
+        guidance = "Set both GitHub Actions secrets before running verify_supabase=true."
+        supabase_result = _verify_supabase_decision_note(args.test_run_id, "N/A")
+        _write_reports(
+            args.target,
+            args.test_run_id,
+            dt.datetime.now(dt.timezone.utc).isoformat(),
+            [
+                SmokeCaseResult(
+                    name="CONFIGURATION",
+                    command="N/A",
+                    passed=False,
+                    checks=[{"name": "supabase_required_env_vars_present", "passed": False}],
+                    response_snippet="",
+                    status_code=None,
+                    error=error_msg,
+                )
+            ],
+            verify_supabase=True,
+            qa_marker="N/A",
+            supabase_result=supabase_result,
+            failure_reason=error_msg,
+            guidance=guidance,
         )
         raise SmokeHarnessError(error_msg)
 
+    qa_marker = _build_qa_marker()
     run_success_command = (
         f"/decision_note scope=run run_id={args.test_run_id} source_command=/daily_review "
-        "human_action=observe note=QA smoke test only; no execution."
+        f"human_action=observe note=QA smoke test only; no execution. marker={qa_marker}"
     )
 
     cases = _build_smoke_cases(args.test_run_id, run_success_command)
@@ -321,15 +477,26 @@ def main() -> int:
         _run_case(name, command, includes, excludes, webhook_url, webhook_secret, chat_id, user_id)
         for (name, command, includes, excludes) in cases
     ]
+    supabase_result = None
+    if args.verify_supabase == "true":
+        supabase_result = _verify_supabase_decision_note(args.test_run_id, qa_marker)
 
     timestamp_utc = dt.datetime.now(dt.timezone.utc).isoformat()
-    _write_reports(args.target, args.test_run_id, timestamp_utc, results, verify_supabase=args.verify_supabase == "true")
+    _write_reports(
+        args.target,
+        args.test_run_id,
+        timestamp_utc,
+        results,
+        verify_supabase=args.verify_supabase == "true",
+        qa_marker=qa_marker,
+        supabase_result=supabase_result,
+    )
 
     print(f"[operator-smoke] target={args.target} run_id={args.test_run_id}")
     for result in results:
         print(f"[operator-smoke] {result.name}: {'PASS' if result.passed else 'FAIL'}")
 
-    overall_pass = all(result.passed for result in results)
+    overall_pass = all(result.passed for result in results) and (supabase_result is None or supabase_result.status == "PASS")
     print(f"[operator-smoke] overall={'PASS' if overall_pass else 'FAIL'}")
     return 0 if overall_pass else 1
 

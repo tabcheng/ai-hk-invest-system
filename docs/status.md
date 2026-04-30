@@ -224,7 +224,11 @@
 - Step 64 platform ownership: GitHub changed script/tests/workflow wording/docs only; Railway service topology/cron/env/webhook routing unchanged; Supabase schema/row verification unchanged (Step 65 deferred).
 - Step 64 Post-merge QA Check: pending post-merge manual workflow acceptance (GitHub Actions `workflow_dispatch` run + artifact review against configured webhook endpoint).
 - Step 64 Post-merge Domain Check: pending post-merge review confirmation (expected scope remains QA-harness-only transport verification with no strategy/paper-trading/runtime execution-path mutation).
+- Step 65 Supabase verification layer for Operator Smoke Test: added optional DB persistence verification for `/decision_note` run-level journal row when `verify_supabase=true`, including per-run `qa_marker` injection and read-only Supabase query on `human_decision_journal_entries`; default `verify_supabase=false` remains `SKIPPED` with no DB requirement.
+- Step 65 platform ownership: GitHub changed script/tests/workflow/docs only; Supabase schema unchanged with read-only query usage only; Railway service topology/cron/env/webhook routing unchanged.
+- Step 65 Post-merge QA Check: pending post-merge manual workflow acceptance with `verify_supabase=true`.
+- Step 65 Post-merge Domain Check: pending post-merge review confirmation.
 
 ## Next approved task candidate
-- Step 64+ candidate: continue bounded operator/runtime hardening with QA-harness consideration for runtime/Telegram/DB changes.
+- Step 66 deferred: post-deploy acceptance checklist for Step 65 manual workflow evidence.
 - Step 67 scheduled daily health check remains future plan only (not implemented in Step 63).

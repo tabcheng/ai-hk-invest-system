@@ -210,10 +210,17 @@
 ## Known unknowns / needs confirmation
 - Production platform settings (GitHub/Railway/Supabase project posture) still require periodic manual verification outside repository files.
 
-## Next approved task candidate
-- Step 62 candidate: `/decision_note` runtime MVP (smallest bounded slice; run-level first if needed, add stock-level only when bounded; preserve paper-trading and human-final-decision boundary).
-
+## Recent completion notes
 - Step 62 `/decision_note` runtime MVP implemented (run-level only), with explicit journaling-only boundary and stock-level not-implemented response.
 - Step 62 platform ownership: GitHub runtime/tests/docs + Supabase table migration; Railway no change.
 - Step 62 Post-merge QA Check: pass (local focused tests for success/validation/auth/help coverage).
 - Step 62 Post-merge Domain Check: pass (decision-support journaling only; no execution/broker/live trading).
+
+- Step 63 Telegram Operator QA Harness MVP: added manual GitHub Actions smoke-test workflow (`workflow_dispatch` only) and script-based webhook command checks for `/help`, `/daily_review`, and `/decision_note` success/validation/not-implemented paths; reports are emitted as markdown/json artifacts with short retention and explicit no-execution guardrail confirmation.
+- Step 63 platform ownership: GitHub changed script/workflow/docs only; Railway service topology/cron/env/webhook routing unchanged; Supabase schema unchanged (optional verification deferred).
+- Step 63 Post-merge QA Check: pass (harness script executed in local config-error mode and workflow wiring/artifact/report fields reviewed for required scope).
+- Step 63 Post-merge Domain Check: pass (manual QA harness only; no strategy/paper-trading calculation/runtime execution-path mutation; no broker/live-money execution semantics introduced).
+
+## Next approved task candidate
+- Step 64+ candidate: continue bounded operator/runtime hardening with QA-harness consideration for runtime/Telegram/DB changes.
+- Step 67 scheduled daily health check remains future plan only (not implemented in Step 63).

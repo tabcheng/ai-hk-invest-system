@@ -48,6 +48,26 @@ def test_run_case_send_result_not_available_is_skipped(monkeypatch):
         c["name"] == "send_result_delivered_true_when_available"
         and c["actual"] == "SKIPPED_not_available"
         and c["passed"] is True
+        and c["status"] == "SKIPPED_not_available"
+        for c in result.checks
+    )
+
+
+def test_run_case_send_result_delivered_false_fails(monkeypatch):
+    payload = {
+        "ok": True,
+        "handled": True,
+        "replied": True,
+        "send_result": {"delivered": False},
+    }
+    monkeypatch.setattr(smoke, "_send_command", lambda *args, **kwargs: (200, json.dumps(payload)))
+    result = smoke._run_case("A_help", "/help", [], [], "https://example.com", None, "1", "2")
+    assert result.passed is False
+    assert any(
+        c["name"] == "send_result_delivered_true_when_available"
+        and c["passed"] is False
+        and c["status"] == "FAIL"
+        and c["actual"] is False
         for c in result.checks
     )
 

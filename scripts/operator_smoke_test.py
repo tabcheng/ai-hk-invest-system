@@ -139,7 +139,7 @@ def _run_case(
             "name": "send_result_delivered_true_when_available",
             "passed": delivered_true if send_result_available else True,
             "actual": (send_result or {}).get("delivered") if send_result_available else "SKIPPED_not_available",
-            "status": "PASS" if send_result_available else "SKIPPED_not_available",
+            "status": ("PASS" if delivered_true else "FAIL") if send_result_available else "SKIPPED_not_available",
         }
     )
     if send_result_available:

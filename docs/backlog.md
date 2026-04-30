@@ -11,10 +11,10 @@ Prioritization:
 1. **Step 67 future plan — scheduled daily health check**
    - Keep as future plan only; do not implement schedule in Step 63.
 
-2. **Step 65 candidate — optional Supabase verification for operator smoke harness**
-   - Keep default harness behavior non-blocking and safe (`verify_supabase=false` by default).
-   - Add row-level verification only if it remains bounded/read-only.
-   - No schema migration and no runtime execution-path change.
+2. **Step 66 deferred — post-deploy acceptance checklist for Step 65 smoke harness**
+   - Capture manual workflow evidence (`verify_supabase=true`) with redaction checks.
+   - Confirm report artifacts include PASS/FAIL/SKIPPED supabase_verification status and qa_marker traceability.
+   - Keep checklist docs/process scope only.
 
 ### P1
 1. **Telegram command registration follow-up (optional)**
@@ -76,6 +76,7 @@ Prioritization:
 - **Step 62 completed:** implemented `/decision_note` runtime MVP (run-level journaling only), including validation/authorization-focused tests and explicit non-execution boundary messaging.
 - **Step 63 completed:** added manual Telegram operator smoke-test QA harness (`scripts/operator_smoke_test.py`) + manual GitHub Actions workflow (`workflow_dispatch`) with report artifacts (`operator_smoke_report.md/json`) and 7-day retention; no strategy/paper-trading calculation/live-money execution changes.
 - **Step 64 completed:** expanded smoke command coverage to `/runs`, `/runner_status`, `/risk_review <test_run_id>`, `/pnl_review`, `/outcome_review`; normalized report wording to transport-focused verification; added positive-integer `test_run_id` fail-fast validation/reporting; preserved manual-only workflow and non-execution guardrails.
+- **Step 65 completed:** added optional Supabase verification layer for operator smoke harness (`verify_supabase=true`) with read-only `human_decision_journal_entries` query using per-run `qa_marker`; reports now include `supabase_verification_status`, `supabase_table`, `qa_marker`, `matched_rows_count`, and safe failure guidance with secret redaction; `verify_supabase=false` remains SKIPPED by default.
 
 ### Earlier completed foundations
 - Step 1–12 baseline (documentation foundation, signal framework, dedup, run lifecycle, modularization, tests, Telegram MVP/hardening).

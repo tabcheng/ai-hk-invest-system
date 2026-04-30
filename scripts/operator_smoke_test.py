@@ -49,7 +49,7 @@ class SupabaseVerificationResult:
 
 
 def _redact(value: str) -> str:
-    for key in ("OPERATOR_WEBHOOK_TEST_URL", "OPERATOR_WEBHOOK_SECRET", "SUPABASE_SERVICE_ROLE_KEY"):
+    for key in ("OPERATOR_WEBHOOK_TEST_URL", "OPERATOR_WEBHOOK_SECRET", "SUPABASE_URL", "SUPABASE_SERVICE_ROLE_KEY"):
         secret = os.getenv(key, "")
         if secret:
             value = value.replace(secret, "[REDACTED]")

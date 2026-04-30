@@ -227,11 +227,13 @@ def test_command_coverage_includes_step64_cases():
 def test_redact_no_secrets_printed(monkeypatch):
     monkeypatch.setenv("OPERATOR_WEBHOOK_TEST_URL", "https://secret.example")
     monkeypatch.setenv("OPERATOR_WEBHOOK_SECRET", "abc123")
+    monkeypatch.setenv("SUPABASE_URL", "https://project.supabase.co")
     monkeypatch.setenv("SUPABASE_SERVICE_ROLE_KEY", "service-role-secret")
-    text = "url=https://secret.example token=abc123 key=service-role-secret"
+    text = "url=https://secret.example token=abc123 sb=https://project.supabase.co key=service-role-secret"
     redacted = smoke._redact(text)
     assert "https://secret.example" not in redacted
     assert "abc123" not in redacted
+    assert "https://project.supabase.co" not in redacted
     assert "service-role-secret" not in redacted
     assert "[REDACTED]" in redacted
 

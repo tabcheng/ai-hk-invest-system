@@ -11,13 +11,16 @@ Prioritization:
 1. **Step 67 future plan — scheduled daily health check**
    - Keep as future plan only; do not implement schedule in Step 63.
 
-2. **Step 66 deferred — post-deploy acceptance checklist for Step 65 smoke harness**
-   - Capture manual workflow evidence (`verify_supabase=true`) with redaction checks.
-   - Confirm report artifacts include PASS/FAIL/SKIPPED supabase_verification status and qa_marker traceability.
-   - Keep checklist docs/process scope only.
+2. **GitHub Actions Node.js 20 deprecation maintenance**
+   - Track and update workflows/actions before Node.js 20 deprecation deadlines impact CI/manual QA workflows.
+   - Keep maintenance bounded to workflow/runtime compatibility, with no strategy/paper-trading logic side effects.
 
 ### P1
-1. **Telegram command registration follow-up (optional)**
+1. **Operator smoke report wording normalization / possible future test-mode echo**
+   - Continue clarifying transport verification vs response-text verification semantics.
+   - Revisit test-mode echo feasibility only as a future bounded QA-harness enhancement.
+
+2. **Telegram command registration follow-up (optional)**
    - Decide whether to add bot command registration (`setMyCommands`) for discoverability.
    - Keep this isolated from strategy and paper-trading logic.
 
@@ -41,6 +44,7 @@ Prioritization:
    - Not in Step 60 scope: no localization implementation in this step.
 
 ### P2
+- Future normal feature development after Step 66 checklist baseline (new runtime/Telegram/DB slices must declare QA coverage explicitly).
 - Expand deterministic replay/integration fixtures for multi-day paper-trading scenarios.
 - Improve failure-path coverage for DB/notification/run-finalization edge cases.
 - Track lightweight runtime health metrics (duration, per-ticker latency, failure ratio) in a scoped step.

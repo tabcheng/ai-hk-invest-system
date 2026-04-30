@@ -1,7 +1,7 @@
 # Project Status
 
 ## Last reviewed date
-2026-04-29
+2026-04-30
 
 ## Post-merge acceptance + wording discipline (system-of-record)
 - Every merged step must complete two mandatory acceptance checks:
@@ -229,6 +229,12 @@
 - Step 65 Post-merge QA Check: pending post-merge manual workflow acceptance with `verify_supabase=true`.
 - Step 65 Post-merge Domain Check: pending post-merge review confirmation.
 
+- Step 66 checklist formalization (docs-only): created `docs/post-deploy-acceptance-checklist.md` and aligned runbook/status/backlog/project-plan wording so future runtime/Telegram/DB/paper-trading PRs must declare required post-deploy QA coverage explicitly.
+- Step 66 platform ownership: GitHub docs/workflow-governance wording only; Railway settings unchanged; Supabase schema unchanged.
+- Step 66 Post-merge QA Check: pending until merge + manual review (must not pre-mark PASS).
+- Step 66 Post-merge Domain Check: pending until merge + manual review (must not pre-mark PASS).
+
+
 ## Next approved task candidate
-- Step 66 deferred: post-deploy acceptance checklist for Step 65 manual workflow evidence.
+- Step 66 in progress: post-deploy acceptance checklist formalization (docs-only) for runtime/Telegram/DB/paper-trading PR acceptance gating.
 - Step 67 scheduled daily health check remains future plan only (not implemented in Step 63).

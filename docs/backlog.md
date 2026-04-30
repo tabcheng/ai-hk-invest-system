@@ -8,11 +8,13 @@ Prioritization:
 ## Active backlog (pending)
 
 ### P0
-1. **Step 62 candidate — `/decision_note` runtime MVP**
-   - Implement smallest bounded runtime slice for Step 61 contract.
-   - Prefer run-level first if stock-level scope grows too large; include stock-level only if still bounded.
-   - Preserve paper-trading and human-final-decision boundary.
-   - Keep journaling-only behavior (no execution semantics, no broker/live-trading integration).
+1. **Step 67 future plan — scheduled daily health check**
+   - Keep as future plan only; do not implement schedule in Step 63.
+
+2. **Step 65 candidate — optional Supabase verification for operator smoke harness**
+   - Keep default harness behavior non-blocking and safe (`verify_supabase=false` by default).
+   - Add row-level verification only if it remains bounded/read-only.
+   - No schema migration and no runtime execution-path change.
 
 ### P1
 1. **Telegram command registration follow-up (optional)**
@@ -71,6 +73,8 @@ Prioritization:
 - **Step 58 completed (docs-only):** added `docs/operator-runbook.md` with compact normal/no-data/invalid-input interpretation examples for `/runs`, `/runner_status`, `/risk_review`, `/pnl_review`, `/outcome_review`, `/outcome_review <days>`, and explicitly documented Step 57 stock-display fallback policy; runtime behavior unchanged (GitHub changed; Railway unchanged).
 - **Step 59 completed:** added read-only `/daily_review` Telegram operator command as a compact daily operator review packet MVP that aggregates section-level status from existing review surfaces (`runner_status`, latest run id, pnl snapshot availability, outcome summary availability), with partial no-data/internal-error tolerance, focused tests (success/partial-no-data/helper-error/unauthorized/help inclusion), and docs sync across runbook/spec/status/backlog (GitHub changed; Railway unchanged).
 - **Step 60 completed:** upgraded read-only `/daily_review` usability by adding `business_date_hkt`, `latest_run_time_hkt`, `daily_review_health`, `next_action_hint`, and `detail_commands` (including `/risk_review <run_id>` when available), while preserving section-scoped no-data/internal-error tolerance and command-level completion behavior; added focused tests and docs synchronization (GitHub changed; Railway unchanged).
+- **Step 62 completed:** implemented `/decision_note` runtime MVP (run-level journaling only), including validation/authorization-focused tests and explicit non-execution boundary messaging.
+- **Step 63 completed:** added manual Telegram operator smoke-test QA harness (`scripts/operator_smoke_test.py`) + manual GitHub Actions workflow (`workflow_dispatch`) with report artifacts (`operator_smoke_report.md/json`) and 7-day retention; no strategy/paper-trading calculation/live-money execution changes.
 
 ### Earlier completed foundations
 - Step 1–12 baseline (documentation foundation, signal framework, dedup, run lifecycle, modularization, tests, Telegram MVP/hardening).
@@ -85,4 +89,4 @@ Prioritization:
   - Use `docs maintenance follow-up` only when opening a pending backlog item (not when declaring merge completion).
 - No backlog item authorizes autonomous live-money execution.
 
-- Step 62: add run-level `/decision_note` runtime MVP; defer stock-level journaling.
+- Step 62 runtime MVP is complete (run-level only); stock-level decision journal runtime remains intentionally not implemented.

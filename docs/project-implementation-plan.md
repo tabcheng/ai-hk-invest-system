@@ -81,3 +81,10 @@ Paper-trading review/read-surface expansion, Telegram operator workflow hardenin
 - Mark uncertain facts as `unknown / needs confirmation`.
 
 - Step 62 implementation (runtime): `/decision_note` run-level only with persistence + validation + tests.
+
+
+## Step 63 implementation note (completed)
+- Added manual operator smoke QA harness only (`scripts/operator_smoke_test.py` + `.github/workflows/operator-smoke-test.yml`).
+- No schedule trigger, no push/PR production webhook trigger, no strategy or paper-trading calculation changes.
+- Optional Supabase verification input exists but defaults to skipped in Step 63; full row verification deferred candidate for Step 65.
+- Step 67 scheduled daily health check remains future plan only.

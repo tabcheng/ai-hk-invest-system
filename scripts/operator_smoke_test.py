@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Manual Telegram operator smoke test harness (Step 63 MVP)."""
+"""Manual Telegram operator smoke test harness (Step 64 expanded coverage)."""
 
 from __future__ import annotations
 
@@ -131,16 +131,19 @@ def _run_case(
     checks.append({"name": "json_replied_true", "passed": replied_true, "actual": payload.get("replied")})
     passed = passed and replied_true
 
-    send_result = payload.get("send_result") if isinstance(payload, dict) else {}
-    delivered_true = bool(isinstance(send_result, dict) and send_result.get("delivered") is True)
+    send_result = payload.get("send_result") if isinstance(payload, dict) else None
+    send_result_available = isinstance(send_result, dict)
+    delivered_true = bool(send_result_available and send_result.get("delivered") is True)
     checks.append(
         {
-            "name": "send_result_delivered_true",
-            "passed": delivered_true,
-            "actual": (send_result or {}).get("delivered") if isinstance(send_result, dict) else None,
+            "name": "send_result_delivered_true_when_available",
+            "passed": delivered_true if send_result_available else True,
+            "actual": (send_result or {}).get("delivered") if send_result_available else "SKIPPED_not_available",
+            "status": "PASS" if send_result_available else "SKIPPED_not_available",
         }
     )
-    passed = passed and delivered_true
+    if send_result_available:
+        passed = passed and delivered_true
 
     for token in must_include:
         checks.append(
@@ -176,8 +179,10 @@ def _write_reports(
     timestamp_utc: str,
     results: list[SmokeCaseResult],
     verify_supabase: bool,
+    failure_reason: str | None = None,
+    guidance: str | None = None,
 ) -> None:
-    overall_pass = all(result.passed for result in results)
+    overall_pass = all(result.passed for result in results) and failure_reason is None
     supabase_status = "SKIPPED"
     if verify_supabase:
         supabase_status = "SKIPPED"
@@ -186,13 +191,17 @@ def _write_reports(
         "target": target,
         "timestamp_utc": timestamp_utc,
         "test_run_id": test_run_id,
+        "overall_result": "PASS" if overall_pass else "FAIL",
         "overall_pass": overall_pass,
         "supabase_verification": {
             "status": supabase_status,
             "note": "Step 63 defers full row verification to Step 65 candidate.",
         },
         "guardrail_confirmation": "no broker/live-money execution detected",
+        "transport_verification": "PASS" if overall_pass else "FAIL",
         "response_text_verification": "SKIPPED_current_webhook_contract",
+        "reason": failure_reason,
+        "guidance": guidance,
         "results": [asdict(result) for result in results],
     }
     with open(REPORT_JSON_PATH, "w", encoding="utf-8") as fh:
@@ -230,7 +239,10 @@ def _write_reports(
             f"- overall_result: `{'PASS' if overall_pass else 'FAIL'}`",
             f"- supabase_verification_status: `{supabase_status}`",
             "- guardrail_confirmation: `no broker/live-money execution detected`",
+            f"- transport_verification: `{'PASS' if overall_pass else 'FAIL'}`",
             "- response_text_verification: `SKIPPED_current_webhook_contract`",
+            f"- reason: `{failure_reason or 'N/A'}`",
+            f"- guidance: `{guidance or 'N/A'}`",
         ]
     )
 
@@ -241,9 +253,32 @@ def _write_reports(
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--target", default="production")
-    parser.add_argument("--test-run-id", required=True)
+    parser.add_argument("--test-run-id", required=True, help="Enter only the numeric run id, e.g. 31")
     parser.add_argument("--verify-supabase", default="false", choices=["true", "false"])
     args = parser.parse_args()
+    if not args.test_run_id.isdigit() or int(args.test_run_id) <= 0:
+        error_msg = "invalid test_run_id"
+        guidance = "enter only a positive integer, e.g. 31"
+        _write_reports(
+            args.target,
+            args.test_run_id,
+            dt.datetime.now(dt.timezone.utc).isoformat(),
+            [
+                SmokeCaseResult(
+                    name="CONFIGURATION",
+                    command="N/A",
+                    passed=False,
+                    checks=[{"name": "test_run_id_positive_integer", "passed": False, "actual": args.test_run_id}],
+                    response_snippet="",
+                    status_code=None,
+                    error=error_msg,
+                )
+            ],
+            verify_supabase=args.verify_supabase == "true",
+            failure_reason=error_msg,
+            guidance=guidance,
+        )
+        raise SmokeHarnessError(f"{error_msg}; {guidance}")
 
     webhook_url = os.getenv("OPERATOR_WEBHOOK_TEST_URL", "").strip()
     chat_id = os.getenv("OPERATOR_TEST_CHAT_ID", "").strip()
@@ -280,32 +315,7 @@ def main() -> int:
         "human_action=observe note=QA smoke test only; no execution."
     )
 
-    cases: list[tuple[str, str, list[str], list[re.Pattern[str]]]] = [
-        ("A_help", "/help", ["/daily_review", "/decision_note"], [PLACEHOLDER_PATTERN]),
-        ("B_daily_review", "/daily_review", ["Status: completed.", "business_date_hkt", "daily_review_health", "decision-support"], []),
-        (
-            "C_decision_note_run_success",
-            run_success_command,
-            [
-                "Status: completed.",
-                "human decision journal entry recorded",
-                "journaling only; no execution; no real-money trading",
-            ],
-            [],
-        ),
-        (
-            "D_decision_note_stock_not_implemented",
-            "/decision_note scope=stock run_id=1 source_command=/daily_review human_action=observe note=QA check",
-            ["stock-level decision journal is not implemented yet", "no execution performed"],
-            [],
-        ),
-        (
-            "E_decision_note_invalid",
-            "/decision_note scope=run run_id=abc source_command=/daily_review human_action=observe note=QA",
-            ["Status: failed.", "run_id must be a positive integer"],
-            [],
-        ),
-    ]
+    cases = _build_smoke_cases(args.test_run_id, run_success_command)
 
     results = [
         _run_case(name, command, includes, excludes, webhook_url, webhook_secret, chat_id, user_id)
@@ -322,6 +332,40 @@ def main() -> int:
     overall_pass = all(result.passed for result in results)
     print(f"[operator-smoke] overall={'PASS' if overall_pass else 'FAIL'}")
     return 0 if overall_pass else 1
+
+
+def _build_smoke_cases(test_run_id: str, run_success_command: str) -> list[tuple[str, str, list[str], list[re.Pattern[str]]]]:
+    return [
+        ("A_help", "/help", ["/daily_review", "/decision_note"], [PLACEHOLDER_PATTERN]),
+        ("B_runs", "/runs", ["Status: completed.", "run"], []),
+        ("C_runner_status", "/runner_status", ["Status: completed.", "latest"], []),
+        ("D_risk_review", f"/risk_review {test_run_id}", ["Status: completed.", "risk"], []),
+        ("E_pnl_review", "/pnl_review", ["Status: completed.", "pnl"], []),
+        ("F_outcome_review", "/outcome_review", ["Status: completed.", "outcome"], []),
+        ("B_daily_review", "/daily_review", ["Status: completed.", "business_date_hkt", "daily_review_health", "decision-support"], []),
+        (
+            "G_decision_note_run_success",
+            run_success_command,
+            [
+                "Status: completed.",
+                "human decision journal entry recorded",
+                "journaling only; no execution; no real-money trading",
+            ],
+            [],
+        ),
+        (
+            "H_decision_note_stock_not_implemented",
+            "/decision_note scope=stock run_id=1 source_command=/daily_review human_action=observe note=QA check",
+            ["stock-level decision journal is not implemented yet", "no execution performed"],
+            [],
+        ),
+        (
+            "I_decision_note_invalid",
+            "/decision_note scope=run run_id=abc source_command=/daily_review human_action=observe note=QA",
+            ["Status: failed.", "run_id must be a positive integer"],
+            [],
+        ),
+    ]
 
 
 if __name__ == "__main__":

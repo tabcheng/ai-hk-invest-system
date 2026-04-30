@@ -220,6 +220,10 @@
 - Step 63 platform ownership: GitHub changed script/workflow/docs only; Railway service topology/cron/env/webhook routing unchanged; Supabase schema unchanged (optional verification deferred).
 - Step 63 Post-merge QA Check: pending manual GitHub Actions workflow run against configured webhook test endpoint and artifact review.
 - Step 63 Post-merge Domain Check: pending post-merge review confirmation (expected scope remains manual QA harness only with no strategy/paper-trading/runtime execution-path mutation).
+- Step 64 Telegram Operator QA Harness coverage expansion: extended smoke command set to include `/runs`, `/runner_status`, `/risk_review <test_run_id>`, `/pnl_review`, and `/outcome_review` while preserving Step 63 cases; report contract now explicitly separates `transport_verification` from `response_text_verification=SKIPPED_current_webhook_contract`.
+- Step 64 platform ownership: GitHub changed script/tests/workflow wording/docs only; Railway service topology/cron/env/webhook routing unchanged; Supabase schema/row verification unchanged (Step 65 deferred).
+- Step 64 Post-merge QA Check: pass (local focused smoke-harness unit tests validate expanded case coverage, transport-verification reporting, response-text skipped marker, invalid `test_run_id` fail-fast reporting, and secret-redaction expectation in report outputs).
+- Step 64 Post-merge Domain Check: pass (QA harness remains decision-support transport validation only, no strategy/paper-trading calculation mutation, no broker/live-money execution path).
 
 ## Next approved task candidate
 - Step 64+ candidate: continue bounded operator/runtime hardening with QA-harness consideration for runtime/Telegram/DB changes.

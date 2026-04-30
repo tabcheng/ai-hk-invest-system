@@ -8,7 +8,7 @@ on:
         required: true
         default: production
       test_run_id:
-        description: Existing run_id used for /decision_note scope=run smoke check
+        description: Enter only the numeric run id, e.g. 31
         required: true
       verify_supabase:
         description: Optional Supabase row verification (Step 63 default false)

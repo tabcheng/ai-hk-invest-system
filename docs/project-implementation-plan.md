@@ -88,3 +88,10 @@ Paper-trading review/read-surface expansion, Telegram operator workflow hardenin
 - No schedule trigger, no push/PR production webhook trigger, no strategy or paper-trading calculation changes.
 - Optional Supabase verification input exists but defaults to skipped in Step 63; full row verification deferred candidate for Step 65.
 - Step 67 scheduled daily health check remains future plan only.
+
+## Step 64 implementation note (completed)
+- Expanded operator smoke coverage (manual `workflow_dispatch` only) to include `/runs`, `/runner_status`, `/risk_review <test_run_id>`, `/pnl_review`, `/outcome_review`, while preserving existing `/help`, `/daily_review`, and `/decision_note` cases.
+- Report wording now distinguishes transport/delivery verification vs response-text limitation (`response_text_verification=SKIPPED_current_webhook_contract`).
+- Added fail-fast `--test-run-id` validation (positive integer only) with readable FAIL report output and guidance.
+- No strategy logic changes, no paper-trading calculation changes, no Railway topology/env/webhook changes, and no Supabase row verification in this step (deferred to Step 65).
+- Step 66 post-deploy acceptance checklist remains deferred, and Step 67 scheduled daily health check remains future plan only.

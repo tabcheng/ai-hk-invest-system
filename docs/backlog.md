@@ -75,6 +75,7 @@ Prioritization:
 - **Step 60 completed:** upgraded read-only `/daily_review` usability by adding `business_date_hkt`, `latest_run_time_hkt`, `daily_review_health`, `next_action_hint`, and `detail_commands` (including `/risk_review <run_id>` when available), while preserving section-scoped no-data/internal-error tolerance and command-level completion behavior; added focused tests and docs synchronization (GitHub changed; Railway unchanged).
 - **Step 62 completed:** implemented `/decision_note` runtime MVP (run-level journaling only), including validation/authorization-focused tests and explicit non-execution boundary messaging.
 - **Step 63 completed:** added manual Telegram operator smoke-test QA harness (`scripts/operator_smoke_test.py`) + manual GitHub Actions workflow (`workflow_dispatch`) with report artifacts (`operator_smoke_report.md/json`) and 7-day retention; no strategy/paper-trading calculation/live-money execution changes.
+- **Step 64 completed:** expanded smoke command coverage to `/runs`, `/runner_status`, `/risk_review <test_run_id>`, `/pnl_review`, `/outcome_review`; normalized report wording to transport-focused verification; added positive-integer `test_run_id` fail-fast validation/reporting; preserved manual-only workflow and non-execution guardrails.
 
 ### Earlier completed foundations
 - Step 1–12 baseline (documentation foundation, signal framework, dedup, run lifecycle, modularization, tests, Telegram MVP/hardening).

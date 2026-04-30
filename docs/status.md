@@ -218,8 +218,8 @@
 
 - Step 63 Telegram Operator QA Harness MVP: added manual GitHub Actions smoke-test workflow (`workflow_dispatch` only) and script-based webhook command checks for `/help`, `/daily_review`, and `/decision_note` success/validation/not-implemented paths; reports are emitted as markdown/json artifacts with short retention and explicit no-execution guardrail confirmation.
 - Step 63 platform ownership: GitHub changed script/workflow/docs only; Railway service topology/cron/env/webhook routing unchanged; Supabase schema unchanged (optional verification deferred).
-- Step 63 Post-merge QA Check: pass (harness script executed in local config-error mode and workflow wiring/artifact/report fields reviewed for required scope).
-- Step 63 Post-merge Domain Check: pass (manual QA harness only; no strategy/paper-trading calculation/runtime execution-path mutation; no broker/live-money execution semantics introduced).
+- Step 63 Post-merge QA Check: pending manual GitHub Actions workflow run against configured webhook test endpoint and artifact review.
+- Step 63 Post-merge Domain Check: pending post-merge review confirmation (expected scope remains manual QA harness only with no strategy/paper-trading/runtime execution-path mutation).
 
 ## Next approved task candidate
 - Step 64+ candidate: continue bounded operator/runtime hardening with QA-harness consideration for runtime/Telegram/DB changes.

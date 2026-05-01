@@ -231,8 +231,13 @@
 
 - Step 66 checklist formalization (docs-only): created `docs/post-deploy-acceptance-checklist.md` and aligned runbook/status/backlog/project-plan wording so future runtime/Telegram/DB/paper-trading PRs must declare required post-deploy QA coverage explicitly.
 - Step 66 platform ownership: GitHub docs/workflow-governance wording only; Railway settings unchanged; Supabase schema unchanged.
-- Step 66 Post-merge QA Check: pending until merge + manual review (must not pre-mark PASS).
-- Step 66 Post-merge Domain Check: pending until merge + manual review (must not pre-mark PASS).
+- Step 66 Post-merge QA Check: pass — docs-only checklist formalization merged; post-deploy acceptance checklist, operator runbook flow, and backlog/status/project-plan wording were aligned; no runtime behavior changed.
+- Step 66 Post-merge Domain Check: pass — AI HK investing-system alignment preserved; checklist reinforces paper-trading / decision-support-only boundary, human final decision authority, and no broker/live-money execution guardrail.
+- Step 68 Stock-level Decision Journal MVP: pending merge acceptance confirmation. Runtime changes target `/decision_note scope=stock` with required `run_id`, `stock_id`, `source_command`, `human_action`, `note`, while keeping journaling-only boundary explicit (no execution, no real-money trading).
+- Step 68 persistence plan: existing `human_decision_journal_entries` with `stock_id` in `metadata` for MVP (no Supabase schema change planned).
+- Step 68 Operator Smoke Test/update plan: include stock-level `/decision_note` success command and require `verify_supabase=true` verification for both run-level and stock-level journal rows before post-merge sign-off.
+- Step 68 Post-merge QA Check: pending until merge + manual Operator Smoke Test (`verify_supabase=true`) evidence review.
+- Step 68 Post-merge Domain Check: pending until merge + manual review confirmation (decision-support only; no execution semantics).
 
 
 ## Next approved task candidate

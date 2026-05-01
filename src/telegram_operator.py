@@ -8,7 +8,12 @@ from typing import Any
 from zoneinfo import ZoneInfo
 
 from src.daily_runner import ENTRYPOINT, SCHEDULE_BASIS
-from src.human_decision_journal import ALLOWED_HUMAN_ACTIONS, ALLOWED_SOURCE_COMMANDS, record_run_level_decision_note
+from src.human_decision_journal import (
+    ALLOWED_HUMAN_ACTIONS,
+    ALLOWED_SOURCE_COMMANDS,
+    record_run_level_decision_note,
+    record_stock_level_decision_note,
+)
 from src.runs import get_latest_run_execution_summary, get_run_by_id, list_recent_runs
 
 _RUNS_COMMAND_PATTERN = re.compile(r"^/runs(?:\s+(\d+)d)?\s*$", re.IGNORECASE)
@@ -24,6 +29,13 @@ _MAX_DAYS = 30
 _DEFAULT_LIMIT = 50
 _OUTCOME_REVIEW_MIN_DAYS = 1
 _OUTCOME_REVIEW_MAX_DAYS = 365
+_DECISION_NOTE_STOCK_ID_MAX_LENGTH = 32
+_DECISION_NOTE_NOTE_MAX_LENGTH = 500
+_DECISION_NOTE_STOCK_ID_PATTERN = re.compile(r"^[A-Za-z0-9._-]+$")
+_DECISION_NOTE_EXECUTION_WORDING_PATTERN = re.compile(
+    r"\b(?:broker|execute|executed|executing|market\s+order|live[-_\s]?money|live\s+trade)\b",
+    re.IGNORECASE,
+)
 _HKT_TZ = ZoneInfo("Asia/Hong_Kong")
 
 
@@ -182,10 +194,8 @@ def _parse_decision_note_command(command_text: str) -> dict[str, Any]:
     scope = parsed.get("scope", "").strip().lower()
     if not scope:
         raise ValueError("Invalid input: missing scope.")
-    if scope == "stock":
-        raise ValueError("stock-level decision journal is not implemented yet; no execution performed")
-    if scope != "run":
-        raise ValueError("Invalid input: unsupported scope. Only scope=run is supported in Step 62; no execution performed")
+    if scope not in {"run", "stock"}:
+        raise ValueError("Invalid input: unsupported scope. scope must be run or stock.")
 
     run_id_token = parsed.get("run_id", "").strip()
     if not run_id_token:
@@ -209,8 +219,28 @@ def _parse_decision_note_command(command_text: str) -> dict[str, Any]:
     note = parsed.get("note", "").strip()
     if not note:
         raise ValueError("Invalid input: note must not be empty.")
+    if len(note) > _DECISION_NOTE_NOTE_MAX_LENGTH:
+        raise ValueError(f"Invalid input: note exceeds max length {_DECISION_NOTE_NOTE_MAX_LENGTH}.")
+    if _DECISION_NOTE_EXECUTION_WORDING_PATTERN.search(note):
+        raise ValueError("Invalid input: note must remain journaling-only and must not imply broker/live execution.")
 
-    return {"scope": scope, "run_id": run_id, "source_command": source_command, "human_action": human_action, "note": note}
+    stock_id = parsed.get("stock_id", "").strip()
+    if scope == "stock":
+        if not stock_id:
+            raise ValueError("Invalid input: stock_id is required when scope=stock.")
+        if len(stock_id) > _DECISION_NOTE_STOCK_ID_MAX_LENGTH:
+            raise ValueError(f"Invalid input: stock_id exceeds max length {_DECISION_NOTE_STOCK_ID_MAX_LENGTH}.")
+        if not _DECISION_NOTE_STOCK_ID_PATTERN.match(stock_id):
+            raise ValueError("Invalid input: stock_id contains unsupported characters.")
+
+    return {
+        "scope": scope,
+        "run_id": run_id,
+        "stock_id": stock_id if scope == "stock" else None,
+        "source_command": source_command,
+        "human_action": human_action,
+        "note": note,
+    }
 def _parse_daily_review_command(command_text: str) -> None:
     """Validate `/daily_review` with no extra tokens."""
     if not _DAILY_REVIEW_COMMAND_PATTERN.match(command_text or ""):
@@ -403,6 +433,8 @@ def build_help_command_message() -> str:
             "- /daily_review : Show daily operator review packet MVP (每日操作員快速檢視封包).",
             "- /decision_note scope=run run_id=123 source_command=/daily_review human_action=observe note=Daily review checked. : "
             "Record run-level human decision journal entry (journaling only; no execution).",
+            "- /decision_note scope=stock run_id=123 stock_id=0700.HK source_command=/daily_review human_action=observe note=Reviewed signal; no action. : "
+            "Record stock-level human decision journal entry (journaling only; no execution).",
             "- /help : Show this operator usage guide (顯示操作說明).",
             "- /h : Alias of /help (與 /help 相同).",
         ]
@@ -846,14 +878,25 @@ def handle_telegram_operator_command(client: Any, update: dict[str, Any]) -> str
                 return _build_usage_error_message(command_label="/decision_note", error_text=str(exc))
             try:
                 user_id_for_journal = auth_decision.get("user_id") or None
-                record_run_level_decision_note(
-                    client,
-                    run_id=parsed["run_id"],
-                    source_command=parsed["source_command"],
-                    human_action=parsed["human_action"],
-                    note=parsed["note"],
-                    operator_user_id_hash_or_label=user_id_for_journal,
-                )
+                if parsed["scope"] == "stock":
+                    record_stock_level_decision_note(
+                        client,
+                        run_id=parsed["run_id"],
+                        stock_id=parsed["stock_id"],
+                        source_command=parsed["source_command"],
+                        human_action=parsed["human_action"],
+                        note=parsed["note"],
+                        operator_user_id_hash_or_label=user_id_for_journal,
+                    )
+                else:
+                    record_run_level_decision_note(
+                        client,
+                        run_id=parsed["run_id"],
+                        source_command=parsed["source_command"],
+                        human_action=parsed["human_action"],
+                        note=parsed["note"],
+                        operator_user_id_hash_or_label=user_id_for_journal,
+                    )
             except Exception as exc:
                 print(f"Telegram /decision_note persistence failed: chat_id={chat_id} user_id={user_id} error={exc!r}")
                 return _build_operator_message(command_label="/decision_note", status="failed", reason="internal decision journal persistence error")
@@ -864,6 +907,7 @@ def handle_telegram_operator_command(client: Any, update: dict[str, Any]) -> str
                 fields=[
                     ("run_id", parsed["run_id"]),
                     ("scope", parsed["scope"]),
+                    ("stock_id", parsed["stock_id"] or "N/A"),
                     ("human_action", parsed["human_action"]),
                     ("source_command", parsed["source_command"]),
                     ("journal_boundary", "journaling only; no execution; no real-money trading"),

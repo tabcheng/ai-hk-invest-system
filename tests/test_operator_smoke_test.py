@@ -159,23 +159,28 @@ def test_verify_supabase_true_missing_service_role_key_fails_with_report(tmp_pat
 
 
 def test_supabase_verification_pass_with_matching_row(monkeypatch):
-    captured = {"url": ""}
+    captured = {"urls": []}
 
     class _Resp:
+        def __init__(self, body: str):
+            self._body = body
         def __enter__(self): return self
         def __exit__(self, exc_type, exc, tb): return False
-        def read(self): return b'[{"id":1}]'
+        def read(self): return self._body.encode("utf-8")
 
     monkeypatch.setenv("SUPABASE_URL", "https://abc.supabase.co")
     monkeypatch.setenv("SUPABASE_SERVICE_ROLE_KEY", "super-secret")
     def _fake_urlopen(req, timeout=30):
-        captured["url"] = req.full_url
-        return _Resp()
+        captured["urls"].append(req.full_url)
+        if "scope=eq.run" in req.full_url:
+            return _Resp('[{"id":1}]')
+        return _Resp('[{"id":2,"metadata":{"stock_id":"0700.HK"}}]')
     monkeypatch.setattr(smoke.request, "urlopen", _fake_urlopen)
     result = smoke._verify_supabase_decision_note("31", "mk")
     assert result.status == "PASS"
-    assert result.matched_rows_count == 1
-    assert "source_command=eq.%2Fdaily_review" in captured["url"]
+    assert result.matched_run_rows_count == 1
+    assert result.matched_stock_rows_count == 1
+    assert any("source_command=eq.%2Fdaily_review" in url for url in captured["urls"])
 
 
 def test_supabase_verification_fail_when_no_rows(monkeypatch):
@@ -189,7 +194,8 @@ def test_supabase_verification_fail_when_no_rows(monkeypatch):
     monkeypatch.setattr(smoke.request, "urlopen", lambda req, timeout=30: _Resp())
     result = smoke._verify_supabase_decision_note("31", "mk")
     assert result.status == "FAIL"
-    assert result.matched_rows_count == 0
+    assert result.matched_run_rows_count == 0
+    assert result.matched_stock_rows_count == 0
 
 
 def test_supabase_query_error_is_redacted(monkeypatch):
@@ -208,12 +214,12 @@ def test_qa_marker_included_in_decision_note_command():
         "/decision_note scope=run run_id=31 source_command=/daily_review "
         f"human_action=observe note=QA smoke test only; no execution. marker={marker}"
     )
-    cases = smoke._build_smoke_cases("31", cmd)
+    cases = smoke._build_smoke_cases("31", cmd, "/decision_note scope=stock run_id=31 stock_id=0700.HK source_command=/daily_review human_action=observe note=ok")
     assert any(marker in command for _, command, _, _ in cases)
 
 
 def test_command_coverage_includes_step64_cases():
-    cases = smoke._build_smoke_cases("31", "/decision_note scope=run run_id=31 source_command=/daily_review human_action=observe note=ok")
+    cases = smoke._build_smoke_cases("31", "/decision_note scope=run run_id=31 source_command=/daily_review human_action=observe note=ok", "/decision_note scope=stock run_id=31 stock_id=0700.HK source_command=/daily_review human_action=observe note=ok")
     commands = [command for _, command, _, _ in cases]
     assert "/runs" in commands
     assert "/runner_status" in commands
@@ -252,7 +258,10 @@ def test_write_reports_transport_pass_supabase_fail_overall_fail(tmp_path, monke
         status="FAIL",
         table="human_decision_journal_entries",
         qa_marker="mk",
-        matched_rows_count=0,
+        matched_run_rows_count=0,
+        matched_stock_rows_count=0,
+        run_level_status="FAIL",
+        stock_level_status="FAIL",
         reason="no row",
     )
     smoke._write_reports("production", "31", "2026-04-30T00:00:00+00:00", [result], True, "mk", supabase_result=supabase_result)

@@ -457,12 +457,10 @@ Proposed table: `human_decision_journal_entries` with draft columns:
 `id`, `created_at`, `scope`, `run_id`, `stock_id` (nullable for run scope), `stock_name` (nullable), `system_signal` (nullable), `human_action`, `confidence` (nullable), `reason_tag` (nullable), `note`, `source_command`, `operator_user_id_hash_or_label`, `related_daily_review_health` (nullable), `related_pnl_snapshot_status` (nullable), `related_outcome_summary_status` (nullable), `later_outcome_link` (nullable), `metadata` (nullable).
 
 ### Step 61 explicit non-goals
-- No runtime `/decision_note` command implementation.
-- No runtime code changes.
 - No DB migration/schema change.
 - No Railway topology/cron/env/webhook/deployment changes.
 - No strategy logic change.
 - No paper-trading calculation change.
 - No autonomous execution/broker integration.
 
-- Step 62 runtime adds `/decision_note` run-level MVP (scope=run only), journaling-only boundary, no execution/no real-money trading.
+- Step 68 extends `/decision_note` to stock-level MVP (`scope=stock`) with required `stock_id`; bounded vocabularies: `human_action in {observe, watchlist, reject_signal, accept_for_paper, defer}` and source commands limited to review/read-only operator commands; no execution/no real-money trading.

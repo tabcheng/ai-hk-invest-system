@@ -95,4 +95,4 @@ Prioritization:
   - Use `docs maintenance follow-up` only when opening a pending backlog item (not when declaring merge completion).
 - No backlog item authorizes autonomous live-money execution.
 
-- Step 62 runtime MVP is complete (run-level only); stock-level decision journal runtime remains intentionally not implemented.
+- Step 68 runtime MVP extends `/decision_note` to include stock-level journaling support (`scope=stock`) with bounded validation and no-execution guardrail; persistence uses existing `human_decision_journal_entries` and stores `stock_id` in `metadata` for MVP.

@@ -42,7 +42,10 @@ class SupabaseVerificationResult:
     status: str
     table: str
     qa_marker: str
-    matched_rows_count: int
+    matched_run_rows_count: int
+    matched_stock_rows_count: int
+    run_level_status: str
+    stock_level_status: str
     reason: str | None = None
     guidance: str | None = None
     secrets_redacted: bool = True
@@ -86,7 +89,10 @@ def _verify_supabase_decision_note(test_run_id: str, qa_marker: str) -> Supabase
             status="FAIL",
             table=table_name,
             qa_marker=qa_marker,
-            matched_rows_count=0,
+            matched_run_rows_count=0,
+            matched_stock_rows_count=0,
+            run_level_status="FAIL",
+            stock_level_status="FAIL",
             reason="Missing required env var: SUPABASE_URL",
             guidance="Set GitHub Actions secret SUPABASE_URL when verify_supabase=true.",
         )
@@ -95,16 +101,24 @@ def _verify_supabase_decision_note(test_run_id: str, qa_marker: str) -> Supabase
             status="FAIL",
             table=table_name,
             qa_marker=qa_marker,
-            matched_rows_count=0,
+            matched_run_rows_count=0,
+            matched_stock_rows_count=0,
+            run_level_status="FAIL",
+            stock_level_status="FAIL",
             reason="Missing required env var: SUPABASE_SERVICE_ROLE_KEY",
             guidance="Set GitHub Actions secret SUPABASE_SERVICE_ROLE_KEY when verify_supabase=true.",
         )
 
     encoded_marker = quote(qa_marker, safe="")
     encoded_source_command = quote("/daily_review", safe="")
-    url = (
+    run_url = (
         f"{supabase_url.rstrip('/')}/rest/v1/{table_name}"
         f"?select=id&scope=eq.run&run_id=eq.{test_run_id}&source_command=eq.{encoded_source_command}"
+        f"&human_action=eq.observe&note=ilike.*{encoded_marker}*"
+    )
+    stock_url = (
+        f"{supabase_url.rstrip('/')}/rest/v1/{table_name}"
+        f"?select=id,metadata&scope=eq.stock&run_id=eq.{test_run_id}&source_command=eq.{encoded_source_command}"
         f"&human_action=eq.observe&note=ilike.*{encoded_marker}*"
     )
     headers = {
@@ -112,57 +126,86 @@ def _verify_supabase_decision_note(test_run_id: str, qa_marker: str) -> Supabase
         "Authorization": f"Bearer {service_role_key}",
         "Accept": "application/json",
     }
-    req = request.Request(url, headers=headers, method="GET")
+    run_req = request.Request(run_url, headers=headers, method="GET")
+    stock_req = request.Request(stock_url, headers=headers, method="GET")
     try:
-        with request.urlopen(req, timeout=30) as resp:
-            body = resp.read().decode("utf-8", errors="replace")
+        with request.urlopen(run_req, timeout=30) as resp:
+            run_body = resp.read().decode("utf-8", errors="replace")
+        with request.urlopen(stock_req, timeout=30) as resp:
+            stock_body = resp.read().decode("utf-8", errors="replace")
     except Exception as exc:  # noqa: BLE001
         return SupabaseVerificationResult(
             status="FAIL",
             table=table_name,
             qa_marker=qa_marker,
-            matched_rows_count=0,
+            matched_run_rows_count=0,
+            matched_stock_rows_count=0,
+            run_level_status="FAIL",
+            stock_level_status="FAIL",
             reason="Supabase verification query failed",
             guidance=f"Check SUPABASE_URL/service role key and table access; error={_redact(str(exc))}",
         )
 
     try:
-        payload = json.loads(body)
+        run_payload = json.loads(run_body)
+        stock_payload = json.loads(stock_body)
     except json.JSONDecodeError:
         return SupabaseVerificationResult(
             status="FAIL",
             table=table_name,
             qa_marker=qa_marker,
-            matched_rows_count=0,
+            matched_run_rows_count=0,
+            matched_stock_rows_count=0,
+            run_level_status="FAIL",
+            stock_level_status="FAIL",
             reason="Supabase verification query returned non-JSON response",
             guidance="Confirm Supabase REST endpoint and credentials are valid for read-only query.",
         )
 
-    if not isinstance(payload, list):
+    if not isinstance(run_payload, list) or not isinstance(stock_payload, list):
         return SupabaseVerificationResult(
             status="FAIL",
             table=table_name,
             qa_marker=qa_marker,
-            matched_rows_count=0,
+            matched_run_rows_count=0,
+            matched_stock_rows_count=0,
+            run_level_status="FAIL",
+            stock_level_status="FAIL",
             reason="Supabase verification query returned unexpected payload shape",
             guidance="Expected list payload from PostgREST query; confirm table/API behavior.",
         )
 
-    matched_rows_count = len(payload)
-    if matched_rows_count < 1:
+    matched_run_rows_count = len(run_payload)
+    stock_rows_with_id = [
+        row for row in stock_payload
+        if isinstance(row, dict)
+        and isinstance(row.get("metadata"), dict)
+        and str(row["metadata"].get("stock_id", "")).strip() == "0700.HK"
+    ]
+    matched_stock_rows_count = len(stock_rows_with_id)
+    run_level_status = "PASS" if matched_run_rows_count > 0 else "FAIL"
+    stock_level_status = "PASS" if matched_stock_rows_count > 0 else "FAIL"
+    overall_status = "PASS" if run_level_status == "PASS" and stock_level_status == "PASS" else "FAIL"
+    if overall_status == "FAIL":
         return SupabaseVerificationResult(
             status="FAIL",
             table=table_name,
             qa_marker=qa_marker,
-            matched_rows_count=0,
-            reason="No matching /decision_note row found in Supabase",
-            guidance="Confirm webhook command succeeded and note includes qa_marker for this run.",
+            matched_run_rows_count=matched_run_rows_count,
+            matched_stock_rows_count=matched_stock_rows_count,
+            run_level_status=run_level_status,
+            stock_level_status=stock_level_status,
+            reason="Missing run-level or stock-level /decision_note verification row in Supabase",
+            guidance="Confirm both webhook commands succeeded and include qa_marker; stock metadata.stock_id must equal 0700.HK.",
         )
     return SupabaseVerificationResult(
-        status="PASS",
+        status=overall_status,
         table=table_name,
         qa_marker=qa_marker,
-        matched_rows_count=matched_rows_count,
+        matched_run_rows_count=matched_run_rows_count,
+        matched_stock_rows_count=matched_stock_rows_count,
+        run_level_status=run_level_status,
+        stock_level_status=stock_level_status,
     )
 
 
@@ -301,7 +344,10 @@ def _write_reports(
         "status": supabase_status,
         "table": "human_decision_journal_entries",
         "qa_marker": qa_marker,
-        "matched_rows_count": supabase_result.matched_rows_count if supabase_result else 0,
+        "run_level_supabase_verification_status": supabase_result.run_level_status if supabase_result else ("SKIPPED" if not verify_supabase else "FAIL"),
+        "stock_level_supabase_verification_status": supabase_result.stock_level_status if supabase_result else ("SKIPPED" if not verify_supabase else "FAIL"),
+        "matched_run_rows_count": supabase_result.matched_run_rows_count if supabase_result else 0,
+        "matched_stock_rows_count": supabase_result.matched_stock_rows_count if supabase_result else 0,
         "reason": supabase_result.reason if supabase_result else ("SKIPPED_verify_supabase_false" if not verify_supabase else None),
         "guidance": supabase_result.guidance if supabase_result else ("No DB query performed because verify_supabase=false." if not verify_supabase else None),
         "secrets_redacted": True,
@@ -359,7 +405,10 @@ def _write_reports(
             f"- supabase_verification_status: `{supabase_status}`",
             f"- supabase_table: `{supabase_payload['table']}`",
             f"- qa_marker: `{qa_marker}`",
-            f"- matched_rows_count: `{supabase_payload['matched_rows_count']}`",
+            f"- run_level_supabase_verification_status: `{supabase_payload['run_level_supabase_verification_status']}`",
+            f"- stock_level_supabase_verification_status: `{supabase_payload['stock_level_supabase_verification_status']}`",
+            f"- matched_run_rows_count: `{supabase_payload['matched_run_rows_count']}`",
+            f"- matched_stock_rows_count: `{supabase_payload['matched_stock_rows_count']}`",
             f"- supabase_reason: `{supabase_payload['reason'] or 'N/A'}`",
             f"- supabase_guidance: `{supabase_payload['guidance'] or 'N/A'}`",
             f"- secrets_redacted: `{supabase_payload['secrets_redacted']}`",
@@ -470,8 +519,12 @@ def main() -> int:
         f"/decision_note scope=run run_id={args.test_run_id} source_command=/daily_review "
         f"human_action=observe note=QA smoke test only; no execution. marker={qa_marker}"
     )
+    stock_success_command = (
+        f"/decision_note scope=stock run_id={args.test_run_id} stock_id=0700.HK source_command=/daily_review "
+        f"human_action=observe note=QA stock-level smoke test only; no execution. marker={qa_marker}"
+    )
 
-    cases = _build_smoke_cases(args.test_run_id, run_success_command)
+    cases = _build_smoke_cases(args.test_run_id, run_success_command, stock_success_command)
 
     results = [
         _run_case(name, command, includes, excludes, webhook_url, webhook_secret, chat_id, user_id)
@@ -501,7 +554,9 @@ def main() -> int:
     return 0 if overall_pass else 1
 
 
-def _build_smoke_cases(test_run_id: str, run_success_command: str) -> list[tuple[str, str, list[str], list[re.Pattern[str]]]]:
+def _build_smoke_cases(
+    test_run_id: str, run_success_command: str, stock_success_command: str
+) -> list[tuple[str, str, list[str], list[re.Pattern[str]]]]:
     return [
         ("A_help", "/help", ["/daily_review", "/decision_note"], [PLACEHOLDER_PATTERN]),
         ("B_runs", "/runs", ["Status: completed.", "run"], []),
@@ -521,9 +576,9 @@ def _build_smoke_cases(test_run_id: str, run_success_command: str) -> list[tuple
             [],
         ),
         (
-            "H_decision_note_stock_not_implemented",
-            "/decision_note scope=stock run_id=1 source_command=/daily_review human_action=observe note=QA check",
-            ["stock-level decision journal is not implemented yet", "no execution performed"],
+            "H_decision_note_stock_success",
+            stock_success_command,
+            ["Status: completed.", "scope: stock", "stock_id: 0700.HK", "journaling only; no execution; no real-money trading"],
             [],
         ),
         (

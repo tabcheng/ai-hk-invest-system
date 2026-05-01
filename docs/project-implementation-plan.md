@@ -95,12 +95,13 @@ Paper-trading review/read-surface expansion, Telegram operator workflow hardenin
 - Report wording now distinguishes transport/delivery verification vs response-text limitation (`response_text_verification=SKIPPED_current_webhook_contract`).
 - Added fail-fast `--test-run-id` validation (positive integer only) with readable FAIL report output and guidance.
 - No strategy logic changes, no paper-trading calculation changes, no Railway topology/env/webhook changes, and no Supabase row verification in this step (deferred to Step 65).
-- Step 66 post-deploy acceptance checklist remains deferred, and Step 67 scheduled daily health check remains future plan only.
+- Step 66 post-deploy acceptance checklist is completed and applies to Step 68 post-merge acceptance; Step 67 scheduled daily health check remains future plan only.
 
 ## Step 65 implementation note (completed)
 - Added optional Supabase verification layer to manual operator smoke harness (still `workflow_dispatch` only).
 - `verify_supabase=false` remains default and returns `supabase_verification_status=SKIPPED` with no DB query requirement.
 - `verify_supabase=true` now requires GitHub Actions secrets `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY`, generates per-run `qa_marker`, and performs read-only verification query on `human_decision_journal_entries` for `/decision_note` run-level persistence evidence.
+- Step 68 extends `/decision_note` runtime to stock-level (`scope=stock`) with required `stock_id`, bounded `human_action`/`source_command` vocabularies, and explicit journaling-only/no-execution response boundary.
 - Reports now include `supabase_verification_status`, `supabase_table`, `qa_marker`, `matched_rows_count`, and safe failure reason/guidance while keeping secrets redacted.
 - No Supabase schema migration, no Railway topology/cron/env/webhook routing change, no strategy logic/paper-trading calculation change, and no broker/live-money execution semantics.
-- Step 66 post-deploy acceptance checklist remains deferred; Step 67 scheduled daily health check remains future plan only.
+- Step 66 post-deploy acceptance checklist now applies to Step 68 runtime acceptance; Step 67 scheduled daily health check remains future plan only.

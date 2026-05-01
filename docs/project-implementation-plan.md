@@ -105,3 +105,14 @@ Paper-trading review/read-surface expansion, Telegram operator workflow hardenin
 - Reports now include `supabase_verification_status`, `supabase_table`, `qa_marker`, `matched_rows_count`, and safe failure reason/guidance while keeping secrets redacted.
 - No Supabase schema migration, no Railway topology/cron/env/webhook routing change, no strategy logic/paper-trading calculation change, and no broker/live-money execution semantics.
 - Step 66 post-deploy acceptance checklist now applies to Step 68 runtime acceptance; Step 67 scheduled daily health check remains future plan only.
+
+
+## Step 69 system-of-record direction/governance update (docs-only)
+- Formalize project direction/governance as internal AI HK investing product system-of-record across spec/architecture/product-surface/production-readiness/market-data docs.
+- Step 67 remains future scheduled health-check plan only (not implemented in this step).
+- Future runtime/DB/UI changes must follow Step 66 post-deploy acceptance checklist.
+
+### Next candidate sequence
+1. **Step 70 candidate:** Mini App Read-only Review Shell MVP **or** MarketDataProvider Interface MVP.
+2. **Step 71 candidate:** Market Data Requirement / Vendor Trial Plan.
+3. **Step 72 candidate:** AI Team Paper Decision MVP.

@@ -233,13 +233,14 @@
 - Step 66 platform ownership: GitHub docs/workflow-governance wording only; Railway settings unchanged; Supabase schema unchanged.
 - Step 66 Post-merge QA Check: pass — docs-only checklist formalization merged; post-deploy acceptance checklist, operator runbook flow, and backlog/status/project-plan wording were aligned; no runtime behavior changed.
 - Step 66 Post-merge Domain Check: pass — AI HK investing-system alignment preserved; checklist reinforces paper-trading / decision-support-only boundary, human final decision authority, and no broker/live-money execution guardrail.
-- Step 68 Stock-level Decision Journal MVP: pending merge acceptance confirmation. Runtime changes target `/decision_note scope=stock` with required `run_id`, `stock_id`, `source_command`, `human_action`, `note`, while keeping journaling-only boundary explicit (no execution, no real-money trading).
-- Step 68 persistence plan: existing `human_decision_journal_entries` with `stock_id` in `metadata` for MVP (no Supabase schema change planned).
-- Step 68 Operator Smoke Test/update plan: include stock-level `/decision_note` success command and require `verify_supabase=true` verification for both run-level and stock-level journal rows before post-merge sign-off.
-- Step 68 Post-merge QA Check: pending until merge + manual Operator Smoke Test (`verify_supabase=true`) evidence review.
-- Step 68 Post-merge Domain Check: pending until merge + manual review confirmation (decision-support only; no execution semantics).
+- Step 68 Stock-level Decision Journal MVP: completed/accepted — stock-level `/decision_note` merged with post-merge Operator Smoke Test (`verify_supabase=true`) evidence and decision-support boundary preserved.
 
 
 ## Next approved task candidate
-- Step 66 in progress: post-deploy acceptance checklist formalization (docs-only) for runtime/Telegram/DB/paper-trading PR acceptance gating.
 - Step 67 scheduled daily health check remains future plan only; do not implement scheduled automation until explicitly approved in a future step.
+
+
+- Step 68 completed/accepted: stock-level `/decision_note` runtime MVP merged and accepted with post-merge Operator Smoke Test (`verify_supabase=true`) evidence.
+- Step 69 in progress: Project Direction & Product Governance system-of-record update (docs-only), PR pending.
+- Step 69 Post-merge QA Check: pending (must be recorded only after merge).
+- Step 69 Post-merge Domain Check: pending (must be recorded only after merge).

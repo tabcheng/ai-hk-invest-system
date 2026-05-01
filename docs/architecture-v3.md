@@ -154,3 +154,42 @@ The platform is designed as an **AI investment firm operating model** with stric
 - Keep run traceability/status semantics coherent across modules.
 - Keep documentation synchronized with runtime truth after each completed step.
 - Keep scope paper-trading/decision-support only (no autonomous real-money execution).
+
+
+## Step 69 product architecture extension
+### Product surfaces by role
+- **Telegram Bot**: notification delivery, quick operator command actions, and smoke-test entry surface.
+- **Telegram Mini App / Web UI**: daily review/product-review surface for richer multi-entity inspection.
+- **Backend + Supabase**: canonical system-of-record persistence and audit boundary.
+
+### Product architecture (expanded)
+```text
+[Telegram Bot: notify + quick actions + smoke test]
+                 |
+                 v
+[Mini App / Web UI: daily review surface]
+                 |
+                 v
+[Backend APIs + Orchestration + Risk Gate]
+                 |
+                 v
+[Supabase System of Record]
+                 |
+                 v
+[AI Team Paper Trading Track + Outcome Review]
+```
+
+### Market data integration boundary
+- Vendor onboarding must be preceded by a stable `MarketDataProvider` interface boundary.
+- Strategy logic and orchestration must depend on internal provider contracts, not vendor SDK primitives.
+
+### AI team paper-trading + risk gate
+- AI team paper-trading track is first-class and remains simulation-only.
+- A risk gate check is required before any simulated order creation is accepted into system records.
+- Simulated order creation metadata must include: `strategy_version`, `data_source`, `data_timestamp`, `risk_check`, `paper_trade_only=true`.
+
+### Security notes (mandatory)
+- Mini App / browser clients must **never** receive `SUPABASE_SERVICE_ROLE_KEY`.
+- Vendor API keys/secrets must remain backend-only (Railway/GitHub Secrets/runtime env), never shipped to client surfaces.
+- Future Mini App authentication must validate Telegram `initData` server-side before granting data access.
+- No broker secrets are stored/used because no broker/live execution path is permitted.

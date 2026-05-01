@@ -113,6 +113,7 @@ Paper-trading review/read-surface expansion, Telegram operator workflow hardenin
 - Future runtime/DB/UI changes must follow Step 66 post-deploy acceptance checklist.
 
 ### Next candidate sequence
-1. **Step 70 candidate:** Mini App Read-only Review Shell MVP **or** MarketDataProvider Interface MVP.
-2. **Step 71 candidate:** Market Data Requirement / Vendor Trial Plan.
-3. **Step 72 candidate:** AI Team Paper Decision MVP.
+1. **Step 70:** update `AGENTS.md` as the repo-level Codex/agent instruction source (docs-only governance hardening).
+2. **Step 71 candidate:** Mini App Read-only Review Shell MVP.
+3. **Step 72 candidate:** Market Data Requirement / Vendor Trial Plan.
+4. **Step 73 candidate:** AI Team Paper Decision MVP.

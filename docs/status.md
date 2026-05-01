@@ -234,6 +234,8 @@
 - Step 66 Post-merge QA Check: pass — docs-only checklist formalization merged; post-deploy acceptance checklist, operator runbook flow, and backlog/status/project-plan wording were aligned; no runtime behavior changed.
 - Step 66 Post-merge Domain Check: pass — AI HK investing-system alignment preserved; checklist reinforces paper-trading / decision-support-only boundary, human final decision authority, and no broker/live-money execution guardrail.
 - Step 68 Stock-level Decision Journal MVP: completed/accepted — stock-level `/decision_note` merged with post-merge Operator Smoke Test (`verify_supabase=true`) evidence and decision-support boundary preserved.
+- Step 68 Post-merge QA Check: pass — stock-level `/decision_note` runtime was merged and accepted with manual Operator Smoke Test using `verify_supabase=true`; run-level and stock-level decision journal smoke cases passed; artifact/report was produced.
+- Step 68 Post-merge Domain Check: pass — stock-level decision journal remained paper-trading / decision-support only; no broker integration, no live-money execution, no strategy logic change, no paper-trading calculation change, no Railway topology change, and no Supabase schema migration.
 
 
 ## Next approved task candidate

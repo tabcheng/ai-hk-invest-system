@@ -238,7 +238,7 @@
   - Secret (optional if webhook auth enabled): `OPERATOR_WEBHOOK_SECRET`
   - Secret (required only when `verify_supabase=true`): `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`
 - Step 65 smoke cases:
-  - Existing: `/help`, `/daily_review`, `/decision_note` run-level success, `/decision_note` stock-scope not-implemented, invalid `/decision_note`.
+  - Existing: `/help`, `/daily_review`, `/decision_note` run-level success, `/decision_note` stock-level success, invalid `/decision_note`.
   - Expanded: `/runs`, `/runner_status`, `/risk_review <test_run_id>`, `/pnl_review`, `/outcome_review`.
 - Guardrails:
   - Harness validates command responses only; no broker/live-money execution is allowed.

@@ -233,9 +233,11 @@
 - Step 66 platform ownership: GitHub docs/workflow-governance wording only; Railway settings unchanged; Supabase schema unchanged.
 - Step 66 Post-merge QA Check: pending until merge + manual review (must not pre-mark PASS).
 - Step 66 Post-merge Domain Check: pending until merge + manual review (must not pre-mark PASS).
-- Step 68 Stock-level Decision Journal MVP: `/decision_note` now supports `scope=stock` with required `run_id`, `stock_id`, `source_command`, `human_action`, `note`; journaling-only boundary remains explicit (no execution, no real-money trading).
-- Step 68 persistence uses existing `human_decision_journal_entries`; stock-level MVP stores `stock_id` in `metadata` (no Supabase schema change).
-- Step 68 Operator Smoke Test harness updated to include stock-level `/decision_note` success command case.
+- Step 68 Stock-level Decision Journal MVP: pending merge acceptance confirmation. Runtime changes target `/decision_note scope=stock` with required `run_id`, `stock_id`, `source_command`, `human_action`, `note`, while keeping journaling-only boundary explicit (no execution, no real-money trading).
+- Step 68 persistence plan: existing `human_decision_journal_entries` with `stock_id` in `metadata` for MVP (no Supabase schema change planned).
+- Step 68 Operator Smoke Test/update plan: include stock-level `/decision_note` success command and require `verify_supabase=true` verification for both run-level and stock-level journal rows before post-merge sign-off.
+- Step 68 Post-merge QA Check: pending until merge + manual Operator Smoke Test (`verify_supabase=true`) evidence review.
+- Step 68 Post-merge Domain Check: pending until merge + manual review confirmation (decision-support only; no execution semantics).
 
 
 ## Next approved task candidate

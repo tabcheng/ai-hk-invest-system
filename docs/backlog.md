@@ -8,10 +8,15 @@ Prioritization:
 ## Active backlog (pending)
 
 ### P0
-1. **Step 67 future plan — scheduled daily health check**
+1. **Step 70 — GitHub / Codex instruction guardrails update**
+   - Update repo-level instruction guardrails in `AGENTS.md` to reflect current project direction and governance baseline.
+   - PR review checklist must explicitly include inline review threads / Codex comments.
+   - Unresolved Codex comments remain blockers when they affect correctness, audit trail, security, runtime behavior, or domain guardrails.
+
+2. **Step 67 future plan — scheduled daily health check**
    - Keep as future plan only; do not implement scheduled automation until explicitly approved in a future step.
 
-2. **GitHub Actions Node.js 20 deprecation maintenance**
+3. **GitHub Actions Node.js 20 deprecation maintenance**
    - Track and update workflows/actions before Node.js 20 deprecation deadlines impact CI/manual QA workflows.
    - Keep maintenance bounded to workflow/runtime compatibility, with no strategy/paper-trading logic side effects.
 

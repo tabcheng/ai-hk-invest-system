@@ -243,6 +243,10 @@
 
 
 - Step 68 completed/accepted: stock-level `/decision_note` runtime MVP merged and accepted with post-merge Operator Smoke Test (`verify_supabase=true`) evidence.
-- Step 69 in progress: Project Direction & Product Governance system-of-record update (docs-only), PR pending.
-- Step 69 Post-merge QA Check: pending (must be recorded only after merge).
-- Step 69 Post-merge Domain Check: pending (must be recorded only after merge).
+- Step 69 repo merge completed: yes.
+- Step 69 manual platform acceptance completed: yes.
+- Step 69 Post-merge QA Check: pass.
+- Step 69 Post-merge Domain Check: pass.
+- Step 70 in progress: GitHub / Codex instruction guardrails update (docs-only), PR pending.
+- Step 70 Post-merge QA Check: pending (must be recorded only after merge).
+- Step 70 Post-merge Domain Check: pending (must be recorded only after merge).

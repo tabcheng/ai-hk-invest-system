@@ -9,7 +9,7 @@ Prioritization:
 
 ### P0
 1. **Step 67 future plan — scheduled daily health check**
-   - Keep as future plan only; do not implement schedule in Step 63.
+   - Keep as future plan only; do not implement scheduled automation until explicitly approved in a future step.
 
 2. **GitHub Actions Node.js 20 deprecation maintenance**
    - Track and update workflows/actions before Node.js 20 deprecation deadlines impact CI/manual QA workflows.
@@ -24,21 +24,21 @@ Prioritization:
    - Decide whether to add bot command registration (`setMyCommands`) for discoverability.
    - Keep this isolated from strategy and paper-trading logic.
 
-2. **Delivery semantics phase narrative instrumentation (`delivery_phase`)**
+3. **Delivery semantics phase narrative instrumentation (`delivery_phase`)**
    - Re-evaluate whether a compact `delivery_phase` enum still adds enough operator triage value beyond current fields (`correlation_id`, `dedup_check_result`, `dedup_persist_result`).
    - Keep scope bounded and avoid broad telemetry redesign; preserve current best-effort/non-blocking delivery behavior.
    - If approved later, require focused tests and explicit backward-compatible projection semantics.
 
-3. **Platform evidence cadence + artifact capture follow-up (GitHub / Railway / Supabase)**
+4. **Platform evidence cadence + artifact capture follow-up (GitHub / Railway / Supabase)**
    - Define a lightweight recurring manual verification cadence (for example monthly/after critical config changes) and where to store dated evidence snapshots/screenshots.
    - Keep this as documentation/process hardening first; do not trigger infra refactor or runtime topology changes without a separate approved step.
 
-4. **Decision-to-outcome attribution linkage follow-up (analytics)**
+5. **Decision-to-outcome attribution linkage follow-up (analytics)**
    - Evaluate a bounded linkage model between `paper_trade_decisions` records and subsequent closed-trade outcomes.
    - Keep this as a follow-up design/implementation candidate only after Step 55 confirms baseline utility.
    - Preserve decision-support guardrails; do not introduce autonomous execution semantics.
 
-5. **Telegram output language option (future)**
+6. **Telegram output language option (future)**
    - Add configurable Telegram output language support, initially `zh-HK` and `en`.
    - Suggested rollout: apply first to `/daily_review`, then expand to other commands.
    - Not in Step 60 scope: no localization implementation in this step.

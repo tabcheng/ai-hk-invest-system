@@ -11,6 +11,7 @@ After Step 66, every relevant PR must explicitly state which checklist sections 
 - [ ] `docs/status.md` is updated with current step state and acceptance status wording.
 - [ ] `docs/backlog.md` is updated when new non-blocking follow-up work is discovered.
 - [ ] No premature post-merge PASS wording is written before actual manual acceptance/review is completed.
+- [ ] Docs-only PRs normally require GitHub CI + review only, unless docs changes also modify workflow/runtime expectations.
 
 ## B. Telegram / Operator PRs
 - [ ] Operator Smoke Test is executed after merge/deploy.

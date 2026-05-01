@@ -226,8 +226,8 @@
 - Step 64 Post-merge Domain Check: pending post-merge review confirmation (expected scope remains QA-harness-only transport verification with no strategy/paper-trading/runtime execution-path mutation).
 - Step 65 Supabase verification layer for Operator Smoke Test: added optional DB persistence verification for `/decision_note` run-level journal row when `verify_supabase=true`, including per-run `qa_marker` injection and read-only Supabase query on `human_decision_journal_entries`; default `verify_supabase=false` remains `SKIPPED` with no DB requirement.
 - Step 65 platform ownership: GitHub changed script/tests/workflow/docs only; Supabase schema unchanged with read-only query usage only; Railway service topology/cron/env/webhook routing unchanged.
-- Step 65 Post-merge QA Check: pending post-merge manual workflow acceptance with `verify_supabase=true`.
-- Step 65 Post-merge Domain Check: pending post-merge review confirmation.
+- Step 65 Post-merge QA Check: pass — manual Operator Smoke Test completed with `verify_supabase=true`; transport checks passed; Supabase verification accepted; artifact/report produced.
+- Step 65 Post-merge Domain Check: pass — paper-trading / decision-support boundary preserved; no broker/live-money execution, no strategy logic change, no paper-trading calculation change, no Railway topology change, and no Supabase schema change.
 
 - Step 66 checklist formalization (docs-only): created `docs/post-deploy-acceptance-checklist.md` and aligned runbook/status/backlog/project-plan wording so future runtime/Telegram/DB/paper-trading PRs must declare required post-deploy QA coverage explicitly.
 - Step 66 platform ownership: GitHub docs/workflow-governance wording only; Railway settings unchanged; Supabase schema unchanged.
@@ -237,4 +237,4 @@
 
 ## Next approved task candidate
 - Step 66 in progress: post-deploy acceptance checklist formalization (docs-only) for runtime/Telegram/DB/paper-trading PR acceptance gating.
-- Step 67 scheduled daily health check remains future plan only (not implemented in Step 63).
+- Step 67 scheduled daily health check remains future plan only; do not implement scheduled automation until explicitly approved in a future step.

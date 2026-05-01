@@ -60,17 +60,18 @@ Paper-trading review/read-surface expansion, Telegram operator workflow hardenin
    - `docs/status.md`: merged completion truth + acceptance result wording.
    - `docs/backlog.md`: pending follow-up work only; never the canonical merged-state record.
 
-## Next small-step candidates (do not over-plan)
-1. **Step 62 candidate — `/decision_note` runtime MVP (bounded)**
-   - Implement Step 61 contract as the smallest runtime slice.
-   - Prefer run-level journaling first if stock-level expands scope; include stock-level only if still bounded.
-   - Keep command strictly journaling-only (no trade execution semantics).
+## QA foundation closure note (Step 66)
+- Step 66 formalizes post-deploy acceptance checklist governance and closes the current QA foundation phase for Operator Smoke Test + optional Supabase verification usage.
+- After Step 66, project returns to normal feature development cadence.
+- Any future runtime / Telegram / DB persistence change must explicitly state post-deploy QA coverage (smoke test, deploy evidence, and Supabase verification applicability).
+- Step 67 scheduled daily health check remains optional future plan only and is not implemented in Step 66.
 
-2. **Telegram command registration follow-up (optional)**
+## Next small-step candidates (do not over-plan)
+1. **Telegram command registration follow-up (optional)**
    - Decide whether to add `setMyCommands` for discoverability.
    - Keep isolated from strategy and paper-trading logic.
 
-3. **Platform evidence cadence/process follow-up**
+2. **Platform evidence cadence/process follow-up**
    - Define lightweight recurring manual verification cadence and evidence artifact location policy.
    - Keep docs/process scope only unless a separate infra/runtime step is explicitly approved.
 

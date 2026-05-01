@@ -1,0 +1,48 @@
+# Post-deploy Acceptance Checklist (Step 66)
+
+## Purpose
+This checklist is the post-deploy/manual-acceptance gate for PRs that touch runtime, Telegram operator flow, database persistence, paper-trading support surfaces, and related deployment configuration.
+
+After Step 66, every relevant PR must explicitly state which checklist sections apply and provide evidence before acceptance is marked PASS.
+
+## A. All PRs
+- [ ] GitHub CI is PASS.
+- [ ] PR scope matches the currently approved step scope (no unauthorized scope expansion).
+- [ ] `docs/status.md` is updated with current step state and acceptance status wording.
+- [ ] `docs/backlog.md` is updated when new non-blocking follow-up work is discovered.
+- [ ] No premature post-merge PASS wording is written before actual manual acceptance/review is completed.
+- [ ] Docs-only PRs normally require GitHub CI + review only, unless docs changes also modify workflow/runtime expectations.
+
+## B. Telegram / Operator PRs
+- [ ] Operator Smoke Test is executed after merge/deploy.
+- [ ] Workflow run link is captured in review evidence.
+- [ ] Smoke-test artifact/report is reviewed.
+- [ ] Overall smoke-test result is PASS.
+- [ ] `response_text_verification` limitation is explicitly understood/acknowledged unless a future test-mode echo contract is introduced.
+
+## C. Supabase / Persistence PRs
+- [ ] `verify_supabase=true` is required when DB persistence behavior is touched.
+- [ ] Supabase verification status is PASS.
+- [ ] Matched row count and QA marker are checked where applicable.
+- [ ] `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` remain GitHub Secrets only.
+- [ ] No secrets appear in logs, reports, docs, or source code.
+
+## D. Railway / Deployment PRs
+- [ ] Railway deployment is completed before production smoke test starts.
+- [ ] No unexpected changes in service topology, cron, env vars, or webhook routing.
+- [ ] If Railway settings changed, document exact setting changes and rollback notes.
+
+## E. Domain Guardrail
+- [ ] No broker integration.
+- [ ] No live-money order flow.
+- [ ] No autonomous real execution.
+- [ ] System remains paper-trading / decision-support only.
+- [ ] Human final decision authority is preserved.
+- [ ] Strategy or calculation changes receive stricter review before acceptance.
+
+## F. Evidence to paste back for review
+- PR link.
+- Workflow run link.
+- Artifact/report status.
+- Railway deployment status (if relevant).
+- Supabase verification result (if relevant).

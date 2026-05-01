@@ -253,3 +253,11 @@
   - QA harness is not trading logic and must not trigger broker/live-money execution.
 - Future governance note:
   - After Step 66, runtime/Telegram/DB project changes should include operator QA-harness consideration in acceptance flow.
+
+
+## Post-merge acceptance flow (Step 66)
+1. If runtime/deployment-relevant change exists, first wait for Railway deploy completion before production smoke validation.
+2. Run Operator Smoke Test via GitHub Actions manual workflow (`workflow_dispatch`).
+3. Use `verify_supabase=true` only when DB persistence was touched by the merged PR; otherwise keep default skipped mode.
+4. Paste workflow run link in review thread and confirm artifact/report status.
+5. After reviewer confirmation, record final acceptance result in `docs/status.md` (do not pre-mark PASS before manual review completion).

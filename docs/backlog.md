@@ -9,38 +9,42 @@ Prioritization:
 
 ### P0
 1. **Step 67 future plan — scheduled daily health check**
-   - Keep as future plan only; do not implement schedule in Step 63.
+   - Keep as future plan only; do not implement scheduled automation until explicitly approved in a future step.
 
-2. **Step 66 deferred — post-deploy acceptance checklist for Step 65 smoke harness**
-   - Capture manual workflow evidence (`verify_supabase=true`) with redaction checks.
-   - Confirm report artifacts include PASS/FAIL/SKIPPED supabase_verification status and qa_marker traceability.
-   - Keep checklist docs/process scope only.
+2. **GitHub Actions Node.js 20 deprecation maintenance**
+   - Track and update workflows/actions before Node.js 20 deprecation deadlines impact CI/manual QA workflows.
+   - Keep maintenance bounded to workflow/runtime compatibility, with no strategy/paper-trading logic side effects.
 
 ### P1
-1. **Telegram command registration follow-up (optional)**
+1. **Operator smoke report wording normalization / possible future test-mode echo**
+   - Continue clarifying transport verification vs response-text verification semantics.
+   - Revisit test-mode echo feasibility only as a future bounded QA-harness enhancement.
+
+2. **Telegram command registration follow-up (optional)**
    - Decide whether to add bot command registration (`setMyCommands`) for discoverability.
    - Keep this isolated from strategy and paper-trading logic.
 
-2. **Delivery semantics phase narrative instrumentation (`delivery_phase`)**
+3. **Delivery semantics phase narrative instrumentation (`delivery_phase`)**
    - Re-evaluate whether a compact `delivery_phase` enum still adds enough operator triage value beyond current fields (`correlation_id`, `dedup_check_result`, `dedup_persist_result`).
    - Keep scope bounded and avoid broad telemetry redesign; preserve current best-effort/non-blocking delivery behavior.
    - If approved later, require focused tests and explicit backward-compatible projection semantics.
 
-3. **Platform evidence cadence + artifact capture follow-up (GitHub / Railway / Supabase)**
+4. **Platform evidence cadence + artifact capture follow-up (GitHub / Railway / Supabase)**
    - Define a lightweight recurring manual verification cadence (for example monthly/after critical config changes) and where to store dated evidence snapshots/screenshots.
    - Keep this as documentation/process hardening first; do not trigger infra refactor or runtime topology changes without a separate approved step.
 
-4. **Decision-to-outcome attribution linkage follow-up (analytics)**
+5. **Decision-to-outcome attribution linkage follow-up (analytics)**
    - Evaluate a bounded linkage model between `paper_trade_decisions` records and subsequent closed-trade outcomes.
    - Keep this as a follow-up design/implementation candidate only after Step 55 confirms baseline utility.
    - Preserve decision-support guardrails; do not introduce autonomous execution semantics.
 
-5. **Telegram output language option (future)**
+6. **Telegram output language option (future)**
    - Add configurable Telegram output language support, initially `zh-HK` and `en`.
    - Suggested rollout: apply first to `/daily_review`, then expand to other commands.
    - Not in Step 60 scope: no localization implementation in this step.
 
 ### P2
+- Future normal feature development after Step 66 checklist baseline (new runtime/Telegram/DB slices must declare QA coverage explicitly).
 - Expand deterministic replay/integration fixtures for multi-day paper-trading scenarios.
 - Improve failure-path coverage for DB/notification/run-finalization edge cases.
 - Track lightweight runtime health metrics (duration, per-ticker latency, failure ratio) in a scoped step.

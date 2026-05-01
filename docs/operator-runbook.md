@@ -208,7 +208,7 @@
 ---
 
 ## `/decision_note` runtime MVP (Step 68: run-level + stock-level)
-- Step 61 只定義 contract，不提供 runtime command。
+- Step 61 定義 contract；Step 62 提供 run-level runtime；Step 68 擴展為 stock-level runtime。
 - Scope: `run` and `stock` (stock scope requires `stock_id`).
 - User-supplied required fields: `scope`, `run_id`, `human_action`, `note`, `source_command` (+ `stock_id` when `scope=stock`).
 - System-generated required fields: `created_at` (record creation time) and `operator_user_id_hash_or_label` when available/applicable.
@@ -217,8 +217,8 @@
 - `system_signal` values: `buy_signal`, `sell_signal`, `hold_signal`, `block_signal`, `watch_signal`, `none`.
 - `human_action` values: `observe`, `watchlist`, `reject_signal`, `accept_for_paper`, `defer`.
 - `confidence`: `low`, `medium`, `high`.
-- Guardrails: no broker integration/no market order/no auto real-money execution; `accept_signal` is journaling context only; human remains final decision-maker.
-- Future examples (not available now):
+- Guardrails: no broker integration/no market order/no auto real-money execution; `accept_for_paper` is journaling context only; human remains final decision-maker.
+- Examples:
   - `/decision_note scope=run run_id=321 source_command=/daily_review human_action=observe confidence=medium note=Daily review checked.`
   - `/decision_note scope=stock run_id=321 stock_id=0700.HK source_command=/daily_review human_action=observe note=Reviewed signal; no action.`
 

@@ -32,7 +32,10 @@ _OUTCOME_REVIEW_MAX_DAYS = 365
 _DECISION_NOTE_STOCK_ID_MAX_LENGTH = 32
 _DECISION_NOTE_NOTE_MAX_LENGTH = 500
 _DECISION_NOTE_STOCK_ID_PATTERN = re.compile(r"^[A-Za-z0-9._-]+$")
-_DECISION_NOTE_EXECUTION_WORDING_PATTERN = re.compile(r"\b(?:broker|execute|execution|real[-_\s]?money|live[-_\s]?money|live\s+trade)\b", re.IGNORECASE)
+_DECISION_NOTE_EXECUTION_WORDING_PATTERN = re.compile(
+    r"\b(?:broker|execute|executed|executing|market\s+order|live[-_\s]?money|live\s+trade)\b",
+    re.IGNORECASE,
+)
 _HKT_TZ = ZoneInfo("Asia/Hong_Kong")
 
 

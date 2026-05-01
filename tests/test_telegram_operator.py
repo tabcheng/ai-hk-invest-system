@@ -870,6 +870,44 @@ def test_decision_note_success_stock_level(monkeypatch):
     assert seen["kwargs"]["stock_id"] == "0700.HK"
 
 
+def test_decision_note_success_stock_level_allows_no_execution_phrase(monkeypatch):
+    monkeypatch.setenv("TELEGRAM_CHAT_ID", "chat-1")
+    called = {"stock": 0}
+
+    def _fake_record_stock(_client, **kwargs):
+        called["stock"] += 1
+        called["note"] = kwargs["note"]
+        return {"id": 3}
+
+    monkeypatch.setattr("src.telegram_operator.record_stock_level_decision_note", _fake_record_stock)
+    response = handle_telegram_operator_command(
+        object(),
+        _build_update("/decision_note scope=stock run_id=31 stock_id=0700.HK source_command=/daily_review human_action=observe note=QA stock-level smoke test only; no execution."),
+    )
+    assert "Status: completed." in response
+    assert called["stock"] == 1
+    assert "no execution" in called["note"]
+
+
+def test_decision_note_success_run_level_allows_no_execution_phrase(monkeypatch):
+    monkeypatch.setenv("TELEGRAM_CHAT_ID", "chat-1")
+    called = {"run": 0}
+
+    def _fake_record_run(_client, **kwargs):
+        called["run"] += 1
+        called["note"] = kwargs["note"]
+        return {"id": 4}
+
+    monkeypatch.setattr("src.telegram_operator.record_run_level_decision_note", _fake_record_run)
+    response = handle_telegram_operator_command(
+        object(),
+        _build_update("/decision_note scope=run run_id=31 source_command=/daily_review human_action=observe note=QA smoke test only; no execution."),
+    )
+    assert "Status: completed." in response
+    assert called["run"] == 1
+    assert "no execution" in called["note"]
+
+
 def test_decision_note_invalid_run_id(monkeypatch):
     monkeypatch.setenv("TELEGRAM_CHAT_ID", "chat-1")
     response = handle_telegram_operator_command(object(), _build_update("/decision_note scope=run run_id=abc source_command=/daily_review human_action=observe note=ok"))

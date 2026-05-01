@@ -50,6 +50,24 @@ Prioritization:
 - Track lightweight runtime health metrics (duration, per-ticker latency, failure ratio) in a scoped step.
 - Add market-relative/context overlays for analytics interpretation (for example benchmark comparison or regime tags) only after baseline outcome summary is stable.
 
+
+### P0.5 — Active track scaffolding (Step 69 direction alignment)
+
+#### Product Surface Track
+- Define and deliver phased Telegram + Mini App/Web UI roadmap with read-only-first governance and explicit paper/simulation labeling.
+
+#### Production Readiness Track
+- Implement lightweight environment-governance practices (local/CI/staging-lite/production) with release evidence discipline.
+
+#### Market Data Architecture Track
+- Formalize provider-first market data architecture and vendor-evaluation criteria without lock-in.
+
+#### Strategy Risk Gate Track
+- Harden pre-simulated-order risk-gate requirements and metadata completeness checks.
+
+#### AI Team Paper Trading Track
+- Expand AI team paper-decision capture/review loops with human final decision preserved.
+
 ## Completed backlog (archived)
 
 ### Recently completed (Steps 40–60)

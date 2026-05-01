@@ -464,3 +464,24 @@ Proposed table: `human_decision_journal_entries` with draft columns:
 - No autonomous execution/broker integration.
 
 - Step 68 extends `/decision_note` to stock-level MVP (`scope=stock`) with required `stock_id`; bounded vocabularies: `human_action in {observe, watchlist, reject_signal, accept_for_paper, defer}` and source commands limited to review/read-only operator commands; no execution/no real-money trading.
+
+
+## Step 69 — Project direction + product governance system-of-record update
+- Project positioning is now formalized as an **internal AI Hong Kong equity investing product** (not a trial-only experiment).
+- Mainline operating model: **AI analysis team + AI team paper trading + human final decision + strategy improvement loop**.
+- System remains strictly **paper-trading / simulated-decision support only**.
+- Explicit non-goals remain unchanged: **no broker integration**, **no autonomous real-money order path**, **no live-money auto execution**.
+
+### Decision-boundary separation (must stay explicit)
+1. **AI simulated decision**
+   - AI generates simulated signal/decision proposals for review and paper-trading evaluation only.
+2. **Human paper decision**
+   - Human records/adjusts paper decisions inside system surfaces for simulated tracking, review, and learning loops.
+3. **Real trade decision outside system**
+   - Any real-money action is decided and executed outside this system by the human final decision-maker.
+
+### Paper-trading lifecycle contract
+- Simulated artifacts include simulated orders, simulated positions, simulated PnL, and outcome review.
+- Strategy-improvement loop is evidence-driven: review outcomes -> identify gaps -> propose controlled strategy updates -> verify with paper trading again.
+- Strategy-changing features require stricter review and explicit acceptance evidence before rollout.
+- Simulated order creation guardrail requires explicit metadata: `strategy_version`, `data_source`, `data_timestamp`, `risk_check`, and `paper_trade_only=true`.

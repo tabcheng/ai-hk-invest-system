@@ -207,7 +207,7 @@
 
 ---
 
-## Future contract preview: `/decision_note` (Step 61 docs-first, not implemented)
+## `/decision_note` runtime MVP (Step 68: run-level + stock-level)
 - Step 61 只定義 contract，不提供 runtime command。
 - Scope: `run` and `stock` (stock scope requires `stock_id`).
 - User-supplied required fields: `scope`, `run_id`, `human_action`, `note`, `source_command` (+ `stock_id` when `scope=stock`).
@@ -215,14 +215,15 @@
 - Operator should not manually provide `created_at` in Telegram command text.
 - Recommended fields: `system_signal`, `confidence`, `reason_tag`.
 - `system_signal` values: `buy_signal`, `sell_signal`, `hold_signal`, `block_signal`, `watch_signal`, `none`.
-- `human_action` values: `observe`, `investigate`, `accept_signal`, `reject_signal`, `hold_watch`, `skip`.
+- `human_action` values: `observe`, `watchlist`, `reject_signal`, `accept_for_paper`, `defer`.
 - `confidence`: `low`, `medium`, `high`.
 - Guardrails: no broker integration/no market order/no auto real-money execution; `accept_signal` is journaling context only; human remains final decision-maker.
 - Future examples (not available now):
   - `/decision_note scope=run run_id=321 source_command=/daily_review human_action=observe confidence=medium note=Daily review checked.`
-  - `/decision_note scope=stock run_id=321 stock_id=0700.HK source_command=/risk_review system_signal=buy_signal human_action=investigate confidence=low note=Need risk review first.`
+  - `/decision_note scope=stock run_id=321 stock_id=0700.HK source_command=/daily_review human_action=observe note=Reviewed signal; no action.`
 
 - /decision_note scope=run run_id=123 source_command=/daily_review human_action=observe note=Daily review checked. : Record run-level human decision journal entry only; no execution.
+- /decision_note scope=stock run_id=123 stock_id=0700.HK source_command=/daily_review human_action=observe note=Reviewed signal; no action. : Record stock-level human decision journal entry only; no execution.
 
 ## Step 65 manual Operator QA harness (GitHub Actions + optional Supabase verification)
 - Scope: manual QA harness only; not trading logic, not strategy changes, not paper-trading calculation changes.

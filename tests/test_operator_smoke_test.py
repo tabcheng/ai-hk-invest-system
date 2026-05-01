@@ -208,12 +208,12 @@ def test_qa_marker_included_in_decision_note_command():
         "/decision_note scope=run run_id=31 source_command=/daily_review "
         f"human_action=observe note=QA smoke test only; no execution. marker={marker}"
     )
-    cases = smoke._build_smoke_cases("31", cmd)
+    cases = smoke._build_smoke_cases("31", cmd, "/decision_note scope=stock run_id=31 stock_id=0700.HK source_command=/daily_review human_action=observe note=ok")
     assert any(marker in command for _, command, _, _ in cases)
 
 
 def test_command_coverage_includes_step64_cases():
-    cases = smoke._build_smoke_cases("31", "/decision_note scope=run run_id=31 source_command=/daily_review human_action=observe note=ok")
+    cases = smoke._build_smoke_cases("31", "/decision_note scope=run run_id=31 source_command=/daily_review human_action=observe note=ok", "/decision_note scope=stock run_id=31 stock_id=0700.HK source_command=/daily_review human_action=observe note=ok")
     commands = [command for _, command, _, _ in cases]
     assert "/runs" in commands
     assert "/runner_status" in commands

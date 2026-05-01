@@ -845,6 +845,31 @@ def test_decision_note_success_run_level(monkeypatch):
     assert seen["run_id"] == 321
 
 
+def test_decision_note_success_stock_level(monkeypatch):
+    monkeypatch.setenv("TELEGRAM_CHAT_ID", "chat-1")
+    seen = {"run": 0, "stock": 0}
+
+    monkeypatch.setattr("src.telegram_operator.record_run_level_decision_note", lambda *_a, **_k: seen.__setitem__("run", seen["run"] + 1))
+
+    def _fake_record_stock(_client, **kwargs):
+        seen["stock"] += 1
+        seen["kwargs"] = kwargs
+        return {"id": 2}
+
+    monkeypatch.setattr("src.telegram_operator.record_stock_level_decision_note", _fake_record_stock)
+    response = handle_telegram_operator_command(
+        object(),
+        _build_update("/decision_note scope=stock run_id=31 stock_id=0700.HK source_command=/daily_review human_action=observe note=Reviewed Tencent signal; no action."),
+    )
+    assert "Status: completed." in response
+    assert "- scope: stock" in response
+    assert "- stock_id: 0700.HK" in response
+    assert "journaling only; no execution; no real-money trading" in response
+    assert seen["run"] == 0
+    assert seen["stock"] == 1
+    assert seen["kwargs"]["stock_id"] == "0700.HK"
+
+
 def test_decision_note_invalid_run_id(monkeypatch):
     monkeypatch.setenv("TELEGRAM_CHAT_ID", "chat-1")
     response = handle_telegram_operator_command(object(), _build_update("/decision_note scope=run run_id=abc source_command=/daily_review human_action=observe note=ok"))
@@ -863,19 +888,48 @@ def test_decision_note_unsupported_source_command(monkeypatch):
     assert "unsupported source_command" in response
 
 
-def test_decision_note_scope_stock_not_implemented(monkeypatch):
+def test_decision_note_scope_stock_missing_stock_id(monkeypatch):
     monkeypatch.setenv("TELEGRAM_CHAT_ID", "chat-1")
     response = handle_telegram_operator_command(object(), _build_update("/decision_note scope=stock run_id=1 source_command=/daily_review human_action=observe note=ok"))
-    assert "not implemented yet" in response and "no execution performed" in response
+    assert "stock_id is required when scope=stock" in response
+
+
+def test_decision_note_scope_stock_invalid_stock_id_length(monkeypatch):
+    monkeypatch.setenv("TELEGRAM_CHAT_ID", "chat-1")
+    response = handle_telegram_operator_command(
+        object(),
+        _build_update("/decision_note scope=stock run_id=1 stock_id=123456789012345678901234567890123 source_command=/daily_review human_action=observe note=ok"),
+    )
+    assert "stock_id exceeds max length" in response
+
+
+def test_decision_note_scope_stock_invalid_stock_id_characters(monkeypatch):
+    monkeypatch.setenv("TELEGRAM_CHAT_ID", "chat-1")
+    response = handle_telegram_operator_command(
+        object(),
+        _build_update("/decision_note scope=stock run_id=1 stock_id=0700.HK! source_command=/daily_review human_action=observe note=ok"),
+    )
+    assert "stock_id contains unsupported characters" in response
+
+
+def test_decision_note_rejects_execution_wording_in_note(monkeypatch):
+    monkeypatch.setenv("TELEGRAM_CHAT_ID", "chat-1")
+    response = handle_telegram_operator_command(
+        object(),
+        _build_update("/decision_note scope=run run_id=1 source_command=/daily_review human_action=observe note=ask broker to execute live trade"),
+    )
+    assert "must not imply broker/live execution" in response
 
 
 def test_decision_note_unauthorized_does_not_write(monkeypatch):
     monkeypatch.setenv("TELEGRAM_CHAT_ID", "chat-allowed")
-    called = {"n": 0}
-    monkeypatch.setattr("src.telegram_operator.record_run_level_decision_note", lambda *_a, **_k: called.__setitem__("n", called["n"] + 1))
-    response = handle_telegram_operator_command(object(), _build_update("/decision_note scope=run run_id=1 source_command=/daily_review human_action=observe note=ok", chat_id="other"))
+    called = {"run": 0, "stock": 0}
+    monkeypatch.setattr("src.telegram_operator.record_run_level_decision_note", lambda *_a, **_k: called.__setitem__("run", called["run"] + 1))
+    monkeypatch.setattr("src.telegram_operator.record_stock_level_decision_note", lambda *_a, **_k: called.__setitem__("stock", called["stock"] + 1))
+    response = handle_telegram_operator_command(object(), _build_update("/decision_note scope=stock run_id=1 stock_id=0700.HK source_command=/daily_review human_action=observe note=ok", chat_id="other"))
     assert "Status: unauthorized." in response
-    assert called["n"] == 0
+    assert called["run"] == 0
+    assert called["stock"] == 0
 
 
 def test_decision_note_malformed_usage(monkeypatch):

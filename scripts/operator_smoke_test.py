@@ -470,8 +470,12 @@ def main() -> int:
         f"/decision_note scope=run run_id={args.test_run_id} source_command=/daily_review "
         f"human_action=observe note=QA smoke test only; no execution. marker={qa_marker}"
     )
+    stock_success_command = (
+        f"/decision_note scope=stock run_id={args.test_run_id} stock_id=0700.HK source_command=/daily_review "
+        f"human_action=observe note=QA stock-level smoke test only; no execution. marker={qa_marker}"
+    )
 
-    cases = _build_smoke_cases(args.test_run_id, run_success_command)
+    cases = _build_smoke_cases(args.test_run_id, run_success_command, stock_success_command)
 
     results = [
         _run_case(name, command, includes, excludes, webhook_url, webhook_secret, chat_id, user_id)
@@ -501,7 +505,9 @@ def main() -> int:
     return 0 if overall_pass else 1
 
 
-def _build_smoke_cases(test_run_id: str, run_success_command: str) -> list[tuple[str, str, list[str], list[re.Pattern[str]]]]:
+def _build_smoke_cases(
+    test_run_id: str, run_success_command: str, stock_success_command: str
+) -> list[tuple[str, str, list[str], list[re.Pattern[str]]]]:
     return [
         ("A_help", "/help", ["/daily_review", "/decision_note"], [PLACEHOLDER_PATTERN]),
         ("B_runs", "/runs", ["Status: completed.", "run"], []),
@@ -521,9 +527,9 @@ def _build_smoke_cases(test_run_id: str, run_success_command: str) -> list[tuple
             [],
         ),
         (
-            "H_decision_note_stock_not_implemented",
-            "/decision_note scope=stock run_id=1 source_command=/daily_review human_action=observe note=QA check",
-            ["stock-level decision journal is not implemented yet", "no execution performed"],
+            "H_decision_note_stock_success",
+            stock_success_command,
+            ["Status: completed.", "scope: stock", "stock_id: 0700.HK", "journaling only; no execution; no real-money trading"],
             [],
         ),
         (

@@ -1,4 +1,4 @@
-# Mini App Read-only Data Surface Boundary Plan (Step 75, docs-only)
+# Mini App Read-only Data Surface Boundary Plan (Step 75) + Auth Prerequisite Utility (Step 76)
 
 ## Scope and intent
 This document defines the **next-step boundary plan** for moving from the current static Mini App shell (Phase 1) to a future **data-enabled but read-only** surface.
@@ -95,3 +95,12 @@ The AI HK Invest system remains paper-trading/decision-support only:
 - real trade decision outside system
 
 No broker integration or autonomous real-money execution is authorized by this plan.
+
+## Step 76 implementation update (backend-only auth utility)
+- Added `src/miniapp_auth.py` backend-only Telegram Mini App `initData` validation helper with bounded failure reasons and freshness checks.
+- Added focused deterministic tests in `tests/test_miniapp_auth.py` using fake bot token fixtures only; no Telegram network calls, no Supabase dependency, and no Railway dependency.
+- This step does **not** add HTTP endpoint/API route, Mini App frontend fetch integration, Supabase read path, or Railway deployment/config changes.
+- Production Mini App data read remains blocked until all of the following are implemented and accepted:
+  1. validation helper is wired into an actual backend endpoint;
+  2. operator authorization boundary is enforced;
+  3. bounded read-only response contract is implemented and accepted.

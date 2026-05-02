@@ -219,3 +219,9 @@ The platform is designed as an **AI investment firm operating model** with stric
 - Explicitly rejected for first data-enabled phase: direct browser Supabase production reads, any browser-held service-role/vendor/broker secret, and any `initDataUnsafe`-based authorization logic.
 - First read-only candidates are review-only sections (`runner_status`, recent runs/latest run id, daily review summary, paper PnL/risk snapshot, outcome review summary); no write-capable endpoints.
 - Deferred scope remains unchanged: strategy mutation, decision capture, paper order creation, broker/live execution, unrestricted table browsing, and browser-initiated secret-backed market-data calls.
+
+## Step 76 implementation note — Backend-only Mini App initData validation helper
+- Added server-side utility `src/miniapp_auth.py` to validate raw Telegram Mini App `initData` using Telegram HMAC check, required `hash`/`auth_date`, and bounded freshness window.
+- Helper is backend-only input contract: `initData` query string + backend bot token parameter; no trust is placed on browser `initDataUnsafe` for authorization.
+- Current step is prerequisite utility only: no HTTP endpoint, no Supabase read integration, no Mini App frontend fetch wiring, and no Railway topology/env changes.
+- Therefore, production Mini App data-read path remains blocked pending endpoint wiring + operator authorization enforcement + bounded read-only response contract acceptance.

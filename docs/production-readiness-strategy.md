@@ -87,3 +87,11 @@ UAT-lite may be introduced later as optional follow-up; it is not required in th
 - No Mini App frontend fetch wiring is introduced in this step.
 - No Railway manual env/config change is required in-step unless separately approved.
 - Production data-enabled Mini App remains blocked until a separately designed/accepted bounded read implementation is approved.
+
+
+## Step 80 readiness note (controlled Railway Mini App API smoke acceptance planning)
+- Live API smoke for `POST /miniapp/api/review-shell` requires backend-only secrets (`TELEGRAM_BOT_TOKEN`, `MINIAPP_ALLOWED_TELEGRAM_USER_IDS`) and must not expose secrets to browser/client/static Mini App.
+- Raw Telegram `initData` must not be logged.
+- Smoke acceptance must preserve bounded mock/read-only response contract and explicit guardrails.
+- Step 80 smoke scope remains no Supabase production read.
+- Step 80 smoke scope remains no write/order/execution.

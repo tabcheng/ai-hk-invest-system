@@ -282,5 +282,11 @@
 - Step 78 platform ownership: GitHub runtime/tests/docs changed; Railway manual change not required by default; Supabase unchanged.
 
 - Step 79 completed: Mini App API skeleton hardening for `POST /miniapp/api/review-shell` now enforces JSON Content-Type contract and request body size cap (413/415 bounded failures), while preserving existing initData validation/operator allowlist gates and mock-only read-only response behavior.
+- Step 79 repo merge completed: yes.
+- Step 79 manual platform acceptance completed: yes (docs/runbook alignment completed; controlled Railway smoke execution remains a separate explicit operator action in Step 80 track).
 - Step 79 safety boundary: no Supabase production read, no Mini App frontend fetch integration, no write/order/execution path, and `/telegram/webhook` behavior/secret handling unchanged.
 - Step 79 platform ownership: GitHub code/tests/docs updated; Railway manual env/config change not required in-step unless separately approved; Supabase schema/runtime unchanged.
+
+- Step 80 planning completed (docs-only): created controlled Railway Mini App API smoke decision/acceptance record for `POST /miniapp/api/review-shell`, including service ownership (`telegram-webhook` owner, `miniapp-static-preview` static-only, `paper-daily-runner` unaffected), pre-env safe failures (`503/415/413`), post-env negative auth checks (`401/403`), post-env authorized mock `200` expectations, and manual evidence checklist template.
+- Step 80 boundary reaffirmed: no Supabase production read, no Mini App frontend fetch wiring, and no write/order/execution path in this step.
+- Step 80 platform action model: Railway env setup + manual smoke require explicit operator action after merge; no in-step runtime behavior change is introduced by this docs update.

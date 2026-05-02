@@ -251,3 +251,10 @@ The platform is designed as an **AI investment firm operating model** with stric
 - No Mini App frontend fetch wiring is introduced in this step.
 - No Railway manual env/config change is required in-step unless separately approved.
 - Production data-enabled Mini App remains blocked until a separately designed/accepted bounded read implementation is approved.
+
+
+## Step 80 service ownership clarification (controlled Railway smoke planning, docs-only)
+- Backend route ownership remains with Railway service `telegram-webhook` for `POST /miniapp/api/review-shell`.
+- `miniapp-static-preview` remains static frontend hosting only and must not host backend API routes.
+- `paper-daily-runner` remains unaffected by Mini App API smoke activities.
+- Production Supabase data-read path for Mini App remains blocked until separately designed and explicitly accepted bounded read implementation.

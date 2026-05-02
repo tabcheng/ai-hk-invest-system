@@ -143,3 +143,10 @@ No broker integration or autonomous real-money execution is authorized by this p
 - Existing auth/authorization behavior is preserved (`400/401/403/503` contracts unchanged), with no raw `init_data` echo/log exposure introduced.
 - Added smoke validation runbook `docs/miniapp-api-smoke-runbook.md` for controlled later Railway/manual verification.
 - Endpoint remains mock-only/read-only; no Supabase production read, no Mini App frontend fetch wiring, and no write/order/execution path in this step.
+
+
+## Step 80 controlled Railway smoke planning update (docs-only)
+- Service ownership is explicit for smoke/acceptance: `telegram-webhook` owns backend API route, `miniapp-static-preview` remains static-only frontend, and `paper-daily-runner` remains unaffected.
+- Controlled smoke acceptance is split into pre-env safe failure checks and post-env authorized mock-only success checks.
+- Production Supabase data read remains blocked in Step 80 and requires separately designed/accepted bounded read contract in a future step.
+- No Mini App frontend fetch integration and no write/order/execution path are introduced in Step 80.

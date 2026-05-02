@@ -23,6 +23,7 @@ Define role boundaries between Telegram Bot and upcoming Mini App / Web UI surfa
 - Scope: read-only review only; must not alter strategy settings or paper orders.
 - Required labeling: explicit paper/simulation status on relevant views.
 - Acceptance: post-deploy acceptance evidence is mandatory before phase closure.
+- Step 71 MVP baseline: static/mock Mini App-compatible review shell is allowed for low-risk rollout, with no production Supabase read, no write controls, and explicit security/auth TODOs (`initData` server-side validation required; no service-role/vendor secrets in browser).
 
 ### Phase 2 — Decision Capture
 - Add bounded decision-capture forms for human paper decisions/journals only.

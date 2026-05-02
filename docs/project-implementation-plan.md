@@ -114,6 +114,6 @@ Paper-trading review/read-surface expansion, Telegram operator workflow hardenin
 
 ### Next candidate sequence
 1. **Step 70:** update `AGENTS.md` as the repo-level Codex/agent instruction source (docs-only governance hardening).
-2. **Step 71 candidate:** Mini App Read-only Review Shell MVP.
+2. **Step 71:** Mini App Read-only Review Shell MVP (implemented as static/mock review shell, no write actions, no production Supabase read, no auth implementation yet).
 3. **Step 72 candidate:** Market Data Requirement / Vendor Trial Plan.
 4. **Step 73 candidate:** AI Team Paper Decision MVP.

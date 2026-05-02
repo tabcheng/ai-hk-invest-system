@@ -250,3 +250,7 @@
 - Step 70 in progress: GitHub / Codex instruction guardrails update (docs-only), PR pending.
 - Step 70 Post-merge QA Check: pending (must be recorded only after merge).
 - Step 70 Post-merge Domain Check: pending (must be recorded only after merge).
+- Step 71 in progress: Mini App Read-only Review Shell MVP (static/mock `miniapp/index.html` + lightweight static contract test), with explicit read-only/paper-only labels and security/auth TODO placeholders.
+- Step 71 scope guardrails (implemented): no write action, no strategy change, no paper order creation, no production Supabase read, no service-role key in browser, no vendor secret in browser.
+- Step 71 Post-merge QA Check: pending (must be recorded only after merge).
+- Step 71 Post-merge Domain Check: pending (must be recorded only after merge).

@@ -2,8 +2,102 @@ from __future__ import annotations
 
 import json
 import os
+from datetime import datetime, timedelta, timezone
 from typing import Any
 from wsgiref.simple_server import make_server
+
+from src.miniapp_auth import (
+    MiniAppAuthValidationError,
+    authorize_telegram_operator,
+    validate_telegram_init_data,
+)
+
+
+def _parse_miniapp_allowed_telegram_user_ids(raw_value: str | None) -> list[int]:
+    if raw_value is None:
+        raise MiniAppAuthValidationError("missing_operator_allowlist_config")
+
+    tokens = [part.strip() for part in raw_value.split(",")]
+    if not tokens or any(token == "" for token in tokens):
+        raise MiniAppAuthValidationError("invalid_operator_allowlist_config")
+
+    disallowed_literals = {"true", "false", "null", "none"}
+    parsed: list[int] = []
+    for token in tokens:
+        if token.lower() in disallowed_literals or not token.isdigit():
+            raise MiniAppAuthValidationError("invalid_operator_allowlist_config")
+        parsed.append(int(token))
+    return parsed
+
+
+def _load_miniapp_bot_token_from_env() -> str:
+    token = os.getenv("TELEGRAM_BOT_TOKEN", "").strip()
+    if not token:
+        raise MiniAppAuthValidationError("missing_miniapp_bot_token_config")
+    return token
+
+
+def _load_miniapp_allowed_telegram_user_ids_from_env() -> list[int]:
+    return _parse_miniapp_allowed_telegram_user_ids(os.getenv("MINIAPP_ALLOWED_TELEGRAM_USER_IDS"))
+
+
+def _build_miniapp_review_shell_mock_response(operator: dict[str, Any]) -> dict[str, Any]:
+    generated_at_hkt = datetime.now(timezone(timedelta(hours=8))).isoformat()
+    return {
+        "status": "ok",
+        "generated_at_hkt": generated_at_hkt,
+        "operator": operator,
+        "sections": {
+            "runner_status": {
+                "status": "mock",
+                "message": "Read-only API skeleton only; no production data read in Step 78.",
+            },
+            "daily_review": {"status": "mock"},
+            "pnl_snapshot": {"status": "mock"},
+            "outcome_review": {"status": "mock"},
+        },
+        "guardrails": {
+            "read_only": True,
+            "paper_trade_only": True,
+            "decision_support_only": True,
+            "no_broker_execution": True,
+            "no_real_money_execution": True,
+        },
+    }
+
+
+def _handle_miniapp_review_shell_request(raw_body: bytes) -> tuple[str, dict[str, Any]]:
+    try:
+        payload = json.loads(raw_body.decode("utf-8") or "{}")
+    except Exception:
+        return "400 Bad Request", {"ok": False, "error": "invalid_json"}
+
+    if not isinstance(payload, dict):
+        return "400 Bad Request", {"ok": False, "error": "invalid_json"}
+    init_data = payload.get("init_data")
+    if not isinstance(init_data, str) or not init_data.strip():
+        return "400 Bad Request", {"ok": False, "error": "missing_init_data"}
+
+    try:
+        bot_token = _load_miniapp_bot_token_from_env()
+    except MiniAppAuthValidationError:
+        return "503 Service Unavailable", {"ok": False, "error": "miniapp_auth_config_unavailable"}
+    try:
+        allowed_user_ids = _load_miniapp_allowed_telegram_user_ids_from_env()
+    except MiniAppAuthValidationError:
+        return "503 Service Unavailable", {"ok": False, "error": "miniapp_operator_allowlist_unavailable"}
+
+    try:
+        validated_context = validate_telegram_init_data(init_data, bot_token=bot_token)
+    except MiniAppAuthValidationError:
+        return "401 Unauthorized", {"ok": False, "error": "invalid_init_data"}
+    try:
+        operator = authorize_telegram_operator(
+            validated_context, allowed_telegram_user_ids=allowed_user_ids
+        )
+    except MiniAppAuthValidationError:
+        return "403 Forbidden", {"ok": False, "error": "operator_not_authorized"}
+    return "200 OK", _build_miniapp_review_shell_mock_response(operator)
 
 
 def _load_supabase_client() -> Any:
@@ -118,12 +212,19 @@ def create_wsgi_app() -> Any:
         path = environ.get("PATH_INFO", "")
         method = environ.get("REQUEST_METHOD", "")
 
-        if path != "/telegram/webhook":
+        if path not in {"/telegram/webhook", "/miniapp/api/review-shell"}:
             status = "404 Not Found"
             payload = {"ok": False, "error": "not_found"}
         elif method != "POST":
             status = "405 Method Not Allowed"
             payload = {"ok": False, "error": "method_not_allowed"}
+        elif path == "/miniapp/api/review-shell":
+            try:
+                body_size = int(environ.get("CONTENT_LENGTH") or 0)
+            except (TypeError, ValueError):
+                body_size = 0
+            raw_body = environ["wsgi.input"].read(body_size)
+            status, payload = _handle_miniapp_review_shell_request(raw_body)
         elif not _is_webhook_request_authorized(environ):
             status = "401 Unauthorized"
             payload = {"ok": False, "error": "unauthorized"}

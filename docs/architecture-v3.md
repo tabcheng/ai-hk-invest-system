@@ -236,3 +236,10 @@ The platform is designed as an **AI investment firm operating model** with stric
 - Helper is backend-only input contract: `initData` query string + backend bot token parameter; no trust is placed on browser `initDataUnsafe` for authorization.
 - Current step is prerequisite utility only: no HTTP endpoint, no Supabase read integration, no Mini App frontend fetch wiring, and no Railway topology/env changes.
 - Therefore, production Mini App data-read path remains blocked pending endpoint wiring + operator authorization enforcement + bounded read-only response contract acceptance.
+
+## Step 78 Mini App auth-gated read-only API skeleton (backend-only)
+- Added backend route `POST /miniapp/api/review-shell` in existing WSGI app.
+- Request boundary: JSON body with `init_data` only; raw Telegram `initData` is validated server-side and never trusted from `initDataUnsafe`.
+- Access boundary: valid Telegram signature/freshness plus backend allowlist authorization by stable numeric Telegram `user.id`.
+- Response boundary: mock read-only bounded JSON only (no Supabase production data read).
+- Explicit non-goals preserved: no Mini App frontend fetch integration, no write action, no decision capture, no paper order creation, no broker/live execution.

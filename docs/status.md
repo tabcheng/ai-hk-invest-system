@@ -1,7 +1,7 @@
 # Project Status
 
 ## Last reviewed date
-2026-04-30
+2026-05-02
 
 ## Post-merge acceptance + wording discipline (system-of-record)
 - Every merged step must complete two mandatory acceptance checks:
@@ -254,8 +254,11 @@
 - Step 71 manual platform acceptance completed: yes.
 - Step 71 Post-merge QA Check: pass — Mini App read-only static shell merged; static contract test present; shell remains static/mock with no form/button controls, no production Supabase read, no backend endpoint, no Railway setting change, no vendor SDK, and no broker/live execution.
 - Step 71 Post-merge Domain Check: pass — Phase 1 UI remains read-only paper-trading / decision-support review surface only; no write action, no strategy change, no paper order creation, human final decision preserved, and real-money execution stays outside the system.
-- Step 72 in progress: Mini App Preview / Deployment Path Decision (docs-only) with option assessment (Railway static service vs webhook static-serving vs external static host vs local-only).
 - Step 72 recommendation (docs decision): use dedicated Railway static site/static service as default Phase 1 preview path; keep shell read-only/no-data/no-write/no-vendor/no-broker boundary.
 - Step 72 security boundary reminder: browser/client must not hold `SUPABASE_SERVICE_ROLE_KEY` or vendor secrets; future data access must validate Telegram `initData` server-side.
-- Step 72 Post-merge QA Check: pending (must be recorded only after merge).
-- Step 72 Post-merge Domain Check: pending (must be recorded only after merge).
+- Step 72 repo merge completed: yes (PR #70 merged).
+- Step 72 manual platform acceptance completed: yes (docs-only decision step; no Railway runtime mutation in-step).
+- Step 72 Post-merge QA Check: pass.
+- Step 72 Post-merge Domain Check: pass.
+- Step 73 in progress: Mini App Static Preview Deployment Runbook / Railway execution checklist (docs-first, boundary-preserving).
+- Step 73 scope baseline: dedicated Railway static service `miniapp-static-preview` with Root Directory `/miniapp`, separated from `telegram-webhook` and `paper-daily-runner`, no production Supabase read/write/auth enablement in this step.

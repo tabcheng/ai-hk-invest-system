@@ -13,20 +13,29 @@ Prioritization:
    - PR review checklist must explicitly include inline review threads / Codex comments.
    - Unresolved Codex comments remain blockers when they affect correctness, audit trail, security, runtime behavior, or domain guardrails.
 
-2. **Step 71 — Mini App Read-only Review Shell MVP acceptance closure**
-   - Runtime/docs shell is added in-repo; post-merge QA/Domain checks must be recorded after merge.
-   - Keep Step 71 in Phase 1 boundary: read-only only, no write path, no strategy change, no paper-order creation, no production Supabase read.
-   - Future auth follow-up remains required: server-side Telegram `initData` validation before any data-access enablement.
+2. **Mini App server-side auth validation follow-up (active)**
+   - Before any data-enabled Mini App access, implement server-side Telegram `initData` validation boundary.
+   - `initDataUnsafe` must never be trusted for authorization decisions.
 
-3. **Step 72 — Mini App Preview / Deployment Path Decision rollout follow-up**
-   - Recommended default is Railway dedicated static site/static service, isolated from webhook ingress service.
-   - Do not add backend data/auth/write paths in this follow-up; keep Phase 1 shell static read-only.
-   - Keep secrets boundary explicit: no `SUPABASE_SERVICE_ROLE_KEY`/vendor secrets in browser; future data access requires server-side `initData` validation.
+3. **Data-enabled read-only Mini App API surface (active)**
+   - Keep as future bounded scope after auth boundary is in place.
+   - Must remain read-only first; no write path or execution semantics.
 
-4. **Step 67 future plan — scheduled daily health check**
+4. **Mini App decision capture / paper order creation (active, deferred)**
+   - Decision capture is Phase 2 follow-up and must remain bounded/non-execution.
+   - Paper order creation is later controlled phase only after risk-gate requirements.
+
+5. **Mini App domain + environment decisions (active)**
+   - Decide custom domain policy for Mini App preview/production path.
+   - Decide PR preview environment policy for Mini App changes.
+
+6. **Mini App frontend framework migration decision (active, deferred)**
+   - Keep static shell baseline for now; evaluate framework migration only if needed later.
+
+7. **Step 67 future plan — scheduled daily health check**
    - Keep as future plan only; do not implement scheduled automation until explicitly approved in a future step.
 
-5. **GitHub Actions Node.js 20 deprecation maintenance**
+8. **GitHub Actions Node.js 20 deprecation maintenance**
    - Track and update workflows/actions before Node.js 20 deprecation deadlines impact CI/manual QA workflows.
    - Keep maintenance bounded to workflow/runtime compatibility, with no strategy/paper-trading logic side effects.
 
@@ -114,6 +123,7 @@ Prioritization:
 - **Step 63 completed:** added manual Telegram operator smoke-test QA harness (`scripts/operator_smoke_test.py`) + manual GitHub Actions workflow (`workflow_dispatch`) with report artifacts (`operator_smoke_report.md/json`) and 7-day retention; no strategy/paper-trading calculation/live-money execution changes.
 - **Step 64 completed:** expanded smoke command coverage to `/runs`, `/runner_status`, `/risk_review <test_run_id>`, `/pnl_review`, `/outcome_review`; normalized report wording to transport-focused verification; added positive-integer `test_run_id` fail-fast validation/reporting; preserved manual-only workflow and non-execution guardrails.
 - **Step 65 completed:** added optional Supabase verification layer for operator smoke harness (`verify_supabase=true`) with read-only `human_decision_journal_entries` query using per-run `qa_marker`; reports now include `supabase_verification_status`, `supabase_table`, `qa_marker`, `matched_rows_count`, and safe failure guidance with secret redaction; `verify_supabase=false` remains SKIPPED by default.
+- **Step 73 completed (docs + deployment runbook):** added `docs/miniapp-static-preview-runbook.md` with Railway execution checklist for dedicated `miniapp-static-preview` static service (`/miniapp` root), explicit service separation from `telegram-webhook` and `paper-daily-runner`, and security/domain guardrails for Phase 1 read-only shell deployment.
 
 ### Earlier completed foundations
 - Step 1–12 baseline (documentation foundation, signal framework, dedup, run lifecycle, modularization, tests, Telegram MVP/hardening).

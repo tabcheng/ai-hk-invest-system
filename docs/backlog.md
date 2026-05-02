@@ -13,9 +13,11 @@ Prioritization:
    - PR review checklist must explicitly include inline review threads / Codex comments.
    - Unresolved Codex comments remain blockers when they affect correctness, audit trail, security, runtime behavior, or domain guardrails.
 
-2. **Mini App server-side auth validation follow-up (active)**
-   - Before any data-enabled Mini App access, implement server-side Telegram `initData` validation boundary.
-   - `initDataUnsafe` must never be trusted for authorization decisions.
+2. **Mini App backend endpoint wiring follow-up (active)**
+   - Before any data-enabled Mini App access, wire both backend helpers into endpoint path:
+     - server-side Telegram `initData` validation
+     - backend operator authorization by Telegram numeric user id allowlist
+   - `initDataUnsafe` and username must never be trusted for authorization decisions.
 
 3. **Data-enabled read-only Mini App API surface (active)**
    - Keep as future bounded scope after auth boundary is in place.
@@ -142,3 +144,4 @@ Prioritization:
 - Step 68 runtime MVP extends `/decision_note` to include stock-level journaling support (`scope=stock`) with bounded validation and no-execution guardrail; persistence uses existing `human_decision_journal_entries` and stores `stock_id` in `metadata` for MVP.
 
 - **Step 76 completed (backend prerequisite utility):** implemented backend-only Telegram Mini App `initData` validation helper (`src/miniapp_auth.py`) with focused deterministic tests; no API route, no frontend fetch wiring, no Supabase data read, no Railway change.
+- **Step 77 completed (backend prerequisite utility):** implemented backend-only Mini App operator authorization boundary helper (`authorize_telegram_operator`) with bounded failure reasons and focused deterministic tests; authorization is Telegram numeric user id-based only; no API route, no frontend fetch wiring, no Supabase change, no Railway change.

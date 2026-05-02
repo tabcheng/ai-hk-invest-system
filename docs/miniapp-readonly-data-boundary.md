@@ -104,3 +104,23 @@ No broker integration or autonomous real-money execution is authorized by this p
   1. validation helper is wired into an actual backend endpoint;
   2. operator authorization boundary is enforced;
   3. bounded read-only response contract is implemented and accepted.
+
+## Step 77 implementation update (backend-only operator authorization boundary helper)
+- Added backend-only operator authorization boundary helper in `src/miniapp_auth.py` that accepts validated context from `validate_telegram_init_data(...)` and authorizes only by stable Telegram numeric `user.id`.
+- The helper returns a bounded authorized context only (`telegram_user_id`, optional `username`, `authorization_status=authorized`) and rejects bounded failures for:
+  - `missing_user`
+  - `missing_user_id`
+  - `invalid_user_id_type`
+  - `empty_operator_allowlist`
+  - `unauthorized_user_id`
+- Security boundary remains explicit:
+  - do not read allowlist from browser/client;
+  - do not use username as authorization key;
+  - do not log raw `initData`;
+  - do not log bot token or expose secrets.
+- Focused tests now cover authorized/unauthorized and missing/invalid-context failures, including username-only non-authorization behavior.
+- No HTTP route/API endpoint is added in this step.
+- No Supabase read/schema/RLS change is added in this step.
+- No Mini App frontend fetch/change is added in this step.
+- No Railway topology/env/runtime change is added in this step.
+- Production data read remains blocked until both helper layers are wired into a backend endpoint and a bounded read-only response contract is implemented/accepted.

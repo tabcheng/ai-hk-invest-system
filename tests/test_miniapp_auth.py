@@ -5,7 +5,11 @@ from urllib.parse import urlencode
 
 import pytest
 
-from src.miniapp_auth import MiniAppAuthValidationError, validate_telegram_init_data
+from src.miniapp_auth import (
+    MiniAppAuthValidationError,
+    authorize_telegram_operator,
+    validate_telegram_init_data,
+)
 
 
 FAKE_BOT_TOKEN = "123456:TEST_FAKE_BOT_TOKEN"
@@ -83,3 +87,55 @@ def test_validate_telegram_init_data_fails_on_malformed_user_json():
 def test_validate_telegram_init_data_fails_for_empty_bot_token():
     with pytest.raises(MiniAppAuthValidationError, match="empty_bot_token"):
         validate_telegram_init_data("auth_date=1700000000&hash=x", bot_token="", now_ts=NOW_TS)
+
+
+def test_authorize_telegram_operator_passes_for_allowed_user_id():
+    result = authorize_telegram_operator(
+        {"user": {"id": 42, "username": "hk_operator"}},
+        allowed_telegram_user_ids=[42, 99],
+    )
+    assert result == {
+        "telegram_user_id": 42,
+        "username": "hk_operator",
+        "authorization_status": "authorized",
+    }
+
+
+def test_authorize_telegram_operator_fails_for_unauthorized_user_id():
+    with pytest.raises(MiniAppAuthValidationError, match="unauthorized_user_id"):
+        authorize_telegram_operator({"user": {"id": 77}}, allowed_telegram_user_ids=[42, 99])
+
+
+def test_authorize_telegram_operator_fails_when_user_missing():
+    with pytest.raises(MiniAppAuthValidationError, match="missing_user"):
+        authorize_telegram_operator({}, allowed_telegram_user_ids=[42])
+
+
+def test_authorize_telegram_operator_fails_when_user_id_missing():
+    with pytest.raises(MiniAppAuthValidationError, match="missing_user_id"):
+        authorize_telegram_operator({"user": {"username": "hk_operator"}}, allowed_telegram_user_ids=[42])
+
+
+def test_authorize_telegram_operator_fails_when_user_id_type_invalid():
+    with pytest.raises(MiniAppAuthValidationError, match="invalid_user_id_type"):
+        authorize_telegram_operator({"user": {"id": "42"}}, allowed_telegram_user_ids=[42])
+
+
+def test_authorize_telegram_operator_fails_when_user_id_is_bool():
+    with pytest.raises(MiniAppAuthValidationError, match="invalid_user_id_type"):
+        authorize_telegram_operator({"user": {"id": True}}, allowed_telegram_user_ids=[1])
+
+
+def test_authorize_telegram_operator_fails_for_empty_allowlist():
+    with pytest.raises(MiniAppAuthValidationError, match="empty_operator_allowlist"):
+        authorize_telegram_operator({"user": {"id": 42}}, allowed_telegram_user_ids=[])
+
+
+def test_authorize_telegram_operator_does_not_authorize_username_only_user():
+    with pytest.raises(MiniAppAuthValidationError, match="missing_user_id"):
+        authorize_telegram_operator({"user": {"username": "only_name"}}, allowed_telegram_user_ids=[42])
+
+
+def test_authorize_telegram_operator_fails_for_invalid_allowlist_user_id_type():
+    with pytest.raises(MiniAppAuthValidationError, match="invalid_allowlist_user_id_type"):
+        authorize_telegram_operator({"user": {"id": 42}}, allowed_telegram_user_ids=[42, "99"])  # type: ignore[list-item]

@@ -218,6 +218,17 @@ The platform is designed as an **AI investment firm operating model** with stric
 - Future Mini App data path must follow strict backend-mediated flow: browser sends Telegram `initData` -> backend validates server-side -> backend enforces operator authorization -> backend reads bounded internal/Supabase data -> backend returns bounded read-only JSON -> Mini App renders read-only review cards.
 - Explicitly rejected for first data-enabled phase: direct browser Supabase production reads, any browser-held service-role/vendor/broker secret, and any `initDataUnsafe`-based authorization logic.
 - First read-only candidates are review-only sections (`runner_status`, recent runs/latest run id, daily review summary, paper PnL/risk snapshot, outcome review summary); no write-capable endpoints.
+
+## Step 77 backend authorization boundary helper (backend-only prerequisite)
+- Mini App auth boundary is now explicitly two-step on backend:
+  1. `validate_telegram_init_data(...)` verifies Telegram-signed payload freshness/integrity.
+  2. `authorize_telegram_operator(...)` verifies validated `context["user"]["id"]` is inside backend-managed operator allowlist.
+- Authorization key is stable Telegram numeric user id only; username is non-authoritative metadata.
+- This step adds helper/tests only and does not introduce endpoint wiring, Supabase read path, or frontend data fetch.
+- Platform impact for Step 77:
+  - GitHub: runtime helper/tests/docs updates.
+  - Railway: unchanged.
+  - Supabase: unchanged.
 - Deferred scope remains unchanged: strategy mutation, decision capture, paper order creation, broker/live execution, unrestricted table browsing, and browser-initiated secret-backed market-data calls.
 
 ## Step 76 implementation note — Backend-only Mini App initData validation helper

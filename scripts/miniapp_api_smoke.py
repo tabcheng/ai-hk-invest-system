@@ -120,7 +120,10 @@ def _assert_sections_contract(payload: dict[str, Any]) -> bool:
         return False
     if latest_system_run.get("status") not in {"unavailable", "ok", "unknown"}:
         return False
-    if latest_system_run.get("status") == "unavailable" and latest_system_run.get("source") != "not_configured":
+    if latest_system_run.get("status") == "unavailable" and latest_system_run.get("source") not in {
+        "not_configured",
+        "local_artifact",
+    }:
         return False
 
     for key in ("daily_review", "pnl_snapshot", "outcome_review"):

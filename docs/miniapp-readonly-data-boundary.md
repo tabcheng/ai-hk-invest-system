@@ -201,3 +201,17 @@ No broker integration or autonomous real-money execution is authorized by this p
   - no Supabase production data reads,
   - no Mini App frontend fetch wiring,
   - no write/order/execution path.
+
+## Step 87 implementation update (first real latest-system-run provider via bounded local artifact)
+- Added `LocalArtifactMiniAppReadDataProvider` in `src/miniapp_data_provider.py` as the first concrete `latest_system_run` read provider beyond default unavailable contract.
+- Provider reads a **backend-local bounded JSON artifact** from `MINIAPP_LATEST_SYSTEM_RUN_ARTIFACT_PATH` and maps only bounded summary fields into `sections.latest_system_run`.
+- Default/failure behavior remains explicit and bounded:
+  - missing/invalid artifact => `status=unavailable`, `source=local_artifact`, bounded limitation message;
+  - valid artifact with required fields => `status=ok`, `source=local_artifact`.
+- `src/miniapp_read_model.py` now resolves default provider by env:
+  - artifact path configured => local-artifact provider;
+  - otherwise => existing `RailwayRuntimeEnvMiniAppReadDataProvider` with Step 86 unavailable fallback.
+- Scope stays strict:
+  - no Supabase production reads,
+  - no Mini App frontend fetch wiring,
+  - no write/order/execution path.

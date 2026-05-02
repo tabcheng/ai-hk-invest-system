@@ -290,3 +290,12 @@
 - Step 80 planning completed (docs-only): created controlled Railway Mini App API smoke decision/acceptance record for `POST /miniapp/api/review-shell`, including service ownership (`telegram-webhook` owner, `miniapp-static-preview` static-only, `paper-daily-runner` unaffected), pre-env safe failures (`503/415/413`), post-env negative auth checks (`401/403`), post-env authorized mock `200` expectations, and manual evidence checklist template.
 - Step 80 boundary reaffirmed: no Supabase production read, no Mini App frontend fetch wiring, and no write/order/execution path in this step.
 - Step 80 platform action model: Railway env setup + manual smoke require explicit operator action after merge; no in-step runtime behavior change is introduced by this docs update.
+
+
+- Step 80 repo merge completed: yes.
+- Step 80 manual platform acceptance completed: yes (planning/docs-only step; controlled execution deferred to Step 81 evidence run).
+- Step 80 Post-merge QA Check: pass.
+- Step 80 Post-merge Domain Check: pass.
+- Step 81 current status: controlled Railway Mini App API smoke execution/evidence record in progress (operator-controlled manual execution).
+- Step 81 guardrails: no Supabase production read, no Mini App frontend fetch, no write/order/execution, and no broker/live execution path.
+- Step 81 platform action note: any Railway env changes require explicit operator action and must not expose secrets to browser/client.

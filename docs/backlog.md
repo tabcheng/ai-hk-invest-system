@@ -164,3 +164,13 @@ Prioritization:
 
 - **Step 79 completed (Mini App API skeleton hardening + smoke runbook):** hardened `POST /miniapp/api/review-shell` request contract with JSON Content-Type enforcement and 8192-byte payload cap (bounded 415/413 failures), expanded focused tests, and added `docs/miniapp-api-smoke-runbook.md`; endpoint remains mock-only/read-only with no Supabase production read, no frontend fetch wiring, and no write/order/execution path (GitHub changed; Railway unchanged; Supabase unchanged).
 - **Step 78 completed (backend-only API skeleton):** added `POST /miniapp/api/review-shell` auth-gated by Telegram `initData` validation and backend operator allowlist authorization; returns bounded mock read-only JSON only; no Supabase production read, no frontend fetch wiring, no write/order/execution path; Railway unchanged; Supabase unchanged.
+
+
+## Step 81 active follow-ups (controlled Mini App smoke track)
+- Active: Step 81 controlled Railway smoke execution/evidence record for `POST /miniapp/api/review-shell` (operator-controlled manual run + evidence capture).
+- Active: first bounded read-only internal/Supabase data-source design (separate future step; not enabled in Step 81).
+- Active: Mini App frontend fetch decision (deferred until bounded backend read contract is accepted).
+- Active: Mini App API rate limiting / interaction-frequency hardening (future runtime hardening step).
+- Active: production data-read acceptance criteria and rollout gate definition (future step).
+- Deferred (explicit): decision capture and paper order creation remain out of current active implementation scope.
+- Step 80 planning item moved out of active pending backlog: completed as docs-only controlled smoke planning baseline.

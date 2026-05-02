@@ -95,3 +95,11 @@ UAT-lite may be introduced later as optional follow-up; it is not required in th
 - Smoke acceptance must preserve bounded mock/read-only response contract and explicit guardrails.
 - Step 80 smoke scope remains no Supabase production read.
 - Step 80 smoke scope remains no write/order/execution.
+
+
+## Step 81 controlled Railway smoke evidence requirement
+- Live smoke evidence for `POST /miniapp/api/review-shell` must record `415`, `413`, and `503` checks.
+- If backend env is configured by operator, evidence should also record `401` (invalid initData), `403` (unauthorized operator), and authorized mock `200`.
+- Raw Telegram `initData` must not be logged or copied into evidence artifacts.
+- `TELEGRAM_BOT_TOKEN` and `MINIAPP_ALLOWED_TELEGRAM_USER_IDS` must remain backend-only and never exposed to browser/client assets.
+- Step 81 remains platform smoke evidence only and must not perform Supabase production read.

@@ -150,3 +150,10 @@ No broker integration or autonomous real-money execution is authorized by this p
 - Controlled smoke acceptance is split into pre-env safe failure checks and post-env authorized mock-only success checks.
 - Production Supabase data read remains blocked in Step 80 and requires separately designed/accepted bounded read contract in a future step.
 - No Mini App frontend fetch integration and no write/order/execution path are introduced in Step 80.
+
+
+## Step 81 clarification (platform smoke evidence only)
+- Step 81 records controlled Railway smoke execution evidence only for backend route `POST /miniapp/api/review-shell`.
+- Step 81 does not introduce production Supabase data read and does not change read-only data contract scope.
+- Backend smoke route remains owned by `telegram-webhook`; `miniapp-static-preview` remains static-only.
+- `paper-daily-runner` remains unaffected.

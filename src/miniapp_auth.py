@@ -77,3 +77,36 @@ def validate_telegram_init_data(
     if "query_id" in fields:
         context["query_id"] = fields["query_id"]
     return context
+
+
+def authorize_telegram_operator(
+    validated_context: dict[str, Any],
+    *,
+    allowed_telegram_user_ids: list[int],
+) -> dict[str, Any]:
+    """Authorize Mini App operator access based on stable Telegram numeric user id."""
+    user = validated_context.get("user")
+    if not isinstance(user, dict):
+        raise MiniAppAuthValidationError("missing_user")
+
+    telegram_user_id = user.get("id")
+    if telegram_user_id is None:
+        raise MiniAppAuthValidationError("missing_user_id")
+    if isinstance(telegram_user_id, bool) or not isinstance(telegram_user_id, int):
+        raise MiniAppAuthValidationError("invalid_user_id_type")
+
+    if not allowed_telegram_user_ids:
+        raise MiniAppAuthValidationError("empty_operator_allowlist")
+    for allowed_user_id in allowed_telegram_user_ids:
+        if isinstance(allowed_user_id, bool) or not isinstance(allowed_user_id, int):
+            raise MiniAppAuthValidationError("invalid_allowlist_user_id_type")
+    if telegram_user_id not in allowed_telegram_user_ids:
+        raise MiniAppAuthValidationError("unauthorized_user_id")
+
+    result: dict[str, Any] = {
+        "telegram_user_id": telegram_user_id,
+        "authorization_status": "authorized",
+    }
+    if isinstance(user.get("username"), str) and user["username"]:
+        result["username"] = user["username"]
+    return result

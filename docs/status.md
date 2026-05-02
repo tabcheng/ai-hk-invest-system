@@ -273,3 +273,6 @@
 - Step 76 repo merge target: backend-only Telegram Mini App `initData` validation helper + focused tests (no API endpoint / no Supabase integration / no Mini App frontend changes).
 - Step 76 scope boundary: validation utility prerequisite only; production data-enabled Mini App read remains blocked until endpoint wiring + operator authorization + bounded response contract acceptance are completed.
 - Step 76 platform ownership: GitHub runtime helper/tests/docs changes only; Railway unchanged; Supabase unchanged.
+- Step 77 repo merge target: backend-only Mini App operator authorization boundary helper + focused tests (no API endpoint / no Supabase read / no Mini App frontend changes).
+- Step 77 scope boundary: authorization utility prerequisite only; valid Telegram initData alone is insufficient for access, and production data-enabled Mini App read remains blocked until endpoint wiring + bounded read-only response contract acceptance are completed.
+- Step 77 platform ownership: GitHub runtime helper/tests/docs changes only; Railway unchanged; Supabase unchanged; Mini App static frontend unchanged.

@@ -243,3 +243,11 @@ The platform is designed as an **AI investment firm operating model** with stric
 - Access boundary: valid Telegram signature/freshness plus backend allowlist authorization by stable numeric Telegram `user.id`.
 - Response boundary: mock read-only bounded JSON only (no Supabase production data read).
 - Explicit non-goals preserved: no Mini App frontend fetch integration, no write action, no decision capture, no paper order creation, no broker/live execution.
+
+
+## Step 79 readiness note (Mini App API skeleton hardening)
+- `POST /miniapp/api/review-shell` now enforces explicit JSON Content-Type and bounded request size cap before auth processing.
+- Endpoint remains bounded mock-only/read-only and does not read Supabase production data.
+- No Mini App frontend fetch wiring is introduced in this step.
+- No Railway manual env/config change is required in-step unless separately approved.
+- Production data-enabled Mini App remains blocked until a separately designed/accepted bounded read implementation is approved.

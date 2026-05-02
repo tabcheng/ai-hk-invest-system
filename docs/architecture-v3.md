@@ -211,3 +211,11 @@ The platform is designed as an **AI investment firm operating model** with stric
 - No write action, no strategy change path, no paper order creation path, no broker/live execution path.
 - No production Supabase read in this step and no service-role backend endpoint.
 - Security/auth is TODO-only in this step: server-side `initData` validation is required for future auth implementation; browser must not hold service-role/vendor secrets.
+
+
+## Step 75 read-only data surface boundary plan (docs-only)
+- Source-of-truth plan: `docs/miniapp-readonly-data-boundary.md`.
+- Future Mini App data path must follow strict backend-mediated flow: browser sends Telegram `initData` -> backend validates server-side -> backend enforces operator authorization -> backend reads bounded internal/Supabase data -> backend returns bounded read-only JSON -> Mini App renders read-only review cards.
+- Explicitly rejected for first data-enabled phase: direct browser Supabase production reads, any browser-held service-role/vendor/broker secret, and any `initDataUnsafe`-based authorization logic.
+- First read-only candidates are review-only sections (`runner_status`, recent runs/latest run id, daily review summary, paper PnL/risk snapshot, outcome review summary); no write-capable endpoints.
+- Deferred scope remains unchanged: strategy mutation, decision capture, paper order creation, broker/live execution, unrestricted table browsing, and browser-initiated secret-backed market-data calls.

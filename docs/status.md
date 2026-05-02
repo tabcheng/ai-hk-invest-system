@@ -265,3 +265,7 @@
 - Step 73 preview URL: https://miniapp-static-preview-production.up.railway.app/
 - Step 73 Post-merge QA Check: pass — Railway `miniapp-static-preview` (Root Directory `/miniapp`) rendered successfully; no deployment errors/logs observed; no env vars added; no Supabase production read observed; no write action/order creation observed; `telegram-webhook` unaffected; `paper-daily-runner` unaffected.
 - Step 73 Post-merge Domain Check: pass — Mini App preview remains Phase 1 static read-only mock/placeholder shell with paper-trading / decision-support-only boundary, no broker connection, and no real-money execution path.
+
+- Step 75 planning kickoff (docs-only): defined Mini App read-only data surface boundary plan in `docs/miniapp-readonly-data-boundary.md` (recommended backend-mediated auth/data path, explicit rejected paths, candidate read-only sections, deferred scope, conceptual response contract, and future implementation acceptance criteria).
+- Step 75 dependency reminder: Mini App next phase remains blocked on server-side Telegram `initData` validation + authorization boundary before any production data-enabled read path.
+- Step 75 scope boundary: no runtime API/auth/Supabase schema/RLS/Mini App fetch/write changes; webhook + daily runner remain unaffected in this step.

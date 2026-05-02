@@ -64,3 +64,13 @@ UAT-lite may be introduced later as optional follow-up; it is not required in th
 - Rollback baseline: disable/unpublish static preview service URL and fall back to local-only preview while keeping repo shell unchanged.
 - Step 73 execution requirement: use a dedicated Railway static service named `miniapp-static-preview` with Root Directory `/miniapp`; keep this service isolated from `telegram-webhook` ingress and `paper-daily-runner` scheduling responsibilities.
 - Step 73 operator runbook source-of-truth: `docs/miniapp-static-preview-runbook.md` for post-merge manual creation/deploy/verification checklist.
+
+
+## Step 75 Mini App read-only data boundary readiness policy (docs-only)
+- Step class: docs-only planning; no runtime/API/auth/Supabase/Railway implementation changes in this step.
+- Data-read prerequisite remains mandatory: server-side Telegram `initData` validation + authorization boundary must be implemented before any production Mini App data read.
+- Security posture for first data-enabled read-only phase:
+  - browser/client must not hold Supabase service-role or vendor/broker secrets;
+  - backend-only bounded read API contract;
+  - read-only response shape with explicit paper-trading/decision-support wording.
+- Operational isolation requirement remains: webhook ingress and daily runner behavior must remain unaffected by future Mini App read-only data surface rollout.

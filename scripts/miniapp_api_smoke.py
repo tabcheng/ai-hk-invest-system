@@ -115,6 +115,14 @@ def _assert_sections_contract(payload: dict[str, Any]) -> bool:
     if runner_status.get("source") != "railway_runtime_env":
         return False
 
+    latest_system_run = sections.get("latest_system_run")
+    if not isinstance(latest_system_run, dict):
+        return False
+    if latest_system_run.get("status") not in {"unavailable", "ok", "unknown"}:
+        return False
+    if latest_system_run.get("status") == "unavailable" and latest_system_run.get("source") != "not_configured":
+        return False
+
     for key in ("daily_review", "pnl_snapshot", "outcome_review"):
         section = sections.get(key)
         if not isinstance(section, dict):

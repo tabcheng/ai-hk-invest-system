@@ -84,6 +84,11 @@ def test_miniapp_review_shell_success_runner_status_bounded_runtime_source(monke
     assert runner_status["status"] in {"ok", "unknown"}
     assert runner_status["git_commit_sha_short"] == "abcdef123456"
     assert "SUPABASE_SERVICE_ROLE_KEY" not in json.dumps(payload)
+    latest_system_run = payload["sections"]["latest_system_run"]
+    assert latest_system_run["status"] in {"unavailable", "ok", "unknown"}
+    if latest_system_run["status"] == "unavailable":
+        assert latest_system_run["source"] == "not_configured"
+
 
 
 def test_miniapp_review_shell_rejects_missing_content_type():

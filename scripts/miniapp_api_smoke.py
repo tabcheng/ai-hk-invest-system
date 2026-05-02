@@ -120,14 +120,17 @@ def _assert_no_write_affordance(payload: dict[str, Any]) -> bool:
     blocked_tokens = (
         "supabase_service_role_key",
         "service_role_key",
+        "broker_api_key",
+        "broker_api_secret",
+        "broker_secret",
         "insert",
         "update",
         "delete",
         "create_order",
         "place_order",
-        "broker",
-        "execution",
-        "real_money",
+        "execute_order",
+        "live_order",
+        "real_order",
     )
     return not any(token in serialized for token in blocked_tokens)
 

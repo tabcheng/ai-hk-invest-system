@@ -140,3 +140,5 @@ Prioritization:
 - No backlog item authorizes autonomous live-money execution.
 
 - Step 68 runtime MVP extends `/decision_note` to include stock-level journaling support (`scope=stock`) with bounded validation and no-execution guardrail; persistence uses existing `human_decision_journal_entries` and stores `stock_id` in `metadata` for MVP.
+
+- **Step 76 completed (backend prerequisite utility):** implemented backend-only Telegram Mini App `initData` validation helper (`src/miniapp_auth.py`) with focused deterministic tests; no API route, no frontend fetch wiring, no Supabase data read, no Railway change.

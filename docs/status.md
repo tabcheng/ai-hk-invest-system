@@ -269,3 +269,7 @@
 - Step 75 planning kickoff (docs-only): defined Mini App read-only data surface boundary plan in `docs/miniapp-readonly-data-boundary.md` (recommended backend-mediated auth/data path, explicit rejected paths, candidate read-only sections, deferred scope, conceptual response contract, and future implementation acceptance criteria).
 - Step 75 dependency reminder: Mini App next phase remains blocked on server-side Telegram `initData` validation + authorization boundary before any production data-enabled read path.
 - Step 75 scope boundary: no runtime API/auth/Supabase schema/RLS/Mini App fetch/write changes; webhook + daily runner remain unaffected in this step.
+
+- Step 76 repo merge target: backend-only Telegram Mini App `initData` validation helper + focused tests (no API endpoint / no Supabase integration / no Mini App frontend changes).
+- Step 76 scope boundary: validation utility prerequisite only; production data-enabled Mini App read remains blocked until endpoint wiring + operator authorization + bounded response contract acceptance are completed.
+- Step 76 platform ownership: GitHub runtime helper/tests/docs changes only; Railway unchanged; Supabase unchanged.

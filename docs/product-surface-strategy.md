@@ -26,6 +26,8 @@ Define role boundaries between Telegram Bot and upcoming Mini App / Web UI surfa
 - Step 71 MVP baseline: static/mock Mini App-compatible review shell is allowed for low-risk rollout, with no production Supabase read, no write controls, and explicit security/auth TODOs (`initData` server-side validation required; no service-role/vendor secrets in browser).
 - Step 72 deployment-path decision: adopt Railway static-site/service as the default preview path for Phase 1 shell exposure (separate from webhook ingress service), keep shell static/read-only, and keep all data/auth/write/vendor integration out of scope.
 - Step 73 execution runbook: add operator runbook (`docs/miniapp-static-preview-runbook.md`) to execute dedicated Railway static preview deployment (`miniapp-static-preview`) with explicit `/miniapp` Root Directory and strict separation from `telegram-webhook` and `paper-daily-runner` service responsibilities.
+- Step 75 boundary plan (docs-only): add `docs/miniapp-readonly-data-boundary.md` to define the future read-only data surface boundary (recommended data path, rejected path, candidate read-only sections, deferred scope, conceptual response contract, and future acceptance criteria) without enabling runtime API/auth/data-fetch changes in this step.
+- Step 75 dependency rule: Mini App production data-read phase must not begin until server-side Telegram `initData` validation and authorization boundary are implemented and accepted.
 
 ### Step 72 decision record — Mini App preview/deployment path
 - **Recommended option (default):** Railway dedicated static site/static service with independent preview URL for operator access.

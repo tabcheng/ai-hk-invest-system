@@ -69,6 +69,23 @@ def test_miniapp_review_shell_success_accepts_json_charset_content_type(monkeypa
     assert payload["status"] == "ok"
 
 
+def test_miniapp_review_shell_success_runner_status_bounded_runtime_source(monkeypatch):
+    monkeypatch.setenv("RAILWAY_SERVICE_NAME", "telegram-webhook")
+    monkeypatch.setenv("RAILWAY_ENVIRONMENT_NAME", "production")
+    monkeypatch.setenv("RAILWAY_GIT_BRANCH", "main")
+    monkeypatch.setenv("RAILWAY_GIT_COMMIT_SHA", "abcdef1234567890")
+    monkeypatch.setenv("RAILWAY_DEPLOYMENT_ID", "dep-1")
+    monkeypatch.setenv("SUPABASE_SERVICE_ROLE_KEY", "secret-do-not-expose")
+    status, payload = _call("/miniapp/api/review-shell", "POST", _authorized_request(monkeypatch))
+
+    assert status.startswith("200")
+    runner_status = payload["sections"]["runner_status"]
+    assert runner_status["source"] == "railway_runtime_env"
+    assert runner_status["status"] in {"ok", "unknown"}
+    assert runner_status["git_commit_sha_short"] == "abcdef123456"
+    assert "SUPABASE_SERVICE_ROLE_KEY" not in json.dumps(payload)
+
+
 def test_miniapp_review_shell_rejects_missing_content_type():
     status, payload = _call("/miniapp/api/review-shell", "POST", b"{}", content_type=None)
     assert status.startswith("415")

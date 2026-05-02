@@ -176,3 +176,7 @@ Prioritization:
 - Step 80 planning item moved out of active pending backlog: completed as docs-only controlled smoke planning baseline.
 
 - **Step 82 completed:** added manual-trigger Mini App API smoke automation (`.github/workflows/miniapp-api-smoke.yml` + `scripts/miniapp_api_smoke.py`) with safe logging and bounded `415/413/401/403/200` assertions; no Supabase/frontend/write execution scope expansion.
+
+### Step 84 follow-up note (completed increment)
+- First bounded read-only runtime status source is now implemented for Mini App review-shell `sections.runner_status`.
+- Future internal/Supabase-backed read sections remain separate bounded follow-up work and must keep read-only/paper-trading/decision-support-only guardrails.

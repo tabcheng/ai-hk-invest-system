@@ -273,3 +273,10 @@ The platform is designed as an **AI investment firm operating model** with stric
 - Smoke automation targets `telegram-webhook` endpoint path `POST /miniapp/api/review-shell` and does not involve `miniapp-static-preview` backend hosting.
 - `miniapp-static-preview` remains static-only; `paper-daily-runner` remains unaffected.
 - Smoke script signs Telegram `initData` locally and validates bounded response contracts (`415/413/401/403/200`) with safe logging only.
+
+## Step 84 Mini App read-model boundary increment
+- Mini App backend review-shell API now includes a first bounded runtime read source for `sections.runner_status` via `src/miniapp_read_model.py`.
+- Source is runtime metadata only (`railway_runtime_env`), not system-of-record business data.
+- This increment does not add Supabase production reads, market-data reads, paper-PnL reads, decision capture, paper order creation, or broker/live execution.
+- Remaining Mini App review-shell sections (`daily_review`, `pnl_snapshot`, `outcome_review`) remain mock-only.
+- `miniapp-static-preview` remains static-only; `paper-daily-runner` remains unaffected.

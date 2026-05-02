@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import json
 import os
-from datetime import datetime, timedelta, timezone
 from typing import Any
 from wsgiref.simple_server import make_server
 
@@ -12,6 +11,7 @@ from src.miniapp_auth import (
     validate_telegram_init_data,
 )
 
+from src.miniapp_read_model import build_miniapp_review_shell_response
 
 def _parse_miniapp_allowed_telegram_user_ids(raw_value: str | None) -> list[int]:
     if raw_value is None:
@@ -39,31 +39,6 @@ def _load_miniapp_bot_token_from_env() -> str:
 
 def _load_miniapp_allowed_telegram_user_ids_from_env() -> list[int]:
     return _parse_miniapp_allowed_telegram_user_ids(os.getenv("MINIAPP_ALLOWED_TELEGRAM_USER_IDS"))
-
-
-def _build_miniapp_review_shell_mock_response(operator: dict[str, Any]) -> dict[str, Any]:
-    generated_at_hkt = datetime.now(timezone(timedelta(hours=8))).isoformat()
-    return {
-        "status": "ok",
-        "generated_at_hkt": generated_at_hkt,
-        "operator": operator,
-        "sections": {
-            "runner_status": {
-                "status": "mock",
-                "message": "Read-only API skeleton only; no production data read in Step 78.",
-            },
-            "daily_review": {"status": "mock"},
-            "pnl_snapshot": {"status": "mock"},
-            "outcome_review": {"status": "mock"},
-        },
-        "guardrails": {
-            "read_only": True,
-            "paper_trade_only": True,
-            "decision_support_only": True,
-            "no_broker_execution": True,
-            "no_real_money_execution": True,
-        },
-    }
 
 
 MINIAPP_REVIEW_SHELL_MAX_BODY_BYTES = 8192
@@ -127,7 +102,7 @@ def _handle_miniapp_review_shell_request(raw_body: bytes) -> tuple[str, dict[str
         )
     except MiniAppAuthValidationError:
         return "403 Forbidden", {"ok": False, "error": "operator_not_authorized"}
-    return "200 OK", _build_miniapp_review_shell_mock_response(operator)
+    return "200 OK", build_miniapp_review_shell_response(operator=operator, env=os.environ)
 
 
 def _load_supabase_client() -> Any:

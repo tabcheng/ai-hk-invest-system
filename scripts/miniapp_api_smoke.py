@@ -102,15 +102,24 @@ def _assert_json_field(payload: dict[str, Any], path: list[str], expected: Any) 
     return current == expected
 
 
-def _assert_mock_sections(payload: dict[str, Any]) -> bool:
+def _assert_sections_contract(payload: dict[str, Any]) -> bool:
     sections = payload.get("sections")
     if not isinstance(sections, dict) or not sections:
         return False
 
-    for value in sections.values():
-        if not isinstance(value, dict):
+    runner_status = sections.get("runner_status")
+    if not isinstance(runner_status, dict):
+        return False
+    if runner_status.get("status") not in {"ok", "unknown"}:
+        return False
+    if runner_status.get("source") != "railway_runtime_env":
+        return False
+
+    for key in ("daily_review", "pnl_snapshot", "outcome_review"):
+        section = sections.get(key)
+        if not isinstance(section, dict):
             return False
-        if value.get("status") != "mock":
+        if section.get("status") != "mock":
             return False
     return True
 
@@ -174,7 +183,7 @@ def main() -> int:
                     _assert_json_field(payload, ["guardrails", "decision_support_only"], True),
                     _assert_json_field(payload, ["guardrails", "no_broker_execution"], True),
                     _assert_json_field(payload, ["guardrails", "no_real_money_execution"], True),
-                    _assert_mock_sections(payload),
+                    _assert_sections_contract(payload),
                     _assert_no_write_affordance(payload),
                 ]
                 if not all(checks):

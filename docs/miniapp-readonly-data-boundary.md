@@ -165,3 +165,29 @@ No broker integration or autonomous real-money execution is authorized by this p
 - Script uses backend secrets/env vars, locally signs Telegram `initData`, and asserts bounded 415/413/401/403/200 contracts.
 - Security/logging policy: do not print raw `initData`, bot token, allowlist IDs, or full request body.
 - Data boundary remains unchanged: no Supabase production read, no Mini App frontend fetch wiring, and no write/order/execution path.
+
+## Step 84 implementation update (first bounded read-only runtime status source)
+- `POST /miniapp/api/review-shell` now uses a dedicated read-model helper (`src/miniapp_read_model.py`) and promotes `sections.runner_status` from pure mock to bounded runtime metadata.
+- Runtime section source is bounded to safe Railway/backend runtime metadata only:
+  - `RAILWAY_SERVICE_NAME`
+  - `RAILWAY_ENVIRONMENT_NAME`
+  - `RAILWAY_GIT_BRANCH`
+  - `RAILWAY_GIT_COMMIT_SHA` (shortened output only)
+  - `RAILWAY_DEPLOYMENT_ID` (presence boolean only)
+  - optional `RAILWAY_PROJECT_NAME` is not required by current contract.
+- Runner status contract now includes:
+  - `status` (`ok` or `unknown`)
+  - `source=railway_runtime_env`
+  - bounded service/environment/branch/short-commit/deployment-presence fields
+  - `generated_at_hkt`
+- Explicit non-goals preserved in this step:
+  - no Supabase production data read,
+  - no market-data read,
+  - no paper PnL data read,
+  - no decision capture,
+  - no paper order creation,
+  - no broker/live execution,
+  - no Mini App frontend fetch wiring.
+- Other response sections remain mock-only (`daily_review`, `pnl_snapshot`, `outcome_review`).
+- `miniapp-static-preview` remains static-only and `paper-daily-runner` remains unaffected.
+- Future Supabase/internal data reads remain separate work requiring explicit bounded data contracts and acceptance.

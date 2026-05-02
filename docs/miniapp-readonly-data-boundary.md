@@ -194,9 +194,9 @@ No broker integration or autonomous real-money execution is authorized by this p
 
 ## Step 86 implementation update (first bounded internal/business read contract + adapter boundary)
 - Added a bounded Mini App read-data provider boundary in backend code:
-  - `MiniAppReadDataProvider` protocol defines `get_latest_system_run_summary()` as the first internal/business read contract.
-  - `RailwayRuntimeEnvMiniAppReadDataProvider` is the first adapter implementation, using only bounded Railway runtime env metadata (no Supabase reads).
-- `src/miniapp_read_model.py` now consumes the provider boundary (with optional injection for tests) instead of embedding adapter logic directly.
+  - `MiniAppReadDataProvider` protocol now separates two bounded reads: `get_runtime_status_summary()` and `get_latest_system_run_summary()`.
+  - `RailwayRuntimeEnvMiniAppReadDataProvider` remains the first adapter implementation, using only bounded Railway runtime env metadata for runtime status and a default `latest_system_run` unavailable contract (`status=unavailable`, `source=not_configured`).
+- `src/miniapp_read_model.py` consumes the provider boundary (with optional injection for tests) and now returns both `sections.runner_status` and `sections.latest_system_run` from provider methods.
 - Scope remains strictly read-only and backend-only:
   - no Supabase production data reads,
   - no Mini App frontend fetch wiring,

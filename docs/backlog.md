@@ -41,6 +41,22 @@ Prioritization:
    - Track and update workflows/actions before Node.js 20 deprecation deadlines impact CI/manual QA workflows.
    - Keep maintenance bounded to workflow/runtime compatibility, with no strategy/paper-trading logic side effects.
 
+9. **Step 80 — controlled Railway Mini App API smoke (active)**
+   - Execute operator-triggered Railway env/manual smoke for `POST /miniapp/api/review-shell` using Step 80 runbook evidence checklist.
+   - Verify pre-env safe failures (`503/415/413/401`) and post-env authorized mock `200` path while preserving mock-only/read-only boundary.
+
+10. **First bounded read-only internal/Supabase data source design (active)**
+   - Keep production data-read blocked until bounded data contract, auth boundary, and acceptance criteria are explicitly approved.
+
+11. **Mini App frontend fetch decision (active, deferred)**
+   - Decide whether/when to wire frontend fetch only after Step 80 smoke evidence and bounded data-read design acceptance.
+
+12. **Rate limiting / interaction-frequency hardening (active)**
+   - Define bounded backend protections for Mini App API request burst/abuse control without introducing write/execution semantics.
+
+13. **Production data-read acceptance (active, deferred)**
+   - Add explicit acceptance checklist for first production data-read enablement after bounded design + controlled smoke evidence are approved.
+
 ### P1
 1. **Operator smoke report wording normalization / possible future test-mode echo**
    - Continue clarifying transport verification vs response-text verification semantics.

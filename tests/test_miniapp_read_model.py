@@ -124,3 +124,76 @@ def test_provider_injection_can_override_runtime_status_and_latest_system_run():
     assert payload["sections"]["runner_status"] == {"status": "ok", "source": "stub_runtime"}
     assert payload["sections"]["latest_system_run"]["source"] == "stub_system_run"
     assert payload["sections"]["latest_system_run"]["run_id"] == 86
+
+
+def test_local_artifact_provider_reads_latest_system_run_summary(tmp_path):
+    artifact = tmp_path / "latest_system_run.json"
+    artifact.write_text(
+        """
+{
+  "run_id": 87,
+  "run_status": "success",
+  "started_at_hkt": "2026-05-02T20:00:00+08:00",
+  "completed_at_hkt": "2026-05-02T20:05:00+08:00",
+  "data_timestamp_hkt": "2026-05-02T20:05:00+08:00",
+  "summary": "Bounded local artifact summary."
+}
+""".strip(),
+        encoding="utf-8",
+    )
+
+    payload = build_miniapp_review_shell_response(
+        operator={"telegram_user_id": 42},
+        env={"MINIAPP_LATEST_SYSTEM_RUN_ARTIFACT_PATH": str(artifact)},
+    )
+
+    assert payload["sections"]["latest_system_run"] == {
+        "status": "ok",
+        "source": "local_artifact",
+        "run_id": 87,
+        "run_status": "success",
+        "started_at_hkt": "2026-05-02T20:00:00+08:00",
+        "completed_at_hkt": "2026-05-02T20:05:00+08:00",
+        "data_timestamp_hkt": "2026-05-02T20:05:00+08:00",
+        "summary": "Bounded local artifact summary.",
+        "limitations": [],
+    }
+
+
+def test_local_artifact_provider_returns_unavailable_when_artifact_invalid(tmp_path):
+    artifact = tmp_path / "latest_system_run.json"
+    artifact.write_text("{invalid", encoding="utf-8")
+
+    payload = build_miniapp_review_shell_response(
+        operator={"telegram_user_id": 42},
+        env={"MINIAPP_LATEST_SYSTEM_RUN_ARTIFACT_PATH": str(artifact)},
+    )
+    latest_system_run = payload["sections"]["latest_system_run"]
+    assert latest_system_run["status"] == "unavailable"
+    assert latest_system_run["source"] == "local_artifact"
+
+
+def test_local_artifact_provider_returns_unavailable_when_root_not_object(tmp_path):
+    artifact = tmp_path / "latest_system_run.json"
+    artifact.write_text('["not-an-object"]', encoding="utf-8")
+
+    payload = build_miniapp_review_shell_response(
+        operator={"telegram_user_id": 42},
+        env={"MINIAPP_LATEST_SYSTEM_RUN_ARTIFACT_PATH": str(artifact)},
+    )
+    latest_system_run = payload["sections"]["latest_system_run"]
+    assert latest_system_run["status"] == "unavailable"
+    assert latest_system_run["source"] == "local_artifact"
+
+
+def test_local_artifact_provider_returns_unavailable_when_run_id_not_positive_int(tmp_path):
+    artifact = tmp_path / "latest_system_run.json"
+    artifact.write_text('{"run_id":"87","run_status":"success"}', encoding="utf-8")
+
+    payload = build_miniapp_review_shell_response(
+        operator={"telegram_user_id": 42},
+        env={"MINIAPP_LATEST_SYSTEM_RUN_ARTIFACT_PATH": str(artifact)},
+    )
+    latest_system_run = payload["sections"]["latest_system_run"]
+    assert latest_system_run["status"] == "unavailable"
+    assert latest_system_run["source"] == "local_artifact"

@@ -4,6 +4,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Any, Mapping
 
 from src.miniapp_data_provider import (
+    LocalArtifactMiniAppReadDataProvider,
     MiniAppReadDataProvider,
     RailwayRuntimeEnvMiniAppReadDataProvider,
 )
@@ -11,12 +12,22 @@ from src.miniapp_data_provider import (
 _HKT = timezone(timedelta(hours=8))
 
 
+def _resolve_default_provider(
+    env: Mapping[str, str] | None,
+    now: datetime | None,
+) -> MiniAppReadDataProvider:
+    artifact_path = str((env or {}).get("MINIAPP_LATEST_SYSTEM_RUN_ARTIFACT_PATH", "") or "").strip()
+    if artifact_path:
+        return LocalArtifactMiniAppReadDataProvider(artifact_path=artifact_path, env=env, now=now)
+    return RailwayRuntimeEnvMiniAppReadDataProvider(env=env, now=now)
+
+
 def build_runtime_status_section(
     env: Mapping[str, str] | None = None,
     now: datetime | None = None,
     provider: MiniAppReadDataProvider | None = None,
 ) -> dict[str, Any]:
-    data_provider = provider or RailwayRuntimeEnvMiniAppReadDataProvider(env=env, now=now)
+    data_provider = provider or _resolve_default_provider(env=env, now=now)
     return data_provider.get_runtime_status_summary()
 
 
@@ -27,7 +38,7 @@ def build_miniapp_review_shell_response(
     provider: MiniAppReadDataProvider | None = None,
 ) -> dict[str, Any]:
     generated_at = now.astimezone(_HKT) if now else datetime.now(_HKT)
-    data_provider = provider or RailwayRuntimeEnvMiniAppReadDataProvider(env=env, now=generated_at)
+    data_provider = provider or _resolve_default_provider(env=env, now=generated_at)
 
     return {
         "status": "ok",

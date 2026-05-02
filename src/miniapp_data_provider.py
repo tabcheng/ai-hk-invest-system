@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
+import json
+from pathlib import Path
 import re
 from typing import Any, Mapping, Protocol
 
@@ -8,6 +10,7 @@ from typing import Any, Mapping, Protocol
 _HKT = timezone(timedelta(hours=8))
 _RUNTIME_SOURCE = "railway_runtime_env"
 _NOT_CONFIGURED_SOURCE = "not_configured"
+_LOCAL_ARTIFACT_SOURCE = "local_artifact"
 _MAX_SHA_SHORT_LEN = 12
 
 
@@ -79,4 +82,70 @@ class RailwayRuntimeEnvMiniAppReadDataProvider:
             "data_timestamp_hkt": None,
             "summary": None,
             "limitations": ["No production data source configured in Step 86."],
+        }
+
+
+class LocalArtifactMiniAppReadDataProvider(RailwayRuntimeEnvMiniAppReadDataProvider):
+    """Bounded provider for latest-system-run based on local JSON artifact only."""
+
+    def __init__(
+        self,
+        artifact_path: str | None,
+        env: Mapping[str, str] | None = None,
+        now: datetime | None = None,
+    ):
+        super().__init__(env=env, now=now)
+        self._artifact_path = str(artifact_path or "").strip()
+
+    @staticmethod
+    def _unavailable_summary(limitation: str) -> dict[str, Any]:
+        return {
+            "status": "unavailable",
+            "source": _LOCAL_ARTIFACT_SOURCE,
+            "run_id": None,
+            "run_status": None,
+            "started_at_hkt": None,
+            "completed_at_hkt": None,
+            "data_timestamp_hkt": None,
+            "summary": None,
+            "limitations": [limitation],
+        }
+
+    def get_latest_system_run_summary(self) -> dict[str, Any]:
+        if not self._artifact_path:
+            return self._unavailable_summary("Local artifact path is not configured.")
+
+        try:
+            payload = json.loads(Path(self._artifact_path).read_text(encoding="utf-8"))
+        except (FileNotFoundError, OSError, json.JSONDecodeError):
+            return self._unavailable_summary("Local artifact is missing or invalid JSON.")
+
+        if not isinstance(payload, dict):
+            return self._unavailable_summary("Local artifact root must be a JSON object.")
+
+        run_id = payload.get("run_id")
+        run_status = payload.get("run_status")
+        started_at_hkt = payload.get("started_at_hkt")
+        completed_at_hkt = payload.get("completed_at_hkt")
+        data_timestamp_hkt = payload.get("data_timestamp_hkt")
+        summary = payload.get("summary")
+        limitations = payload.get("limitations")
+
+        if not isinstance(run_id, int) or isinstance(run_id, bool) or run_id <= 0:
+            return self._unavailable_summary("Local artifact schema is incomplete for latest_system_run.")
+        if not isinstance(run_status, str) or not run_status.strip():
+            return self._unavailable_summary("Local artifact schema is incomplete for latest_system_run.")
+
+        return {
+            "status": "ok",
+            "source": _LOCAL_ARTIFACT_SOURCE,
+            "run_id": run_id,
+            "run_status": run_status.strip(),
+            "started_at_hkt": started_at_hkt if isinstance(started_at_hkt, str) else None,
+            "completed_at_hkt": completed_at_hkt if isinstance(completed_at_hkt, str) else None,
+            "data_timestamp_hkt": data_timestamp_hkt if isinstance(data_timestamp_hkt, str) else None,
+            "summary": summary if isinstance(summary, str) else None,
+            "limitations": [item for item in limitations if isinstance(item, str)]
+            if isinstance(limitations, list)
+            else [],
         }

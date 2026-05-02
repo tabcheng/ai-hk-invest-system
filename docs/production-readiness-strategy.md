@@ -62,3 +62,5 @@ UAT-lite may be introduced later as optional follow-up; it is not required in th
   - no write action/strategy change/paper-order creation/live execution.
 - Future auth gate requirement stays unchanged: any later data-enabled Mini App flow must validate Telegram `initData` server-side before access.
 - Rollback baseline: disable/unpublish static preview service URL and fall back to local-only preview while keeping repo shell unchanged.
+- Step 73 execution requirement: use a dedicated Railway static service named `miniapp-static-preview` with Root Directory `/miniapp`; keep this service isolated from `telegram-webhook` ingress and `paper-daily-runner` scheduling responsibilities.
+- Step 73 operator runbook source-of-truth: `docs/miniapp-static-preview-runbook.md` for post-merge manual creation/deploy/verification checklist.

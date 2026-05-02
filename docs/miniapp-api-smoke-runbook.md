@@ -33,15 +33,22 @@
 - Do **not** paste real bot token into docs, logs, GitHub comments, or browser tools.
 - Allowlist must be Telegram **numeric user id only** (not username).
 
-## Safe smoke expectations before allowlist/env setup
+## Pre-env safe failures (before allowlist/env setup)
 Expected safe failures:
 - Missing/invalid `MINIAPP_ALLOWED_TELEGRAM_USER_IDS` => safe `503`.
 - Missing/invalid `TELEGRAM_BOT_TOKEN` => safe `503`.
 - Non-JSON Content-Type => `415` with `{ "ok": false, "error": "unsupported_media_type" }`.
 - Oversized body (>8192 bytes) => `413` with `{ "ok": false, "error": "payload_too_large" }`.
-- Invalid `initData` signature/freshness => `401` with `{ "ok": false, "error": "invalid_init_data" }`.
 
-## Authorized mock smoke expectations after env setup
+Note:
+- In a **true pre-env** smoke run, `401 invalid_init_data` is not expected because backend env/config checks happen before initData validation.
+
+## Post-env negative auth checks (after env/config is present)
+Expected failures:
+- Invalid `initData` signature/freshness => `401` with `{ "ok": false, "error": "invalid_init_data" }`.
+- Unauthorized operator (valid initData but user id not in allowlist) => `403` with `{ "ok": false, "error": "operator_not_authorized" }`.
+
+## Post-env authorized mock success (after env/config is present)
 Expected authorized success path:
 - Authorized request returns `200`.
 - Response remains **mock-only/read-only**.

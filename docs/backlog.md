@@ -174,3 +174,5 @@ Prioritization:
 - Active: production data-read acceptance criteria and rollout gate definition (future step).
 - Deferred (explicit): decision capture and paper order creation remain out of current active implementation scope.
 - Step 80 planning item moved out of active pending backlog: completed as docs-only controlled smoke planning baseline.
+
+- **Step 82 completed:** added manual-trigger Mini App API smoke automation (`.github/workflows/miniapp-api-smoke.yml` + `scripts/miniapp_api_smoke.py`) with safe logging and bounded `415/413/401/403/200` assertions; no Supabase/frontend/write execution scope expansion.

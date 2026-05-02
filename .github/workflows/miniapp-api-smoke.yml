@@ -1,0 +1,25 @@
+name: Mini App API Smoke Test
+
+on:
+  workflow_dispatch:
+
+jobs:
+  miniapp-api-smoke:
+    runs-on: ubuntu-latest
+    environment: miniapp-smoke
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Run Mini App API smoke script
+        env:
+          MINIAPP_SMOKE_ENDPOINT_URL: ${{ secrets.MINIAPP_SMOKE_ENDPOINT_URL }}
+          MINIAPP_SMOKE_BOT_TOKEN: ${{ secrets.MINIAPP_SMOKE_BOT_TOKEN }}
+          MINIAPP_SMOKE_ALLOWED_TELEGRAM_USER_ID: ${{ secrets.MINIAPP_SMOKE_ALLOWED_TELEGRAM_USER_ID }}
+          MINIAPP_SMOKE_UNAUTHORIZED_TELEGRAM_USER_ID: ${{ secrets.MINIAPP_SMOKE_UNAUTHORIZED_TELEGRAM_USER_ID }}
+        run: python scripts/miniapp_api_smoke.py

@@ -157,3 +157,11 @@ No broker integration or autonomous real-money execution is authorized by this p
 - Step 81 does not introduce production Supabase data read and does not change read-only data contract scope.
 - Backend smoke route remains owned by `telegram-webhook`; `miniapp-static-preview` remains static-only.
 - `paper-daily-runner` remains unaffected.
+
+
+## Step 82 tooling update (manual automated smoke only)
+- Added manual GitHub Actions automated smoke tooling for `POST /miniapp/api/review-shell` via `.github/workflows/miniapp-api-smoke.yml` and `scripts/miniapp_api_smoke.py`.
+- Workflow is manual-trigger only and intended for controlled smoke evidence capture.
+- Script uses backend secrets/env vars, locally signs Telegram `initData`, and asserts bounded 415/413/401/403/200 contracts.
+- Security/logging policy: do not print raw `initData`, bot token, allowlist IDs, or full request body.
+- Data boundary remains unchanged: no Supabase production read, no Mini App frontend fetch wiring, and no write/order/execution path.

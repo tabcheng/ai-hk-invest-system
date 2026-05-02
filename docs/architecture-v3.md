@@ -266,3 +266,10 @@ The platform is designed as an **AI investment firm operating model** with stric
 - Backend smoke route ownership remains with Railway service `telegram-webhook`.
 - `miniapp-static-preview` remains static-only and does not host backend API logic.
 - `paper-daily-runner` remains unaffected by Step 81 smoke activity.
+
+
+## Step 82 QA automation note (manual GitHub Actions smoke)
+- Added a manual GitHub Actions smoke workflow for Mini App API endpoint verification (`workflow_dispatch` only).
+- Smoke automation targets `telegram-webhook` endpoint path `POST /miniapp/api/review-shell` and does not involve `miniapp-static-preview` backend hosting.
+- `miniapp-static-preview` remains static-only; `paper-daily-runner` remains unaffected.
+- Smoke script signs Telegram `initData` locally and validates bounded response contracts (`415/413/401/403/200`) with safe logging only.

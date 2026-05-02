@@ -260,5 +260,8 @@
 - Step 72 manual platform acceptance completed: yes (docs-only decision step; no Railway runtime mutation in-step).
 - Step 72 Post-merge QA Check: pass.
 - Step 72 Post-merge Domain Check: pass.
-- Step 73 in progress: Mini App Static Preview Deployment Runbook / Railway execution checklist (docs-first, boundary-preserving).
-- Step 73 scope baseline: dedicated Railway static service `miniapp-static-preview` with Root Directory `/miniapp`, separated from `telegram-webhook` and `paper-daily-runner`, no production Supabase read/write/auth enablement in this step.
+- Step 73 repo merge completed: yes (PR #71 merged).
+- Step 73 manual platform acceptance completed: yes.
+- Step 73 preview URL: https://miniapp-static-preview-production.up.railway.app/
+- Step 73 Post-merge QA Check: pass — Railway `miniapp-static-preview` (Root Directory `/miniapp`) rendered successfully; no deployment errors/logs observed; no env vars added; no Supabase production read observed; no write action/order creation observed; `telegram-webhook` unaffected; `paper-daily-runner` unaffected.
+- Step 73 Post-merge Domain Check: pass — Mini App preview remains Phase 1 static read-only mock/placeholder shell with paper-trading / decision-support-only boundary, no broker connection, and no real-money execution path.

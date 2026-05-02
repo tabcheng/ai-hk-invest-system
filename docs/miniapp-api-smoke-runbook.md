@@ -89,3 +89,35 @@ Expected authorized success path:
 - decision capture
 - paper order creation
 - broker/live execution
+
+
+## Step 81 execution evidence record (operator-controlled)
+- This section records **manual operator-controlled Railway smoke execution evidence** after Step 80 planning.
+- Scope remains platform-smoke evidence only for `POST /miniapp/api/review-shell`.
+- Do not perform Supabase production reads, Mini App frontend fetch wiring, or any write/order/execution action in Step 81.
+
+### Evidence fields (fill after operator run)
+- Railway service:
+- Deployment commit:
+- Endpoint URL tested:
+- Content-Type 415 tested: yes/no/result
+- Oversized 413 tested: yes/no/result
+- Missing/invalid env 503 tested: yes/no/result
+- Invalid initData 401 tested: yes/no/not run/result
+- Unauthorized operator 403 tested: yes/no/not run/result
+- Authorized mock 200 tested: yes/no/not run/result
+- Supabase production read observed: yes/no
+- Write/order/execution path observed: yes/no
+- telegram-webhook existing Telegram command behavior unaffected: yes/no
+- paper-daily-runner unaffected: yes/no
+- Notes / limitations:
+
+### Evidence staging expectation
+1. **Pre-env stage** (no backend allowlist/token ready): verify safe bounded failures (`415`, `413`, `503`).
+2. **Post-env negative auth stage** (env configured by operator): verify `401` invalid initData and `403` unauthorized operator.
+3. **Post-env authorized mock stage** (when operator allowlist and test initData are valid): verify bounded mock-only `200` response and guardrails.
+
+### Step 81 constraints reminder
+- Raw Telegram `initData` must not be logged into app logs, browser console, docs, or PR comments.
+- `TELEGRAM_BOT_TOKEN` and `MINIAPP_ALLOWED_TELEGRAM_USER_IDS` remain backend-only secrets/allowlist values.
+- Step 81 does not authorize or introduce production Supabase data read.

@@ -258,3 +258,11 @@ The platform is designed as an **AI investment firm operating model** with stric
 - `miniapp-static-preview` remains static frontend hosting only and must not host backend API routes.
 - `paper-daily-runner` remains unaffected by Mini App API smoke activities.
 - Production Supabase data-read path for Mini App remains blocked until separately designed and explicitly accepted bounded read implementation.
+
+
+## Step 81 platform smoke evidence boundary (docs/evidence)
+- Step 81 is limited to controlled Railway smoke evidence recording for `POST /miniapp/api/review-shell`.
+- This step does **not** enable production Supabase data read.
+- Backend smoke route ownership remains with Railway service `telegram-webhook`.
+- `miniapp-static-preview` remains static-only and does not host backend API logic.
+- `paper-daily-runner` remains unaffected by Step 81 smoke activity.

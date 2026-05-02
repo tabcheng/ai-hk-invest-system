@@ -43,7 +43,7 @@ Prioritization:
 
 9. **Step 80 — controlled Railway Mini App API smoke (active)**
    - Execute operator-triggered Railway env/manual smoke for `POST /miniapp/api/review-shell` using Step 80 runbook evidence checklist.
-   - Verify pre-env safe failures (`503/415/413/401`) and post-env authorized mock `200` path while preserving mock-only/read-only boundary.
+   - Verify pre-env safe failures (`503/415/413`), then post-env negative auth checks (`401/403`), then post-env authorized mock `200` path while preserving mock-only/read-only boundary.
 
 10. **First bounded read-only internal/Supabase data source design (active)**
    - Keep production data-read blocked until bounded data contract, auth boundary, and acceptance criteria are explicitly approved.

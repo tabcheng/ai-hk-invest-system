@@ -306,3 +306,4 @@
 
 - Step 84 repo update in progress: first bounded read-only runtime status source for Mini App review-shell (`sections.runner_status`) implemented via dedicated read model; response remains auth-gated and read-only with mock-only `daily_review` / `pnl_snapshot` / `outcome_review` sections.
 - Step 84 scope confirmation: no Supabase production read, no market-data read, no paper-PnL data-read surface expansion, no decision capture, no paper order creation, no broker/live execution, and no Mini App frontend fetch wiring.
+- Step 86 completed: first bounded internal/business read contract + adapter boundary for Mini App review-shell added via `MiniAppReadDataProvider.get_latest_system_run_summary()` and runtime adapter `RailwayRuntimeEnvMiniAppReadDataProvider`; endpoint remains auth-gated/read-only with no Supabase production read and no frontend fetch wiring.

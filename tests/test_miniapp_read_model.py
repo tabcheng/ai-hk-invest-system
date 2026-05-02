@@ -78,3 +78,27 @@ def test_review_shell_response_does_not_dump_arbitrary_env():
     assert "SUPABASE_SERVICE_ROLE_KEY" not in serialized
     assert "super-secret" not in serialized
     assert "TELEGRAM_BOT_TOKEN" not in serialized
+
+def test_runtime_status_uses_injected_provider_boundary():
+    class _StubProvider:
+        def get_latest_system_run_summary(self):
+            return {"status": "ok", "source": "stub_provider"}
+
+    section = build_runtime_status_section(provider=_StubProvider())
+    assert section == {"status": "ok", "source": "stub_provider"}
+
+def test_review_shell_response_uses_injected_provider_for_runner_status_section():
+    class _StubProvider:
+        def get_latest_system_run_summary(self):
+            return {"status": "ok", "source": "stub_provider", "section": "runner_status"}
+
+    payload = build_miniapp_review_shell_response(
+        operator={"telegram_user_id": 42},
+        provider=_StubProvider(),
+    )
+
+    assert payload["sections"]["runner_status"] == {
+        "status": "ok",
+        "source": "stub_provider",
+        "section": "runner_status",
+    }

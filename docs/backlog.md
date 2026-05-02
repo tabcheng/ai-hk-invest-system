@@ -180,3 +180,4 @@ Prioritization:
 ### Step 84 follow-up note (completed increment)
 - First bounded read-only runtime status source is now implemented for Mini App review-shell `sections.runner_status`.
 - Future internal/Supabase-backed read sections remain separate bounded follow-up work and must keep read-only/paper-trading/decision-support-only guardrails.
+- **Step 86 completed:** establish first bounded internal/business read contract + adapter boundary for Mini App review-shell using `MiniAppReadDataProvider` protocol and first runtime adapter implementation; no Supabase production read, no frontend fetch wiring, no write/order/execution path.

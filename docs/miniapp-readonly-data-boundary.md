@@ -191,3 +191,13 @@ No broker integration or autonomous real-money execution is authorized by this p
 - Other response sections remain mock-only (`daily_review`, `pnl_snapshot`, `outcome_review`).
 - `miniapp-static-preview` remains static-only and `paper-daily-runner` remains unaffected.
 - Future Supabase/internal data reads remain separate work requiring explicit bounded data contracts and acceptance.
+
+## Step 86 implementation update (first bounded internal/business read contract + adapter boundary)
+- Added a bounded Mini App read-data provider boundary in backend code:
+  - `MiniAppReadDataProvider` protocol defines `get_latest_system_run_summary()` as the first internal/business read contract.
+  - `RailwayRuntimeEnvMiniAppReadDataProvider` is the first adapter implementation, using only bounded Railway runtime env metadata (no Supabase reads).
+- `src/miniapp_read_model.py` now consumes the provider boundary (with optional injection for tests) instead of embedding adapter logic directly.
+- Scope remains strictly read-only and backend-only:
+  - no Supabase production data reads,
+  - no Mini App frontend fetch wiring,
+  - no write/order/execution path.

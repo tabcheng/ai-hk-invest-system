@@ -65,15 +65,17 @@ Expected authorized success path:
 - Railway service:
 - Deployment commit:
 - Endpoint URL tested:
-- Content-Type 415 tested: yes/no
-- Oversized 413 tested: yes/no
-- Invalid initData 401 tested: yes/no
-- Missing/invalid env 503 tested: yes/no
-- Authorized mock 200 tested: yes/no/not run
+- Content-Type 415 tested: yes/no/result
+- Oversized 413 tested: yes/no/result
+- Missing/invalid env 503 tested: yes/no/result
+- Invalid initData 401 tested: yes/no/not run/result
+- Unauthorized operator 403 tested: yes/no/not run/result
+- Authorized mock 200 tested: yes/no/not run/result
 - Supabase production read observed: yes/no
 - Write/order/execution path observed: yes/no
 - telegram-webhook existing Telegram command behavior unaffected: yes/no
 - paper-daily-runner unaffected: yes/no
+- Notes / limitations:
 
 ## Security reminders
 - Do **not** paste real bot token into browser/client.
@@ -95,22 +97,6 @@ Expected authorized success path:
 - This section records **manual operator-controlled Railway smoke execution evidence** after Step 80 planning.
 - Scope remains platform-smoke evidence only for `POST /miniapp/api/review-shell`.
 - Do not perform Supabase production reads, Mini App frontend fetch wiring, or any write/order/execution action in Step 81.
-
-### Evidence fields (fill after operator run)
-- Railway service:
-- Deployment commit:
-- Endpoint URL tested:
-- Content-Type 415 tested: yes/no/result
-- Oversized 413 tested: yes/no/result
-- Missing/invalid env 503 tested: yes/no/result
-- Invalid initData 401 tested: yes/no/not run/result
-- Unauthorized operator 403 tested: yes/no/not run/result
-- Authorized mock 200 tested: yes/no/not run/result
-- Supabase production read observed: yes/no
-- Write/order/execution path observed: yes/no
-- telegram-webhook existing Telegram command behavior unaffected: yes/no
-- paper-daily-runner unaffected: yes/no
-- Notes / limitations:
 
 ### Evidence staging expectation
 1. **Pre-env stage** (no backend allowlist/token ready): verify safe bounded failures (`415`, `413`, `503`).

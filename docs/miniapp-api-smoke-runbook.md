@@ -107,3 +107,33 @@ Expected authorized success path:
 - Raw Telegram `initData` must not be logged into app logs, browser console, docs, or PR comments.
 - `TELEGRAM_BOT_TOKEN` and `MINIAPP_ALLOWED_TELEGRAM_USER_IDS` remain backend-only secrets/allowlist values.
 - Step 81 does not authorize or introduce production Supabase data read.
+
+
+## Step 82 — GitHub Actions automated smoke workflow (manual trigger only)
+- Added workflow: `.github/workflows/miniapp-api-smoke.yml`.
+- Trigger mode is `workflow_dispatch` only (no `push` / `pull_request` auto run).
+- Suggested protected environment: `miniapp-smoke`.
+- Required GitHub secrets (environment or repository):
+  - `MINIAPP_SMOKE_ENDPOINT_URL`
+  - `MINIAPP_SMOKE_BOT_TOKEN`
+  - `MINIAPP_SMOKE_ALLOWED_TELEGRAM_USER_ID`
+  - `MINIAPP_SMOKE_UNAUTHORIZED_TELEGRAM_USER_ID`
+- Added script: `scripts/miniapp_api_smoke.py`.
+- Endpoint URL contract: if `MINIAPP_SMOKE_ENDPOINT_URL` already ends with `/miniapp/api/review-shell`, script uses it directly; otherwise script appends `/miniapp/api/review-shell`.
+- Script generates Telegram-signed `initData` locally via HMAC and uses current `auth_date`; no Telegram network call required.
+- Script validates and checks bounded cases: `415`, `413`, `401`, `403`, `200`.
+- Logs are bounded to safe labels + HTTP status + safe error/status fields only.
+- Raw `initData`, bot token, allowlist IDs, and full request body must not be printed.
+- For `200`, script asserts mock/read-only guardrails and decision-support-only / paper-trade-only / no-broker/no-real-money execution flags.
+- Step 82 remains smoke tooling + docs only: no Supabase production read, no frontend fetch wiring, no write/order/execution path.
+
+### Optional local dry-run
+```bash
+export MINIAPP_SMOKE_ENDPOINT_URL='https://<railway-service-url>'
+export MINIAPP_SMOKE_BOT_TOKEN='<bot-token>'
+export MINIAPP_SMOKE_ALLOWED_TELEGRAM_USER_ID='<authorized-user-id>'
+export MINIAPP_SMOKE_UNAUTHORIZED_TELEGRAM_USER_ID='<unauthorized-user-id>'
+python scripts/miniapp_api_smoke.py
+```
+- Expected safe output: PASS/FAIL per case with status code only.
+- Do not paste real secrets into shell history snapshots, screenshots, or GitHub comments.

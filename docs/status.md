@@ -299,3 +299,7 @@
 - Step 81 current status: controlled Railway Mini App API smoke execution/evidence record in progress (operator-controlled manual execution).
 - Step 81 guardrails: no Supabase production read, no Mini App frontend fetch, no write/order/execution, and no broker/live execution path.
 - Step 81 platform action note: any Railway env changes require explicit operator action and must not expose secrets to browser/client.
+
+- Step 82 completed: added manual-trigger GitHub Actions Mini App API smoke workflow (`workflow_dispatch` only) and local-HMAC signed initData smoke script covering `415/413/401/403/200` with safe logging policy.
+- Step 82 safety boundary preserved: no Supabase production read, no Mini App frontend fetch wiring, no write/order/execution, `miniapp-static-preview` remains static-only, `paper-daily-runner` unaffected.
+- Step 82 platform ownership: GitHub workflow/script/docs changed; Railway requires existing `telegram-webhook` deployment + matching backend allowlist/token for authorized `200` smoke; Supabase unchanged.

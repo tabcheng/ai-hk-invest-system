@@ -103,3 +103,12 @@ UAT-lite may be introduced later as optional follow-up; it is not required in th
 - Raw Telegram `initData` must not be logged or copied into evidence artifacts.
 - `TELEGRAM_BOT_TOKEN` and `MINIAPP_ALLOWED_TELEGRAM_USER_IDS` must remain backend-only and never exposed to browser/client assets.
 - Step 81 remains platform smoke evidence only and must not perform Supabase production read.
+
+
+## Step 82 readiness note (GitHub Actions automated Mini App API smoke)
+- Added manual-trigger-only workflow for live Railway smoke of `POST /miniapp/api/review-shell`.
+- Workflow is not auto-triggered by `push`/`pull_request`.
+- Secrets must be configured in GitHub environment/repository secrets only; never committed to repo.
+- Raw `initData`, bot token, and allowlist IDs must not be printed in workflow logs.
+- Railway precondition: `telegram-webhook` already deployed/configured with matching backend allowlist for authorized `200` smoke path.
+- Scope remains no Supabase production read, no frontend fetch wiring, no write/order/execution.

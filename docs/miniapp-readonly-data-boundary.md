@@ -124,3 +124,12 @@ No broker integration or autonomous real-money execution is authorized by this p
 - No Mini App frontend fetch/change is added in this step.
 - No Railway topology/env/runtime change is added in this step.
 - Production data read remains blocked until both helper layers are wired into a backend endpoint and a bounded read-only response contract is implemented/accepted.
+
+## Step 78 implementation update (backend-only auth-gated read-only API skeleton)
+- Added backend WSGI route `POST /miniapp/api/review-shell` with JSON-only request contract and required `init_data` field.
+- Route enforces dual gate: `validate_telegram_init_data(...)` + `authorize_telegram_operator(...)`.
+- Added backend-only allowlist env parsing for `MINIAPP_ALLOWED_TELEGRAM_USER_IDS` (comma-separated numeric Telegram user IDs only).
+- Success response is bounded mock JSON only (`status=mock` sections + explicit read-only/paper-trade guardrails).
+- No Supabase production read, no Mini App frontend fetch wiring, no write action, no decision capture, no paper order creation, and no broker/live execution path in this step.
+- Railway manual deployment/env configuration is not required for this PR unless explicitly approved in a later step.
+- Production data-enabled Mini App remains blocked until a bounded Supabase/internal read implementation is separately designed and accepted.

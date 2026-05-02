@@ -74,3 +74,8 @@ UAT-lite may be introduced later as optional follow-up; it is not required in th
   - backend-only bounded read API contract;
   - read-only response shape with explicit paper-trading/decision-support wording.
 - Operational isolation requirement remains: webhook ingress and daily runner behavior must remain unaffected by future Mini App read-only data surface rollout.
+
+## Step 78 readiness note (Mini App backend auth gate skeleton)
+- Step 78 adds backend-only auth-gated mock read-only endpoint `POST /miniapp/api/review-shell`.
+- This step does not require Railway manual deployment changes by default and does not introduce Supabase schema/runtime data-read dependencies.
+- Production data-enabled Mini App API remains blocked pending explicit bounded read design + acceptance.

@@ -150,7 +150,7 @@ def test_local_artifact_provider_reads_latest_system_run_summary(tmp_path):
     assert payload["sections"]["latest_system_run"] == {
         "status": "ok",
         "source": "local_artifact",
-        "run_id": 87,
+        "run_id": "87",
         "run_status": "success",
         "started_at_hkt": "2026-05-02T20:00:00+08:00",
         "completed_at_hkt": "2026-05-02T20:05:00+08:00",
@@ -186,9 +186,9 @@ def test_local_artifact_provider_returns_unavailable_when_root_not_object(tmp_pa
     assert latest_system_run["source"] == "local_artifact"
 
 
-def test_local_artifact_provider_returns_unavailable_when_run_id_not_positive_int(tmp_path):
+def test_local_artifact_provider_returns_unavailable_when_run_id_invalid_type(tmp_path):
     artifact = tmp_path / "latest_system_run.json"
-    artifact.write_text('{"run_id":"87","run_status":"success"}', encoding="utf-8")
+    artifact.write_text('{"run_id":true,"run_status":"success"}', encoding="utf-8")
 
     payload = build_miniapp_review_shell_response(
         operator={"telegram_user_id": 42},
@@ -197,3 +197,78 @@ def test_local_artifact_provider_returns_unavailable_when_run_id_not_positive_in
     latest_system_run = payload["sections"]["latest_system_run"]
     assert latest_system_run["status"] == "unavailable"
     assert latest_system_run["source"] == "local_artifact"
+
+
+def test_local_artifact_provider_returns_unavailable_when_oversized(tmp_path):
+    artifact = tmp_path / "latest_system_run.json"
+    artifact.write_text("x" * (16 * 1024 + 1), encoding="utf-8")
+    payload = build_miniapp_review_shell_response(
+        operator={"telegram_user_id": 42},
+        env={"MINIAPP_LATEST_SYSTEM_RUN_ARTIFACT_PATH": str(artifact)},
+    )
+    latest_system_run = payload["sections"]["latest_system_run"]
+    assert latest_system_run["status"] == "unavailable"
+    assert latest_system_run["source"] == "local_artifact"
+
+
+def test_local_artifact_provider_returns_unavailable_when_run_status_invalid(tmp_path):
+    artifact = tmp_path / "latest_system_run.json"
+    artifact.write_text('{"run_id":87,"run_status":"completed"}', encoding="utf-8")
+    payload = build_miniapp_review_shell_response(
+        operator={"telegram_user_id": 42},
+        env={"MINIAPP_LATEST_SYSTEM_RUN_ARTIFACT_PATH": str(artifact)},
+    )
+    latest_system_run = payload["sections"]["latest_system_run"]
+    assert latest_system_run["status"] == "unavailable"
+    assert latest_system_run["source"] == "local_artifact"
+
+
+def test_local_artifact_provider_bounds_long_fields_and_ignores_extra_fields(tmp_path):
+    artifact = tmp_path / "latest_system_run.json"
+    artifact.write_text(
+        (
+            "{"
+            '"run_id":"%s",'
+            '"run_status":"success",'
+            '"started_at_hkt":"%s",'
+            '"completed_at_hkt":"%s",'
+            '"data_timestamp_hkt":"%s",'
+            '"summary":"%s",'
+            '"limitations":["%s","%s","%s","%s","%s","%s"],'
+            '"SUPABASE_SERVICE_ROLE_KEY":"secret-a",'
+            '"TELEGRAM_BOT_TOKEN":"secret-b",'
+            '"broker_api_key":"secret-c"'
+            "}"
+        )
+        % (
+            "r" * 200,
+            "t" * 90,
+            "u" * 90,
+            "v" * 90,
+            "s" * 900,
+            "l1" * 100,
+            "l2" * 100,
+            "l3" * 100,
+            "l4" * 100,
+            "l5" * 100,
+            "l6" * 100,
+        ),
+        encoding="utf-8",
+    )
+    payload = build_miniapp_review_shell_response(
+        operator={"telegram_user_id": 42},
+        env={"MINIAPP_LATEST_SYSTEM_RUN_ARTIFACT_PATH": str(artifact)},
+    )
+    latest_system_run = payload["sections"]["latest_system_run"]
+    assert latest_system_run["status"] == "ok"
+    assert len(latest_system_run["run_id"]) == 80
+    assert len(latest_system_run["started_at_hkt"]) == 40
+    assert len(latest_system_run["completed_at_hkt"]) == 40
+    assert len(latest_system_run["data_timestamp_hkt"]) == 40
+    assert len(latest_system_run["summary"]) == 500
+    assert len(latest_system_run["limitations"]) == 5
+    assert all(len(item) <= 160 for item in latest_system_run["limitations"])
+    serialized = str(latest_system_run)
+    assert "SUPABASE_SERVICE_ROLE_KEY" not in serialized
+    assert "TELEGRAM_BOT_TOKEN" not in serialized
+    assert "broker_api_key" not in serialized

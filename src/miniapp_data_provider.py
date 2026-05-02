@@ -11,6 +11,13 @@ _HKT = timezone(timedelta(hours=8))
 _RUNTIME_SOURCE = "railway_runtime_env"
 _NOT_CONFIGURED_SOURCE = "not_configured"
 _LOCAL_ARTIFACT_SOURCE = "local_artifact"
+_LOCAL_ARTIFACT_MAX_BYTES = 16 * 1024
+_LATEST_SYSTEM_RUN_ALLOWED_STATUSES = {"success", "failed", "partial", "unknown"}
+_MAX_RUN_ID_LEN = 80
+_MAX_TIME_LEN = 40
+_MAX_SUMMARY_LEN = 500
+_MAX_LIMITATIONS = 5
+_MAX_LIMITATION_ITEM_LEN = 160
 _MAX_SHA_SHORT_LEN = 12
 
 
@@ -111,12 +118,53 @@ class LocalArtifactMiniAppReadDataProvider(RailwayRuntimeEnvMiniAppReadDataProvi
             "limitations": [limitation],
         }
 
+    @staticmethod
+    def _truncate_str(value: Any, max_len: int) -> str | None:
+        if not isinstance(value, str):
+            return None
+        normalized = value.strip()
+        if not normalized:
+            return None
+        return normalized[:max_len]
+
+    @staticmethod
+    def _bounded_run_id(value: Any) -> str | None:
+        if isinstance(value, bool):
+            return None
+        if isinstance(value, int):
+            text = str(value)
+        elif isinstance(value, str):
+            text = value.strip()
+        else:
+            return None
+        if not text:
+            return None
+        return text[:_MAX_RUN_ID_LEN]
+
+    @staticmethod
+    def _bounded_limitations(value: Any) -> list[str]:
+        if not isinstance(value, list):
+            return []
+        bounded: list[str] = []
+        for item in value:
+            limited = LocalArtifactMiniAppReadDataProvider._truncate_str(item, _MAX_LIMITATION_ITEM_LEN)
+            if limited is None:
+                continue
+            bounded.append(limited)
+            if len(bounded) >= _MAX_LIMITATIONS:
+                break
+        return bounded
+
     def get_latest_system_run_summary(self) -> dict[str, Any]:
         if not self._artifact_path:
             return self._unavailable_summary("Local artifact path is not configured.")
 
         try:
-            payload = json.loads(Path(self._artifact_path).read_text(encoding="utf-8"))
+            artifact_path = Path(self._artifact_path)
+            artifact_size = artifact_path.stat().st_size
+            if artifact_size > _LOCAL_ARTIFACT_MAX_BYTES:
+                return self._unavailable_summary("Local artifact exceeds maximum allowed size.")
+            payload = json.loads(artifact_path.read_text(encoding="utf-8"))
         except (FileNotFoundError, OSError, json.JSONDecodeError):
             return self._unavailable_summary("Local artifact is missing or invalid JSON.")
 
@@ -131,21 +179,21 @@ class LocalArtifactMiniAppReadDataProvider(RailwayRuntimeEnvMiniAppReadDataProvi
         summary = payload.get("summary")
         limitations = payload.get("limitations")
 
-        if not isinstance(run_id, int) or isinstance(run_id, bool) or run_id <= 0:
+        bounded_run_id = self._bounded_run_id(run_id)
+        if bounded_run_id is None:
             return self._unavailable_summary("Local artifact schema is incomplete for latest_system_run.")
-        if not isinstance(run_status, str) or not run_status.strip():
+        bounded_run_status = self._truncate_str(run_status, max_len=32)
+        if bounded_run_status is None or bounded_run_status not in _LATEST_SYSTEM_RUN_ALLOWED_STATUSES:
             return self._unavailable_summary("Local artifact schema is incomplete for latest_system_run.")
 
         return {
             "status": "ok",
             "source": _LOCAL_ARTIFACT_SOURCE,
-            "run_id": run_id,
-            "run_status": run_status.strip(),
-            "started_at_hkt": started_at_hkt if isinstance(started_at_hkt, str) else None,
-            "completed_at_hkt": completed_at_hkt if isinstance(completed_at_hkt, str) else None,
-            "data_timestamp_hkt": data_timestamp_hkt if isinstance(data_timestamp_hkt, str) else None,
-            "summary": summary if isinstance(summary, str) else None,
-            "limitations": [item for item in limitations if isinstance(item, str)]
-            if isinstance(limitations, list)
-            else [],
+            "run_id": bounded_run_id,
+            "run_status": bounded_run_status,
+            "started_at_hkt": self._truncate_str(started_at_hkt, _MAX_TIME_LEN),
+            "completed_at_hkt": self._truncate_str(completed_at_hkt, _MAX_TIME_LEN),
+            "data_timestamp_hkt": self._truncate_str(data_timestamp_hkt, _MAX_TIME_LEN),
+            "summary": self._truncate_str(summary, _MAX_SUMMARY_LEN),
+            "limitations": self._bounded_limitations(limitations),
         }

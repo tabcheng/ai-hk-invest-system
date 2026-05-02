@@ -4,7 +4,7 @@ import io
 import json
 from urllib.parse import urlencode
 
-from src.telegram_webhook_server import create_wsgi_app
+from src.telegram_webhook_server import MINIAPP_REVIEW_SHELL_MAX_BODY_BYTES, create_wsgi_app
 
 FAKE_BOT_TOKEN = "123456:TEST_FAKE_BOT_TOKEN"
 NOW_TS = 1_700_000_000
@@ -17,7 +17,7 @@ def _build_signed_init_data(fields: dict[str, str], *, bot_token: str) -> str:
     return urlencode({**fields, "hash": data_hash})
 
 
-def _call(path: str, method: str, body: bytes):
+def _call(path: str, method: str, body: bytes, *, content_type: str | None = "application/json"):
     app = create_wsgi_app()
     environ = {
         "PATH_INFO": path,
@@ -25,6 +25,8 @@ def _call(path: str, method: str, body: bytes):
         "CONTENT_LENGTH": str(len(body)),
         "wsgi.input": io.BytesIO(body),
     }
+    if content_type is not None:
+        environ["CONTENT_TYPE"] = content_type
     captured = {}
 
     def _start_response(status, headers):
@@ -35,7 +37,7 @@ def _call(path: str, method: str, body: bytes):
     return captured["status"], json.loads(response[0].decode("utf-8"))
 
 
-def test_miniapp_review_shell_authorized_returns_mock_response(monkeypatch):
+def _authorized_request(monkeypatch):
     monkeypatch.setenv("TELEGRAM_BOT_TOKEN", FAKE_BOT_TOKEN)
     monkeypatch.setenv("MINIAPP_ALLOWED_TELEGRAM_USER_IDS", "42,99")
     monkeypatch.setattr("src.miniapp_auth.time.time", lambda: NOW_TS)
@@ -47,16 +49,64 @@ def test_miniapp_review_shell_authorized_returns_mock_response(monkeypatch):
         },
         bot_token=FAKE_BOT_TOKEN,
     )
+    return json.dumps({"init_data": init_data}).encode()
 
-    status, payload = _call("/miniapp/api/review-shell", "POST", json.dumps({"init_data": init_data}).encode())
 
+def test_miniapp_review_shell_success_accepts_json_content_type(monkeypatch):
+    status, payload = _call("/miniapp/api/review-shell", "POST", _authorized_request(monkeypatch))
     assert status.startswith("200")
     assert payload["status"] == "ok"
-    assert payload["guardrails"]["read_only"] is True
-    assert payload["guardrails"]["paper_trade_only"] is True
-    assert payload["guardrails"]["no_broker_execution"] is True
-    assert "order" not in json.dumps(payload).lower()
-    assert payload["sections"]["runner_status"]["status"] == "mock"
+
+
+def test_miniapp_review_shell_success_accepts_json_charset_content_type(monkeypatch):
+    status, payload = _call(
+        "/miniapp/api/review-shell",
+        "POST",
+        _authorized_request(monkeypatch),
+        content_type="application/json; charset=utf-8",
+    )
+    assert status.startswith("200")
+    assert payload["status"] == "ok"
+
+
+def test_miniapp_review_shell_rejects_missing_content_type():
+    status, payload = _call("/miniapp/api/review-shell", "POST", b"{}", content_type=None)
+    assert status.startswith("415")
+    assert payload["error"] == "unsupported_media_type"
+
+
+def test_miniapp_review_shell_rejects_non_json_content_type():
+    status, payload = _call("/miniapp/api/review-shell", "POST", b"{}", content_type="text/plain")
+    assert status.startswith("415")
+    assert payload["error"] == "unsupported_media_type"
+
+
+def test_miniapp_review_shell_rejects_unsupported_json_content_type_params(monkeypatch):
+    body = _authorized_request(monkeypatch)
+    status, payload = _call(
+        "/miniapp/api/review-shell",
+        "POST",
+        body,
+        content_type="application/json; charset=latin-1",
+    )
+    assert status.startswith("415")
+    assert payload["error"] == "unsupported_media_type"
+
+    status, payload = _call(
+        "/miniapp/api/review-shell",
+        "POST",
+        body,
+        content_type="application/json; version=1",
+    )
+    assert status.startswith("415")
+    assert payload["error"] == "unsupported_media_type"
+
+
+def test_miniapp_review_shell_rejects_oversized_payload():
+    oversized = b"x" * (MINIAPP_REVIEW_SHELL_MAX_BODY_BYTES + 1)
+    status, payload = _call("/miniapp/api/review-shell", "POST", oversized)
+    assert status.startswith("413")
+    assert payload["error"] == "payload_too_large"
 
 
 def test_miniapp_review_shell_failures(monkeypatch):

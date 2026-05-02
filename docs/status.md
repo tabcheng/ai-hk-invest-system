@@ -280,3 +280,7 @@
 - Step 78 auth boundary: requires both valid `validate_telegram_init_data(...)` and `authorize_telegram_operator(...)` allowlist authorization; valid Telegram `initData` alone is insufficient.
 - Step 78 non-goals preserved: no Supabase production read, no Mini App frontend fetch integration, no write action, no decision capture, no paper order creation, no broker/live execution.
 - Step 78 platform ownership: GitHub runtime/tests/docs changed; Railway manual change not required by default; Supabase unchanged.
+
+- Step 79 completed: Mini App API skeleton hardening for `POST /miniapp/api/review-shell` now enforces JSON Content-Type contract and request body size cap (413/415 bounded failures), while preserving existing initData validation/operator allowlist gates and mock-only read-only response behavior.
+- Step 79 safety boundary: no Supabase production read, no Mini App frontend fetch integration, no write/order/execution path, and `/telegram/webhook` behavior/secret handling unchanged.
+- Step 79 platform ownership: GitHub code/tests/docs updated; Railway manual env/config change not required in-step unless separately approved; Supabase schema/runtime unchanged.

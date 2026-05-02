@@ -66,6 +66,36 @@ def _build_miniapp_review_shell_mock_response(operator: dict[str, Any]) -> dict[
     }
 
 
+MINIAPP_REVIEW_SHELL_MAX_BODY_BYTES = 8192
+
+
+def _is_supported_json_content_type(content_type: str) -> bool:
+    normalized = content_type.strip().lower()
+    if not normalized:
+        return False
+
+    parts = [part.strip() for part in normalized.split(";") if part.strip()]
+    if not parts or parts[0] != "application/json":
+        return False
+    if len(parts) == 1:
+        return True
+
+    allowed_params = {"charset=utf-8"}
+    return all(part in allowed_params for part in parts[1:])
+
+
+def _safe_parse_content_length(raw_value: Any) -> int | None:
+    if raw_value is None:
+        return None
+    try:
+        parsed = int(str(raw_value).strip())
+    except (TypeError, ValueError):
+        return None
+    if parsed < 0:
+        return None
+    return parsed
+
+
 def _handle_miniapp_review_shell_request(raw_body: bytes) -> tuple[str, dict[str, Any]]:
     try:
         payload = json.loads(raw_body.decode("utf-8") or "{}")
@@ -219,12 +249,25 @@ def create_wsgi_app() -> Any:
             status = "405 Method Not Allowed"
             payload = {"ok": False, "error": "method_not_allowed"}
         elif path == "/miniapp/api/review-shell":
-            try:
-                body_size = int(environ.get("CONTENT_LENGTH") or 0)
-            except (TypeError, ValueError):
-                body_size = 0
-            raw_body = environ["wsgi.input"].read(body_size)
-            status, payload = _handle_miniapp_review_shell_request(raw_body)
+            content_type = str(environ.get("CONTENT_TYPE") or "")
+            if not _is_supported_json_content_type(content_type):
+                status = "415 Unsupported Media Type"
+                payload = {"ok": False, "error": "unsupported_media_type"}
+            else:
+                body_size = _safe_parse_content_length(environ.get("CONTENT_LENGTH"))
+                if body_size is not None and body_size > MINIAPP_REVIEW_SHELL_MAX_BODY_BYTES:
+                    status = "413 Payload Too Large"
+                    payload = {"ok": False, "error": "payload_too_large"}
+                else:
+                    safe_read_size = MINIAPP_REVIEW_SHELL_MAX_BODY_BYTES + 1
+                    if body_size is not None:
+                        safe_read_size = min(body_size, MINIAPP_REVIEW_SHELL_MAX_BODY_BYTES + 1)
+                    raw_body = environ["wsgi.input"].read(safe_read_size)
+                    if len(raw_body) > MINIAPP_REVIEW_SHELL_MAX_BODY_BYTES:
+                        status = "413 Payload Too Large"
+                        payload = {"ok": False, "error": "payload_too_large"}
+                    else:
+                        status, payload = _handle_miniapp_review_shell_request(raw_body)
         elif not _is_webhook_request_authorized(environ):
             status = "401 Unauthorized"
             payload = {"ok": False, "error": "unauthorized"}

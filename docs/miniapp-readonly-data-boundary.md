@@ -133,3 +133,13 @@ No broker integration or autonomous real-money execution is authorized by this p
 - No Supabase production read, no Mini App frontend fetch wiring, no write action, no decision capture, no paper order creation, and no broker/live execution path in this step.
 - Railway manual deployment/env configuration is not required for this PR unless explicitly approved in a later step.
 - Production data-enabled Mini App remains blocked until a bounded Supabase/internal read implementation is separately designed and accepted.
+
+
+## Step 79 implementation update (API skeleton hardening + smoke runbook)
+- Hardened `POST /miniapp/api/review-shell` request contract in backend ingress:
+  - explicit JSON Content-Type requirement (`application/json` with optional charset variant),
+  - bounded reject for unsupported type (`415 unsupported_media_type`),
+  - bounded request body cap (`MINIAPP_REVIEW_SHELL_MAX_BODY_BYTES=8192`) with `413 payload_too_large`.
+- Existing auth/authorization behavior is preserved (`400/401/403/503` contracts unchanged), with no raw `init_data` echo/log exposure introduced.
+- Added smoke validation runbook `docs/miniapp-api-smoke-runbook.md` for controlled later Railway/manual verification.
+- Endpoint remains mock-only/read-only; no Supabase production read, no Mini App frontend fetch wiring, and no write/order/execution path in this step.

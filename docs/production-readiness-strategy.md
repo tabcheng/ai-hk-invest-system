@@ -79,3 +79,11 @@ UAT-lite may be introduced later as optional follow-up; it is not required in th
 - Step 78 adds backend-only auth-gated mock read-only endpoint `POST /miniapp/api/review-shell`.
 - This step does not require Railway manual deployment changes by default and does not introduce Supabase schema/runtime data-read dependencies.
 - Production data-enabled Mini App API remains blocked pending explicit bounded read design + acceptance.
+
+
+## Step 79 readiness note (Mini App API skeleton hardening)
+- `POST /miniapp/api/review-shell` now enforces explicit JSON Content-Type and bounded request size cap before auth processing.
+- Endpoint remains bounded mock-only/read-only and does not read Supabase production data.
+- No Mini App frontend fetch wiring is introduced in this step.
+- No Railway manual env/config change is required in-step unless separately approved.
+- Production data-enabled Mini App remains blocked until a separately designed/accepted bounded read implementation is approved.

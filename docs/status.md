@@ -250,7 +250,12 @@
 - Step 70 in progress: GitHub / Codex instruction guardrails update (docs-only), PR pending.
 - Step 70 Post-merge QA Check: pending (must be recorded only after merge).
 - Step 70 Post-merge Domain Check: pending (must be recorded only after merge).
-- Step 71 in progress: Mini App Read-only Review Shell MVP (static/mock `miniapp/index.html` + lightweight static contract test), with explicit read-only/paper-only labels and security/auth TODO placeholders.
-- Step 71 scope guardrails (implemented): no write action, no strategy change, no paper order creation, no production Supabase read, no service-role key in browser, no vendor secret in browser.
-- Step 71 Post-merge QA Check: pending (must be recorded only after merge).
-- Step 71 Post-merge Domain Check: pending (must be recorded only after merge).
+- Step 71 repo merge completed: yes.
+- Step 71 manual platform acceptance completed: yes.
+- Step 71 Post-merge QA Check: pass — Mini App read-only static shell merged; static contract test present; shell remains static/mock with no form/button controls, no production Supabase read, no backend endpoint, no Railway setting change, no vendor SDK, and no broker/live execution.
+- Step 71 Post-merge Domain Check: pass — Phase 1 UI remains read-only paper-trading / decision-support review surface only; no write action, no strategy change, no paper order creation, human final decision preserved, and real-money execution stays outside the system.
+- Step 72 in progress: Mini App Preview / Deployment Path Decision (docs-only) with option assessment (Railway static service vs webhook static-serving vs external static host vs local-only).
+- Step 72 recommendation (docs decision): use dedicated Railway static site/static service as default Phase 1 preview path; keep shell read-only/no-data/no-write/no-vendor/no-broker boundary.
+- Step 72 security boundary reminder: browser/client must not hold `SUPABASE_SERVICE_ROLE_KEY` or vendor secrets; future data access must validate Telegram `initData` server-side.
+- Step 72 Post-merge QA Check: pending (must be recorded only after merge).
+- Step 72 Post-merge Domain Check: pending (must be recorded only after merge).

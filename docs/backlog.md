@@ -18,10 +18,15 @@ Prioritization:
    - Keep Step 71 in Phase 1 boundary: read-only only, no write path, no strategy change, no paper-order creation, no production Supabase read.
    - Future auth follow-up remains required: server-side Telegram `initData` validation before any data-access enablement.
 
-3. **Step 67 future plan — scheduled daily health check**
+3. **Step 72 — Mini App Preview / Deployment Path Decision rollout follow-up**
+   - Recommended default is Railway dedicated static site/static service, isolated from webhook ingress service.
+   - Do not add backend data/auth/write paths in this follow-up; keep Phase 1 shell static read-only.
+   - Keep secrets boundary explicit: no `SUPABASE_SERVICE_ROLE_KEY`/vendor secrets in browser; future data access requires server-side `initData` validation.
+
+4. **Step 67 future plan — scheduled daily health check**
    - Keep as future plan only; do not implement scheduled automation until explicitly approved in a future step.
 
-4. **GitHub Actions Node.js 20 deprecation maintenance**
+5. **GitHub Actions Node.js 20 deprecation maintenance**
    - Track and update workflows/actions before Node.js 20 deprecation deadlines impact CI/manual QA workflows.
    - Keep maintenance bounded to workflow/runtime compatibility, with no strategy/paper-trading logic side effects.
 

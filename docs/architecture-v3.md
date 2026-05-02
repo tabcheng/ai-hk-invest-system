@@ -194,6 +194,17 @@ The platform is designed as an **AI investment firm operating model** with stric
 - Future Mini App authentication must validate Telegram `initData` server-side before granting data access.
 - No broker secrets are stored/used because no broker/live execution path is permitted.
 
+
+## Step 72 deployment-path decision — Mini App Preview / Deployment Path
+- Recommended default path: deploy `miniapp/index.html` via a **dedicated Railway static site/static service** with its own preview URL.
+- Rationale: keeps preview hosting isolated from Telegram webhook ingress runtime, reducing routing/operational coupling risk while enabling operator-accessible URL preview.
+- Explicit non-goals in Step 72: no production Supabase read, no backend service-role endpoint, no vendor SDK integration, no write action, and no broker/live execution path.
+- Security guardrails remain mandatory: browser/client must never contain `SUPABASE_SERVICE_ROLE_KEY` or vendor secrets; future data-enabled Mini App auth must validate Telegram `initData` server-side before granting access.
+- Alternative paths evaluated and not selected as long-term default:
+  - existing webhook service static serving: acceptable only as short-lived fallback preview, not long-term due to ingress coupling risk;
+  - external static host: viable but adds cross-platform operations overhead;
+  - local-only preview: safe but insufficient for real operator URL-based usage and Telegram Mini App linkage rehearsal.
+
 ## Step 71 implementation note — Mini App Read-only Review Shell MVP
 - Added a low-risk static Mini App-compatible review shell entrypoint at `miniapp/index.html`.
 - Scope is intentionally bounded to read-only placeholder sections (`Daily Review`, `Stock Decisions`, `Paper PnL / Risk`, `Outcome Review`, `Guardrails`).

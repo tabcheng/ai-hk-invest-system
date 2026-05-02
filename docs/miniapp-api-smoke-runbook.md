@@ -137,3 +137,23 @@ python scripts/miniapp_api_smoke.py
 ```
 - Expected safe output: PASS/FAIL per case with status code only.
 - Do not paste real secrets into shell history snapshots, screenshots, or GitHub comments.
+
+## Step 84 smoke contract update (bounded runtime runner status)
+- Authorized `200` response no longer requires `sections.runner_status.status=mock`.
+- Updated accepted runner-status contract:
+  - `sections.runner_status.source=railway_runtime_env`
+  - `sections.runner_status.status` in `{ "ok", "unknown" }`
+- Remaining sections still expected mock-only:
+  - `sections.daily_review.status=mock`
+  - `sections.pnl_snapshot.status=mock`
+  - `sections.outcome_review.status=mock`
+- Guardrails remain mandatory and unchanged:
+  - `read_only=true`
+  - `paper_trade_only=true`
+  - `decision_support_only=true`
+  - `no_broker_execution=true`
+  - `no_real_money_execution=true`
+- Security checks remain unchanged:
+  - no secret exposure,
+  - no write/order/execution affordance,
+  - no Supabase production data read.

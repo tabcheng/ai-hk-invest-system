@@ -112,3 +112,10 @@ UAT-lite may be introduced later as optional follow-up; it is not required in th
 - Raw `initData`, bot token, and allowlist IDs must not be printed in workflow logs.
 - Railway precondition: `telegram-webhook` already deployed/configured with matching backend allowlist for authorized `200` smoke path.
 - Scope remains no Supabase production read, no frontend fetch wiring, no write/order/execution.
+
+## Step 84 readiness note (first bounded runtime status source)
+- `POST /miniapp/api/review-shell` now exposes first bounded read-only runtime status metadata under `sections.runner_status`.
+- This is Railway/backend runtime metadata only and remains within read-only decision-support boundaries.
+- No Supabase production read, no market-data read, no paper-PnL read, no decision capture, no paper order creation, and no broker/live execution are introduced.
+- Mini App frontend remains not wired to fetch this endpoint in Step 84.
+- `miniapp-static-preview` remains static-only and `paper-daily-runner` operational path remains unaffected.

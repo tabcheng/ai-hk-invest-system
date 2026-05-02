@@ -17,7 +17,7 @@ def build_runtime_status_section(
     provider: MiniAppReadDataProvider | None = None,
 ) -> dict[str, Any]:
     data_provider = provider or RailwayRuntimeEnvMiniAppReadDataProvider(env=env, now=now)
-    return data_provider.get_latest_system_run_summary()
+    return data_provider.get_runtime_status_summary()
 
 
 def build_miniapp_review_shell_response(
@@ -27,14 +27,15 @@ def build_miniapp_review_shell_response(
     provider: MiniAppReadDataProvider | None = None,
 ) -> dict[str, Any]:
     generated_at = now.astimezone(_HKT) if now else datetime.now(_HKT)
-    runner_status = build_runtime_status_section(env=env, now=generated_at, provider=provider)
+    data_provider = provider or RailwayRuntimeEnvMiniAppReadDataProvider(env=env, now=generated_at)
 
     return {
         "status": "ok",
         "generated_at_hkt": generated_at.isoformat(),
         "operator": operator,
         "sections": {
-            "runner_status": runner_status,
+            "runner_status": data_provider.get_runtime_status_summary(),
+            "latest_system_run": data_provider.get_latest_system_run_summary(),
             "daily_review": {"status": "mock"},
             "pnl_snapshot": {"status": "mock"},
             "outcome_review": {"status": "mock"},

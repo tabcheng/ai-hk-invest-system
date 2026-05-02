@@ -3,10 +3,21 @@ import json
 from scripts.miniapp_api_smoke import _assert_no_write_affordance, _assert_sections_contract
 
 
-def test_assert_sections_contract_accepts_bounded_runtime_runner_status():
+def test_assert_sections_contract_accepts_step_86_bounded_contract():
     payload = {
         "sections": {
             "runner_status": {"status": "unknown", "source": "railway_runtime_env"},
+            "latest_system_run": {
+                "status": "unavailable",
+                "source": "not_configured",
+                "run_id": None,
+                "run_status": None,
+                "started_at_hkt": None,
+                "completed_at_hkt": None,
+                "data_timestamp_hkt": None,
+                "summary": None,
+                "limitations": ["No production data source configured in Step 86."],
+            },
             "daily_review": {"status": "mock"},
             "pnl_snapshot": {"status": "mock"},
             "outcome_review": {"status": "mock"},
@@ -21,7 +32,10 @@ def test_assert_no_write_affordance_still_blocks_execution_tokens():
             "no_broker_execution": True,
             "no_real_money_execution": True,
         },
-        "sections": {"runner_status": {"status": "ok", "source": "railway_runtime_env"}},
+        "sections": {
+            "runner_status": {"status": "ok", "source": "railway_runtime_env"},
+            "latest_system_run": {"status": "unavailable", "source": "not_configured"},
+        },
         "note": "safe",
     }
     assert _assert_no_write_affordance(payload)

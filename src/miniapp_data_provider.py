@@ -7,12 +7,16 @@ from typing import Any, Mapping, Protocol
 
 _HKT = timezone(timedelta(hours=8))
 _RUNTIME_SOURCE = "railway_runtime_env"
+_NOT_CONFIGURED_SOURCE = "not_configured"
 _MAX_SHA_SHORT_LEN = 12
 
 
 class MiniAppReadDataProvider(Protocol):
+    def get_runtime_status_summary(self) -> dict[str, Any]:
+        """Return bounded backend runtime status metadata for Mini App runner_status section."""
+
     def get_latest_system_run_summary(self) -> dict[str, Any]:
-        """Return a bounded latest-system-run summary for Mini App read model."""
+        """Return bounded latest-system-run contract for Mini App latest_system_run section."""
 
 
 class RailwayRuntimeEnvMiniAppReadDataProvider:
@@ -36,9 +40,11 @@ class RailwayRuntimeEnvMiniAppReadDataProvider:
             return None
         return normalized.lower()[:_MAX_SHA_SHORT_LEN]
 
-    def get_latest_system_run_summary(self) -> dict[str, Any]:
+    def _generated_at_hkt(self) -> str:
         generated_at = self._now.astimezone(_HKT) if self._now else datetime.now(_HKT)
+        return generated_at.isoformat()
 
+    def get_runtime_status_summary(self) -> dict[str, Any]:
         service_name = self._safe_env_get(self._env, "RAILWAY_SERVICE_NAME")
         environment = self._safe_env_get(self._env, "RAILWAY_ENVIRONMENT_NAME")
         git_branch = self._safe_env_get(self._env, "RAILWAY_GIT_BRANCH")
@@ -59,5 +65,18 @@ class RailwayRuntimeEnvMiniAppReadDataProvider:
             "git_branch": git_branch,
             "git_commit_sha_short": git_commit_sha_short,
             "deployment_id_present": bool(deployment_id),
-            "generated_at_hkt": generated_at.isoformat(),
+            "generated_at_hkt": self._generated_at_hkt(),
+        }
+
+    def get_latest_system_run_summary(self) -> dict[str, Any]:
+        return {
+            "status": "unavailable",
+            "source": _NOT_CONFIGURED_SOURCE,
+            "run_id": None,
+            "run_status": None,
+            "started_at_hkt": None,
+            "completed_at_hkt": None,
+            "data_timestamp_hkt": None,
+            "summary": None,
+            "limitations": ["No production data source configured in Step 86."],
         }

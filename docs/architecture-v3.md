@@ -193,3 +193,10 @@ The platform is designed as an **AI investment firm operating model** with stric
 - Vendor API keys/secrets must remain backend-only (Railway/GitHub Secrets/runtime env), never shipped to client surfaces.
 - Future Mini App authentication must validate Telegram `initData` server-side before granting data access.
 - No broker secrets are stored/used because no broker/live execution path is permitted.
+
+## Step 71 implementation note — Mini App Read-only Review Shell MVP
+- Added a low-risk static Mini App-compatible review shell entrypoint at `miniapp/index.html`.
+- Scope is intentionally bounded to read-only placeholder sections (`Daily Review`, `Stock Decisions`, `Paper PnL / Risk`, `Outcome Review`, `Guardrails`).
+- No write action, no strategy change path, no paper order creation path, no broker/live execution path.
+- No production Supabase read in this step and no service-role backend endpoint.
+- Security/auth is TODO-only in this step: server-side `initData` validation is required for future auth implementation; browser must not hold service-role/vendor secrets.

@@ -13,10 +13,15 @@ Prioritization:
    - PR review checklist must explicitly include inline review threads / Codex comments.
    - Unresolved Codex comments remain blockers when they affect correctness, audit trail, security, runtime behavior, or domain guardrails.
 
-2. **Step 67 future plan — scheduled daily health check**
+2. **Step 71 — Mini App Read-only Review Shell MVP acceptance closure**
+   - Runtime/docs shell is added in-repo; post-merge QA/Domain checks must be recorded after merge.
+   - Keep Step 71 in Phase 1 boundary: read-only only, no write path, no strategy change, no paper-order creation, no production Supabase read.
+   - Future auth follow-up remains required: server-side Telegram `initData` validation before any data-access enablement.
+
+3. **Step 67 future plan — scheduled daily health check**
    - Keep as future plan only; do not implement scheduled automation until explicitly approved in a future step.
 
-3. **GitHub Actions Node.js 20 deprecation maintenance**
+4. **GitHub Actions Node.js 20 deprecation maintenance**
    - Track and update workflows/actions before Node.js 20 deprecation deadlines impact CI/manual QA workflows.
    - Keep maintenance bounded to workflow/runtime compatibility, with no strategy/paper-trading logic side effects.
 

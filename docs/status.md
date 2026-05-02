@@ -254,3 +254,6 @@
 - Step 71 scope guardrails (implemented): no write action, no strategy change, no paper order creation, no production Supabase read, no service-role key in browser, no vendor secret in browser.
 - Step 71 Post-merge QA Check: pending (must be recorded only after merge).
 - Step 71 Post-merge Domain Check: pending (must be recorded only after merge).
+- Step 72 in progress: Mini App Preview / Deployment Path Decision (docs-only) with option assessment (Railway static service vs webhook static-serving vs external static host vs local-only).
+- Step 72 recommendation (docs decision): use dedicated Railway static site/static service as default Phase 1 preview path; keep shell read-only/no-data/no-write/no-vendor/no-broker boundary.
+- Step 72 security boundary reminder: browser/client must not hold `SUPABASE_SERVICE_ROLE_KEY` or vendor secrets; future data access must validate Telegram `initData` server-side.

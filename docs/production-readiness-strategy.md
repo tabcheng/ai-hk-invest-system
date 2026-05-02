@@ -49,3 +49,16 @@ UAT-lite may be introduced later as optional follow-up; it is not required in th
 - Each release should preserve a clear rollback option and documented acceptance evidence.
 - Acceptance evidence should include expected success path and known-failure-path behavior.
 - Strategy or simulation-governance changes require stricter review before acceptance closure.
+
+
+## Step 72 Mini App preview/deployment readiness policy (docs-only)
+- Default preview path for Phase 1 shell: **Railway dedicated static site/static service** (separate from Telegram webhook ingress runtime).
+- Deployment change class for Step 72: docs-level decision only; no runtime backend/auth/data-path enablement in this step.
+- Required guardrails for any static preview deployment:
+  - static shell remains read-only and paper-trading decision-support context only;
+  - no production Supabase reads;
+  - no service-role backend endpoint;
+  - no vendor SDK or vendor secret in browser;
+  - no write action/strategy change/paper-order creation/live execution.
+- Future auth gate requirement stays unchanged: any later data-enabled Mini App flow must validate Telegram `initData` server-side before access.
+- Rollback baseline: disable/unpublish static preview service URL and fall back to local-only preview while keeping repo shell unchanged.

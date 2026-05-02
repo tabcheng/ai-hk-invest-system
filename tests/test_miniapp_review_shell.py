@@ -1,3 +1,4 @@
+import re
 from pathlib import Path
 
 
@@ -35,7 +36,13 @@ def test_step74_review_shell_static_contract() -> None:
         "cdn.jsdelivr.net/npm/@supabase",
         "createClient(",
         "SUPABASE_SERVICE_ROLE_KEY=",
-        "telegram.initDataUnsafe",
+    ]
+
+    forbidden_init_data_unsafe_patterns = [
+        r"window\.Telegram\.WebApp\.initDataUnsafe",
+        r"Telegram\.WebApp\.initDataUnsafe",
+        r"telegram\.initDataUnsafe",
+        r"\.initDataUnsafe",
     ]
 
     for text in required_text:
@@ -43,6 +50,9 @@ def test_step74_review_shell_static_contract() -> None:
 
     for text in forbidden_text:
         assert text not in html
+
+    for pattern in forbidden_init_data_unsafe_patterns:
+        assert re.search(pattern, html, flags=re.IGNORECASE) is None
 
     assert "<main" in html
     assert "<form" not in html

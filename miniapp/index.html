@@ -3,73 +3,120 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>AI HK Invest — Review Shell</title>
+    <title>AI HK Invest — Mini App Preview Shell</title>
     <style>
-      :root { color-scheme: light dark; font-family: Arial, sans-serif; }
-      body { max-width: 900px; margin: 0 auto; padding: 24px; line-height: 1.5; }
-      .badge { display: inline-block; padding: 4px 10px; border-radius: 12px; background: #f0f3ff; color: #253a8a; font-weight: 600; }
-      .card { border: 1px solid #d9d9d9; border-radius: 8px; padding: 12px 16px; margin: 12px 0; }
-      .muted { color: #666; }
-      ul { margin-top: 8px; }
+      :root {
+        color-scheme: light dark;
+        font-family: Arial, sans-serif;
+      }
+
+      body {
+        max-width: 960px;
+        margin: 0 auto;
+        padding: 24px;
+        line-height: 1.5;
+      }
+
+      .tag-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin: 8px 0 20px;
+      }
+
+      .tag {
+        display: inline-block;
+        padding: 4px 10px;
+        border-radius: 999px;
+        border: 1px solid #c6d0f5;
+        background: #eef2ff;
+        color: #1e2f8f;
+        font-size: 0.9rem;
+        font-weight: 700;
+      }
+
+      .card {
+        border: 1px solid #d9d9d9;
+        border-radius: 10px;
+        padding: 12px 16px;
+        margin: 12px 0;
+      }
+
+      .muted {
+        color: #666;
+      }
+
+      ul {
+        margin-top: 8px;
+      }
     </style>
   </head>
   <body>
-    <h1>AI HK Invest — Review Shell</h1>
-    <p><span class="badge">Read-only Review Shell</span></p>
+    <header>
+      <h1>AI HK Invest — Mini App Preview Shell</h1>
+      <p class="muted">Minimal static operator preview for Phase 1 review surface.</p>
+      <div class="tag-row" aria-label="Preview guardrail labels">
+        <span class="tag">Phase 1</span>
+        <span class="tag">Read-only</span>
+        <span class="tag">Mock / placeholder</span>
+        <span class="tag">Paper trading only</span>
+        <span class="tag">Decision support only</span>
+        <span class="tag">No broker connection</span>
+        <span class="tag">No real-money execution</span>
+        <span class="tag">Human final decision outside system</span>
+      </div>
+    </header>
 
-    <p class="muted">
-      Mock/placeholder review surface for Telegram Mini App / Web UI Phase 1.
-      This page is intentionally static and does not read production Supabase.
-    </p>
+    <main>
+      <section class="card">
+        <h2>Daily Review</h2>
+        <p>[Placeholder] Daily packet summary, readiness hints, and section status.</p>
+      </section>
 
-    <section class="card">
-      <h2>Daily Review</h2>
-      <p>[Placeholder] Daily packet summary, readiness hints, and section status.</p>
-    </section>
+      <section class="card">
+        <h2>Stock Decisions</h2>
+        <p>[Placeholder] Multi-stock signal and decision review list (read-only).</p>
+      </section>
 
-    <section class="card">
-      <h2>Stock Decisions</h2>
-      <p>[Placeholder] Multi-stock signal/decision review list (read-only).</p>
-    </section>
+      <section class="card">
+        <h2>Paper PnL / Risk</h2>
+        <p>[Placeholder] Paper-only PnL, exposure, and risk snapshot (read-only).</p>
+      </section>
 
-    <section class="card">
-      <h2>Paper PnL / Risk</h2>
-      <p>[Placeholder] Paper-only PnL, exposure, and risk snapshot (read-only).</p>
-    </section>
+      <section class="card">
+        <h2>Outcome Review</h2>
+        <p>[Placeholder] Closed-trade outcomes and holding-period summary (read-only).</p>
+      </section>
 
-    <section class="card">
-      <h2>Outcome Review</h2>
-      <p>[Placeholder] Closed-trade outcomes and holding-period summary (read-only).</p>
-    </section>
+      <section class="card">
+        <h2>Guardrails</h2>
+        <ul>
+          <li>paper trading only</li>
+          <li>decision support only</li>
+          <li>no broker connection</li>
+          <li>no real-money execution</li>
+          <li>human final decision outside system</li>
+        </ul>
+      </section>
 
-    <section class="card">
-      <h2>Guardrails</h2>
-      <ul>
-        <li>paper trading only</li>
-        <li>decision support only</li>
-        <li>no broker connection</li>
-        <li>no real-money execution</li>
-        <li>human final decision outside system</li>
-      </ul>
-    </section>
+      <section class="card">
+        <h2>Decision Boundaries</h2>
+        <ul>
+          <li><strong>AI simulated decision:</strong> model-generated paper/simulated suggestion only.</li>
+          <li><strong>Human paper decision:</strong> operator review decision for paper-trading workflow.</li>
+          <li><strong>Real trade decision outside system:</strong> any real-money action is outside this system.</li>
+        </ul>
+      </section>
 
-    <section class="card">
-      <h2>Decision Boundaries</h2>
-      <ul>
-        <li><strong>AI simulated decision:</strong> model-generated paper/simulated suggestion only.</li>
-        <li><strong>Human paper decision:</strong> operator review decision for paper-trading workflow.</li>
-        <li><strong>Real trade decision outside system:</strong> any real-money action is outside this system.</li>
-      </ul>
-    </section>
-
-    <section class="card">
-      <h2>Security / Auth TODO (not implemented in Step 71)</h2>
-      <ul>
-        <li>Future Mini App auth must validate Telegram initData server-side before access is granted.</li>
-        <li>Do not trust <code>initDataUnsafe</code> for authorization decisions.</li>
-        <li>No SUPABASE_SERVICE_ROLE_KEY in browser/client code.</li>
-        <li>No vendor API secret in browser/client code.</li>
-      </ul>
-    </section>
+      <section class="card">
+        <h2>Security / Auth TODO</h2>
+        <ul>
+          <li>Future Mini App auth must validate Telegram initData server-side before access is granted.</li>
+          <li>Do not trust <code>initDataUnsafe</code> for authorization decisions.</li>
+          <li>No SUPABASE_SERVICE_ROLE_KEY in browser/client code.</li>
+          <li>No vendor API secret in browser/client code.</li>
+        </ul>
+      </section>
+    </main>
   </body>
 </html>

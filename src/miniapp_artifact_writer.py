@@ -2,7 +2,9 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+import tempfile
 from typing import Any, Mapping
+from uuid import uuid4
 
 _MAX_ARTIFACT_BYTES = 16 * 1024
 _ALLOWED_RUN_STATUSES = {"success", "failed", "partial", "unknown"}
@@ -112,7 +114,22 @@ def write_latest_system_run_artifact(path: str | Path, artifact: Mapping[str, ob
         raise ValueError("artifact exceeds 16KB size cap")
 
     target.parent.mkdir(parents=True, exist_ok=True)
-    tmp_path = target.with_name(f"{target.name}.tmp")
-    tmp_path.write_bytes(encoded)
-    tmp_path.replace(target)
-    return target
+    tmp_path = target.parent / f".{target.name}.{uuid4().hex}.tmp"
+    try:
+        with tempfile.NamedTemporaryFile(
+            mode="wb",
+            dir=target.parent,
+            prefix=f".{target.name}.{uuid4().hex}.",
+            suffix=".tmp",
+            delete=False,
+        ) as tmp_file:
+            tmp_file.write(encoded)
+            tmp_path = Path(tmp_file.name)
+        tmp_path.replace(target)
+        return target
+    finally:
+        if tmp_path.exists() and tmp_path != target:
+            try:
+                tmp_path.unlink()
+            except OSError:
+                pass

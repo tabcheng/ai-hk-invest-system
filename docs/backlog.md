@@ -198,6 +198,7 @@ Prioritization:
 
 ### P0 (Step 91A follow-up gate)
 - Correct Railway backend Supabase key boundary for `paper-daily-runner` immediately (current finding: `SUPABASE_KEY` is publishable-class under RLS-enabled tables).
+- Update note: operator confirmed backend key class correction to secret-class; keep Step 91A gate blocked until redeploy + runtime acceptance evidence is recorded.
 - After correction, redeploy and rerun `paper-daily-runner` + operator smoke/acceptance checks.
 - Record Step 91A RLS runtime acceptance evidence and close blocked status before Step 92 runtime work.
 - Record Step 91A RLS runtime acceptance evidence before Step 92 runtime implementation starts.

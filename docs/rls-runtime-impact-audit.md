@@ -22,8 +22,16 @@ This step does **not**:
 - Step 91A manual platform acceptance is **blocked** until `paper-daily-runner` uses backend-only elevated Supabase key class.
 - Do not paste or log actual key values.
 
+## Platform correction recorded
+- Operator confirmed `paper-daily-runner` backend `SUPABASE_KEY` key class has been corrected from publishable-class to secret-class (`sb_secret_...`).
+- Actual key value must not be pasted or logged.
+- Step 91A runtime acceptance remains pending until Railway redeploy is completed and runtime DB write checks pass.
+
 At-risk until corrected:
 - `paper-daily-runner` writes to existing Supabase tables (for example `runs`, `signals`, decision-ledger-related rows, paper-trading outputs) are treated as at-risk until Railway key boundary is corrected.
+
+Post-correction pending checks:
+- after redeploy, verify `paper-daily-runner` DB writes succeed under current RLS posture and record checklist evidence.
 
 ## Existing Supabase touchpoints (current repo behavior)
 - `paper-daily-runner` uses backend Supabase client and writes existing system-of-record tables.

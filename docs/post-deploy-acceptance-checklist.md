@@ -62,3 +62,7 @@ After Step 66, every relevant PR must explicitly state which checklist sections 
 - [ ] no service key logged: yes/no
 - [ ] no anon/publishable key used for backend writes: yes/no
 - [ ] issues / errors:
+
+Step 91A recorded result (PR #88):
+- platform key correction completed: yes
+- RLS runtime acceptance completed: yes

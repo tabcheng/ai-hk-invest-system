@@ -329,9 +329,9 @@
 - Step 91A non-goals preserved: no runtime `latest_system_runs` repository implementation, no runner Supabase write addition, no Mini App frontend Supabase fetch, no schema/RLS policy code change, no broker/live execution path.
 - Step 92 should proceed only after Step 91A RLS runtime acceptance evidence is recorded.
 - Step 91A repo merge completed: yes.
-- Step 91A manual platform correction completed: yes.
-- Step 91A runtime acceptance completed: pending.
-- Step 91A known issue (historical, now corrected): `paper-daily-runner` previously used publishable-class Supabase key (`sb_publishable_...`) while RLS is enabled on all tables.
-- Step 91A remaining remediation: complete redeploy and execute RLS runtime acceptance checklist to confirm backend DB writes under RLS.
-- Step 91A Post-merge QA Check: pending (record only after key correction + redeploy + acceptance evidence).
-- Step 91A Post-merge Domain Check: pending (record only after key correction + redeploy + acceptance evidence).
+- Step 91A platform key correction completed: yes.
+- Step 91A RLS runtime acceptance completed: yes.
+- Step 91A acceptance evidence summary: backend key class corrected to secret-class (actual key value not documented), Railway staged changes deployed, paper-daily-runner completed after redeploy, `runs` insert/update observed, `signals` upsert/update observed, decision-ledger/paper-trading writes observed, Telegram notification path works, Mini App API smoke rerun completed, no service key observed in logs, and `miniapp-static-preview` remains free of Supabase service/secret key.
+- Step 91A Post-merge QA Check: pass.
+- Step 91A Post-merge Domain Check: pass.
+- Step 92 may proceed after PR #88 merge.

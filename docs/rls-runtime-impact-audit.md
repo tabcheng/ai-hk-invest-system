@@ -25,13 +25,24 @@ This step does **not**:
 ## Platform correction recorded
 - Operator confirmed `paper-daily-runner` backend `SUPABASE_KEY` key class has been corrected from publishable-class to secret-class (`sb_secret_...`).
 - Actual key value must not be pasted or logged.
-- Step 91A runtime acceptance remains pending until Railway redeploy is completed and runtime DB write checks pass.
+- Railway staged changes deployed and post-redeploy runtime checks completed.
+- Step 91A platform key correction completed: yes.
+- Step 91A RLS runtime acceptance completed: yes.
 
 At-risk until corrected:
 - `paper-daily-runner` writes to existing Supabase tables (for example `runs`, `signals`, decision-ledger-related rows, paper-trading outputs) are treated as at-risk until Railway key boundary is corrected.
 
 Post-correction pending checks:
-- after redeploy, verify `paper-daily-runner` DB writes succeed under current RLS posture and record checklist evidence.
+- Completed acceptance evidence:
+  - `paper-daily-runner` run completed after redeploy;
+  - `runs` insert/update observed;
+  - `signals` upsert/update observed;
+  - decision ledger / paper-trading writes observed;
+  - Telegram notification still works;
+  - Mini App API smoke rerun completed;
+  - no service key observed in logs;
+  - `miniapp-static-preview` remains free of Supabase service/secret key;
+  - issues/errors: no.
 
 ## Existing Supabase touchpoints (current repo behavior)
 - `paper-daily-runner` uses backend Supabase client and writes existing system-of-record tables.
@@ -73,7 +84,7 @@ Staged migration plan (future implementation step):
 
 ## Acceptance dependency for next step
 - Step 92 (`latest_system_runs` runtime integration) should proceed only after Step 91A RLS runtime acceptance checklist evidence is recorded.
-- Additional gate: platform key correction + redeploy + post-correction acceptance must be complete first.
+- Additional gate status: complete. Step 92 may proceed after PR #88 merge.
 
 ## Domain boundary reminder
 - System remains paper-trading / decision-support only.

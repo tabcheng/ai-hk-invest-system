@@ -280,3 +280,7 @@ Use together with `docs/post-deploy-acceptance-checklist.md` section **G**.
 - no service key logged: yes/no
 - no anon/publishable key used for backend writes: yes/no
 - issues / errors:
+
+Recorded Step 91A operator result:
+- platform key correction completed: yes
+- RLS runtime acceptance completed: yes

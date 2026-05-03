@@ -148,3 +148,8 @@ UAT-lite may be introduced later as optional follow-up; it is not required in th
   - verify no service key appears in logs/artifacts.
 - Naming cleanup recommendation: migrate ambiguous `SUPABASE_KEY` toward explicit backend env naming (`SUPABASE_SERVICE_ROLE_KEY` or `SUPABASE_SECRET_KEY`) via staged fallback-first migration.
 - Non-goal in this step: no Railway variable mutation, no schema/policy code mutation, no runtime repository integration.
+
+Step 91A acceptance status update:
+- platform key correction completed (`paper-daily-runner` backend key class corrected to secret-class; key value redacted).
+- RLS runtime acceptance completed with post-redeploy DB write-path verification and Mini App API smoke rerun confirmation.
+- `miniapp-static-preview` remains free of Supabase service/secret key and no service key was observed in logs.

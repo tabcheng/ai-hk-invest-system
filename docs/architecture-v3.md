@@ -289,3 +289,11 @@ The platform is designed as an **AI investment firm operating model** with stric
 - No Mini App frontend fetch integration is introduced.
 - No write/order/execution behavior is introduced.
 - Step 90 is the required decision point for storage/topology prior to enabling runner-to-miniapp live data flow.
+
+
+## Step 90 architecture decision note (storage/topology, docs-only)
+- Added explicit decision record in `docs/latest-system-run-storage-topology.md` for runner-to-miniapp `latest_system_run` flow.
+- Current architecture reality: Step 87 local artifact read + Step 89 artifact writer exist, but runner (`paper-daily-runner`) and Mini App API owner (`telegram-webhook`) are separate Railway services.
+- Therefore cross-service local filesystem handoff is not assumed.
+- Future canonical topology is recommended as Supabase/internal-table producer-consumer contract (`latest_system_runs`) with backend-only access.
+- This step does not introduce runtime Supabase read/write, schema migration, Railway topology/volume changes, or Mini App frontend fetch wiring.

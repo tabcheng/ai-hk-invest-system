@@ -29,3 +29,8 @@
 ## Execution boundary guardrails
 - Market data strategy supports paper-trading and decision-support workflows only.
 - No broker integration or live-execution path is introduced by this strategy.
+
+
+## Step 90 cross-doc note (storage/topology decision)
+- Step 90 decides runner-to-miniapp `latest_system_run` storage/topology direction (future Supabase/internal table), but introduces no market-data provider/runtime changes.
+- No vendor SDK boundary or market-data freshness semantics are changed in this step.

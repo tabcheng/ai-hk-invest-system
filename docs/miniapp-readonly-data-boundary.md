@@ -228,3 +228,10 @@ No broker integration or autonomous real-money execution is authorized by this p
   - no Mini App frontend fetch wiring,
   - no write/order/execution path.
 - Step 90 must decide storage/topology path before any live runner-to-miniapp data flow is enabled.
+
+
+## Step 90 decision update (storage/topology only, docs-first)
+- New decision doc: `docs/latest-system-run-storage-topology.md`.
+- Decision outcome: future canonical runner-to-miniapp `latest_system_run` flow should use Supabase/internal-table topology (option C) instead of assuming cross-service filesystem handoff.
+- Step 90 is design/contract only: no Supabase migration, no runtime read/write path, no Railway topology or volume change, and no Mini App frontend fetch addition.
+- Step 87 local artifact provider and Step 89 artifact writer remain accepted bounded fallback for local/dev/smoke/single-service usage.

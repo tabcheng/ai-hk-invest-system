@@ -164,3 +164,13 @@ python scripts/miniapp_api_smoke.py
 - Do not assume `paper-daily-runner` filesystem output is readable by `telegram-webhook` without explicit storage/topology design.
 - No Railway topology change, no Railway volume creation, no Supabase production read/write, no Mini App frontend fetch, and no write/order/execution are introduced in Step 89.
 - Step 90 must define and approve storage/topology before runner-to-miniapp live data flow.
+
+
+## Step 90 alignment note (topology decision only)
+- Step 90 records storage/topology decision for future runner-to-miniapp `latest_system_run` flow; recommended future canonical path is Supabase/internal table.
+- This runbook scope remains unchanged for current smoke contract:
+  - no runtime Supabase read/write implementation added,
+  - no Railway topology/volume mutation,
+  - no Mini App frontend fetch wiring,
+  - no write/order/execution behavior.
+- Local artifact provider/writer path remains acceptable for bounded smoke/dev verification.

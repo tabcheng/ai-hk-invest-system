@@ -118,3 +118,10 @@ Paper-trading review/read-surface expansion, Telegram operator workflow hardenin
 3. **Step 72:** Mini App Preview / Deployment Path Decision (docs-only): select Railway dedicated static-site/service as default Phase 1 preview path; keep no-data/no-write/no-auth-enable boundary.
 4. **Step 73 candidate:** Market Data Requirement / Vendor Trial Plan.
 5. **Step 74 candidate:** AI Team Paper Decision MVP.
+
+
+## Step 90 storage/topology decision update (docs-only)
+- **Step 90 completed:** decided runner-to-miniapp `latest_system_run` storage/topology path by comparing same-service filesystem, Railway volume/local artifact path, Supabase internal table, and internal HTTP handoff options.
+- **Decision outcome:** recommend Supabase/internal table as future canonical cross-service path while preserving local artifact provider/writer as fallback for dev/smoke/single-service scenarios.
+- **Scope boundary:** no runtime implementation, no Supabase schema migration/RLS change, no Railway topology or volume change, and no Mini App frontend fetch wiring in Step 90.
+- **Step 91 next candidate:** implementation proposal for Supabase schema + migration/repository/provider interface with bounded latest-record read contract (`completed_at desc nulls last, created_at desc`).

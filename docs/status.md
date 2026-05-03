@@ -311,3 +311,9 @@
 
 - Step 89 completed: added backend-side `latest_system_run` artifact writer helper (`src/miniapp_artifact_writer.py`) with bounded contract builder + atomic local JSON writer (16KB cap, allowlisted run_status, bounded string/list fields) for future runner integration.
 - Step 89 scope boundary preserved: no Railway topology change, no cross-service filesystem assumption, no Supabase production read/write, no Mini App frontend fetch wiring, and no write/order/execution path.
+
+
+- Step 90 completed (docs-only decision/design): added `docs/latest-system-run-storage-topology.md` to decide runner-to-miniapp `latest_system_run` storage/topology direction and compare options A/B/C/D.
+- Step 90 decision: recommend future Option C (`latest_system_runs` Supabase/internal table) as canonical cross-service path; Step 90 itself introduces no Supabase schema migration, no runtime Supabase read/write, no Railway topology/volume change, and no Mini App frontend fetch wiring.
+- Step 90 fallback policy: Step 87 local artifact provider + Step 89 artifact writer remain valid for local/dev/smoke/single-service scenarios and are not removed.
+- Step 90 domain boundary reaffirmed: paper-trading/decision-support only, no broker/live execution, and human final real-trade decision remains outside system.

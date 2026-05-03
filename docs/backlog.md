@@ -186,3 +186,9 @@ Prioritization:
 - **Step 89 completed:** added bounded backend helper `src/miniapp_artifact_writer.py` for generating/writing `latest_system_run` local JSON artifacts (contract-bound fields, allowlisted run_status, atomic write, 16KB cap) for future runner integration.
 - **Step 89 boundary clarification:** helper-only step; it does **not** prove `telegram-webhook` can read `paper-daily-runner` filesystem output, does **not** assume Railway cross-service filesystem sharing, introduces no Railway topology or volume change, and keeps no Supabase production read/write, no Mini App frontend fetch, and no write/order/execution path.
 - **Step 90 prerequisite reminder:** storage/topology decision is required before enabling live runner-to-miniapp data flow.
+
+
+- **Step 90 completed (docs-only decision/design):** added runner-to-miniapp `latest_system_run` storage/topology decision doc with options A/B/C/D and selected future direction = Supabase/internal table (`latest_system_runs`) as canonical cross-service path.
+- **Step 90 non-goal confirmation:** no Supabase migration/RLS update, no runtime read/write implementation, no Railway topology/volume change, and no Mini App frontend fetch wiring.
+- **Next (Step 91 candidate):** propose Supabase schema/migration + backend repository/provider interface for bounded latest-record read (`completed_at desc nulls last, created_at desc`) per repo convention.
+- **Fallback preserved:** local artifact provider/writer remains dev/smoke/single-service option.

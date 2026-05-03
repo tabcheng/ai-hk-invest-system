@@ -126,3 +126,10 @@ UAT-lite may be introduced later as optional follow-up; it is not required in th
 - No Railway topology change and no Railway volume creation are included.
 - No Supabase production read/write, no Mini App frontend fetch, and no write/order/execution path are included.
 - Step 90 must first decide storage + topology before enabling any live runner-to-miniapp artifact flow.
+
+
+## Step 90 readiness decision (storage/topology, docs-only)
+- Runner-to-miniapp `latest_system_run` path is now decisioned at topology level: future canonical path = Supabase/internal table (`latest_system_runs`).
+- Security boundary remains backend-only for Supabase access; no browser/client exposure of service-role keys or secrets.
+- Step 90 introduces no schema migration, no runtime Supabase read/write, no Railway topology/volume change, and no Mini App frontend fetch wiring.
+- Local artifact provider/writer remains valid as fallback/dev/smoke/single-service path.

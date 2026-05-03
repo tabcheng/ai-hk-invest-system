@@ -215,3 +215,16 @@ No broker integration or autonomous real-money execution is authorized by this p
   - no Supabase production reads,
   - no Mini App frontend fetch wiring,
   - no write/order/execution path.
+
+## Step 89 implementation update (artifact writer helper only)
+- Added bounded backend helper `src/miniapp_artifact_writer.py` to build/write `latest_system_run` artifacts for future runner usage.
+- This is helper-only and does **not** establish runtime data flow between Railway services.
+- Explicit guardrails preserved in this step:
+  - does **not** prove `telegram-webhook` can read `paper-daily-runner` filesystem output,
+  - does **not** assume Railway cross-service filesystem sharing,
+  - no Railway topology change,
+  - no Railway volume creation,
+  - no Supabase production read/write,
+  - no Mini App frontend fetch wiring,
+  - no write/order/execution path.
+- Step 90 must decide storage/topology path before any live runner-to-miniapp data flow is enabled.

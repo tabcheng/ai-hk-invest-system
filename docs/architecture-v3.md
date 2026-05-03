@@ -280,3 +280,12 @@ The platform is designed as an **AI investment firm operating model** with stric
 - This increment does not add Supabase production reads, market-data reads, paper-PnL reads, decision capture, paper order creation, or broker/live execution.
 - Remaining Mini App review-shell sections (`daily_review`, `pnl_snapshot`, `outcome_review`) remain mock-only.
 - `miniapp-static-preview` remains static-only; `paper-daily-runner` remains unaffected.
+
+## Step 89 architecture note (bounded artifact writer helper)
+- Step 89 adds a backend-local helper for producing bounded `latest_system_run` JSON artifacts only.
+- It does not alter service topology and does not create Railway shared-storage assumptions between `paper-daily-runner` and `telegram-webhook`.
+- No Railway volume is introduced in this step.
+- No Supabase production read/write path is introduced.
+- No Mini App frontend fetch integration is introduced.
+- No write/order/execution behavior is introduced.
+- Step 90 is the required decision point for storage/topology prior to enabling runner-to-miniapp live data flow.

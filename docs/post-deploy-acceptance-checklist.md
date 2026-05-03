@@ -48,6 +48,9 @@ After Step 66, every relevant PR must explicitly state which checklist sections 
 - Supabase verification result (if relevant).
 
 ## G. RLS Runtime Acceptance Check (Step 91A)
+- [ ] Current publishable-class key corrected before Step 92: yes/no
+- [ ] Railway redeploy completed after key correction: yes/no
+- [ ] paper-daily-runner DB write acceptance passed: yes/no
 - [ ] paper-daily-runner latest run completed after RLS enabled: yes/no
 - [ ] runs table insert/update observed: yes/no
 - [ ] signals upsert/update observed: yes/no

@@ -266,6 +266,9 @@
 ## Step 91A RLS runtime acceptance execution template
 Use together with `docs/post-deploy-acceptance-checklist.md` section **G**.
 
+- Current publishable-class key corrected before Step 92: yes/no
+- Railway redeploy completed after key correction: yes/no
+- paper-daily-runner DB write acceptance passed: yes/no
 - paper-daily-runner latest run completed after RLS enabled: yes/no
 - runs table insert/update observed: yes/no
 - signals upsert/update observed: yes/no

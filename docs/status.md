@@ -329,6 +329,8 @@
 - Step 91A non-goals preserved: no runtime `latest_system_runs` repository implementation, no runner Supabase write addition, no Mini App frontend Supabase fetch, no schema/RLS policy code change, no broker/live execution path.
 - Step 92 should proceed only after Step 91A RLS runtime acceptance evidence is recorded.
 - Step 91A repo merge completed: yes.
-- Step 91A manual platform acceptance completed: pending (operator must execute RLS runtime acceptance checklist and record evidence).
-- Step 91A Post-merge QA Check: pending (record only after operator acceptance evidence is captured).
-- Step 91A Post-merge Domain Check: pending (record only after operator acceptance evidence is captured).
+- Step 91A manual platform acceptance completed: blocked/pending platform correction.
+- Step 91A known issue: `paper-daily-runner` backend runtime currently uses publishable-class Supabase key (`sb_publishable_...`) while RLS is enabled on all tables.
+- Step 91A required remediation: replace backend runtime key with backend-elevated key class (`sb_secret_...` or legacy `SUPABASE_SERVICE_ROLE_KEY`), redeploy service, then execute RLS runtime acceptance checklist.
+- Step 91A Post-merge QA Check: pending (record only after key correction + redeploy + acceptance evidence).
+- Step 91A Post-merge Domain Check: pending (record only after key correction + redeploy + acceptance evidence).

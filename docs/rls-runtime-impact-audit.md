@@ -16,6 +16,15 @@ This step does **not**:
 - This is security-positive.
 - Runtime impact risk: backend reads/writes can fail if low-privilege (anon/publishable) keys are used for server-side persistence paths.
 
+## Known current finding (confirmed)
+- Current Railway `SUPABASE_KEY` is confirmed publishable-class (`sb_publishable_...`), not backend elevated key class.
+- Because RLS is enabled on all tables, backend DB write paths are P0 risk under current key boundary.
+- Step 91A manual platform acceptance is **blocked** until `paper-daily-runner` uses backend-only elevated Supabase key class.
+- Do not paste or log actual key values.
+
+At-risk until corrected:
+- `paper-daily-runner` writes to existing Supabase tables (for example `runs`, `signals`, decision-ledger-related rows, paper-trading outputs) are treated as at-risk until Railway key boundary is corrected.
+
 ## Existing Supabase touchpoints (current repo behavior)
 - `paper-daily-runner` uses backend Supabase client and writes existing system-of-record tables.
 - Existing writes may include `runs`, `signals`, decision-ledger-related records, and paper-trading outputs depending on current run path.
@@ -56,6 +65,7 @@ Staged migration plan (future implementation step):
 
 ## Acceptance dependency for next step
 - Step 92 (`latest_system_runs` runtime integration) should proceed only after Step 91A RLS runtime acceptance checklist evidence is recorded.
+- Additional gate: platform key correction + redeploy + post-correction acceptance must be complete first.
 
 ## Domain boundary reminder
 - System remains paper-trading / decision-support only.

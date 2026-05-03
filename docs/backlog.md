@@ -197,6 +197,9 @@ Prioritization:
 - **Next (Step 92 candidate):** implement backend repository/provider runtime wiring after schema acceptance while preserving local artifact fallback/dev/smoke path.
 
 ### P0 (Step 91A follow-up gate)
+- Correct Railway backend Supabase key boundary for `paper-daily-runner` immediately (current finding: `SUPABASE_KEY` is publishable-class under RLS-enabled tables).
+- After correction, redeploy and rerun `paper-daily-runner` + operator smoke/acceptance checks.
+- Record Step 91A RLS runtime acceptance evidence and close blocked status before Step 92 runtime work.
 - Record Step 91A RLS runtime acceptance evidence before Step 92 runtime implementation starts.
 - Validate backend writer key boundary in Railway runtime (`paper-daily-runner` backend-only elevated key), while keeping `miniapp-static-preview` free of Supabase service-role/secret key.
 - Plan staged runtime/env migration away from ambiguous `SUPABASE_KEY` naming via explicit key var support + fallback + smoke + later fallback removal.

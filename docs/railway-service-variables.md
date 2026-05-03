@@ -147,3 +147,8 @@ Operational guardrail:
 
 Security rule:
 - Never paste/print full key values in docs, tickets, PR comments, screenshots, logs, or CI output.
+
+## Step 91A explicit warning after confirmed finding
+- `paper-daily-runner` must not use publishable-class key (`sb_publishable_...`) for backend writes when RLS is enabled.
+- `miniapp-static-preview` must not receive Supabase service-role/secret keys.
+- `telegram-webhook` future Supabase read path (when enabled) must use backend-only elevated key boundary only.

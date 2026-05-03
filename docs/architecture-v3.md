@@ -302,3 +302,9 @@ The platform is designed as an **AI investment firm operating model** with stric
 - Added Supabase schema/migration proposal for `latest_system_runs` with bounded constraints and RLS enablement (deny-by-default/no browser policies in-step).
 - Added backend repository/provider contract proposal (`write_latest_system_run(record)`, `get_latest_system_run()`) with explicit allowlisted columns and latest-record ordering (`completed_at desc nulls last, created_at desc, id desc`).
 - No runtime Supabase read/write integration is enabled in Step 91; Mini App frontend remains without Supabase fetch wiring.
+
+## Step 91A architecture note — Supabase RLS runtime boundary audit (docs-only)
+- RLS is now manually enabled across Supabase tables by operator (security-positive baseline).
+- Runtime write/read paths can fail when backend workloads use low-privilege anon/publishable keys.
+- Backend runtime services must keep elevated Supabase key backend-only; browser/static Mini App surfaces must never receive service-role/secret keys.
+- Step 91A introduces no runtime data-path change and no `latest_system_runs` repository implementation.

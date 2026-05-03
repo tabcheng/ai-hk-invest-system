@@ -46,3 +46,23 @@ After Step 66, every relevant PR must explicitly state which checklist sections 
 - Artifact/report status.
 - Railway deployment status (if relevant).
 - Supabase verification result (if relevant).
+
+## G. RLS Runtime Acceptance Check (Step 91A)
+- [ ] backend key corrected to secret-class before runner test: yes/no
+- [ ] Current publishable-class key corrected before Step 92: yes/no
+- [ ] Railway redeploy completed after key correction: yes/no
+- [ ] paper-daily-runner DB write acceptance passed: yes/no
+- [ ] paper-daily-runner latest run completed after RLS enabled: yes/no
+- [ ] runs table insert/update observed: yes/no
+- [ ] signals upsert/update observed: yes/no
+- [ ] decision ledger / paper trading writes observed if applicable: yes/no/not applicable
+- [ ] Telegram notification still works: yes/no
+- [ ] Mini App API smoke still passes: yes/no
+- [ ] no service key exposed in Mini App static preview: yes/no
+- [ ] no service key logged: yes/no
+- [ ] no anon/publishable key used for backend writes: yes/no
+- [ ] issues / errors:
+
+Step 91A recorded result (PR #88):
+- platform key correction completed: yes
+- RLS runtime acceptance completed: yes

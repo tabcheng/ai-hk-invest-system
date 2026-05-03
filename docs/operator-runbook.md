@@ -262,3 +262,25 @@
 3. Use `verify_supabase=true` only when DB persistence was touched by the merged PR; otherwise keep default skipped mode.
 4. Paste workflow run link in review thread and confirm artifact/report status.
 5. After reviewer confirmation, record final acceptance result in `docs/status.md` (do not pre-mark PASS before manual review completion).
+
+## Step 91A RLS runtime acceptance execution template
+Use together with `docs/post-deploy-acceptance-checklist.md` section **G**.
+
+- backend key corrected to secret-class before runner test: yes/no
+- Current publishable-class key corrected before Step 92: yes/no
+- Railway redeploy completed after key correction: yes/no
+- paper-daily-runner DB write acceptance passed: yes/no
+- paper-daily-runner latest run completed after RLS enabled: yes/no
+- runs table insert/update observed: yes/no
+- signals upsert/update observed: yes/no
+- decision ledger / paper trading writes observed if applicable: yes/no/not applicable
+- Telegram notification still works: yes/no
+- Mini App API smoke still passes: yes/no
+- no service key exposed in Mini App static preview: yes/no
+- no service key logged: yes/no
+- no anon/publishable key used for backend writes: yes/no
+- issues / errors:
+
+Recorded Step 91A operator result:
+- platform key correction completed: yes
+- RLS runtime acceptance completed: yes

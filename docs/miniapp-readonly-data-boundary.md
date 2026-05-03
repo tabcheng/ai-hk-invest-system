@@ -240,3 +240,8 @@ No broker integration or autonomous real-money execution is authorized by this p
 - Step 91 introduces proposal artifacts only: Supabase `latest_system_runs` migration draft + backend repository contract proposal.
 - API/runtime behavior remains unchanged: no Supabase runtime read/write in miniapp route or runner, no frontend Supabase fetch, no write/order/execution.
 - Local artifact provider remains valid fallback for local/dev/smoke until Step 92 runtime provider integration.
+
+## Step 91A boundary reaffirmation
+- Mini App static preview remains static/read-only and must not receive any Supabase service-role/secret key.
+- Step 91A introduces no Mini App frontend Supabase fetch and no new Mini App production Supabase read path.
+- Backend service keys remain backend runtime only.

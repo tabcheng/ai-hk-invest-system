@@ -322,3 +322,16 @@
 - Step 91 completed: added backend contract doc `docs/latest-system-runs-repository-contract.md` for future `write_latest_system_run(record)` and `get_latest_system_run()` wiring with explicit allowlisted columns and latest-read order (`completed_at desc nulls last, created_at desc, id desc`).
 - Step 91 scope boundary preserved: no runtime Supabase read/write integration, no Mini App frontend fetch, no Railway topology change, and Step 87 local artifact provider remains fallback/dev/smoke path.
 - Step 92 next candidate: implement runtime backend repository/provider integration after Step 91 schema/contract proposal acceptance.
+
+- Step 91A completed (docs/runbook/readiness-only): added `docs/rls-runtime-impact-audit.md` for post-RLS runtime impact assessment and backend Supabase key-boundary checks.
+- Step 91A clarified `SUPABASE_KEY` ambiguity and recorded staged naming-cleanup recommendation (`SUPABASE_SERVICE_ROLE_KEY` / `SUPABASE_SECRET_KEY`) without in-step runtime/env rename.
+- Step 91A added operator RLS runtime acceptance checklist template and docs sync across architecture/production-readiness/miniapp/latest-system-runs/railway-variable references.
+- Step 91A non-goals preserved: no runtime `latest_system_runs` repository implementation, no runner Supabase write addition, no Mini App frontend Supabase fetch, no schema/RLS policy code change, no broker/live execution path.
+- Step 92 should proceed only after Step 91A RLS runtime acceptance evidence is recorded.
+- Step 91A repo merge completed: yes.
+- Step 91A platform key correction completed: yes.
+- Step 91A RLS runtime acceptance completed: yes.
+- Step 91A acceptance evidence summary: backend key class corrected to secret-class (actual key value not documented), Railway staged changes deployed, paper-daily-runner completed after redeploy, `runs` insert/update observed, `signals` upsert/update observed, decision-ledger/paper-trading writes observed, Telegram notification path works, Mini App API smoke rerun completed, no service key observed in logs, and `miniapp-static-preview` remains free of Supabase service/secret key.
+- Step 91A Post-merge QA Check: pass.
+- Step 91A Post-merge Domain Check: pass.
+- Step 92 may proceed after PR #88 merge.

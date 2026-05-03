@@ -63,6 +63,7 @@ All real-money decisions are made and executed outside this system by the human 
 ## Secrets + access guardrails
 Never expose these in browser/client/logs/docs:
 - `SUPABASE_SERVICE_ROLE_KEY`
+- `SUPABASE_SECRET_KEY`
 - vendor API secrets
 - webhook secrets
 - broker keys

@@ -195,3 +195,8 @@ Prioritization:
 - **Step 91 completed (proposal-only):** added Supabase migration draft `supabase/migrations/20260503_step91_create_latest_system_runs.sql` and `docs/latest-system-runs-repository-contract.md` for canonical `latest_system_runs` path with bounded constraints, latest-read ordering, and backend-only/RLS posture documentation.
 - **Step 91 non-goal confirmation:** no runtime Supabase read/write path in runner or Mini App API, no Mini App frontend fetch wiring, and no Railway topology change.
 - **Next (Step 92 candidate):** implement backend repository/provider runtime wiring after schema acceptance while preserving local artifact fallback/dev/smoke path.
+
+### P0 (Step 91A follow-up gate)
+- Record Step 91A RLS runtime acceptance evidence before Step 92 runtime implementation starts.
+- Validate backend writer key boundary in Railway runtime (`paper-daily-runner` backend-only elevated key), while keeping `miniapp-static-preview` free of Supabase service-role/secret key.
+- Plan staged runtime/env migration away from ambiguous `SUPABASE_KEY` naming via explicit key var support + fallback + smoke + later fallback removal.

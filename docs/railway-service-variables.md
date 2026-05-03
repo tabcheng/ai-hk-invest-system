@@ -125,3 +125,25 @@ Operational guardrail:
 - Keep webhook service running continuously and reachable at your Railway public URL for Telegram delivery.
 - Prefer enabling `TELEGRAM_WEBHOOK_SECRET_TOKEN` on webhook service after base connectivity validation.
 - Keep Python runtime pinned to repo `.python-version` (`3.12.9`) to avoid known Railpack mismatch issues documented in `docs/status.md`.
+
+## Step 91A naming/boundary cleanup note (no in-step variable rename)
+- `SUPABASE_KEY` is currently used by runtime code and is ambiguous.
+- Preferred future backend-only explicit names: `SUPABASE_SERVICE_ROLE_KEY` or `SUPABASE_SECRET_KEY`.
+- Do not rename variables directly in this step.
+- Staged migration recommendation:
+  1. add runtime support for new explicit key var with fallback to `SUPABASE_KEY`;
+  2. update Railway variables;
+  3. smoke/acceptance;
+  4. remove fallback later.
+- `miniapp-static-preview` must not hold Supabase service-role/secret key variables.
+
+## Step 91A operator verification matrix (manual, no value disclosure)
+- `paper-daily-runner`
+  - verify backend runtime key is elevated backend-only key (`SUPABASE_SERVICE_ROLE_KEY` or `SUPABASE_SECRET_KEY` target path), not anon/publishable key.
+- `telegram-webhook`
+  - verify service key remains backend runtime only and is not exposed to any frontend/static artifacts.
+- `miniapp-static-preview`
+  - verify no Supabase service-role/secret key is configured.
+
+Security rule:
+- Never paste/print full key values in docs, tickets, PR comments, screenshots, logs, or CI output.

@@ -138,3 +138,13 @@ UAT-lite may be introduced later as optional follow-up; it is not required in th
 - Supabase/internal canonical path now has concrete schema/migration draft + repository contract proposal for `latest_system_runs`.
 - This step introduces **no** runtime read/write enablement and no Railway topology change; manual Supabase apply/review is deferred pending acceptance.
 - Next runtime candidate (Step 92): implement backend repository/provider wiring after schema acceptance, keeping backend-only secret boundary.
+
+## Step 91A readiness update — RLS runtime impact + key-boundary audit
+- Trigger: operator manually enabled RLS on all Supabase tables.
+- Step 91A scope: docs/runbook/safe-check updates only.
+- Required readiness checks:
+  - verify backend writer service (`paper-daily-runner`) uses backend-only elevated key;
+  - verify no Supabase service key is exposed to Mini App/browser/static preview;
+  - verify no service key appears in logs/artifacts.
+- Naming cleanup recommendation: migrate ambiguous `SUPABASE_KEY` toward explicit backend env naming (`SUPABASE_SERVICE_ROLE_KEY` or `SUPABASE_SECRET_KEY`) via staged fallback-first migration.
+- Non-goal in this step: no Railway variable mutation, no schema/policy code mutation, no runtime repository integration.

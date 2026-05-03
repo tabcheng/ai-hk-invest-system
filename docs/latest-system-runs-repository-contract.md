@@ -57,3 +57,9 @@ get_latest_system_run() -> dict
 - No runner write integration to Supabase.
 - No Railway topology change.
 - No broker/live execution behavior.
+
+## Step 91A note (RLS runtime-impact readiness)
+- Step 91A adds RLS runtime impact audit + key-boundary cleanup guidance only.
+- No runtime repository implementation is added in Step 91A.
+- No runner write integration and no Mini App Supabase read integration are added in Step 91A.
+- Step 92 should proceed only after Step 91A RLS runtime acceptance evidence is recorded.

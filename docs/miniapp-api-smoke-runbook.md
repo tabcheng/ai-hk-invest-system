@@ -157,3 +157,10 @@ python scripts/miniapp_api_smoke.py
   - no secret exposure,
   - no write/order/execution affordance,
   - no Supabase production data read.
+
+## Step 89 boundary reminder (artifact helper only)
+- Step 89 introduces only a bounded backend artifact writer helper for `latest_system_run` JSON generation.
+- It does not change the Step 80/81 smoke ownership model and does not prove cross-service filesystem readability.
+- Do not assume `paper-daily-runner` filesystem output is readable by `telegram-webhook` without explicit storage/topology design.
+- No Railway topology change, no Railway volume creation, no Supabase production read/write, no Mini App frontend fetch, and no write/order/execution are introduced in Step 89.
+- Step 90 must define and approve storage/topology before runner-to-miniapp live data flow.

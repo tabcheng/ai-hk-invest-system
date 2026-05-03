@@ -119,3 +119,10 @@ UAT-lite may be introduced later as optional follow-up; it is not required in th
 - No Supabase production read, no market-data read, no paper-PnL read, no decision capture, no paper order creation, and no broker/live execution are introduced.
 - Mini App frontend remains not wired to fetch this endpoint in Step 84.
 - `miniapp-static-preview` remains static-only and `paper-daily-runner` operational path remains unaffected.
+
+## Step 89 readiness clarification (helper-only)
+- Added bounded backend artifact writer helper for `latest_system_run` contract generation only.
+- This step does not validate cross-service filesystem readability and does not assume Railway shared filesystem between `paper-daily-runner` and `telegram-webhook`.
+- No Railway topology change and no Railway volume creation are included.
+- No Supabase production read/write, no Mini App frontend fetch, and no write/order/execution path are included.
+- Step 90 must first decide storage + topology before enabling any live runner-to-miniapp artifact flow.

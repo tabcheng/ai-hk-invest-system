@@ -6,6 +6,7 @@ from src.miniapp_artifact_writer import (
     build_latest_system_run_artifact,
     write_latest_system_run_artifact,
 )
+from src.miniapp_data_provider import LocalArtifactMiniAppReadDataProvider
 
 
 def test_build_latest_system_run_artifact_returns_bounded_contract():
@@ -79,3 +80,22 @@ def test_write_latest_system_run_artifact_rejects_unsupported_keys(tmp_path: Pat
 
     with pytest.raises(ValueError):
         write_latest_system_run_artifact(artifact_path, artifact)
+
+
+def test_writer_generated_artifact_is_readable_by_local_artifact_provider(tmp_path: Path):
+    artifact_path = tmp_path / "latest_system_run.json"
+    artifact = build_latest_system_run_artifact(
+        run_id="89-run",
+        run_status="success",
+        summary="Step 89 writer/provider compatibility sample.",
+    )
+    write_latest_system_run_artifact(artifact_path, artifact)
+
+    provider = LocalArtifactMiniAppReadDataProvider(artifact_path=str(artifact_path))
+    summary = provider.get_latest_system_run_summary()
+
+    assert summary["status"] == "ok"
+    assert summary["source"] == "local_artifact"
+    assert summary["run_id"] == "89-run"
+    assert summary["run_status"] == "success"
+    assert summary["summary"] == "Step 89 writer/provider compatibility sample."

@@ -201,3 +201,5 @@ Prioritization:
 - Step 92 runtime implementation may proceed after PR #88 merge.
 - Validate backend writer key boundary in Railway runtime (`paper-daily-runner` backend-only elevated key), while keeping `miniapp-static-preview` free of Supabase service-role/secret key.
 - Plan staged runtime/env migration away from ambiguous `SUPABASE_KEY` naming via explicit key var support + fallback + smoke + later fallback removal.
+
+- **Step 91B completed:** runtime now supports explicit backend key env priority (`SUPABASE_SECRET_KEY` then `SUPABASE_SERVICE_ROLE_KEY`) with `SUPABASE_KEY` transitional fallback only, safe deprecation warning, focused config tests, and docs updates; Railway variable migration/removal of fallback remains a later platform follow-up.

@@ -335,3 +335,5 @@
 - Step 91A Post-merge QA Check: pass.
 - Step 91A Post-merge Domain Check: pass.
 - Step 92 may proceed after PR #88 merge.
+
+- Step 91B completed: backend Supabase key env resolution is now explicit with priority `SUPABASE_SECRET_KEY` -> `SUPABASE_SERVICE_ROLE_KEY` -> `SUPABASE_KEY` transitional fallback, plus safe deprecation warning and focused tests for priority/error/redaction behavior; no frontend key exposure path introduced and paper-trading/decision-support boundary unchanged.

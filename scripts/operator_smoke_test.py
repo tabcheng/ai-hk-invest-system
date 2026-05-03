@@ -52,11 +52,31 @@ class SupabaseVerificationResult:
 
 
 def _redact(value: str) -> str:
-    for key in ("OPERATOR_WEBHOOK_TEST_URL", "OPERATOR_WEBHOOK_SECRET", "SUPABASE_URL", "SUPABASE_SERVICE_ROLE_KEY"):
+    for key in (
+        "OPERATOR_WEBHOOK_TEST_URL",
+        "OPERATOR_WEBHOOK_SECRET",
+        "SUPABASE_URL",
+        "SUPABASE_SECRET_KEY",
+        "SUPABASE_SERVICE_ROLE_KEY",
+        "SUPABASE_KEY",
+    ):
         secret = os.getenv(key, "")
         if secret:
             value = value.replace(secret, "[REDACTED]")
     return value
+
+
+def _resolve_supabase_backend_key_for_smoke() -> tuple[str | None, str | None]:
+    key = os.getenv("SUPABASE_SECRET_KEY", "").strip()
+    if key:
+        return key, "SUPABASE_SECRET_KEY"
+    key = os.getenv("SUPABASE_SERVICE_ROLE_KEY", "").strip()
+    if key:
+        return key, "SUPABASE_SERVICE_ROLE_KEY"
+    key = os.getenv("SUPABASE_KEY", "").strip()
+    if key:
+        return key, "SUPABASE_KEY"
+    return None, None
 
 
 def _build_update(command: str, chat_id: str, user_id: str) -> dict[str, Any]:
@@ -83,7 +103,7 @@ def _build_qa_marker(timestamp: dt.datetime | None = None) -> str:
 def _verify_supabase_decision_note(test_run_id: str, qa_marker: str) -> SupabaseVerificationResult:
     table_name = "human_decision_journal_entries"
     supabase_url = os.getenv("SUPABASE_URL", "").strip()
-    service_role_key = os.getenv("SUPABASE_SERVICE_ROLE_KEY", "").strip()
+    backend_key, key_env_name = _resolve_supabase_backend_key_for_smoke()
     if not supabase_url:
         return SupabaseVerificationResult(
             status="FAIL",
@@ -96,7 +116,7 @@ def _verify_supabase_decision_note(test_run_id: str, qa_marker: str) -> Supabase
             reason="Missing required env var: SUPABASE_URL",
             guidance="Set GitHub Actions secret SUPABASE_URL when verify_supabase=true.",
         )
-    if not service_role_key:
+    if not backend_key:
         return SupabaseVerificationResult(
             status="FAIL",
             table=table_name,
@@ -105,8 +125,8 @@ def _verify_supabase_decision_note(test_run_id: str, qa_marker: str) -> Supabase
             matched_stock_rows_count=0,
             run_level_status="FAIL",
             stock_level_status="FAIL",
-            reason="Missing required env var: SUPABASE_SERVICE_ROLE_KEY",
-            guidance="Set GitHub Actions secret SUPABASE_SERVICE_ROLE_KEY when verify_supabase=true.",
+            reason="Missing required Supabase backend key env: SUPABASE_SECRET_KEY/SUPABASE_SERVICE_ROLE_KEY/SUPABASE_KEY (fallback).",
+            guidance="Set GitHub Actions secret SUPABASE_SECRET_KEY (preferred) or SUPABASE_SERVICE_ROLE_KEY.",
         )
 
     encoded_marker = quote(qa_marker, safe="")
@@ -122,8 +142,8 @@ def _verify_supabase_decision_note(test_run_id: str, qa_marker: str) -> Supabase
         f"&human_action=eq.observe&note=ilike.*{encoded_marker}*"
     )
     headers = {
-        "apikey": service_role_key,
-        "Authorization": f"Bearer {service_role_key}",
+        "apikey": backend_key,
+        "Authorization": f"Bearer {backend_key}",
         "Accept": "application/json",
     }
     run_req = request.Request(run_url, headers=headers, method="GET")
@@ -143,7 +163,7 @@ def _verify_supabase_decision_note(test_run_id: str, qa_marker: str) -> Supabase
             run_level_status="FAIL",
             stock_level_status="FAIL",
             reason="Supabase verification query failed",
-            guidance=f"Check SUPABASE_URL/service role key and table access; error={_redact(str(exc))}",
+            guidance=f"Check SUPABASE_URL/{key_env_name} and table access; error={_redact(str(exc))}",
         )
 
     try:
@@ -486,9 +506,12 @@ def main() -> int:
         )
         raise SmokeHarnessError(error_msg)
     if args.verify_supabase == "true" and (
-        not os.getenv("SUPABASE_URL", "").strip() or not os.getenv("SUPABASE_SERVICE_ROLE_KEY", "").strip()
+        not os.getenv("SUPABASE_URL", "").strip() or not _resolve_supabase_backend_key_for_smoke()[0]
     ):
-        error_msg = "verify_supabase=true requires SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY"
+        error_msg = (
+            "verify_supabase=true requires SUPABASE_URL and backend key env "
+            "(SUPABASE_SECRET_KEY or SUPABASE_SERVICE_ROLE_KEY; SUPABASE_KEY fallback allowed)"
+        )
         guidance = "Set both GitHub Actions secrets before running verify_supabase=true."
         supabase_result = _verify_supabase_decision_note(args.test_run_id, "N/A")
         _write_reports(

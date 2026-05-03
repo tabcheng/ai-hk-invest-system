@@ -42,15 +42,26 @@ Important:
 - **Required/Optional:** Required.
 - **Purpose:** Supabase project endpoint used by runtime and webhook command execution paths.
 - **Format / Example:** URL, e.g. `https://<project-ref>.supabase.co`.
-- **If missing:** Supabase client initialization fails (`Missing SUPABASE_URL or SUPABASE_KEY...`); runtime and webhook command handling cannot complete normally.
+- **If missing:** Supabase client initialization fails (`Missing SUPABASE_URL or backend Supabase key env...`); runtime and webhook command handling cannot complete normally.
 - **Security note:** Not secret by itself, but should still be managed in deployment variables (not hardcoded).
 
-### `SUPABASE_KEY`
-- **Required/Optional:** Required.
-- **Purpose:** Supabase API key used by server-side runtime.
-- **Format / Example:** Key string (usually `service_role` key for backend workloads).
-- **If missing:** Same failure mode as missing `SUPABASE_URL`; webhook route may return `503 supabase_client_unavailable`.
+### `SUPABASE_SECRET_KEY`
+- **Required/Optional:** Recommended primary backend key.
+- **Purpose:** Preferred backend-only Supabase key for server runtime.
+- **If missing:** Runtime falls back to `SUPABASE_SERVICE_ROLE_KEY`, then `SUPABASE_KEY` transitional fallback.
 - **Security note:** Secret with elevated privileges; never expose client-side or in logs.
+
+### `SUPABASE_SERVICE_ROLE_KEY`
+- **Required/Optional:** Recommended backend key (secondary priority).
+- **Purpose:** Explicit backend-only service-role key for server runtime.
+- **If missing:** Runtime falls back to `SUPABASE_KEY` transitional fallback only when `SUPABASE_SECRET_KEY` is also absent.
+- **Security note:** Secret with elevated privileges; never expose client-side or in logs.
+
+### `SUPABASE_KEY`
+- **Required/Optional:** Transitional fallback only (deprecated for backend contract clarity).
+- **Purpose:** Backward compatibility during staged migration.
+- **If missing:** No impact when either explicit backend key env exists.
+- **Security note:** Treat as secret when present; runtime emits deprecation warning without logging key value.
 
 ### `TELEGRAM_BOT_TOKEN`
 - **Required/Optional:** Required for Telegram outbound delivery and webhook reply path.
@@ -152,3 +163,11 @@ Security rule:
 - `paper-daily-runner` must not use publishable-class key (`sb_publishable_...`) for backend writes when RLS is enabled.
 - `miniapp-static-preview` must not receive Supabase service-role/secret keys.
 - `telegram-webhook` future Supabase read path (when enabled) must use backend-only elevated key boundary only.
+
+
+## Step 91B backend key contract update
+- Backend Supabase key resolution priority is now explicit: `SUPABASE_SECRET_KEY` -> `SUPABASE_SERVICE_ROLE_KEY` -> `SUPABASE_KEY` (transitional fallback only).
+- Runtime deprecation warning is emitted only when fallback `SUPABASE_KEY` is used; warning must not include secret values.
+- Railway variable migration is a later platform step (not changed in this step).
+- `miniapp-static-preview` must never contain `SUPABASE_SECRET_KEY` / `SUPABASE_SERVICE_ROLE_KEY` / `SUPABASE_KEY`.
+- RLS remains enabled; backend secret key usage remains backend-only.

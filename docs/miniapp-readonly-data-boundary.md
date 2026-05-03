@@ -245,3 +245,9 @@ No broker integration or autonomous real-money execution is authorized by this p
 - Mini App static preview remains static/read-only and must not receive any Supabase service-role/secret key.
 - Step 91A introduces no Mini App frontend Supabase fetch and no new Mini App production Supabase read path.
 - Backend service keys remain backend runtime only.
+
+
+## Step 91B backend key boundary reminder
+- Mini App frontend/static preview must never contain backend Supabase keys (`SUPABASE_SECRET_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, or transitional `SUPABASE_KEY`).
+- Any Supabase secret-class key usage remains backend-only under API boundary with RLS enabled.
+- This step does not introduce frontend direct Supabase integration.

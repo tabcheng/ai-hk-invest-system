@@ -133,3 +133,8 @@ UAT-lite may be introduced later as optional follow-up; it is not required in th
 - Security boundary remains backend-only for Supabase access; no browser/client exposure of service-role keys or secrets.
 - Step 90 introduces no schema migration, no runtime Supabase read/write, no Railway topology/volume change, and no Mini App frontend fetch wiring.
 - Local artifact provider/writer remains valid as fallback/dev/smoke/single-service path.
+
+## Step 91 readiness state (proposal-only)
+- Supabase/internal canonical path now has concrete schema/migration draft + repository contract proposal for `latest_system_runs`.
+- This step introduces **no** runtime read/write enablement and no Railway topology change; manual Supabase apply/review is deferred pending acceptance.
+- Next runtime candidate (Step 92): implement backend repository/provider wiring after schema acceptance, keeping backend-only secret boundary.

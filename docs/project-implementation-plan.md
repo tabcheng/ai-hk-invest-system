@@ -124,4 +124,9 @@ Paper-trading review/read-surface expansion, Telegram operator workflow hardenin
 - **Step 90 completed:** decided runner-to-miniapp `latest_system_run` storage/topology path by comparing same-service filesystem, Railway volume/local artifact path, Supabase internal table, and internal HTTP handoff options.
 - **Decision outcome:** recommend Supabase/internal table as future canonical cross-service path while preserving local artifact provider/writer as fallback for dev/smoke/single-service scenarios.
 - **Scope boundary:** no runtime implementation, no Supabase schema migration/RLS change, no Railway topology or volume change, and no Mini App frontend fetch wiring in Step 90.
-- **Step 91 next candidate:** implementation proposal for Supabase schema + migration/repository/provider interface with bounded latest-record read contract (`completed_at desc nulls last, created_at desc`).
+- **Step 91 next candidate:** implementation proposal for Supabase schema + migration/repository/provider interface with bounded latest-record read contract (`completed_at desc nulls last, created_at desc, id desc`).
+
+## Step 91 delivery update (schema/repository proposal)
+- **Step 91 completed:** added proposal migration SQL for `latest_system_runs` and backend repository/provider contract doc for future runner-write + miniapp-read paths.
+- **Scope boundary:** no runtime Supabase read/write integration, no Mini App frontend fetch change, and no Railway topology change.
+- **Step 92 next candidate:** implement backend repository/provider runtime wiring after schema/RLS proposal acceptance.

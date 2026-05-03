@@ -83,7 +83,7 @@ Proposed internal table: `latest_system_runs`
 
 ### Bounded Mini App read rule (future runtime contract)
 - Read **latest one** record only.
-- Ordering: `completed_at DESC NULLS LAST, created_at DESC`.
+- Ordering: `completed_at DESC NULLS LAST, created_at DESC, id DESC`.
 - Map to existing bounded `latest_system_run` response fields only.
 - Do not return raw strategy instructions.
 - Do not return order placement instructions.
@@ -96,3 +96,8 @@ Proposed internal table: `latest_system_runs`
 - System remains paper-trading / decision-support only.
 - AI simulated decision, human paper decision, and real trade decision outside system remain explicitly separated.
 - No broker/live execution is introduced.
+
+## Step 91 schema/repository proposal update
+- Step 91 adds proposal artifacts for Option C canonical path: Supabase migration draft `supabase/migrations/20260503_step91_create_latest_system_runs.sql` and backend contract doc `docs/latest-system-runs-repository-contract.md`.
+- Scope remains proposal-only: no runtime Supabase read/write wiring, no Mini App frontend fetch addition, and no Railway topology/volume change in this step.
+- Step 87 local artifact provider + Step 89 artifact writer remain fallback/dev/smoke path until Step 92 runtime provider implementation is accepted.

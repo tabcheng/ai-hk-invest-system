@@ -190,5 +190,8 @@ Prioritization:
 
 - **Step 90 completed (docs-only decision/design):** added runner-to-miniapp `latest_system_run` storage/topology decision doc with options A/B/C/D and selected future direction = Supabase/internal table (`latest_system_runs`) as canonical cross-service path.
 - **Step 90 non-goal confirmation:** no Supabase migration/RLS update, no runtime read/write implementation, no Railway topology/volume change, and no Mini App frontend fetch wiring.
-- **Next (Step 91 candidate):** propose Supabase schema/migration + backend repository/provider interface for bounded latest-record read (`completed_at desc nulls last, created_at desc`) per repo convention.
 - **Fallback preserved:** local artifact provider/writer remains dev/smoke/single-service option.
+
+- **Step 91 completed (proposal-only):** added Supabase migration draft `supabase/migrations/20260503_step91_create_latest_system_runs.sql` and `docs/latest-system-runs-repository-contract.md` for canonical `latest_system_runs` path with bounded constraints, latest-read ordering, and backend-only/RLS posture documentation.
+- **Step 91 non-goal confirmation:** no runtime Supabase read/write path in runner or Mini App API, no Mini App frontend fetch wiring, and no Railway topology change.
+- **Next (Step 92 candidate):** implement backend repository/provider runtime wiring after schema acceptance while preserving local artifact fallback/dev/smoke path.

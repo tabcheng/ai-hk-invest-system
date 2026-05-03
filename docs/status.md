@@ -317,3 +317,8 @@
 - Step 90 decision: recommend future Option C (`latest_system_runs` Supabase/internal table) as canonical cross-service path; Step 90 itself introduces no Supabase schema migration, no runtime Supabase read/write, no Railway topology/volume change, and no Mini App frontend fetch wiring.
 - Step 90 fallback policy: Step 87 local artifact provider + Step 89 artifact writer remain valid for local/dev/smoke/single-service scenarios and are not removed.
 - Step 90 domain boundary reaffirmed: paper-trading/decision-support only, no broker/live execution, and human final real-trade decision remains outside system.
+
+- Step 91 completed (schema/repository proposal only): added Supabase migration draft `supabase/migrations/20260503_step91_create_latest_system_runs.sql` for `latest_system_runs` with bounded constraints/indexes/RLS enablement and no anon/authenticated browser policies.
+- Step 91 completed: added backend contract doc `docs/latest-system-runs-repository-contract.md` for future `write_latest_system_run(record)` and `get_latest_system_run()` wiring with explicit allowlisted columns and latest-read order (`completed_at desc nulls last, created_at desc`).
+- Step 91 scope boundary preserved: no runtime Supabase read/write integration, no Mini App frontend fetch, no Railway topology change, and Step 87 local artifact provider remains fallback/dev/smoke path.
+- Step 92 next candidate: implement runtime backend repository/provider integration after Step 91 schema/contract proposal acceptance.

@@ -297,3 +297,8 @@ The platform is designed as an **AI investment firm operating model** with stric
 - Therefore cross-service local filesystem handoff is not assumed.
 - Future canonical topology is recommended as Supabase/internal-table producer-consumer contract (`latest_system_runs`) with backend-only access.
 - This step does not introduce runtime Supabase read/write, schema migration, Railway topology/volume changes, or Mini App frontend fetch wiring.
+
+## Step 91 architecture note (schema/repository proposal only)
+- Added Supabase schema/migration proposal for `latest_system_runs` with bounded constraints and RLS enablement (deny-by-default/no browser policies in-step).
+- Added backend repository/provider contract proposal (`write_latest_system_run(record)`, `get_latest_system_run()`) with explicit allowlisted columns and latest-record ordering (`completed_at desc nulls last, created_at desc`).
+- No runtime Supabase read/write integration is enabled in Step 91; Mini App frontend remains without Supabase fetch wiring.

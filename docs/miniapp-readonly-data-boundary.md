@@ -235,3 +235,8 @@ No broker integration or autonomous real-money execution is authorized by this p
 - Decision outcome: future canonical runner-to-miniapp `latest_system_run` flow should use Supabase/internal-table topology (option C) instead of assuming cross-service filesystem handoff.
 - Step 90 is design/contract only: no Supabase migration, no runtime read/write path, no Railway topology or volume change, and no Mini App frontend fetch addition.
 - Step 87 local artifact provider and Step 89 artifact writer remain accepted bounded fallback for local/dev/smoke/single-service usage.
+
+## Step 91 boundary update (schema/proposal only)
+- Step 91 introduces proposal artifacts only: Supabase `latest_system_runs` migration draft + backend repository contract proposal.
+- API/runtime behavior remains unchanged: no Supabase runtime read/write in miniapp route or runner, no frontend Supabase fetch, no write/order/execution.
+- Local artifact provider remains valid fallback for local/dev/smoke until Step 92 runtime provider integration.

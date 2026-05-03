@@ -11,7 +11,7 @@ This step does **not**:
 
 ## Canonical storage target
 - Table: `public.latest_system_runs`
-- Canonical read order: `completed_at desc nulls last, created_at desc`
+- Canonical read order: `completed_at desc nulls last, created_at desc, id desc`
 - Bounded payload mapping target: existing `sections.latest_system_run` response contract only.
 
 ## Proposed repository interfaces (future step)
@@ -39,6 +39,7 @@ get_latest_system_run() -> dict
 - Query exactly one latest row ordered by:
   - `completed_at desc nulls last`
   - `created_at desc`
+  - `id desc`
 - Select explicit allowlisted columns only (never `select *`).
 - Map DB row to bounded `sections.latest_system_run` fields only.
 - On empty/no-data, return bounded unavailable contract (not raw DB errors).

@@ -83,7 +83,7 @@ Proposed internal table: `latest_system_runs`
 
 ### Bounded Mini App read rule (future runtime contract)
 - Read **latest one** record only.
-- Ordering: `completed_at DESC NULLS LAST, created_at DESC`.
+- Ordering: `completed_at DESC NULLS LAST, created_at DESC, id DESC`.
 - Map to existing bounded `latest_system_run` response fields only.
 - Do not return raw strategy instructions.
 - Do not return order placement instructions.

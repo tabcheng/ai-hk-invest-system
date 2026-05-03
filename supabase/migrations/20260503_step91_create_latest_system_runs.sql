@@ -24,8 +24,10 @@ begin
     if jsonb_typeof(elem) <> 'string' then
       return false;
     end if;
+  end loop;
 
-    item_text := trim(both '"' from elem::text);
+  for item_text in select value from jsonb_array_elements_text(input)
+  loop
     if char_length(item_text) > 160 then
       return false;
     end if;
@@ -61,7 +63,7 @@ create table if not exists public.latest_system_runs (
 );
 
 create index if not exists idx_latest_system_runs_latest_read
-  on public.latest_system_runs (completed_at desc nulls last, created_at desc);
+  on public.latest_system_runs (completed_at desc nulls last, created_at desc, id desc);
 
 create index if not exists idx_latest_system_runs_source_created_at
   on public.latest_system_runs (source, created_at desc);

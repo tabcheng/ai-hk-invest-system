@@ -129,20 +129,13 @@ def main() -> int:
     }
 
     if preflight == "PASS":
-        report["runs_check"] = _check_table(base, key or "", "runs", args.freshness_minutes, required=True)
-        report["signals_check"] = _check_table(base, key or "", "signals", args.freshness_minutes, required=True)
-        report["decision_ledger_check"] = {
-            **_check_table(base, key or "", "decision_ledger", args.freshness_minutes, required=False),
-            "classification": "optional",
-        }
-        report["paper_trades_check"] = {
-            **_check_table(base, key or "", "paper_trades", args.freshness_minutes, required=False),
-            "classification": "optional",
-        }
-        report["latest_system_runs_check"] = {
-            **_check_table(base, key or "", "latest_system_runs", args.freshness_minutes, required=False),
-            "classification": "optional",
-        }
+        for table in REQUIRED_TABLES:
+            report[f"{table}_check"] = _check_table(base, key or "", table, args.freshness_minutes, required=True)
+        for table in OPTIONAL_TABLES:
+            report[f"{table}_check"] = {
+                **_check_table(base, key or "", table, args.freshness_minutes, required=False),
+                "classification": "optional",
+            }
 
     required_gate_statuses = [
         report["preflight_status"],

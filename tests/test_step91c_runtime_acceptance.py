@@ -21,6 +21,18 @@ def test_optional_latest_system_runs_404_is_not_configured(monkeypatch):
     assert result["status"] == "NOT_CONFIGURED"
 
 
+def test_required_table_400_is_fail(monkeypatch):
+    monkeypatch.setattr(s.request, "urlopen", lambda req, timeout=30: (_ for _ in ()).throw(_http_error(400)))
+    result = s._check_table("https://a.supabase.co", "sb_secret_x", "signals", 1440, required=True)
+    assert result["status"] == "FAIL"
+
+
+def test_optional_latest_system_runs_400_is_not_configured(monkeypatch):
+    monkeypatch.setattr(s.request, "urlopen", lambda req, timeout=30: (_ for _ in ()).throw(_http_error(400)))
+    result = s._check_table("https://a.supabase.co", "sb_secret_x", "latest_system_runs", 1440, required=False)
+    assert result["status"] == "NOT_CONFIGURED"
+
+
 def test_required_table_stale_row_is_fail(monkeypatch):
     class _Resp:
         def __enter__(self):

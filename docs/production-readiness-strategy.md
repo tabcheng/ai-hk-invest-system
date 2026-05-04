@@ -153,3 +153,10 @@ Step 91A acceptance status update:
 - platform key correction completed (`paper-daily-runner` backend key class corrected to secret-class; key value redacted).
 - RLS runtime acceptance completed with post-redeploy DB write-path verification and Mini App API smoke rerun confirmation.
 - `miniapp-static-preview` remains free of Supabase service/secret key and no service key was observed in logs.
+
+
+## Step 91B explicit backend Supabase key contract
+- Backend production Supabase access should use `SUPABASE_SECRET_KEY` first, or `SUPABASE_SERVICE_ROLE_KEY` as explicit backend alternative.
+- `SUPABASE_KEY` remains transitional fallback only for short-term backward compatibility and should be migrated away in a later platform step.
+- Runtime warnings for fallback usage must be safe and never print secret values.
+- Mini App frontend/browser/static preview must not contain service-role/secret backend keys.

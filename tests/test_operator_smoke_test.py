@@ -155,6 +155,7 @@ def test_verify_supabase_true_missing_service_role_key_fails_with_report(tmp_pat
         smoke.main()
     js = json.loads((tmp_path / "operator_smoke_report.json").read_text(encoding="utf-8"))
     assert js["supabase_verification"]["status"] == "FAIL"
+    assert "SUPABASE_SECRET_KEY" in js["supabase_verification"]["reason"]
     assert "SUPABASE_SERVICE_ROLE_KEY" in js["supabase_verification"]["reason"]
 
 
@@ -169,7 +170,7 @@ def test_supabase_verification_pass_with_matching_row(monkeypatch):
         def read(self): return self._body.encode("utf-8")
 
     monkeypatch.setenv("SUPABASE_URL", "https://abc.supabase.co")
-    monkeypatch.setenv("SUPABASE_SERVICE_ROLE_KEY", "super-secret")
+    monkeypatch.setenv("SUPABASE_SECRET_KEY", "super-secret")
     def _fake_urlopen(req, timeout=30):
         captured["urls"].append(req.full_url)
         if "scope=eq.run" in req.full_url:
@@ -190,7 +191,7 @@ def test_supabase_verification_fail_when_no_rows(monkeypatch):
         def read(self): return b'[]'
 
     monkeypatch.setenv("SUPABASE_URL", "https://abc.supabase.co")
-    monkeypatch.setenv("SUPABASE_SERVICE_ROLE_KEY", "super-secret")
+    monkeypatch.setenv("SUPABASE_SECRET_KEY", "super-secret")
     monkeypatch.setattr(smoke.request, "urlopen", lambda req, timeout=30: _Resp())
     result = smoke._verify_supabase_decision_note("31", "mk")
     assert result.status == "FAIL"
@@ -200,7 +201,7 @@ def test_supabase_verification_fail_when_no_rows(monkeypatch):
 
 def test_supabase_query_error_is_redacted(monkeypatch):
     monkeypatch.setenv("SUPABASE_URL", "https://abc.supabase.co")
-    monkeypatch.setenv("SUPABASE_SERVICE_ROLE_KEY", "super-secret")
+    monkeypatch.setenv("SUPABASE_SECRET_KEY", "super-secret")
     monkeypatch.setattr(smoke.request, "urlopen", lambda req, timeout=30: (_ for _ in ()).throw(RuntimeError("key=super-secret")))
     result = smoke._verify_supabase_decision_note("31", "mk")
     assert result.status == "FAIL"

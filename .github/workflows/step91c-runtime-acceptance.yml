@@ -11,7 +11,7 @@ on:
         description: Enter only the numeric run id, e.g. 31
         required: true
       verify_supabase:
-        description: Keep true for Step 91C acceptance
+        description: true for acceptance; false debug-only
         required: true
         default: "true"
       freshness_minutes:
@@ -42,6 +42,7 @@ jobs:
             *) echo "SUPABASE_SECRET_KEY must start with sb_secret_" >&2; exit 1 ;;
           esac
       - name: Run operator smoke
+        continue-on-error: true
         env:
           OPERATOR_WEBHOOK_TEST_URL: ${{ secrets.OPERATOR_WEBHOOK_TEST_URL }}
           OPERATOR_TEST_CHAT_ID: ${{ vars.OPERATOR_TEST_CHAT_ID }}
@@ -50,8 +51,9 @@ jobs:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-        run: python scripts/operator_smoke_test.py --target "${{ inputs.target }}" --test-run-id "${{ inputs.test_run_id }}" --verify-supabase "true"
+        run: python scripts/operator_smoke_test.py --target "${{ inputs.target }}" --test-run-id "${{ inputs.test_run_id }}" --verify-supabase "${{ inputs.verify_supabase }}"
       - name: Run miniapp API smoke
+        continue-on-error: true
         env:
           MINIAPP_SMOKE_ENDPOINT_URL: ${{ secrets.MINIAPP_SMOKE_ENDPOINT_URL }}
           MINIAPP_SMOKE_BOT_TOKEN: ${{ secrets.MINIAPP_SMOKE_BOT_TOKEN }}
@@ -59,11 +61,26 @@ jobs:
           MINIAPP_SMOKE_UNAUTHORIZED_TELEGRAM_USER_ID: ${{ secrets.MINIAPP_SMOKE_UNAUTHORIZED_TELEGRAM_USER_ID }}
         run: python scripts/miniapp_api_smoke.py
       - name: Run Step91C aggregate acceptance
+        if: always()
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: python scripts/step91c_runtime_acceptance.py --target "${{ inputs.target }}" --test-run-id "${{ inputs.test_run_id }}" --freshness-minutes "${{ inputs.freshness_minutes }}"
+      - name: Final gate from aggregate report
+        if: always()
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          path = Path("step91c_runtime_acceptance_report.json")
+          if not path.exists():
+              raise SystemExit("missing aggregate report")
+          payload = json.loads(path.read_text(encoding="utf-8"))
+          status = payload.get("overall_status")
+          print(f"aggregate_overall_status={status}")
+          raise SystemExit(0 if status == "PASS" else 1)
+          PY
       - name: Upload acceptance artifacts
         if: always()
         uses: actions/upload-artifact@v4

@@ -307,3 +307,4 @@ Use together with `docs/railway-service-variables.md` Step 91C and `docs/post-de
 - Artifacts include: `operator_smoke_report.{md,json}`, `miniapp_api_smoke_report.{md,json}`, `step91c_runtime_acceptance_report.{md,json}`.
 - Guardrail remains unchanged: paper-trading / decision-support only, no broker integration, no real-money execution.
 - Limitation: until Railway token/log integration is added, Railway env/fallback-warning evidence remains partial (`fallback_warning_check=NOT_CHECKED`).
+- Step 91C aggregate evidence gate classification: required Supabase checks are `runs` and `signals`; optional checks are `latest_system_runs`, `decision_ledger`, and `paper_trades` (optional may return `NOT_CONFIGURED` without auto-failing the optional section).

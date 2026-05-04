@@ -76,3 +76,4 @@ Step 91A recorded result (PR #88):
 - Full acceptance still requires Railway log evidence or a future Railway API/CLI integration for fallback-warning verification.
 - Confirm Mini App frontend/static preview never contains `SUPABASE_SECRET_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, or `SUPABASE_KEY`.
 - Confirm no broker integration and no live-money execution path is introduced.
+- Step 91C aggregate pass rule: required gates (`preflight`, key class, operator smoke, miniapp smoke, `runs`, `signals`) must all be `PASS`; stale required rows are `FAIL`.

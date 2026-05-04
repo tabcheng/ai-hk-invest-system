@@ -207,3 +207,10 @@ Operator deploy + smoke evidence flow (manual):
 - Backend smoke/acceptance should prefer `SUPABASE_SECRET_KEY` (`sb_secret_...` class) and may fallback to `SUPABASE_SERVICE_ROLE_KEY` only when explicitly intended.
 - `SUPABASE_KEY` remains transitional fallback and must not be exposed to browser/client/static assets.
 - GitHub smoke artifacts must redact all secret/token/initData/allowlist values.
+
+## Step 91C-2 runtime acceptance variables
+- `RAILWAY_TOKEN` (GitHub Actions environment secret only)
+- `RAILWAY_PROJECT_ID` (GitHub Actions var)
+- `RAILWAY_ENVIRONMENT_ID` (GitHub Actions var)
+- Optional `RAILWAY_LOG_SERVICE_NAMES` (comma-separated service names)
+- Evidence integration is read-only; no variable mutation/redeploy/staged-change commit.

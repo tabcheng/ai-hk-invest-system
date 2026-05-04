@@ -78,3 +78,8 @@ Step 91A recorded result (PR #88):
 - Confirm no broker integration and no live-money execution path is introduced.
 - Step 91C aggregate pass rule: required gates (`preflight`, key class, operator smoke, miniapp smoke, `runs`, `signals`) must all be `PASS`; stale required rows are `FAIL`.
 - Step 91C optional checks policy: optional tables may be `NOT_CONFIGURED`, but optional check `FAIL/INVALID` is blocking and must be resolved before acceptance.
+
+## Step 91C-2 Railway evidence artifact check
+- Runtime acceptance now optionally collects read-only Railway log evidence (`railway_step91c_log_evidence_report.{md,json}`).
+- Expected fallback warning status: `PASS`/`FAIL` when configured, otherwise `NOT_CONFIGURED` (never fake PASS).
+- This evidence step must not mutate Railway variables and must not redeploy services.

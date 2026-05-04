@@ -310,3 +310,8 @@ Use together with `docs/railway-service-variables.md` Step 91C and `docs/post-de
 - Step 91C aggregate evidence gate classification: required Supabase checks are `runs` and `signals`; optional checks are `latest_system_runs`, `decision_ledger`, and `paper_trades` (optional may return `NOT_CONFIGURED` without auto-failing the optional section).
 - Step 91C preflight accepts backend key fallback: `SUPABASE_SECRET_KEY` is preferred and must be `sb_secret_...` when present; if absent, `SUPABASE_SERVICE_ROLE_KEY` is accepted as explicit backend alternative.
 - Optional table checks (`latest_system_runs`, `decision_ledger`, `paper_trades`) allow `NOT_CONFIGURED` but any optional `FAIL/INVALID` still fails aggregate `overall_status`.
+
+## Step 91C-2 Railway evidence automation (read-only)
+- Adds optional read-only Railway log evidence script `scripts/railway_step91c_log_evidence.py` for fallback-warning verification artifacts.
+- No Railway variable mutation, no deploy/redeploy, no staged-change commit, and no secret/raw-log output.
+- `RAILWAY_TOKEN` must stay in GitHub Actions environment secrets only; when token/IDs are absent, report is `NOT_CONFIGURED`.

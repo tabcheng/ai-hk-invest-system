@@ -341,3 +341,6 @@
 
 - Step 91C-1 in progress: GitHub automated runtime acceptance smoke adds structured artifacts for operator smoke + Mini App API smoke + aggregate Supabase evidence, while preserving paper-trading/decision-support boundary and no broker/live-money execution.
 - Step 91C-1 known limitation: without Railway token/log integration, fallback-warning verification remains partial (`NOT_CHECKED`) and full acceptance still needs Railway evidence.
+
+- Step 91C-2 in progress: add optional/read-only Railway log evidence automation for runtime acceptance artifacts, promoting fallback-warning verification from `NOT_CHECKED` to `PASS/FAIL/NOT_CONFIGURED` when configured.
+- Step 91C-2 guardrails: no Railway variable mutation, no deploy/redeploy, no staged-change commit, no raw logs/secrets in artifacts, and paper-trading/decision-support-only boundary unchanged.

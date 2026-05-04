@@ -45,7 +45,7 @@ def _resolve_supabase_backend_key() -> str | None:
 
 
 def get_supabase_client() -> Client:
-    url = os.getenv("SUPABASE_URL")
+    url = os.getenv("SUPABASE_URL", "").strip()
     key = _resolve_supabase_backend_key()
 
     if not url or not key:

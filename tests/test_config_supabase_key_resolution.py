@@ -161,3 +161,14 @@ def test_whitespace_only_legacy_key_does_not_warn_or_leak(monkeypatch, caplog):
         config.get_supabase_client()
 
     assert "SUPABASE_KEY is deprecated" not in caplog.text
+
+
+def test_whitespace_only_supabase_url_raises_missing_config_error(monkeypatch):
+    _set_base_env(monkeypatch)
+    monkeypatch.setenv("SUPABASE_URL", "   ")
+    monkeypatch.setenv("SUPABASE_SECRET_KEY", "secret-key")
+
+    with pytest.raises(ValueError) as exc_info:
+        config.get_supabase_client()
+
+    assert "SUPABASE_URL" in str(exc_info.value)

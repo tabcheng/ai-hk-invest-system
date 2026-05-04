@@ -57,8 +57,9 @@ def _parse_iso(value: str | None) -> datetime | None:
         return None
 
 
-def _scan_entries(entries: list[dict[str, Any]], since_dt: datetime) -> tuple[int, list[str]]:
+def _scan_entries(entries: list[dict[str, Any]], since_dt: datetime) -> tuple[int, int, list[str]]:
     matches = 0
+    redacted_matches = 0
     snippets: list[str] = []
     for entry in entries:
         message = str(entry.get("message", ""))
@@ -66,11 +67,12 @@ def _scan_entries(entries: list[dict[str, Any]], since_dt: datetime) -> tuple[in
         if ts is not None and ts < since_dt:
             continue
         if any(pattern in message for pattern in WARNING_PATTERNS):
-            if SECRET_LIKE_PATTERN.search(message):
-                continue
             matches += 1
+            if SECRET_LIKE_PATTERN.search(message):
+                redacted_matches += 1
+                continue
             snippets.append(message[:180])
-    return matches, snippets[:8]
+    return matches, redacted_matches, snippets[:8]
 
 
 def _collect_service_entries(payload: dict[str, Any]) -> list[dict[str, Any]]:
@@ -103,6 +105,8 @@ def _render_md(report: dict[str, Any]) -> str:
         "log_window_minutes",
         "fallback_warning_check",
         "fallback_warning_matches_count",
+        "redacted_warning_matches_count",
+        "logs_read_count",
         "staged_changes_check",
         "staged_changes_summary",
         "secrets_redacted",
@@ -138,6 +142,8 @@ def main() -> int:
         "log_window_minutes": args.log_window_minutes,
         "fallback_warning_check": "NOT_CONFIGURED",
         "fallback_warning_matches_count": 0,
+        "redacted_warning_matches_count": 0,
+        "logs_read_count": 0,
         "staged_changes_check": "NOT_CONFIGURED",
         "staged_changes_summary": "redacted/count-only",
         "safe_snippets": [],
@@ -150,6 +156,8 @@ def main() -> int:
     if configured:
         try:
             total_matches = 0
+            total_redacted = 0
+            logs_read_count = 0
             safe_snippets: list[str] = []
             logs_query = (
                 "query($projectId:String!,$environmentId:String!,$serviceName:String!){"
@@ -162,21 +170,32 @@ def main() -> int:
                     {"projectId": project_id, "environmentId": environment_id, "serviceName": service_name},
                 )
                 entries = _collect_service_entries(payload)
-                match_count, snippets = _scan_entries(entries, since_dt)
+                logs_read_count += len(entries)
+                match_count, redacted_count, snippets = _scan_entries(entries, since_dt)
                 total_matches += match_count
+                total_redacted += redacted_count
                 safe_snippets.extend(snippets)
 
+            report["logs_read_count"] = logs_read_count
             report["fallback_warning_matches_count"] = total_matches
+            report["redacted_warning_matches_count"] = total_redacted
             report["safe_snippets"] = safe_snippets[:8]
-            report["fallback_warning_check"] = "FAIL" if total_matches > 0 else "PASS"
-            report["overall_status"] = report["fallback_warning_check"]
             report["staged_changes_check"] = "NOT_CONFIGURED"
             report["staged_changes_summary"] = "count-only; staged changes read endpoint not configured"
-            report["limitation"] = "Staged changes check remains NOT_CONFIGURED in this step."
+
+            if logs_read_count == 0:
+                report["fallback_warning_check"] = "FAIL"
+                report["overall_status"] = "FAIL"
+                report["limitation"] = "Configured Railway evidence returned no readable log entries."
+            else:
+                report["fallback_warning_check"] = "FAIL" if total_matches > 0 else "PASS"
+                report["overall_status"] = report["fallback_warning_check"]
+                report["limitation"] = "Staged changes check remains NOT_CONFIGURED in this step."
+
         except Exception as exc:  # noqa: BLE001
-            report["overall_status"] = "NOT_CONFIGURED"
-            report["fallback_warning_check"] = "NOT_CONFIGURED"
-            report["limitation"] = f"Railway API read failed: {exc.__class__.__name__}"
+            report["overall_status"] = "FAIL"
+            report["fallback_warning_check"] = "FAIL"
+            report["limitation"] = f"Configured Railway evidence read failed: {exc.__class__.__name__}"
 
     Path(REPORT_JSON).write_text(json.dumps(report, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     Path(REPORT_MD).write_text(_render_md(report), encoding="utf-8")

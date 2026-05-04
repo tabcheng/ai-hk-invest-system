@@ -203,3 +203,4 @@ Prioritization:
 - Plan staged runtime/env migration away from ambiguous `SUPABASE_KEY` naming via explicit key var support + fallback + smoke + later fallback removal.
 
 - **Step 91B completed:** runtime now supports explicit backend key env priority (`SUPABASE_SECRET_KEY` then `SUPABASE_SERVICE_ROLE_KEY`) with `SUPABASE_KEY` transitional fallback only, safe deprecation warning, focused config tests, and docs updates; Railway variable migration/removal of fallback remains a later platform follow-up.
+- **Step 91C completed (docs/runbook/checklist update):** documented explicit Railway backend key migration/acceptance flow requiring staged env review + deploy + smoke evidence, with backend target state `SUPABASE_SECRET_KEY`-first (`sb_secret_...`), `SUPABASE_SERVICE_ROLE_KEY` explicit alternative, and `SUPABASE_KEY` transitional fallback-only posture; reaffirmed `miniapp-static-preview`/frontend secret boundary and no broker/live execution path.

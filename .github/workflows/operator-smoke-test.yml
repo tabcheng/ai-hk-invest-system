@@ -37,6 +37,7 @@ jobs:
           OPERATOR_TEST_USER_ID: ${{ vars.OPERATOR_TEST_USER_ID }}
           OPERATOR_WEBHOOK_SECRET: ${{ secrets.OPERATOR_WEBHOOK_SECRET }}
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: |
           python scripts/operator_smoke_test.py \

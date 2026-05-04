@@ -70,3 +70,11 @@ After Step 66, every relevant PR must explicitly state which checklist sections 
 Step 91A recorded result (PR #88):
 - platform key correction completed: yes
 - RLS runtime acceptance completed: yes
+
+## Step 91C runtime acceptance automation note
+- GitHub Step 91C acceptance workflow can reduce manual checks by generating structured smoke evidence artifacts for reviewer validation.
+- Full acceptance still requires Railway log evidence or a future Railway API/CLI integration for fallback-warning verification.
+- Confirm Mini App frontend/static preview never contains `SUPABASE_SECRET_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, or `SUPABASE_KEY`.
+- Confirm no broker integration and no live-money execution path is introduced.
+- Step 91C aggregate pass rule: required gates (`preflight`, key class, operator smoke, miniapp smoke, `runs`, `signals`) must all be `PASS`; stale required rows are `FAIL`.
+- Step 91C optional checks policy: optional tables may be `NOT_CONFIGURED`, but optional check `FAIL/INVALID` is blocking and must be resolved before acceptance.

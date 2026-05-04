@@ -145,7 +145,14 @@ def main() -> int:
         report["runs_check"].get("status"),
         report["signals_check"].get("status"),
     ]
-    report["overall_status"] = "PASS" if all(status == "PASS" for status in required_gate_statuses) else "FAIL"
+    optional_gate_statuses = [
+        report["decision_ledger_check"].get("status"),
+        report["paper_trades_check"].get("status"),
+        report["latest_system_runs_check"].get("status"),
+    ]
+    required_ok = all(status == "PASS" for status in required_gate_statuses)
+    optional_ok = all(status in ("PASS", "NOT_CONFIGURED") for status in optional_gate_statuses)
+    report["overall_status"] = "PASS" if required_ok and optional_ok else "FAIL"
 
     Path(REPORT_JSON).write_text(json.dumps(report, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     lines = ["# Step 91C Runtime Acceptance Report", "", f"- overall_status: {report['overall_status']}"]

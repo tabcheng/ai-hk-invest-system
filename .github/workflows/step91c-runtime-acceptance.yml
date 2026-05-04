@@ -32,15 +32,21 @@ jobs:
       - name: Preflight Supabase secret class
         env:
           SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: |
-          if [ -z "$SUPABASE_SECRET_KEY" ]; then
-            echo "SUPABASE_SECRET_KEY missing" >&2
-            exit 1
+          if [ -n "$SUPABASE_SECRET_KEY" ]; then
+            case "$SUPABASE_SECRET_KEY" in
+              sb_secret_*) echo "Supabase secret key class check passed" ;;
+              *) echo "SUPABASE_SECRET_KEY must start with sb_secret_" >&2; exit 1 ;;
+            esac
+            exit 0
           fi
-          case "$SUPABASE_SECRET_KEY" in
-            sb_secret_*) echo "Supabase key class check passed" ;;
-            *) echo "SUPABASE_SECRET_KEY must start with sb_secret_" >&2; exit 1 ;;
-          esac
+          if [ -n "$SUPABASE_SERVICE_ROLE_KEY" ]; then
+            echo "Using SUPABASE_SERVICE_ROLE_KEY fallback preflight"
+            exit 0
+          fi
+          echo "Missing SUPABASE_SECRET_KEY and SUPABASE_SERVICE_ROLE_KEY" >&2
+            exit 1
       - name: Run operator smoke
         continue-on-error: true
         env:

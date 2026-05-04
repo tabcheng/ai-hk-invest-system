@@ -94,3 +94,54 @@ def test_overall_status_cannot_pass_when_required_not_configured(tmp_path, monke
     payload = json.loads((tmp_path / "step91c_runtime_acceptance_report.json").read_text(encoding="utf-8"))
     assert payload["overall_status"] == "FAIL"
     assert rc == 1
+
+
+def test_latest_system_runs_not_configured_does_not_fail_overall(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("SUPABASE_URL", "https://a.supabase.co")
+    monkeypatch.setenv("SUPABASE_SECRET_KEY", "sb_secret_x")
+    (tmp_path / "operator_smoke_report.json").write_text('{"overall_result":"PASS"}', encoding="utf-8")
+    (tmp_path / "miniapp_api_smoke_report.json").write_text('{"overall_passed":true}', encoding="utf-8")
+
+    def _fake_check(_base, _key, table, _freshness, required):
+        if table == "latest_system_runs":
+            return {"status": "NOT_CONFIGURED"}
+        return {"status": "PASS", "freshness": "FRESH", "age_minutes": 1.0}
+
+    monkeypatch.setattr(s, "_check_table", _fake_check)
+    monkeypatch.setattr("sys.argv", ["step91c_runtime_acceptance.py", "--test-run-id", "31"])
+    assert s.main() == 0
+
+
+def test_latest_system_runs_fail_makes_overall_fail(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("SUPABASE_URL", "https://a.supabase.co")
+    monkeypatch.setenv("SUPABASE_SECRET_KEY", "sb_secret_x")
+    (tmp_path / "operator_smoke_report.json").write_text('{"overall_result":"PASS"}', encoding="utf-8")
+    (tmp_path / "miniapp_api_smoke_report.json").write_text('{"overall_passed":true}', encoding="utf-8")
+
+    def _fake_check(_base, _key, table, _freshness, required):
+        if table == "latest_system_runs":
+            return {"status": "FAIL", "reason": "http_500"}
+        return {"status": "PASS", "freshness": "FRESH", "age_minutes": 1.0}
+
+    monkeypatch.setattr(s, "_check_table", _fake_check)
+    monkeypatch.setattr("sys.argv", ["step91c_runtime_acceptance.py", "--test-run-id", "31"])
+    assert s.main() == 1
+
+
+def test_optional_decision_ledger_fail_blocks_overall(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("SUPABASE_URL", "https://a.supabase.co")
+    monkeypatch.setenv("SUPABASE_SECRET_KEY", "sb_secret_x")
+    (tmp_path / "operator_smoke_report.json").write_text('{"overall_result":"PASS"}', encoding="utf-8")
+    (tmp_path / "miniapp_api_smoke_report.json").write_text('{"overall_passed":true}', encoding="utf-8")
+
+    def _fake_check(_base, _key, table, _freshness, required):
+        if table == "decision_ledger":
+            return {"status": "FAIL", "reason": "http_500"}
+        return {"status": "PASS", "freshness": "FRESH", "age_minutes": 1.0}
+
+    monkeypatch.setattr(s, "_check_table", _fake_check)
+    monkeypatch.setattr("sys.argv", ["step91c_runtime_acceptance.py", "--test-run-id", "31"])
+    assert s.main() == 1

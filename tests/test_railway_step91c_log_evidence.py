@@ -88,6 +88,7 @@ def test_configured_warning_with_secret_makes_fail_and_redacted(tmp_path, monkey
     assert report["fallback_warning_matches_count"] == 1
     assert report["redacted_warning_matches_count"] == 1
     assert report["safe_snippets"] == []
+    assert report["raw_logs_included"] is False
 
 
 def test_scan_entries_counts_service_role_warning_redacted():

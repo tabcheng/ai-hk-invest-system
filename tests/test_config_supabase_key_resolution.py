@@ -99,3 +99,65 @@ def test_missing_key_raises_clear_non_secret_error(monkeypatch):
     assert "secret-key" not in msg
     assert "service-role-key" not in msg
     assert "legacy-key" not in msg
+
+
+def test_whitespace_only_primary_key_falls_back_to_service_role(monkeypatch):
+    _set_base_env(monkeypatch)
+    monkeypatch.setenv("SUPABASE_SECRET_KEY", "   ")
+    monkeypatch.setenv("SUPABASE_SERVICE_ROLE_KEY", "service-role-key")
+
+    captured = {}
+
+    def fake_create_client(url, key):
+        captured["key"] = key
+        return object()
+
+    monkeypatch.setattr(config, "create_client", fake_create_client)
+    config.get_supabase_client()
+
+    assert captured["key"] == "service-role-key"
+
+
+def test_whitespace_only_primary_and_secondary_fall_back_to_legacy(monkeypatch, caplog):
+    _set_base_env(monkeypatch)
+    monkeypatch.setenv("SUPABASE_SECRET_KEY", "   ")
+    monkeypatch.setenv("SUPABASE_SERVICE_ROLE_KEY", "   ")
+    monkeypatch.setenv("SUPABASE_KEY", "legacy-key")
+
+    captured = {}
+
+    def fake_create_client(url, key):
+        captured["key"] = key
+        return object()
+
+    monkeypatch.setattr(config, "create_client", fake_create_client)
+    config.get_supabase_client()
+
+    assert captured["key"] == "legacy-key"
+    assert "SUPABASE_KEY is deprecated" in caplog.text
+    assert "legacy-key" not in caplog.text
+
+
+def test_whitespace_only_all_keys_raise_missing_key_error(monkeypatch):
+    _set_base_env(monkeypatch)
+    monkeypatch.setenv("SUPABASE_SECRET_KEY", "   ")
+    monkeypatch.setenv("SUPABASE_SERVICE_ROLE_KEY", "   ")
+    monkeypatch.setenv("SUPABASE_KEY", "   ")
+
+    with pytest.raises(ValueError) as exc_info:
+        config.get_supabase_client()
+
+    msg = str(exc_info.value)
+    assert "SUPABASE_SECRET_KEY" in msg
+    assert "SUPABASE_SERVICE_ROLE_KEY" in msg
+    assert "SUPABASE_KEY (transitional fallback)" in msg
+
+
+def test_whitespace_only_legacy_key_does_not_warn_or_leak(monkeypatch, caplog):
+    _set_base_env(monkeypatch)
+    monkeypatch.setenv("SUPABASE_KEY", "   ")
+
+    with pytest.raises(ValueError):
+        config.get_supabase_client()
+
+    assert "SUPABASE_KEY is deprecated" not in caplog.text

@@ -25,15 +25,15 @@ def get_market_data_provider_name() -> str:
 
 
 def _resolve_supabase_backend_key() -> str | None:
-    supabase_secret_key = os.getenv("SUPABASE_SECRET_KEY")
+    supabase_secret_key = os.getenv("SUPABASE_SECRET_KEY", "").strip()
     if supabase_secret_key:
         return supabase_secret_key
 
-    supabase_service_role_key = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
+    supabase_service_role_key = os.getenv("SUPABASE_SERVICE_ROLE_KEY", "").strip()
     if supabase_service_role_key:
         return supabase_service_role_key
 
-    supabase_key = os.getenv("SUPABASE_KEY")
+    supabase_key = os.getenv("SUPABASE_KEY", "").strip()
     if supabase_key:
         logger.warning(
             "SUPABASE_KEY is deprecated and supported as transitional fallback only. "

@@ -11,7 +11,7 @@ def test_missing_token_not_configured(tmp_path, monkeypatch):
     monkeypatch.delenv("RAILWAY_TOKEN", raising=False)
     monkeypatch.setenv("RAILWAY_PROJECT_ID", "p1")
     monkeypatch.setenv("RAILWAY_ENVIRONMENT_ID", "e1")
-    monkeypatch.setattr("sys.argv", ["railway_step91c_log_evidence.py"])
+    monkeypatch.setattr("sys.argv", ["railway_step91c_log_evidence.py", "--service-names", "paper-daily-runner"])
     assert s.main() == 0
     payload = json.loads((tmp_path / s.REPORT_JSON).read_text(encoding="utf-8"))
     assert payload["overall_status"] == "NOT_CONFIGURED"
@@ -81,10 +81,19 @@ def test_configured_warning_with_secret_makes_fail_and_redacted(tmp_path, monkey
         }
     }
     monkeypatch.setattr(s, "_read_only_graphql", lambda *a, **k: payload)
-    monkeypatch.setattr("sys.argv", ["railway_step91c_log_evidence.py"])
+    monkeypatch.setattr("sys.argv", ["railway_step91c_log_evidence.py", "--service-names", "paper-daily-runner"])
     s.main()
     report = json.loads((tmp_path / s.REPORT_JSON).read_text(encoding="utf-8"))
     assert report["fallback_warning_check"] == "FAIL"
     assert report["fallback_warning_matches_count"] == 1
     assert report["redacted_warning_matches_count"] == 1
     assert report["safe_snippets"] == []
+
+
+def test_scan_entries_counts_service_role_warning_redacted():
+    now = datetime.now(timezone.utc)
+    entries = [{"message": "SUPABASE_KEY fallback using SUPABASE_SERVICE_ROLE_KEY service_role value", "timestamp": now.isoformat()}]
+    matches, redacted, snippets = s._scan_entries(entries, now - timedelta(minutes=5))
+    assert matches == 1
+    assert redacted == 1
+    assert snippets == []

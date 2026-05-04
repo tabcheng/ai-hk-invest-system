@@ -1,0 +1,79 @@
+name: Step 91C Runtime Acceptance
+
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: Target environment label
+        required: true
+        default: production
+      test_run_id:
+        description: Enter only the numeric run id, e.g. 31
+        required: true
+      verify_supabase:
+        description: Keep true for Step 91C acceptance
+        required: true
+        default: "true"
+      freshness_minutes:
+        description: Freshness threshold in minutes
+        required: true
+        default: "1440"
+
+jobs:
+  step91c-acceptance:
+    runs-on: ubuntu-latest
+    environment: production-smoke
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install -r requirements.txt
+      - name: Preflight Supabase secret class
+        env:
+          SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+        run: |
+          if [ -z "$SUPABASE_SECRET_KEY" ]; then
+            echo "SUPABASE_SECRET_KEY missing" >&2
+            exit 1
+          fi
+          case "$SUPABASE_SECRET_KEY" in
+            sb_secret_*) echo "Supabase key class check passed" ;;
+            *) echo "SUPABASE_SECRET_KEY must start with sb_secret_" >&2; exit 1 ;;
+          esac
+      - name: Run operator smoke
+        env:
+          OPERATOR_WEBHOOK_TEST_URL: ${{ secrets.OPERATOR_WEBHOOK_TEST_URL }}
+          OPERATOR_TEST_CHAT_ID: ${{ vars.OPERATOR_TEST_CHAT_ID }}
+          OPERATOR_TEST_USER_ID: ${{ vars.OPERATOR_TEST_USER_ID }}
+          OPERATOR_WEBHOOK_SECRET: ${{ secrets.OPERATOR_WEBHOOK_SECRET }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: python scripts/operator_smoke_test.py --target "${{ inputs.target }}" --test-run-id "${{ inputs.test_run_id }}" --verify-supabase "true"
+      - name: Run miniapp API smoke
+        env:
+          MINIAPP_SMOKE_ENDPOINT_URL: ${{ secrets.MINIAPP_SMOKE_ENDPOINT_URL }}
+          MINIAPP_SMOKE_BOT_TOKEN: ${{ secrets.MINIAPP_SMOKE_BOT_TOKEN }}
+          MINIAPP_SMOKE_ALLOWED_TELEGRAM_USER_ID: ${{ secrets.MINIAPP_SMOKE_ALLOWED_TELEGRAM_USER_ID }}
+          MINIAPP_SMOKE_UNAUTHORIZED_TELEGRAM_USER_ID: ${{ secrets.MINIAPP_SMOKE_UNAUTHORIZED_TELEGRAM_USER_ID }}
+        run: python scripts/miniapp_api_smoke.py
+      - name: Run Step91C aggregate acceptance
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: python scripts/step91c_runtime_acceptance.py --target "${{ inputs.target }}" --test-run-id "${{ inputs.test_run_id }}" --freshness-minutes "${{ inputs.freshness_minutes }}"
+      - name: Upload acceptance artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: step91c-runtime-acceptance-${{ github.run_id }}
+          path: |
+            operator_smoke_report.md
+            operator_smoke_report.json
+            miniapp_api_smoke_report.md
+            miniapp_api_smoke_report.json
+            step91c_runtime_acceptance_report.md
+            step91c_runtime_acceptance_report.json
+          retention-days: 7

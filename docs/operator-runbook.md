@@ -301,3 +301,9 @@ Use together with `docs/railway-service-variables.md` Step 91C and `docs/post-de
 - no secret/service key values exposed in logs/artifacts/screenshots: yes/no
 - no fallback warning for `SUPABASE_KEY` observed when `SUPABASE_SECRET_KEY` is configured: yes/no
 - issues / errors:
+
+## Step 91C-1 GitHub automated runtime acceptance smoke
+- Use GitHub Actions workflow `Step 91C Runtime Acceptance` (`.github/workflows/step91c-runtime-acceptance.yml`) to produce reviewer artifacts with reduced manual handling.
+- Artifacts include: `operator_smoke_report.{md,json}`, `miniapp_api_smoke_report.{md,json}`, `step91c_runtime_acceptance_report.{md,json}`.
+- Guardrail remains unchanged: paper-trading / decision-support only, no broker integration, no real-money execution.
+- Limitation: until Railway token/log integration is added, Railway env/fallback-warning evidence remains partial (`fallback_warning_check=NOT_CHECKED`).

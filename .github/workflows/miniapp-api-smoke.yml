@@ -23,3 +23,13 @@ jobs:
           MINIAPP_SMOKE_ALLOWED_TELEGRAM_USER_ID: ${{ secrets.MINIAPP_SMOKE_ALLOWED_TELEGRAM_USER_ID }}
           MINIAPP_SMOKE_UNAUTHORIZED_TELEGRAM_USER_ID: ${{ secrets.MINIAPP_SMOKE_UNAUTHORIZED_TELEGRAM_USER_ID }}
         run: python scripts/miniapp_api_smoke.py
+
+      - name: Upload miniapp smoke artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: miniapp-api-smoke-${{ github.run_id }}
+          path: |
+            miniapp_api_smoke_report.md
+            miniapp_api_smoke_report.json
+          retention-days: 7

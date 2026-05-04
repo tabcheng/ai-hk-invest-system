@@ -202,3 +202,8 @@ Operator deploy + smoke evidence flow (manual):
 6. Verify Mini App API read-only smoke remains functional.
 7. Verify logs/reports do not expose `SUPABASE_SECRET_KEY` / `SUPABASE_SERVICE_ROLE_KEY` / `SUPABASE_KEY`.
 8. Confirm no fallback warning for `SUPABASE_KEY` appears when `SUPABASE_SECRET_KEY` is configured.
+
+## Step 91C key-class smoke reminders
+- Backend smoke/acceptance should prefer `SUPABASE_SECRET_KEY` (`sb_secret_...` class) and may fallback to `SUPABASE_SERVICE_ROLE_KEY` only when explicitly intended.
+- `SUPABASE_KEY` remains transitional fallback and must not be exposed to browser/client/static assets.
+- GitHub smoke artifacts must redact all secret/token/initData/allowlist values.

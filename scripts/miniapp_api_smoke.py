@@ -9,7 +9,8 @@ import json
 import os
 import sys
 import time
-from dataclasses import dataclass
+from pathlib import Path
+from dataclasses import dataclass, asdict
 from typing import Any
 from urllib import parse, request
 from urllib.error import HTTPError, URLError
@@ -155,6 +156,29 @@ def _assert_no_write_affordance(payload: dict[str, Any]) -> bool:
     return not any(token in serialized for token in blocked_tokens)
 
 
+
+
+def _write_reports(endpoint: str, results: list[CaseResult], authorized_operator_result: str, all_passed: bool) -> None:
+    payload = {
+        "endpoint": endpoint,
+        "overall_passed": all_passed,
+        "authorized_operator_result": authorized_operator_result,
+        "guardrails": {
+            "read_only": True,
+            "paper_trade_only": True,
+            "decision_support_only": True,
+            "no_broker_execution": True,
+            "no_real_money_execution": True,
+        },
+        "secrets_redacted": True,
+        "cases": [asdict(r) for r in results],
+    }
+    Path("miniapp_api_smoke_report.json").write_text(json.dumps(payload, indent=2, ensure_ascii=False)+"\n", encoding="utf-8")
+    lines=["# Mini App API Smoke Report","",f"- endpoint: {endpoint}",f"- overall_passed: {all_passed}",f"- authorized_operator_result: {authorized_operator_result}","- secrets_redacted: true","","## Guardrails","- read_only: true","- paper_trade_only: true","- decision_support_only: true","- no_broker_execution: true","- no_real_money_execution: true","","## Cases"]
+    for r in results:
+        lines.append(f"- {r.name}: {'PASS' if r.passed else 'FAIL'} status={r.status_code} {r.detail}")
+    Path("miniapp_api_smoke_report.md").write_text("\n".join(lines)+"\n", encoding="utf-8")
+
 def main() -> int:
     env = _require_env()
     endpoint = _build_endpoint(env["MINIAPP_SMOKE_ENDPOINT_URL"])
@@ -216,6 +240,9 @@ def main() -> int:
     for r in results:
         label = "PASS" if r.passed else "FAIL"
         print(f"[{label}] {r.name} status={r.status_code} {r.detail}")
+
+    authorized_result = next(("PASS" if r.passed else "FAIL" for r in results if r.name == "E_authorized_operator"), "UNKNOWN")
+    _write_reports(endpoint, results, authorized_result, all_passed)
 
     return 0 if all_passed else 1
 

@@ -338,3 +338,6 @@
 
 - Step 91B completed: backend Supabase key env resolution is now explicit with priority `SUPABASE_SECRET_KEY` -> `SUPABASE_SERVICE_ROLE_KEY` -> `SUPABASE_KEY` transitional fallback, plus safe deprecation warning and focused tests for priority/error/redaction behavior; no frontend key exposure path introduced and paper-trading/decision-support boundary unchanged.
 - Step 91C completed (docs/runbook/checklist alignment): Railway runtime migration plan/evidence requirements are now explicit for backend Supabase key usage (`SUPABASE_SECRET_KEY`/`sb_secret_...` preferred, `SUPABASE_SERVICE_ROLE_KEY` explicit alternative, `SUPABASE_KEY` transitional fallback only), including staged env review + deploy + post-deploy smoke checks for affected backend services and explicit `miniapp-static-preview`/frontend secret-boundary reaffirmation.
+
+- Step 91C-1 in progress: GitHub automated runtime acceptance smoke adds structured artifacts for operator smoke + Mini App API smoke + aggregate Supabase evidence, while preserving paper-trading/decision-support boundary and no broker/live-money execution.
+- Step 91C-1 known limitation: without Railway token/log integration, fallback-warning verification remains partial (`NOT_CHECKED`) and full acceptance still needs Railway evidence.

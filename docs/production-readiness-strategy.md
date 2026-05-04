@@ -160,3 +160,23 @@ Step 91A acceptance status update:
 - `SUPABASE_KEY` remains transitional fallback only for short-term backward compatibility and should be migrated away in a later platform step.
 - Runtime warnings for fallback usage must be safe and never print secret values.
 - Mini App frontend/browser/static preview must not contain service-role/secret backend keys.
+
+## Step 91C readiness focus — Railway explicit backend key migration + smoke evidence
+- Railway runtime target state for backend production services:
+  - `SUPABASE_URL` present.
+  - `SUPABASE_SECRET_KEY` (`sb_secret_...`) is the preferred active backend key.
+  - `SUPABASE_SERVICE_ROLE_KEY` remains explicit backend alternative.
+  - `SUPABASE_KEY` stays transitional fallback only (rollback/backward compatibility), not the intended active dependency.
+- Service review boundary:
+  - Must review `paper-daily-runner`.
+  - Must review `telegram-webhook` when backend Supabase path is in use.
+  - Must review any backend smoke/scheduled service that uses production Supabase data.
+  - `miniapp-static-preview` must remain free of Supabase backend keys.
+- Deployment/acceptance requirement:
+  - Railway staged variable review + deploy + post-deploy smoke evidence are mandatory.
+  - Smoke evidence must include DB write-path checks, Telegram path checks, Mini App read-only API smoke, and safe-log confirmation (no key exposure).
+  - When `SUPABASE_SECRET_KEY` is configured, fallback-warning evidence should confirm `SUPABASE_KEY` is not actively used.
+- Domain boundary unchanged:
+  - RLS remains enabled.
+  - Backend secret key usage remains backend-only.
+  - System remains AI HK equity paper-trading / decision-support only, with no broker/live-money execution path.

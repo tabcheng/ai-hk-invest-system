@@ -284,3 +284,20 @@ Use together with `docs/post-deploy-acceptance-checklist.md` section **G**.
 Recorded Step 91A operator result:
 - platform key correction completed: yes
 - RLS runtime acceptance completed: yes
+
+## Step 91C Railway backend Supabase key migration (manual acceptance template)
+Use together with `docs/railway-service-variables.md` Step 91C and `docs/post-deploy-acceptance-checklist.md` sections **C/D**.
+
+- Railway staged env review completed for affected backend services (`paper-daily-runner`, `telegram-webhook` if Supabase path enabled, other backend scheduled/smoke services): yes/no
+- backend target key set to `SUPABASE_SECRET_KEY` (`sb_secret_...`) on affected backend services: yes/no
+- explicit fallback-only posture confirmed (`SUPABASE_KEY` present only for transitional rollback/backward compatibility): yes/no
+- Railway deploy completed for all affected backend services: yes/no
+- post-deploy `paper-daily-runner` execution completed: yes/no
+- DB writes verified (`runs`, `signals`, decision-ledger / paper-trading where applicable): yes/no
+- `latest_system_runs` path unaffected if configured: yes/no/not applicable
+- Telegram webhook/smoke path still works: yes/no
+- Mini App API read-only smoke still works: yes/no
+- `miniapp-static-preview` confirms no Supabase secret/service-role/fallback backend key vars configured: yes/no
+- no secret/service key values exposed in logs/artifacts/screenshots: yes/no
+- no fallback warning for `SUPABASE_KEY` observed when `SUPABASE_SECRET_KEY` is configured: yes/no
+- issues / errors:

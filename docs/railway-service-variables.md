@@ -171,3 +171,34 @@ Security rule:
 - Railway variable migration is a later platform step (not changed in this step).
 - `miniapp-static-preview` must never contain `SUPABASE_SECRET_KEY` / `SUPABASE_SERVICE_ROLE_KEY` / `SUPABASE_KEY`.
 - RLS remains enabled; backend secret key usage remains backend-only.
+
+## Step 91C Railway runtime variable migration checklist + smoke evidence
+- Goal: make backend production services explicitly depend on `SUPABASE_SECRET_KEY` (`sb_secret_...` class) instead of ambiguous `SUPABASE_KEY`.
+- Affected Railway services to review:
+  1. `paper-daily-runner` (required; backend writes).
+  2. `telegram-webhook` (required if backend Supabase read/write path is enabled).
+  3. Any backend smoke/scheduled service that reads/writes production Supabase data.
+- Frontend/static boundary:
+  - `miniapp-static-preview` must never contain `SUPABASE_SECRET_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, or `SUPABASE_KEY`.
+  - Mini App frontend/browser must never receive backend secret/service-role keys.
+
+Target runtime state (backend services):
+- Required: `SUPABASE_URL`.
+- Preferred active key: `SUPABASE_SECRET_KEY=sb_secret_...`.
+- Allowed explicit backend alternative: `SUPABASE_SERVICE_ROLE_KEY`.
+- Transitional rollback/backward compatibility: `SUPABASE_KEY` may remain configured temporarily, but must not be the active dependency when `SUPABASE_SECRET_KEY` exists.
+- Removal of `SUPABASE_KEY` is deferred to a later step (target Step 91D), after explicit acceptance.
+
+Operator deploy + smoke evidence flow (manual):
+1. Review Railway staged variable changes per affected backend service.
+2. Deploy affected services in Railway.
+3. Trigger/run `paper-daily-runner` post-deploy.
+4. Verify DB write paths:
+   - `runs` insert/update observed,
+   - `signals` upsert/update observed,
+   - decision-ledger / paper-trading writes observed when applicable,
+   - `latest_system_runs` path unaffected if configured.
+5. Verify Telegram path still works (webhook ingress/reply + daily summary path as applicable).
+6. Verify Mini App API read-only smoke remains functional.
+7. Verify logs/reports do not expose `SUPABASE_SECRET_KEY` / `SUPABASE_SERVICE_ROLE_KEY` / `SUPABASE_KEY`.
+8. Confirm no fallback warning for `SUPABASE_KEY` appears when `SUPABASE_SECRET_KEY` is configured.

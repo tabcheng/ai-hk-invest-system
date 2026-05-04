@@ -24,13 +24,17 @@ After Step 66, every relevant PR must explicitly state which checklist sections 
 - [ ] `verify_supabase=true` is required when DB persistence behavior is touched.
 - [ ] Supabase verification status is PASS.
 - [ ] Matched row count and QA marker are checked where applicable.
-- [ ] `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` remain GitHub Secrets only.
+- [ ] `SUPABASE_URL` and backend key vars (`SUPABASE_SECRET_KEY` preferred; `SUPABASE_SERVICE_ROLE_KEY` allowed) remain backend secret stores only.
+- [ ] `SUPABASE_KEY` is treated as transitional fallback only (not preferred active runtime dependency).
 - [ ] No secrets appear in logs, reports, docs, or source code.
 
 ## D. Railway / Deployment PRs
 - [ ] Railway deployment is completed before production smoke test starts.
 - [ ] No unexpected changes in service topology, cron, env vars, or webhook routing.
 - [ ] If Railway settings changed, document exact setting changes and rollback notes.
+- [ ] Affected backend services are explicitly reviewed (`paper-daily-runner`, `telegram-webhook` when Supabase path applies, and any scheduled/smoke backend service using production Supabase data).
+- [ ] `miniapp-static-preview` remains free of `SUPABASE_SECRET_KEY` / `SUPABASE_SERVICE_ROLE_KEY` / `SUPABASE_KEY`.
+- [ ] No `SUPABASE_KEY` fallback warning appears when `SUPABASE_SECRET_KEY` is configured.
 
 ## E. Domain Guardrail
 - [ ] No broker integration.

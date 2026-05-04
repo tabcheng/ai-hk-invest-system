@@ -66,6 +66,15 @@ jobs:
           MINIAPP_SMOKE_ALLOWED_TELEGRAM_USER_ID: ${{ secrets.MINIAPP_SMOKE_ALLOWED_TELEGRAM_USER_ID }}
           MINIAPP_SMOKE_UNAUTHORIZED_TELEGRAM_USER_ID: ${{ secrets.MINIAPP_SMOKE_UNAUTHORIZED_TELEGRAM_USER_ID }}
         run: python scripts/miniapp_api_smoke.py
+      - name: Run Railway log evidence (read-only)
+        if: always()
+        continue-on-error: true
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          RAILWAY_PROJECT_ID: ${{ vars.RAILWAY_PROJECT_ID }}
+          RAILWAY_ENVIRONMENT_ID: ${{ vars.RAILWAY_ENVIRONMENT_ID }}
+          RAILWAY_LOG_SERVICE_NAMES: ${{ vars.RAILWAY_LOG_SERVICE_NAMES }}
+        run: python scripts/railway_step91c_log_evidence.py --log-window-minutes 120
       - name: Run Step91C aggregate acceptance
         if: always()
         env:
@@ -99,4 +108,6 @@ jobs:
             miniapp_api_smoke_report.json
             step91c_runtime_acceptance_report.md
             step91c_runtime_acceptance_report.json
+            railway_step91c_log_evidence_report.md
+            railway_step91c_log_evidence_report.json
           retention-days: 7

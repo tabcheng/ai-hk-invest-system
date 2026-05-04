@@ -81,6 +81,17 @@ def _read_operator_status(path: Path) -> str:
         return "INVALID"
 
 
+
+
+def _read_railway_evidence(path: Path) -> dict[str, Any] | None:
+    if not path.exists():
+        return None
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        return None
+    return payload if isinstance(payload, dict) else None
+
 def _read_miniapp_status(path: Path) -> str:
     if not path.exists():
         return "MISSING"
@@ -124,9 +135,22 @@ def main() -> int:
         "paper_trades_check": {"status": "NOT_CHECKED", "classification": "optional"},
         "latest_system_runs_check": {"status": "NOT_CHECKED", "classification": "optional"},
         "secrets_redacted": True,
-        "fallback_warning_check": "NOT_CHECKED",
+        "fallback_warning_check": "NOT_CONFIGURED",
+        "railway_evidence_status": "MISSING",
         "domain_guardrail_confirmation": "no broker/live-money execution",
     }
+
+    railway = _read_railway_evidence(Path("railway_step91c_log_evidence_report.json"))
+    if railway is None:
+        report["fallback_warning_check"] = "NOT_CONFIGURED"
+        report["railway_evidence_status"] = "MISSING"
+        report["limitation"] = "Railway evidence missing; fallback warning check not configured."
+    else:
+        report["railway_evidence_status"] = "FOUND"
+        fw = railway.get("fallback_warning_check", "NOT_CONFIGURED")
+        report["fallback_warning_check"] = fw if fw in ("PASS", "FAIL", "NOT_CONFIGURED") else "NOT_CONFIGURED"
+        if report["fallback_warning_check"] == "NOT_CONFIGURED":
+            report["limitation"] = railway.get("limitation", "Railway evidence not fully configured.")
 
     if preflight == "PASS":
         for table in REQUIRED_TABLES:
@@ -151,8 +175,9 @@ def main() -> int:
         report["latest_system_runs_check"].get("status"),
     ]
     required_ok = all(status == "PASS" for status in required_gate_statuses)
+    fallback_ok = report["fallback_warning_check"] in ("PASS", "NOT_CONFIGURED")
     optional_ok = all(status in ("PASS", "NOT_CONFIGURED") for status in optional_gate_statuses)
-    report["overall_status"] = "PASS" if required_ok and optional_ok else "FAIL"
+    report["overall_status"] = "PASS" if required_ok and optional_ok and fallback_ok else "FAIL"
 
     Path(REPORT_JSON).write_text(json.dumps(report, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     lines = ["# Step 91C Runtime Acceptance Report", "", f"- overall_status: {report['overall_status']}"]
@@ -163,6 +188,7 @@ def main() -> int:
         "miniapp_smoke_report_status",
         "secrets_redacted",
         "fallback_warning_check",
+        "railway_evidence_status",
         "domain_guardrail_confirmation",
     ):
         lines.append(f"- {key_name}: {report[key_name]}")

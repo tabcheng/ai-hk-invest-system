@@ -206,3 +206,5 @@ Prioritization:
 - **Step 91C completed (docs/runbook/checklist update):** documented explicit Railway backend key migration/acceptance flow requiring staged env review + deploy + smoke evidence, with backend target state `SUPABASE_SECRET_KEY`-first (`sb_secret_...`), `SUPABASE_SERVICE_ROLE_KEY` explicit alternative, and `SUPABASE_KEY` transitional fallback-only posture; reaffirmed `miniapp-static-preview`/frontend secret boundary and no broker/live execution path.
 
 - Step 91C-1 follow-up: integrate Railway API/CLI or tokenized log evidence into acceptance workflow so fallback-warning check can move from `NOT_CHECKED` to deterministic PASS/FAIL.
+
+| 91C-2 | Railway log / fallback-warning evidence automation (read-only) | Add optional read-only Railway evidence script + workflow/artifact integration + aggregate fallback-warning gate mapping (`PASS`/`FAIL`/`NOT_CONFIGURED`) with safe redaction/no raw logs | In progress |

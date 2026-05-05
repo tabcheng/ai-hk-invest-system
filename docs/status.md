@@ -346,3 +346,5 @@
 - Step 91C-2 in progress: add optional/read-only Railway log evidence automation for runtime acceptance artifacts, promoting fallback-warning verification from `NOT_CHECKED` to `PASS/FAIL/NOT_CONFIGURED` when configured.
 - Step 91C-2 guardrails: no Railway variable mutation, no deploy/redeploy, no staged-change commit, no raw logs/secrets in artifacts, and paper-trading/decision-support-only boundary unchanged.
 - Step 91C-4 prepared: Railway evidence diagnostics now include safe HTTPError fields (`railway_api_http_status`, `railway_api_error_kind`, redacted excerpt, host-only endpoint label), optional `RAILWAY_API_URL` override, and lightweight connectivity check status to separate auth/connectivity from GraphQL log-query mismatch; reporting remains read-only and secret-safe.
+
+- Step 91C-5 in progress: Railway evidence query path switched to official `environmentLogs(environmentId, filter, beforeLimit)` mode (default `RAILWAY_LOG_QUERY_MODE=environment`) with `RAILWAY_LOG_SERVICE_IDS` filter support, safe diagnostics (`railway_query_stage=environment_logs`), and unchanged read-only/no-secret/no-deploy guardrails.

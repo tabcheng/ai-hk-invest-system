@@ -69,58 +69,62 @@ def _parse_iso(value: str | None) -> datetime | None:
         return None
 
 
-def _scan_entries(entries: list[dict[str, Any]], since_dt: datetime) -> tuple[int, int, list[str]]:
+def _scan_entries(entries: list[dict[str, Any]], since_dt: datetime) -> tuple[int, int, int, int, list[str]]:
     matches = 0
     redacted_matches = 0
+    in_window_count = 0
+    unknown_ts_count = 0
     snippets: list[str] = []
+
     for entry in entries:
         message = str(entry.get("message", ""))
         ts = _parse_iso(str(entry.get("timestamp", "")))
-        if ts is not None and ts < since_dt:
+        if ts is None:
+            unknown_ts_count += 1
             continue
+        if ts < since_dt:
+            continue
+
+        in_window_count += 1
         if any(pattern in message for pattern in WARNING_PATTERNS):
             matches += 1
             if SECRET_LIKE_PATTERN.search(message):
                 redacted_matches += 1
                 continue
             snippets.append(message[:180])
-    return matches, redacted_matches, snippets[:8]
+
+    return matches, redacted_matches, in_window_count, unknown_ts_count, snippets[:8]
 
 
-def _collect_service_entries(payload: dict[str, Any]) -> list[dict[str, Any]]:
-    edges = (
-        payload.get("data", {})
-        .get("project", {})
-        .get("service", {})
-        .get("deployments", {})
-        .get("edges", [])
-    )
-    if not edges:
-        return []
-    log_edges = edges[0].get("node", {}).get("logs", {}).get("edges", [])
-    entries: list[dict[str, Any]] = []
-    for edge in log_edges:
-        node = edge.get("node", {}) if isinstance(edge, dict) else {}
-        if isinstance(node, dict):
-            entries.append({"message": node.get("message", ""), "timestamp": node.get("timestamp")})
-    return entries
+def _collect_environment_entries(payload: dict[str, Any]) -> list[dict[str, Any]]:
+    raw = payload.get("data", {}).get("environmentLogs")
+    if isinstance(raw, list):
+        return [x for x in raw if isinstance(x, dict)]
+    if isinstance(raw, dict):
+        edges = raw.get("edges", [])
+        return [edge.get("node", {}) for edge in edges if isinstance(edge, dict) and isinstance(edge.get("node"), dict)]
+    return []
 
 
 def _render_md(report: dict[str, Any]) -> str:
-    lines = ["# Railway Step 91C Log Evidence Report", ""]
-    for key in (
+    keys = [
         "overall_status",
         "railway_token_configured",
         "project_id_configured",
         "environment_id_configured",
         "checked_services",
+        "checked_service_ids",
+        "railway_log_query_mode",
+        "railway_query_stage",
         "log_window_minutes",
         "fallback_warning_check",
         "fallback_warning_matches_count",
         "redacted_warning_matches_count",
         "logs_read_count",
+        "logs_recent_count",
+        "logs_returned_count",
+        "logs_unknown_timestamp_count",
         "railway_api_url_host_only",
-        "railway_api_endpoint_label",
         "connectivity_check",
         "connectivity_http_status",
         "connectivity_reason",
@@ -132,27 +136,34 @@ def _render_md(report: dict[str, Any]) -> str:
         "secrets_redacted",
         "raw_logs_included",
         "limitation",
-    ):
-        lines.append(f"- {key}: {report.get(key)}")
+    ]
+    lines = ["# Railway Step 91C Log Evidence Report", ""] + [f"- {k}: {report.get(k)}" for k in keys]
     if report.get("safe_snippets"):
-        lines.extend(["", "## Safe snippets"])
-        lines.extend([f"- {snippet}" for snippet in report["safe_snippets"]])
+        lines.extend(["", "## Safe snippets"] + [f"- {x}" for x in report["safe_snippets"]])
     return "\n".join(lines) + "\n"
 
 
 def main() -> int:
-    p = argparse.ArgumentParser()
-    p.add_argument("--log-window-minutes", type=int, default=120)
-    p.add_argument("--service-names", default=os.getenv("RAILWAY_LOG_SERVICE_NAMES", "paper-daily-runner,telegram-webhook"))
-    args = p.parse_args()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--log-window-minutes", type=int, default=120)
+    parser.add_argument(
+        "--service-names",
+        default=os.getenv("RAILWAY_LOG_SERVICE_NAMES", "paper-daily-runner,telegram-webhook"),
+    )
+    args = parser.parse_args()
 
     token = os.getenv("RAILWAY_TOKEN", "").strip()
     project_id = os.getenv("RAILWAY_PROJECT_ID", "").strip()
     environment_id = os.getenv("RAILWAY_ENVIRONMENT_ID", "").strip()
-    connectivity_probe = os.getenv("RAILWAY_CONNECTIVITY_PROBE", "workspace").strip().lower()
     api_url = os.getenv("RAILWAY_API_URL", RAILWAY_API_URL).strip() or RAILWAY_API_URL
-    api_host = parse.urlparse(api_url).netloc or "unknown"
+
+    query_mode = (os.getenv("RAILWAY_LOG_QUERY_MODE", "environment").strip().lower() or "environment")
+    if query_mode not in {"environment", "cli"}:
+        query_mode = "environment"
+
     services = _split_csv(args.service_names)
+    service_ids = _split_csv(os.getenv("RAILWAY_LOG_SERVICE_IDS", ""))
+    api_host = parse.urlparse(api_url).netloc or "unknown"
     since_dt = datetime.now(timezone.utc) - timedelta(minutes=max(1, args.log_window_minutes))
 
     report: dict[str, Any] = {
@@ -162,11 +173,17 @@ def main() -> int:
         "project_id_configured": bool(project_id),
         "environment_id_configured": bool(environment_id),
         "checked_services": services,
+        "checked_service_ids": service_ids,
+        "railway_log_query_mode": query_mode,
+        "railway_query_stage": None,
         "log_window_minutes": args.log_window_minutes,
         "fallback_warning_check": "NOT_CONFIGURED",
         "fallback_warning_matches_count": 0,
         "redacted_warning_matches_count": 0,
         "logs_read_count": 0,
+        "logs_recent_count": 0,
+        "logs_returned_count": 0,
+        "logs_unknown_timestamp_count": 0,
         "staged_changes_check": "NOT_CONFIGURED",
         "staged_changes_summary": "redacted/count-only",
         "safe_snippets": [],
@@ -176,92 +193,117 @@ def main() -> int:
         "railway_api_endpoint_label": f"https://{api_host}",
         "connectivity_check": "NOT_RUN",
         "connectivity_http_status": None,
-        "connectivity_reason": None,
+        "connectivity_reason": "workspace_probe_not_configured",
         "railway_api_http_status": None,
         "railway_api_error_kind": None,
         "railway_api_error_excerpt_redacted": None,
         "limitation": "Railway evidence unavailable or partial.",
     }
 
-    configured = bool(token and project_id and environment_id and services)
-    if configured:
+    if token and project_id and environment_id:
         try:
-            total_matches = 0
-            total_redacted = 0
-            logs_read_count = 0
-            safe_snippets: list[str] = []
-            logs_query = (
-                "query($projectId:String!,$environmentId:String!,$serviceName:String!){"
-                "project(id:$projectId){service(name:$serviceName){deployments(first:1,environmentId:$environmentId){edges{node{logs(first:300){edges{node{message timestamp}}}}}}}}}"
-            )
-            if connectivity_probe == "account":
-                connectivity_query = "query { me { email } }"
-                try:
-                    _read_only_graphql(token, connectivity_query, {}, api_url)
-                    report["connectivity_check"] = "PASS"
-                except error.HTTPError as exc:
-                    report["connectivity_check"] = "FAIL"
-                    report["connectivity_http_status"] = exc.code
-                except Exception:
-                    report["connectivity_check"] = "FAIL"
-            elif connectivity_probe in {"workspace", "project"}:
-                report["connectivity_check"] = "NOT_RUN"
-                report["connectivity_reason"] = f"{connectivity_probe}_probe_not_configured"
+            if query_mode == "cli":
+                report.update(
+                    {
+                        "overall_status": "FAIL",
+                        "fallback_warning_check": "FAIL",
+                        "railway_query_stage": "cli_logs",
+                        "limitation": "RAILWAY_LOG_QUERY_MODE=cli is not implemented in this step.",
+                    }
+                )
             else:
-                report["connectivity_check"] = "NOT_RUN"
-                report["connectivity_reason"] = "probe_mode_unknown"
-
-            for service_name in services:
+                report["railway_query_stage"] = "environment_logs"
+                if not service_ids:
+                    report.update(
+                        {
+                            "overall_status": "FAIL",
+                            "fallback_warning_check": "FAIL",
+                            "limitation": "RAILWAY_LOG_SERVICE_IDS is required for scoped environmentLogs evidence.",
+                        }
+                    )
+                    Path(REPORT_JSON).write_text(json.dumps(report, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+                    Path(REPORT_MD).write_text(_render_md(report), encoding="utf-8")
+                    print(
+                        "[railway_step91c_log_evidence] "
+                        f"overall_status={report['overall_status']} "
+                        f"fallback_warning_check={report['fallback_warning_check']} "
+                        f"logs_read_count={report['logs_read_count']} "
+                        f"railway_log_query_mode={report['railway_log_query_mode']} "
+                        f"railway_query_stage={report['railway_query_stage']} "
+                        f"railway_api_http_status={report['railway_api_http_status']} "
+                        f"railway_api_error_kind={report['railway_api_error_kind']} "
+                        f"limitation={report['limitation']}"
+                    )
+                    return 0
+                filter_expr = " OR ".join([f"@service:{sid}" for sid in service_ids]) if service_ids else None
                 payload = _read_only_graphql(
                     token,
-                    logs_query,
-                    {"projectId": project_id, "environmentId": environment_id, "serviceName": service_name},
+                    "query($environmentId:String!, $filter:String, $beforeLimit:Int){environmentLogs(environmentId:$environmentId, filter:$filter, beforeLimit:$beforeLimit){message severity timestamp}}",
+                    {"environmentId": environment_id, "filter": filter_expr, "beforeLimit": 300},
                     api_url,
                 )
-                entries = _collect_service_entries(payload)
-                logs_read_count += len(entries)
-                match_count, redacted_count, snippets = _scan_entries(entries, since_dt)
-                total_matches += match_count
-                total_redacted += redacted_count
-                safe_snippets.extend(snippets)
 
-            report["logs_read_count"] = logs_read_count
-            report["fallback_warning_matches_count"] = total_matches
-            report["redacted_warning_matches_count"] = total_redacted
-            report["safe_snippets"] = safe_snippets[:8]
-            report["staged_changes_check"] = "NOT_CONFIGURED"
-            report["staged_changes_summary"] = "count-only; staged changes read endpoint not configured"
+                entries = _collect_environment_entries(payload)
+                matches, redacted, logs_recent, unknown_ts, snippets = _scan_entries(entries, since_dt)
 
-            if logs_read_count == 0:
-                report["fallback_warning_check"] = "FAIL"
-                report["overall_status"] = "FAIL"
-                report["limitation"] = "Configured Railway evidence returned no readable log entries."
-            else:
-                report["fallback_warning_check"] = "FAIL" if total_matches > 0 else "PASS"
-                report["overall_status"] = report["fallback_warning_check"]
-                report["limitation"] = "Staged changes check remains NOT_CONFIGURED in this step."
+                report["logs_returned_count"] = len(entries)
+                report["logs_recent_count"] = logs_recent
+                report["logs_unknown_timestamp_count"] = unknown_ts
+                report["logs_read_count"] = logs_recent
+                report["fallback_warning_matches_count"] = matches
+                report["redacted_warning_matches_count"] = redacted
+                report["safe_snippets"] = snippets
+                report["staged_changes_summary"] = "count-only; staged changes read endpoint not configured"
 
+                if logs_recent == 0:
+                    report.update(
+                        {
+                            "overall_status": "FAIL",
+                            "fallback_warning_check": "FAIL",
+                            "limitation": "Configured Railway evidence returned no readable logs inside the configured log window.",
+                        }
+                    )
+                else:
+                    check = "FAIL" if matches > 0 else "PASS"
+                    report.update(
+                        {
+                            "overall_status": check,
+                            "fallback_warning_check": check,
+                            "limitation": "Staged changes check remains NOT_CONFIGURED in this step.",
+                        }
+                    )
         except error.HTTPError as exc:
             body = exc.read().decode("utf-8", errors="replace") if hasattr(exc, "read") else ""
-            report["overall_status"] = "FAIL"
-            report["fallback_warning_check"] = "FAIL"
-            report["railway_api_http_status"] = exc.code
-            report["railway_api_error_kind"] = "HTTPError"
-            report["railway_api_error_excerpt_redacted"] = _redact_text(body, limit=300)
-            report["limitation"] = "Configured Railway evidence read failed: HTTPError"
+            report.update(
+                {
+                    "overall_status": "FAIL",
+                    "fallback_warning_check": "FAIL",
+                    "railway_api_http_status": exc.code,
+                    "railway_api_error_kind": "HTTPError",
+                    "railway_api_error_excerpt_redacted": _redact_text(body),
+                    "limitation": "Configured Railway evidence read failed: HTTPError",
+                }
+            )
         except Exception as exc:  # noqa: BLE001
-            report["overall_status"] = "FAIL"
-            report["fallback_warning_check"] = "FAIL"
-            report["railway_api_error_kind"] = exc.__class__.__name__
-            report["limitation"] = f"Configured Railway evidence read failed: {exc.__class__.__name__}"
+            report.update(
+                {
+                    "overall_status": "FAIL",
+                    "fallback_warning_check": "FAIL",
+                    "railway_api_error_kind": exc.__class__.__name__,
+                    "limitation": f"Configured Railway evidence read failed: {exc.__class__.__name__}",
+                }
+            )
 
     Path(REPORT_JSON).write_text(json.dumps(report, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     Path(REPORT_MD).write_text(_render_md(report), encoding="utf-8")
+
     print(
         "[railway_step91c_log_evidence] "
         f"overall_status={report['overall_status']} "
         f"fallback_warning_check={report['fallback_warning_check']} "
         f"logs_read_count={report['logs_read_count']} "
+        f"railway_log_query_mode={report['railway_log_query_mode']} "
+        f"railway_query_stage={report['railway_query_stage']} "
         f"railway_api_http_status={report['railway_api_http_status']} "
         f"railway_api_error_kind={report['railway_api_error_kind']} "
         f"limitation={report['limitation']}"

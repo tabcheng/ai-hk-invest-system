@@ -74,6 +74,8 @@ jobs:
           RAILWAY_PROJECT_ID: ${{ vars.RAILWAY_PROJECT_ID }}
           RAILWAY_ENVIRONMENT_ID: ${{ vars.RAILWAY_ENVIRONMENT_ID }}
           RAILWAY_LOG_SERVICE_NAMES: ${{ vars.RAILWAY_LOG_SERVICE_NAMES }}
+          RAILWAY_LOG_QUERY_MODE: ${{ vars.RAILWAY_LOG_QUERY_MODE }}
+          RAILWAY_LOG_SERVICE_IDS: ${{ vars.RAILWAY_LOG_SERVICE_IDS }}
           RAILWAY_API_URL: ${{ vars.RAILWAY_API_URL }}
         run: python scripts/railway_step91c_log_evidence.py --log-window-minutes 120
       - name: Run Step91C aggregate acceptance

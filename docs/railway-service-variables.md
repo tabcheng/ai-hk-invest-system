@@ -214,3 +214,15 @@ Operator deploy + smoke evidence flow (manual):
 - `RAILWAY_ENVIRONMENT_ID` (GitHub Actions var)
 - Optional `RAILWAY_LOG_SERVICE_NAMES` (comma-separated service names)
 - Evidence integration is read-only; no variable mutation/redeploy/staged-change commit.
+
+
+## Step 91C-5 Railway evidence query mode update
+- `RAILWAY_LOG_QUERY_MODE` default: `environment` (allowed: `environment`, `cli`; `cli` reserved/future fallback).
+- `RAILWAY_LOG_SERVICE_IDS`: comma-separated Railway service UUIDs used for environment log filter (recommended).
+- `RAILWAY_LOG_SERVICE_NAMES`: display labels / compatibility only (not the primary log filter in environment mode).
+- `RAILWAY_API_URL` may remain `https://backboard.railway.com/graphql/v2`.
+- Railway evidence path remains read-only: no variable mutation, no deploy/redeploy, no staged-change commit, no raw logs/secrets in artifacts.
+
+- `RAILWAY_LOG_SERVICE_IDS` is required for scoped Step 91C `environmentLogs` evidence.
+- If Railway token/project/environment are configured but service IDs are missing, evidence must fail with scoped-limit message; do not scan full environment logs.
+- `RAILWAY_LOG_SERVICE_NAMES` remains display/compatibility labels only.

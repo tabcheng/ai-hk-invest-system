@@ -336,3 +336,12 @@ Use together with `docs/railway-service-variables.md` Step 91C and `docs/post-de
 
 - Step 91C scoped environmentLogs evidence requires `RAILWAY_LOG_SERVICE_IDS`; missing IDs must fail evidence instead of scanning full environment logs.
 - `RAILWAY_LOG_SERVICE_NAMES` are display labels only in Step 91C environment mode.
+
+## Step 91C-6 Railway runner-side API probe
+- 若本機 `curl` 對同一 Railway endpoint / project / environment / services 成功，但 GitHub Actions 仍是 403，先看 artifact：`railway_api_probe_report.md` / `.json`。
+- 判讀規則：
+  - `project_metadata_status=FAIL` 且 `project_metadata_http_status=403`：優先排查 runner token / GitHub environment secret / project access。
+  - `project_metadata_status=PASS` 但 `environment_logs_probe_status=FAIL` 且 `environment_logs_http_status=403`：偏向 Railway logs endpoint/query-specific 權限或 query 路徑問題。
+  - metadata PASS 但 `configured_environment_id_found=false` 或 `missing_service_ids` 非空：環境/服務 ID 配置錯誤。
+  - `environment_logs_probe_status=PASS` 但主 evidence 仍 FAIL：優先排查 log window 或 fallback warning 命中。
+- 探針維持 read-only，且不得在 chat/docs/logs 貼出 token 或原始 log message。

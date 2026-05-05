@@ -348,3 +348,5 @@
 - Step 91C-4 prepared: Railway evidence diagnostics now include safe HTTPError fields (`railway_api_http_status`, `railway_api_error_kind`, redacted excerpt, host-only endpoint label), optional `RAILWAY_API_URL` override, and lightweight connectivity check status to separate auth/connectivity from GraphQL log-query mismatch; reporting remains read-only and secret-safe.
 
 - Step 91C-5 in progress: Railway evidence query path switched to official `environmentLogs(environmentId, filter, beforeLimit)` mode (default `RAILWAY_LOG_QUERY_MODE=environment`) with `RAILWAY_LOG_SERVICE_IDS` filter support, safe diagnostics (`railway_query_stage=environment_logs`), and unchanged read-only/no-secret/no-deploy guardrails.
+
+- Step 91C-6 in progress: added runner-side read-only Railway API probe plan to separate token/project metadata access failures from environmentLogs permission/query-specific failures, with secret-safe markdown/json artifacts and no runtime mutation/deploy actions.

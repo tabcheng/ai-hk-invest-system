@@ -104,3 +104,10 @@ Step 91A recorded result (PR #88):
 
 - For Step 91C environment mode, `RAILWAY_LOG_SERVICE_IDS` is required; missing IDs must produce Railway evidence `FAIL` (no unfiltered environment scan).
 - Treat `RAILWAY_LOG_SERVICE_NAMES` as display-only labels.
+
+- Step 91C-6: 若 Step91C workflow 出現 Railway 403，先檢查 `railway_api_probe_report`：
+  - metadata 403 => token/secret/project access 問題；
+  - metadata PASS + environmentLogs 403 => logs endpoint/query-specific 權限問題；
+  - metadata PASS + ID missing => vars 配置錯誤；
+  - environmentLogs PASS + evidence FAIL => log window/fallback-warning 路徑問題。
+- Railway diagnostics artifact 必須保持 read-only，不得輸出 token 或 raw logs。

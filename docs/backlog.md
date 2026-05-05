@@ -210,3 +210,5 @@ Prioritization:
 | 91C-2 | Railway log / fallback-warning evidence automation (read-only) | Add optional read-only Railway evidence script + workflow/artifact integration + aggregate fallback-warning gate mapping (`PASS`/`FAIL`/`NOT_CONFIGURED`) with safe redaction/no raw logs | In progress (Step 91C-4 adds HTTPError diagnostics, endpoint override via `RAILWAY_API_URL`, and connectivity check fields while preserving read-only/no-secret boundaries) |
 
 | 91C-5 | Railway official environment logs query adoption | Replace guessed nested Railway logs query with official `environmentLogs` mode; add service-id filter envs + diagnostics/tests/docs alignment | In progress |
+
+| 91C-6 | Railway runner-side API probe diagnostics (read-only) | Add `scripts/railway_api_probe.py` + workflow artifact upload to distinguish token/project metadata access vs environmentLogs permission/query issues; keep existing evidence gate unchanged | In progress |

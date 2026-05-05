@@ -333,3 +333,6 @@ Use together with `docs/railway-service-variables.md` Step 91C and `docs/post-de
 - Set `RAILWAY_LOG_SERVICE_IDS` from Railway Cmd/Ctrl+K service UUIDs to scope filter (`@service:<id>` OR-joined).
 - Keep `RAILWAY_LOG_SERVICE_NAMES` for display/compatibility labels only.
 - Safety guardrails unchanged: no raw log lines in artifacts, no secret output, no Railway mutations/deploy/redeploy.
+
+- Step 91C scoped environmentLogs evidence requires `RAILWAY_LOG_SERVICE_IDS`; missing IDs must fail evidence instead of scanning full environment logs.
+- `RAILWAY_LOG_SERVICE_NAMES` are display labels only in Step 91C environment mode.

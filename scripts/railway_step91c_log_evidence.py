@@ -125,6 +125,9 @@ def _render_md(report: dict[str, Any]) -> str:
         "logs_returned_count",
         "logs_unknown_timestamp_count",
         "railway_api_url_host_only",
+        "connectivity_check",
+        "connectivity_http_status",
+        "connectivity_reason",
         "railway_api_http_status",
         "railway_api_error_kind",
         "railway_api_error_excerpt_redacted",
@@ -188,6 +191,9 @@ def main() -> int:
         "raw_logs_included": False,
         "railway_api_url_host_only": api_host,
         "railway_api_endpoint_label": f"https://{api_host}",
+        "connectivity_check": "NOT_RUN",
+        "connectivity_http_status": None,
+        "connectivity_reason": "workspace_probe_not_configured",
         "railway_api_http_status": None,
         "railway_api_error_kind": None,
         "railway_api_error_excerpt_redacted": None,
@@ -207,6 +213,28 @@ def main() -> int:
                 )
             else:
                 report["railway_query_stage"] = "environment_logs"
+                if not service_ids:
+                    report.update(
+                        {
+                            "overall_status": "FAIL",
+                            "fallback_warning_check": "FAIL",
+                            "limitation": "RAILWAY_LOG_SERVICE_IDS is required for scoped environmentLogs evidence.",
+                        }
+                    )
+                    Path(REPORT_JSON).write_text(json.dumps(report, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+                    Path(REPORT_MD).write_text(_render_md(report), encoding="utf-8")
+                    print(
+                        "[railway_step91c_log_evidence] "
+                        f"overall_status={report['overall_status']} "
+                        f"fallback_warning_check={report['fallback_warning_check']} "
+                        f"logs_read_count={report['logs_read_count']} "
+                        f"railway_log_query_mode={report['railway_log_query_mode']} "
+                        f"railway_query_stage={report['railway_query_stage']} "
+                        f"railway_api_http_status={report['railway_api_http_status']} "
+                        f"railway_api_error_kind={report['railway_api_error_kind']} "
+                        f"limitation={report['limitation']}"
+                    )
+                    return 0
                 filter_expr = " OR ".join([f"@service:{sid}" for sid in service_ids]) if service_ids else None
                 payload = _read_only_graphql(
                     token,

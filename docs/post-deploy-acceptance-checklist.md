@@ -101,3 +101,6 @@ Step 91A recorded result (PR #88):
 - Confirm report field `railway_query_stage=environment_logs` for 4xx diagnostics (`403/400/422`).
 - If `logs_read_count > 0` and no fallback-warning matches, accept `fallback_warning_check=PASS`.
 - If configured but `logs_read_count=0`, treat Railway evidence as `FAIL` and record limitation explicitly.
+
+- For Step 91C environment mode, `RAILWAY_LOG_SERVICE_IDS` is required; missing IDs must produce Railway evidence `FAIL` (no unfiltered environment scan).
+- Treat `RAILWAY_LOG_SERVICE_NAMES` as display-only labels.

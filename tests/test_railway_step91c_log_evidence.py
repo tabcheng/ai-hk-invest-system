@@ -21,12 +21,35 @@ def test_missing_config_not_configured(tmp_path, monkeypatch):
     monkeypatch.setenv("RAILWAY_ENVIRONMENT_ID", "e")
     payload = _run(tmp_path, monkeypatch)
     assert payload["overall_status"] == "NOT_CONFIGURED"
+    assert payload["connectivity_check"] == "NOT_RUN"
+    assert payload["connectivity_reason"] == "workspace_probe_not_configured"
+
+
+def test_missing_service_ids_with_configured_railway_fails_without_query(tmp_path, monkeypatch):
+    monkeypatch.setenv("RAILWAY_TOKEN", "t")
+    monkeypatch.setenv("RAILWAY_PROJECT_ID", "p")
+    monkeypatch.setenv("RAILWAY_ENVIRONMENT_ID", "e")
+    monkeypatch.delenv("RAILWAY_LOG_SERVICE_IDS", raising=False)
+    calls = {"count": 0}
+
+    def _fake(*_a, **_k):
+        calls["count"] += 1
+        return {"data": {"environmentLogs": []}}
+
+    monkeypatch.setattr(s, "_read_only_graphql", _fake)
+    p = _run(tmp_path, monkeypatch)
+    assert p["overall_status"] == "FAIL"
+    assert p["fallback_warning_check"] == "FAIL"
+    assert p["railway_query_stage"] == "environment_logs"
+    assert p["limitation"] == "RAILWAY_LOG_SERVICE_IDS is required for scoped environmentLogs evidence."
+    assert calls["count"] == 0
 
 
 def test_environmentlogs_pass_no_warning(tmp_path, monkeypatch):
     monkeypatch.setenv("RAILWAY_TOKEN", "t")
     monkeypatch.setenv("RAILWAY_PROJECT_ID", "p")
     monkeypatch.setenv("RAILWAY_ENVIRONMENT_ID", "e")
+    monkeypatch.setenv("RAILWAY_LOG_SERVICE_IDS", "svc1")
     monkeypatch.setattr(s, "_read_only_graphql", lambda *a, **k: {"data": {"environmentLogs": [{"message": "all good", "timestamp": datetime.now(timezone.utc).isoformat(), "severity": "INFO"}]}})
     p = _run(tmp_path, monkeypatch)
     assert p["overall_status"] == "PASS"
@@ -38,6 +61,7 @@ def test_environmentlogs_fail_warning_secret_redacted(tmp_path, monkeypatch):
     monkeypatch.setenv("RAILWAY_TOKEN", "t")
     monkeypatch.setenv("RAILWAY_PROJECT_ID", "p")
     monkeypatch.setenv("RAILWAY_ENVIRONMENT_ID", "e")
+    monkeypatch.setenv("RAILWAY_LOG_SERVICE_IDS", "svc1")
     monkeypatch.setattr(s, "_read_only_graphql", lambda *a, **k: {"data": {"environmentLogs": [{"message": "SUPABASE_KEY fallback sb_secret_x", "timestamp": datetime.now(timezone.utc).isoformat()}]}})
     p = _run(tmp_path, monkeypatch)
     assert p["fallback_warning_check"] == "FAIL"
@@ -49,6 +73,7 @@ def test_environmentlogs_edges_shape_supported(tmp_path, monkeypatch):
     monkeypatch.setenv("RAILWAY_TOKEN", "t")
     monkeypatch.setenv("RAILWAY_PROJECT_ID", "p")
     monkeypatch.setenv("RAILWAY_ENVIRONMENT_ID", "e")
+    monkeypatch.setenv("RAILWAY_LOG_SERVICE_IDS", "svc1")
     monkeypatch.setattr(s, "_read_only_graphql", lambda *a, **k: {"data": {"environmentLogs": {"edges": [{"node": {"message": "ok", "timestamp": datetime.now(timezone.utc).isoformat()}}]}}})
     p = _run(tmp_path, monkeypatch)
     assert p["logs_read_count"] == 1
@@ -58,6 +83,7 @@ def test_configured_zero_logs_fail(tmp_path, monkeypatch):
     monkeypatch.setenv("RAILWAY_TOKEN", "t")
     monkeypatch.setenv("RAILWAY_PROJECT_ID", "p")
     monkeypatch.setenv("RAILWAY_ENVIRONMENT_ID", "e")
+    monkeypatch.setenv("RAILWAY_LOG_SERVICE_IDS", "svc1")
     monkeypatch.setattr(s, "_read_only_graphql", lambda *a, **k: {"data": {"environmentLogs": []}})
     p = _run(tmp_path, monkeypatch)
     assert p["overall_status"] == "FAIL"
@@ -69,6 +95,7 @@ def test_http_403_diagnostics(tmp_path, monkeypatch):
     monkeypatch.setenv("RAILWAY_TOKEN", "t")
     monkeypatch.setenv("RAILWAY_PROJECT_ID", "p")
     monkeypatch.setenv("RAILWAY_ENVIRONMENT_ID", "e")
+    monkeypatch.setenv("RAILWAY_LOG_SERVICE_IDS", "svc1")
     err = HTTPError("https://example", 403, "forbidden", hdrs=None, fp=BytesIO(b'{"message":"forbidden","Authorization":"Bearer abc"}'))
     monkeypatch.setattr(s, "_read_only_graphql", lambda *a, **k: (_ for _ in ()).throw(err))
     p = _run(tmp_path, monkeypatch)
@@ -99,6 +126,7 @@ def test_report_never_includes_raw_logs_or_unredacted_secret(tmp_path, monkeypat
     monkeypatch.setenv("RAILWAY_TOKEN", "t")
     monkeypatch.setenv("RAILWAY_PROJECT_ID", "p")
     monkeypatch.setenv("RAILWAY_ENVIRONMENT_ID", "e")
+    monkeypatch.setenv("RAILWAY_LOG_SERVICE_IDS", "svc1")
     monkeypatch.setattr(
         s,
         "_read_only_graphql",
@@ -120,6 +148,7 @@ def test_only_old_clean_logs_fail_not_pass(tmp_path, monkeypatch):
     monkeypatch.setenv("RAILWAY_TOKEN", "t")
     monkeypatch.setenv("RAILWAY_PROJECT_ID", "p")
     monkeypatch.setenv("RAILWAY_ENVIRONMENT_ID", "e")
+    monkeypatch.setenv("RAILWAY_LOG_SERVICE_IDS", "svc1")
     old_ts = (datetime.now(timezone.utc) - timedelta(hours=5)).isoformat()
     monkeypatch.setattr(s, "_read_only_graphql", lambda *a, **k: {"data": {"environmentLogs": [{"message": "old clean", "timestamp": old_ts}]}})
     p = _run(tmp_path, monkeypatch)
@@ -133,6 +162,7 @@ def test_old_warning_with_recent_clean_is_pass(tmp_path, monkeypatch):
     monkeypatch.setenv("RAILWAY_TOKEN", "t")
     monkeypatch.setenv("RAILWAY_PROJECT_ID", "p")
     monkeypatch.setenv("RAILWAY_ENVIRONMENT_ID", "e")
+    monkeypatch.setenv("RAILWAY_LOG_SERVICE_IDS", "svc1")
     old_ts = (datetime.now(timezone.utc) - timedelta(hours=5)).isoformat()
     new_ts = datetime.now(timezone.utc).isoformat()
     monkeypatch.setattr(
@@ -150,6 +180,7 @@ def test_recent_warning_is_fail(tmp_path, monkeypatch):
     monkeypatch.setenv("RAILWAY_TOKEN", "t")
     monkeypatch.setenv("RAILWAY_PROJECT_ID", "p")
     monkeypatch.setenv("RAILWAY_ENVIRONMENT_ID", "e")
+    monkeypatch.setenv("RAILWAY_LOG_SERVICE_IDS", "svc1")
     monkeypatch.setattr(
         s,
         "_read_only_graphql",
@@ -164,6 +195,7 @@ def test_unknown_timestamp_alone_does_not_pass(tmp_path, monkeypatch):
     monkeypatch.setenv("RAILWAY_TOKEN", "t")
     monkeypatch.setenv("RAILWAY_PROJECT_ID", "p")
     monkeypatch.setenv("RAILWAY_ENVIRONMENT_ID", "e")
+    monkeypatch.setenv("RAILWAY_LOG_SERVICE_IDS", "svc1")
     monkeypatch.setattr(s, "_read_only_graphql", lambda *a, **k: {"data": {"environmentLogs": [{"message": "clean unknown ts"}]}})
     p = _run(tmp_path, monkeypatch)
     assert p["overall_status"] == "FAIL"

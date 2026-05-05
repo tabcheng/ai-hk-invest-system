@@ -222,3 +222,7 @@ Operator deploy + smoke evidence flow (manual):
 - `RAILWAY_LOG_SERVICE_NAMES`: display labels / compatibility only (not the primary log filter in environment mode).
 - `RAILWAY_API_URL` may remain `https://backboard.railway.com/graphql/v2`.
 - Railway evidence path remains read-only: no variable mutation, no deploy/redeploy, no staged-change commit, no raw logs/secrets in artifacts.
+
+- `RAILWAY_LOG_SERVICE_IDS` is required for scoped Step 91C `environmentLogs` evidence.
+- If Railway token/project/environment are configured but service IDs are missing, evidence must fail with scoped-limit message; do not scan full environment logs.
+- `RAILWAY_LOG_SERVICE_NAMES` remains display/compatibility labels only.

@@ -94,3 +94,10 @@ Step 91A recorded result (PR #88):
 - Connectivity probe policy: `me { email }` is account-token only; workspace/project token runs should keep connectivity as `NOT_RUN` with reason (for example `workspace_probe_not_configured`) unless explicitly switched to account probe mode.
 
 - Step 91C-2 note: `staged_changes_check` remains `NOT_CONFIGURED` in this step (no staged-changes automation yet); scope is still read-only evidence only with no variable mutation/redeploy/staged-change commit.
+
+
+### Step 91C-5 check additions
+- Confirm report field `railway_log_query_mode=environment` by default.
+- Confirm report field `railway_query_stage=environment_logs` for 4xx diagnostics (`403/400/422`).
+- If `logs_read_count > 0` and no fallback-warning matches, accept `fallback_warning_check=PASS`.
+- If configured but `logs_read_count=0`, treat Railway evidence as `FAIL` and record limitation explicitly.

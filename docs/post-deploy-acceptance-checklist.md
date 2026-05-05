@@ -84,7 +84,12 @@ Step 91A recorded result (PR #88):
 ## Step 91C-2 Railway evidence artifact check
 - Runtime acceptance now optionally collects read-only Railway log evidence (`railway_step91c_log_evidence_report.{md,json}`).
 - Expected fallback warning status: `PASS`/`FAIL` when configured, otherwise `NOT_CONFIGURED` (never fake PASS).
-- Workflow console prints a safe summary line only (status/check/counts/limitation); no raw logs or secrets should be printed.
+- Workflow console prints a safe summary line only (`overall_status`, `fallback_warning_check`, `logs_read_count`, `railway_api_http_status`, `railway_api_error_kind`, `limitation`); no raw logs or secrets should be printed.
 - This evidence step must not mutate Railway variables and must not redeploy services.
+- Optional endpoint override: `RAILWAY_API_URL` (from GitHub Actions vars) can be set when default endpoint is unsuitable.
+- HTTPError diagnostics policy:
+  - `401/403` likely token scope/workspace mismatch.
+  - `400/422` likely GraphQL query/schema mismatch.
+  - inspect `railway_api_error_excerpt_redacted` only (redacted, bounded excerpt; no token/raw logs).
 
 - Step 91C-2 note: `staged_changes_check` remains `NOT_CONFIGURED` in this step (no staged-changes automation yet); scope is still read-only evidence only with no variable mutation/redeploy/staged-change commit.

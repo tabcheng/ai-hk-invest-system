@@ -258,6 +258,7 @@
 - Step 72 security boundary reminder: browser/client must not hold `SUPABASE_SERVICE_ROLE_KEY` or vendor secrets; future data access must validate Telegram `initData` server-side.
 - Step 72 repo merge completed: yes (PR #70 merged).
 - Step 72 manual platform acceptance completed: yes (docs-only decision step; no Railway runtime mutation in-step).
+- Step 91C-3 prepared: Step 91C runtime acceptance workflow now reads `MINIAPP_SMOKE_ENDPOINT_URL` from GitHub Actions `vars` context (environment variable under `production-smoke`) while Mini App bot/user identifiers remain in secrets; Railway evidence script now emits safe one-line console diagnostics (status/check/counts/limitation) with no raw logs/secrets.
 - Step 72 Post-merge QA Check: pass.
 - Step 72 Post-merge Domain Check: pass.
 - Step 73 repo merge completed: yes (PR #71 merged).

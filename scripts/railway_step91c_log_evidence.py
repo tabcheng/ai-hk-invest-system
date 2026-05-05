@@ -199,7 +199,15 @@ def main() -> int:
 
     Path(REPORT_JSON).write_text(json.dumps(report, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     Path(REPORT_MD).write_text(_render_md(report), encoding="utf-8")
-    print(f"[railway_step91c_log_evidence] overall_status={report['overall_status']}")
+    print(
+        "[railway_step91c_log_evidence] "
+        f"overall_status={report['overall_status']} "
+        f"fallback_warning_check={report['fallback_warning_check']} "
+        f"fallback_warning_matches_count={report['fallback_warning_matches_count']} "
+        f"redacted_warning_matches_count={report['redacted_warning_matches_count']} "
+        f"logs_read_count={report['logs_read_count']} "
+        f"limitation={report['limitation']}"
+    )
     return 0
 
 

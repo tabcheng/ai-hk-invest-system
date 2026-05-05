@@ -98,3 +98,31 @@ def test_scan_entries_counts_service_role_warning_redacted():
     assert matches == 1
     assert redacted == 1
     assert snippets == []
+
+
+def test_console_summary_includes_safe_diagnostic_fields(tmp_path, monkeypatch, capsys):
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("RAILWAY_TOKEN", "t")
+    monkeypatch.setenv("RAILWAY_PROJECT_ID", "p")
+    monkeypatch.setenv("RAILWAY_ENVIRONMENT_ID", "e")
+    payload = {
+        "data": {
+            "project": {
+                "service": {
+                    "deployments": {
+                        "edges": [{"node": {"logs": {"edges": [{"node": {"message": "all good", "timestamp": datetime.now(timezone.utc).isoformat()}}]}}}]
+                    }
+                }
+            }
+        }
+    }
+    monkeypatch.setattr(s, "_read_only_graphql", lambda *a, **k: payload)
+    monkeypatch.setattr("sys.argv", ["railway_step91c_log_evidence.py", "--service-names", "paper-daily-runner"])
+    s.main()
+    out = capsys.readouterr().out
+    assert "overall_status=PASS" in out
+    assert "fallback_warning_check=PASS" in out
+    assert "fallback_warning_matches_count=0" in out
+    assert "redacted_warning_matches_count=0" in out
+    assert "logs_read_count=1" in out
+    assert "limitation=Staged changes check remains NOT_CONFIGURED in this step." in out

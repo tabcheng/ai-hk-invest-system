@@ -74,6 +74,8 @@ Step 91A recorded result (PR #88):
 ## Step 91C runtime acceptance automation note
 - GitHub Step 91C acceptance workflow can reduce manual checks by generating structured smoke evidence artifacts for reviewer validation.
 - Full acceptance still requires Railway log evidence or a future Railway API/CLI integration for fallback-warning verification.
+- Mini App smoke endpoint URL is read from GitHub Actions environment variable context (`vars.MINIAPP_SMOKE_ENDPOINT_URL`) under `production-smoke`.
+- Mini App smoke bot token and Telegram smoke user IDs must remain GitHub Actions environment secrets.
 - Confirm Mini App frontend/static preview never contains `SUPABASE_SECRET_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, or `SUPABASE_KEY`.
 - Confirm no broker integration and no live-money execution path is introduced.
 - Step 91C aggregate pass rule: required gates (`preflight`, key class, operator smoke, miniapp smoke, `runs`, `signals`) must all be `PASS`; stale required rows are `FAIL`.
@@ -82,6 +84,7 @@ Step 91A recorded result (PR #88):
 ## Step 91C-2 Railway evidence artifact check
 - Runtime acceptance now optionally collects read-only Railway log evidence (`railway_step91c_log_evidence_report.{md,json}`).
 - Expected fallback warning status: `PASS`/`FAIL` when configured, otherwise `NOT_CONFIGURED` (never fake PASS).
+- Workflow console prints a safe summary line only (status/check/counts/limitation); no raw logs or secrets should be printed.
 - This evidence step must not mutate Railway variables and must not redeploy services.
 
 - Step 91C-2 note: `staged_changes_check` remains `NOT_CONFIGURED` in this step (no staged-changes automation yet); scope is still read-only evidence only with no variable mutation/redeploy/staged-change commit.

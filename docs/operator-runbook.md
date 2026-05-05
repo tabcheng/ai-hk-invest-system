@@ -324,3 +324,4 @@ Use together with `docs/railway-service-variables.md` Step 91C and `docs/post-de
   - `railway_api_http_status` (401/403 usually token scope/workspace mismatch; 400/422 usually GraphQL query/schema mismatch),
   - `railway_api_error_excerpt_redacted` (safe redacted excerpt only, no token/raw log payload).
 - Optional lightweight connectivity check is reported as `connectivity_check` + `connectivity_http_status` to separate auth/connectivity issues from log-query shape issues.
+- `me { email }` connectivity probe is **account-token only** per Railway docs. Default probe mode is workspace-safe `NOT_RUN` (`connectivity_reason=workspace_probe_not_configured`) unless `RAILWAY_CONNECTIVITY_PROBE=account` is explicitly set.

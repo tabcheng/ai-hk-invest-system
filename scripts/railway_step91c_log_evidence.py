@@ -123,6 +123,7 @@ def _render_md(report: dict[str, Any]) -> str:
         "railway_api_endpoint_label",
         "connectivity_check",
         "connectivity_http_status",
+        "connectivity_reason",
         "railway_api_http_status",
         "railway_api_error_kind",
         "railway_api_error_excerpt_redacted",
@@ -148,6 +149,7 @@ def main() -> int:
     token = os.getenv("RAILWAY_TOKEN", "").strip()
     project_id = os.getenv("RAILWAY_PROJECT_ID", "").strip()
     environment_id = os.getenv("RAILWAY_ENVIRONMENT_ID", "").strip()
+    connectivity_probe = os.getenv("RAILWAY_CONNECTIVITY_PROBE", "workspace").strip().lower()
     api_url = os.getenv("RAILWAY_API_URL", RAILWAY_API_URL).strip() or RAILWAY_API_URL
     api_host = parse.urlparse(api_url).netloc or "unknown"
     services = _split_csv(args.service_names)
@@ -174,6 +176,7 @@ def main() -> int:
         "railway_api_endpoint_label": f"https://{api_host}",
         "connectivity_check": "NOT_RUN",
         "connectivity_http_status": None,
+        "connectivity_reason": None,
         "railway_api_http_status": None,
         "railway_api_error_kind": None,
         "railway_api_error_excerpt_redacted": None,
@@ -191,15 +194,22 @@ def main() -> int:
                 "query($projectId:String!,$environmentId:String!,$serviceName:String!){"
                 "project(id:$projectId){service(name:$serviceName){deployments(first:1,environmentId:$environmentId){edges{node{logs(first:300){edges{node{message timestamp}}}}}}}}}"
             )
-            connectivity_query = "query { me { email } }"
-            try:
-                _read_only_graphql(token, connectivity_query, {}, api_url)
-                report["connectivity_check"] = "PASS"
-            except error.HTTPError as exc:
-                report["connectivity_check"] = "FAIL"
-                report["connectivity_http_status"] = exc.code
-            except Exception:
-                report["connectivity_check"] = "FAIL"
+            if connectivity_probe == "account":
+                connectivity_query = "query { me { email } }"
+                try:
+                    _read_only_graphql(token, connectivity_query, {}, api_url)
+                    report["connectivity_check"] = "PASS"
+                except error.HTTPError as exc:
+                    report["connectivity_check"] = "FAIL"
+                    report["connectivity_http_status"] = exc.code
+                except Exception:
+                    report["connectivity_check"] = "FAIL"
+            elif connectivity_probe in {"workspace", "project"}:
+                report["connectivity_check"] = "NOT_RUN"
+                report["connectivity_reason"] = f"{connectivity_probe}_probe_not_configured"
+            else:
+                report["connectivity_check"] = "NOT_RUN"
+                report["connectivity_reason"] = "probe_mode_unknown"
 
             for service_name in services:
                 payload = _read_only_graphql(

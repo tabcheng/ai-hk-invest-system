@@ -49,6 +49,7 @@ def test_configured_graphql_error_is_fail(tmp_path, monkeypatch):
     payload = json.loads((tmp_path / s.REPORT_JSON).read_text(encoding="utf-8"))
     assert payload["overall_status"] == "FAIL"
     assert payload["fallback_warning_check"] == "FAIL"
+    assert payload["connectivity_check"] == "NOT_RUN"
 
 
 def test_configured_no_logs_is_fail(tmp_path, monkeypatch):
@@ -190,3 +191,43 @@ def test_api_url_override_used(tmp_path, monkeypatch):
     payload = json.loads((tmp_path / s.REPORT_JSON).read_text(encoding="utf-8"))
     assert payload["railway_api_url_host_only"] == "backboard.railway.com"
     assert payload["railway_api_endpoint_label"] == "https://backboard.railway.com"
+
+
+def test_workspace_default_mode_does_not_call_me_query(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("RAILWAY_TOKEN", "t")
+    monkeypatch.setenv("RAILWAY_PROJECT_ID", "p")
+    monkeypatch.setenv("RAILWAY_ENVIRONMENT_ID", "e")
+    calls = []
+
+    def _fake(token, query, variables, api_url):
+        calls.append(query)
+        return {"data": {"project": {"service": {"deployments": {"edges": []}}}}}
+
+    monkeypatch.setattr(s, "_read_only_graphql", _fake)
+    monkeypatch.setattr("sys.argv", ["railway_step91c_log_evidence.py"])
+    s.main()
+    assert all("me { email }" not in q for q in calls)
+    payload = json.loads((tmp_path / s.REPORT_JSON).read_text(encoding="utf-8"))
+    assert payload["connectivity_check"] == "NOT_RUN"
+    assert payload["connectivity_reason"] == "workspace_probe_not_configured"
+
+
+def test_account_mode_calls_me_query(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("RAILWAY_TOKEN", "t")
+    monkeypatch.setenv("RAILWAY_PROJECT_ID", "p")
+    monkeypatch.setenv("RAILWAY_ENVIRONMENT_ID", "e")
+    monkeypatch.setenv("RAILWAY_CONNECTIVITY_PROBE", "account")
+    calls = []
+
+    def _fake(token, query, variables, api_url):
+        calls.append(query)
+        if "me { email }" in query:
+            return {"data": {"me": {"email": "x@example.com"}}}
+        return {"data": {"project": {"service": {"deployments": {"edges": []}}}}}
+
+    monkeypatch.setattr(s, "_read_only_graphql", _fake)
+    monkeypatch.setattr("sys.argv", ["railway_step91c_log_evidence.py"])
+    s.main()
+    assert any("me { email }" in q for q in calls)

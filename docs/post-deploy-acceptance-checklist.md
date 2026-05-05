@@ -91,5 +91,6 @@ Step 91A recorded result (PR #88):
   - `401/403` likely token scope/workspace mismatch.
   - `400/422` likely GraphQL query/schema mismatch.
   - inspect `railway_api_error_excerpt_redacted` only (redacted, bounded excerpt; no token/raw logs).
+- Connectivity probe policy: `me { email }` is account-token only; workspace/project token runs should keep connectivity as `NOT_RUN` with reason (for example `workspace_probe_not_configured`) unless explicitly switched to account probe mode.
 
 - Step 91C-2 note: `staged_changes_check` remains `NOT_CONFIGURED` in this step (no staged-changes automation yet); scope is still read-only evidence only with no variable mutation/redeploy/staged-change commit.

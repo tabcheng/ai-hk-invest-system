@@ -207,4 +207,4 @@ Prioritization:
 
 - Step 91C-1 follow-up: integrate Railway API/CLI or tokenized log evidence into acceptance workflow so fallback-warning check can move from `NOT_CHECKED` to deterministic PASS/FAIL.
 
-| 91C-2 | Railway log / fallback-warning evidence automation (read-only) | Add optional read-only Railway evidence script + workflow/artifact integration + aggregate fallback-warning gate mapping (`PASS`/`FAIL`/`NOT_CONFIGURED`) with safe redaction/no raw logs | In progress (Step 91C-3 adds safe one-line console diagnostics and Mini App env-context fix) |
+| 91C-2 | Railway log / fallback-warning evidence automation (read-only) | Add optional read-only Railway evidence script + workflow/artifact integration + aggregate fallback-warning gate mapping (`PASS`/`FAIL`/`NOT_CONFIGURED`) with safe redaction/no raw logs | In progress (Step 91C-4 adds HTTPError diagnostics, endpoint override via `RAILWAY_API_URL`, and connectivity check fields while preserving read-only/no-secret boundaries) |

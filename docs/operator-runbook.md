@@ -318,4 +318,10 @@ Use together with `docs/railway-service-variables.md` Step 91C and `docs/post-de
 - Adds optional read-only Railway log evidence script `scripts/railway_step91c_log_evidence.py` for fallback-warning verification artifacts.
 - No Railway variable mutation, no deploy/redeploy, no staged-change commit, and no secret/raw-log output.
 - `RAILWAY_TOKEN` must stay in GitHub Actions environment secrets only; when token/IDs are absent, report is `NOT_CONFIGURED`.
-- Workflow console now includes safe one-line diagnostics summary (`overall_status`, `fallback_warning_check`, warning match counts, `logs_read_count`, `limitation`) while detailed evidence remains in artifact files.
+- Workflow accepts optional `RAILWAY_API_URL` override (default remains Railway backboard GraphQL v2); evidence only prints host-level endpoint context.
+- Workflow console now includes safe one-line diagnostics summary (`overall_status`, `fallback_warning_check`, `logs_read_count`, `railway_api_http_status`, `railway_api_error_kind`, `limitation`) while detailed evidence remains in artifact files.
+- If Railway evidence fails with `HTTPError`, inspect:
+  - `railway_api_http_status` (401/403 usually token scope/workspace mismatch; 400/422 usually GraphQL query/schema mismatch),
+  - `railway_api_error_excerpt_redacted` (safe redacted excerpt only, no token/raw log payload).
+- Optional lightweight connectivity check is reported as `connectivity_check` + `connectivity_http_status` to separate auth/connectivity issues from log-query shape issues.
+- `me { email }` connectivity probe is **account-token only** per Railway docs. Default probe mode is workspace-safe `NOT_RUN` (`connectivity_reason=workspace_probe_not_configured`) unless `RAILWAY_CONNECTIVITY_PROBE=account` is explicitly set.

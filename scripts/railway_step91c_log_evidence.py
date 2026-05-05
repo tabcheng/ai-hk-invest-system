@@ -8,7 +8,7 @@ import re
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
-from urllib import request
+from urllib import error, parse, request
 
 REPORT_JSON = "railway_step91c_log_evidence_report.json"
 REPORT_MD = "railway_step91c_log_evidence_report.md"
@@ -23,6 +23,13 @@ SECRET_LIKE_PATTERN = re.compile(
     r"(sb_secret_|service_role|bot token|webhook secret|initData|telegram\s*initData|\d{8,10}:[A-Za-z0-9_-]{20,})",
     re.IGNORECASE,
 )
+SECRET_VALUE_PATTERN = re.compile(
+    r"(Bearer\s+[A-Za-z0-9._-]+|sb_secret_[A-Za-z0-9._-]+|"
+    r"\d{8,10}:[A-Za-z0-9_-]{20,}|"
+    r"(SUPABASE_(?:SECRET_KEY|SERVICE_ROLE_KEY|KEY)|TELEGRAM_BOT_TOKEN|"
+    r"TELEGRAM_WEBHOOK_SECRET_TOKEN|RAILWAY_TOKEN|initData|allowlist(?:_ids)?)\s*[:=]\s*[^,\s\"']+)",
+    re.IGNORECASE,
+)
 
 
 def _now() -> str:
@@ -33,10 +40,15 @@ def _split_csv(raw: str) -> list[str]:
     return [x.strip() for x in raw.split(",") if x.strip()]
 
 
-def _read_only_graphql(token: str, query: str, variables: dict[str, Any]) -> dict[str, Any]:
+def _redact_text(raw: str, *, limit: int = 300) -> str:
+    trimmed = re.sub(r"\s+", " ", str(raw)).strip()[:limit]
+    return SECRET_VALUE_PATTERN.sub("[REDACTED]", trimmed)
+
+
+def _read_only_graphql(token: str, query: str, variables: dict[str, Any], api_url: str) -> dict[str, Any]:
     body = json.dumps({"query": query, "variables": variables}).encode("utf-8")
     req = request.Request(
-        RAILWAY_API_URL,
+        api_url,
         data=body,
         headers={"Content-Type": "application/json", "Authorization": f"Bearer {token}"},
         method="POST",
@@ -107,6 +119,14 @@ def _render_md(report: dict[str, Any]) -> str:
         "fallback_warning_matches_count",
         "redacted_warning_matches_count",
         "logs_read_count",
+        "railway_api_url_host_only",
+        "railway_api_endpoint_label",
+        "connectivity_check",
+        "connectivity_http_status",
+        "connectivity_reason",
+        "railway_api_http_status",
+        "railway_api_error_kind",
+        "railway_api_error_excerpt_redacted",
         "staged_changes_check",
         "staged_changes_summary",
         "secrets_redacted",
@@ -129,6 +149,9 @@ def main() -> int:
     token = os.getenv("RAILWAY_TOKEN", "").strip()
     project_id = os.getenv("RAILWAY_PROJECT_ID", "").strip()
     environment_id = os.getenv("RAILWAY_ENVIRONMENT_ID", "").strip()
+    connectivity_probe = os.getenv("RAILWAY_CONNECTIVITY_PROBE", "workspace").strip().lower()
+    api_url = os.getenv("RAILWAY_API_URL", RAILWAY_API_URL).strip() or RAILWAY_API_URL
+    api_host = parse.urlparse(api_url).netloc or "unknown"
     services = _split_csv(args.service_names)
     since_dt = datetime.now(timezone.utc) - timedelta(minutes=max(1, args.log_window_minutes))
 
@@ -149,6 +172,14 @@ def main() -> int:
         "safe_snippets": [],
         "secrets_redacted": True,
         "raw_logs_included": False,
+        "railway_api_url_host_only": api_host,
+        "railway_api_endpoint_label": f"https://{api_host}",
+        "connectivity_check": "NOT_RUN",
+        "connectivity_http_status": None,
+        "connectivity_reason": None,
+        "railway_api_http_status": None,
+        "railway_api_error_kind": None,
+        "railway_api_error_excerpt_redacted": None,
         "limitation": "Railway evidence unavailable or partial.",
     }
 
@@ -163,11 +194,29 @@ def main() -> int:
                 "query($projectId:String!,$environmentId:String!,$serviceName:String!){"
                 "project(id:$projectId){service(name:$serviceName){deployments(first:1,environmentId:$environmentId){edges{node{logs(first:300){edges{node{message timestamp}}}}}}}}}"
             )
+            if connectivity_probe == "account":
+                connectivity_query = "query { me { email } }"
+                try:
+                    _read_only_graphql(token, connectivity_query, {}, api_url)
+                    report["connectivity_check"] = "PASS"
+                except error.HTTPError as exc:
+                    report["connectivity_check"] = "FAIL"
+                    report["connectivity_http_status"] = exc.code
+                except Exception:
+                    report["connectivity_check"] = "FAIL"
+            elif connectivity_probe in {"workspace", "project"}:
+                report["connectivity_check"] = "NOT_RUN"
+                report["connectivity_reason"] = f"{connectivity_probe}_probe_not_configured"
+            else:
+                report["connectivity_check"] = "NOT_RUN"
+                report["connectivity_reason"] = "probe_mode_unknown"
+
             for service_name in services:
                 payload = _read_only_graphql(
                     token,
                     logs_query,
                     {"projectId": project_id, "environmentId": environment_id, "serviceName": service_name},
+                    api_url,
                 )
                 entries = _collect_service_entries(payload)
                 logs_read_count += len(entries)
@@ -192,9 +241,18 @@ def main() -> int:
                 report["overall_status"] = report["fallback_warning_check"]
                 report["limitation"] = "Staged changes check remains NOT_CONFIGURED in this step."
 
+        except error.HTTPError as exc:
+            body = exc.read().decode("utf-8", errors="replace") if hasattr(exc, "read") else ""
+            report["overall_status"] = "FAIL"
+            report["fallback_warning_check"] = "FAIL"
+            report["railway_api_http_status"] = exc.code
+            report["railway_api_error_kind"] = "HTTPError"
+            report["railway_api_error_excerpt_redacted"] = _redact_text(body, limit=300)
+            report["limitation"] = "Configured Railway evidence read failed: HTTPError"
         except Exception as exc:  # noqa: BLE001
             report["overall_status"] = "FAIL"
             report["fallback_warning_check"] = "FAIL"
+            report["railway_api_error_kind"] = exc.__class__.__name__
             report["limitation"] = f"Configured Railway evidence read failed: {exc.__class__.__name__}"
 
     Path(REPORT_JSON).write_text(json.dumps(report, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
@@ -203,9 +261,9 @@ def main() -> int:
         "[railway_step91c_log_evidence] "
         f"overall_status={report['overall_status']} "
         f"fallback_warning_check={report['fallback_warning_check']} "
-        f"fallback_warning_matches_count={report['fallback_warning_matches_count']} "
-        f"redacted_warning_matches_count={report['redacted_warning_matches_count']} "
         f"logs_read_count={report['logs_read_count']} "
+        f"railway_api_http_status={report['railway_api_http_status']} "
+        f"railway_api_error_kind={report['railway_api_error_kind']} "
         f"limitation={report['limitation']}"
     )
     return 0

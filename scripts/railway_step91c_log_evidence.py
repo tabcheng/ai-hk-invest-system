@@ -58,20 +58,24 @@ def _parse_iso(value: str | None) -> datetime | None:
     except Exception:
         return None
 
-def _scan_entries(entries: list[dict[str, Any]], since_dt: datetime) -> tuple[int, int, list[str]]:
-    matches, redacted_matches, snippets = 0, 0, []
+def _scan_entries(entries: list[dict[str, Any]], since_dt: datetime) -> tuple[int, int, int, int, list[str]]:
+    matches, redacted_matches, in_window_count, unknown_ts_count, snippets = 0, 0, 0, 0, []
     for entry in entries:
         message = str(entry.get("message", ""))
         ts = _parse_iso(str(entry.get("timestamp", "")))
-        if ts is not None and ts < since_dt:
+        if ts is None:
+            unknown_ts_count += 1
             continue
+        if ts < since_dt:
+            continue
+        in_window_count += 1
         if any(pattern in message for pattern in WARNING_PATTERNS):
             matches += 1
             if SECRET_LIKE_PATTERN.search(message):
                 redacted_matches += 1
                 continue
             snippets.append(message[:180])
-    return matches, redacted_matches, snippets[:8]
+    return matches, redacted_matches, in_window_count, unknown_ts_count, snippets[:8]
 
 def _collect_environment_entries(payload: dict[str, Any]) -> list[dict[str, Any]]:
     raw = payload.get("data", {}).get("environmentLogs")
@@ -87,6 +91,7 @@ def _render_md(report: dict[str, Any]) -> str:
         "overall_status","railway_token_configured","project_id_configured","environment_id_configured",
         "checked_services","checked_service_ids","railway_log_query_mode","railway_query_stage","log_window_minutes",
         "fallback_warning_check","fallback_warning_matches_count","redacted_warning_matches_count","logs_read_count",
+        "logs_recent_count","logs_returned_count","logs_unknown_timestamp_count",
         "railway_api_url_host_only","railway_api_http_status","railway_api_error_kind","railway_api_error_excerpt_redacted",
         "staged_changes_check","staged_changes_summary","secrets_redacted","raw_logs_included","limitation",
     ]
@@ -119,6 +124,7 @@ def main() -> int:
         "checked_services": services, "checked_service_ids": service_ids, "railway_log_query_mode": query_mode,
         "railway_query_stage": None, "log_window_minutes": args.log_window_minutes, "fallback_warning_check": "NOT_CONFIGURED",
         "fallback_warning_matches_count": 0, "redacted_warning_matches_count": 0, "logs_read_count": 0,
+        "logs_recent_count": 0, "logs_returned_count": 0, "logs_unknown_timestamp_count": 0,
         "staged_changes_check": "NOT_CONFIGURED", "staged_changes_summary": "redacted/count-only", "safe_snippets": [],
         "secrets_redacted": True, "raw_logs_included": False, "railway_api_url_host_only": api_host,
         "railway_api_endpoint_label": f"https://{api_host}",
@@ -140,15 +146,18 @@ def main() -> int:
                     api_url,
                 )
                 entries = _collect_environment_entries(payload)
-                logs_read = len(entries)
-                m, r, snippets = _scan_entries(entries, since_dt)
-                report["logs_read_count"] = logs_read
+                logs_returned = len(entries)
+                m, r, logs_recent, unknown_ts, snippets = _scan_entries(entries, since_dt)
+                report["logs_returned_count"] = logs_returned
+                report["logs_recent_count"] = logs_recent
+                report["logs_unknown_timestamp_count"] = unknown_ts
+                report["logs_read_count"] = logs_recent
                 report["fallback_warning_matches_count"] = m
                 report["redacted_warning_matches_count"] = r
                 report["safe_snippets"] = snippets
                 report["staged_changes_summary"] = "count-only; staged changes read endpoint not configured"
-                if logs_read == 0:
-                    report.update({"overall_status": "FAIL", "fallback_warning_check": "FAIL", "limitation": "Configured Railway evidence returned no readable log entries."})
+                if logs_recent == 0:
+                    report.update({"overall_status": "FAIL", "fallback_warning_check": "FAIL", "limitation": "Configured Railway evidence returned no readable logs inside the configured log window."})
                 else:
                     check = "FAIL" if m > 0 else "PASS"
                     report.update({"overall_status": check, "fallback_warning_check": check, "limitation": "Staged changes check remains NOT_CONFIGURED in this step."})

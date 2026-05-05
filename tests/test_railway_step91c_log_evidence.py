@@ -31,6 +31,7 @@ def test_environmentlogs_pass_no_warning(tmp_path, monkeypatch):
     p = _run(tmp_path, monkeypatch)
     assert p["overall_status"] == "PASS"
     assert p["railway_query_stage"] == "environment_logs"
+    assert p["logs_read_count"] == 1
 
 
 def test_environmentlogs_fail_warning_secret_redacted(tmp_path, monkeypatch):
@@ -61,6 +62,7 @@ def test_configured_zero_logs_fail(tmp_path, monkeypatch):
     p = _run(tmp_path, monkeypatch)
     assert p["overall_status"] == "FAIL"
     assert p["logs_read_count"] == 0
+    assert p["logs_returned_count"] == 0
 
 
 def test_http_403_diagnostics(tmp_path, monkeypatch):
@@ -114,7 +116,62 @@ def test_report_never_includes_raw_logs_or_unredacted_secret(tmp_path, monkeypat
     assert "sb_secret_" not in json.dumps(p)
 
 
+def test_only_old_clean_logs_fail_not_pass(tmp_path, monkeypatch):
+    monkeypatch.setenv("RAILWAY_TOKEN", "t")
+    monkeypatch.setenv("RAILWAY_PROJECT_ID", "p")
+    monkeypatch.setenv("RAILWAY_ENVIRONMENT_ID", "e")
+    old_ts = (datetime.now(timezone.utc) - timedelta(hours=5)).isoformat()
+    monkeypatch.setattr(s, "_read_only_graphql", lambda *a, **k: {"data": {"environmentLogs": [{"message": "old clean", "timestamp": old_ts}]}})
+    p = _run(tmp_path, monkeypatch)
+    assert p["overall_status"] == "FAIL"
+    assert p["fallback_warning_check"] == "FAIL"
+    assert p["logs_returned_count"] == 1
+    assert p["logs_read_count"] == 0
+
+
+def test_old_warning_with_recent_clean_is_pass(tmp_path, monkeypatch):
+    monkeypatch.setenv("RAILWAY_TOKEN", "t")
+    monkeypatch.setenv("RAILWAY_PROJECT_ID", "p")
+    monkeypatch.setenv("RAILWAY_ENVIRONMENT_ID", "e")
+    old_ts = (datetime.now(timezone.utc) - timedelta(hours=5)).isoformat()
+    new_ts = datetime.now(timezone.utc).isoformat()
+    monkeypatch.setattr(
+        s,
+        "_read_only_graphql",
+        lambda *a, **k: {"data": {"environmentLogs": [{"message": "SUPABASE_KEY fallback old", "timestamp": old_ts}, {"message": "recent clean", "timestamp": new_ts}]}},
+    )
+    p = _run(tmp_path, monkeypatch)
+    assert p["overall_status"] == "PASS"
+    assert p["fallback_warning_matches_count"] == 0
+    assert p["logs_read_count"] == 1
+
+
+def test_recent_warning_is_fail(tmp_path, monkeypatch):
+    monkeypatch.setenv("RAILWAY_TOKEN", "t")
+    monkeypatch.setenv("RAILWAY_PROJECT_ID", "p")
+    monkeypatch.setenv("RAILWAY_ENVIRONMENT_ID", "e")
+    monkeypatch.setattr(
+        s,
+        "_read_only_graphql",
+        lambda *a, **k: {"data": {"environmentLogs": [{"message": "SUPABASE_KEY fallback recent", "timestamp": datetime.now(timezone.utc).isoformat()}]}},
+    )
+    p = _run(tmp_path, monkeypatch)
+    assert p["overall_status"] == "FAIL"
+    assert p["fallback_warning_check"] == "FAIL"
+
+
+def test_unknown_timestamp_alone_does_not_pass(tmp_path, monkeypatch):
+    monkeypatch.setenv("RAILWAY_TOKEN", "t")
+    monkeypatch.setenv("RAILWAY_PROJECT_ID", "p")
+    monkeypatch.setenv("RAILWAY_ENVIRONMENT_ID", "e")
+    monkeypatch.setattr(s, "_read_only_graphql", lambda *a, **k: {"data": {"environmentLogs": [{"message": "clean unknown ts"}]}})
+    p = _run(tmp_path, monkeypatch)
+    assert p["overall_status"] == "FAIL"
+    assert p["logs_unknown_timestamp_count"] == 1
+    assert p["logs_read_count"] == 0
+
+
 def test_scan_window():
     now = datetime.now(timezone.utc)
-    m, r, _ = s._scan_entries([{"message": "SUPABASE_KEY fallback", "timestamp": (now - timedelta(hours=3)).isoformat()}], now - timedelta(minutes=5))
-    assert (m, r) == (0, 0)
+    m, r, in_window, unknown_ts, _ = s._scan_entries([{"message": "SUPABASE_KEY fallback", "timestamp": (now - timedelta(hours=3)).isoformat()}], now - timedelta(minutes=5))
+    assert (m, r, in_window, unknown_ts) == (0, 0, 0, 0)

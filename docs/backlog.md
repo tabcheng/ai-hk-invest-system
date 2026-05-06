@@ -216,3 +216,5 @@ Prioritization:
 | 91C-7A | Railway request-shape + fingerprint diagnostics (read-only) | Add explicit API headers in Railway probe scripts, add token fingerprint match gate (`RAILWAY_TOKEN_SHA256_PREFIX`), and optional same-runner curl account probe (`RAILWAY_CURL_PROBE`) to separate token mismatch vs urllib request-shape vs runner-edge 403; keep no raw logs/secrets and no Railway mutation/deploy | Completed |
 
 - Step 91C-7B completed: wired optional workflow env vars `RAILWAY_TOKEN_SHA256_PREFIX` and `RAILWAY_CURL_PROBE` into Step 91C runtime acceptance workflow Railway API probe step only (no blind global env wiring); optional unset behavior remains safe defaults (`NOT_CONFIGURED` / probe `off`) and diagnostics remain read-only/secret-safe.
+
+- **Step 92A completed (runtime + docs):** implemented `src/latest_system_runs_repository.py`, added migration `supabase/migrations/20260506_step92a_latest_system_runs_contract_v2.sql`, and wired best-effort write from paper daily run completion. This table is bounded latest-state only (not full audit ledger); Telegram read + Mini App read-only fetch stay in follow-up steps.

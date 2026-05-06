@@ -101,3 +101,10 @@ Proposed internal table: `latest_system_runs`
 - Step 91 adds proposal artifacts for Option C canonical path: Supabase migration draft `supabase/migrations/20260503_step91_create_latest_system_runs.sql` and backend contract doc `docs/latest-system-runs-repository-contract.md`.
 - Scope remains proposal-only: no runtime Supabase read/write wiring, no Mini App frontend fetch addition, and no Railway topology/volume change in this step.
 - Step 87 local artifact provider + Step 89 artifact writer remain fallback/dev/smoke path until Step 92 runtime provider implementation is accepted.
+
+
+## Step 92A implementation update
+- Implemented backend repository/provider + runner write path only.
+- `latest_system_runs` remains a bounded latest-state surface for operator/product read models, not a full event/audit ledger.
+- System-of-record audit trail remains in `runs`, paper-trading records, and decision records tables.
+- Telegram webhook read integration and Mini App frontend read-only fetch are explicitly deferred.

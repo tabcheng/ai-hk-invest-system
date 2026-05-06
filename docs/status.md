@@ -27,7 +27,8 @@
 - Step 91C-7B completed in repo: Step 91C workflow now wires optional diagnostics vars (`RAILWAY_TOKEN_SHA256_PREFIX`, `RAILWAY_CURL_PROBE`) into the Railway API probe step only (the only script that reads them).
 - Both diagnostics vars remain optional and read-only: unset values keep safe defaults (`NOT_CONFIGURED`/probe `off`) and must not be interpreted as fake PASS.
 - Railway 403 lesson remains preserved: explicit `Accept`/`User-Agent`/`Authorization` headers, redacted summary-only diagnostics, and no raw logs/secrets.
-- Next, proceed with `latest_system_runs` repository/provider path.
+- Step 92A completed: added backend `latest_system_runs` repository/provider and best-effort paper-daily-runner write path with bounded latest-row contract.
+- Step 92A scope boundary: Telegram webhook read and Mini App read-only fetch remain deferred to next steps.
 
 ## Post-merge acceptance + wording discipline (system-of-record)
 - Every merged step must complete two mandatory acceptance checks:

@@ -10,8 +10,9 @@ This step does **not**:
 
 ## Canonical storage target
 - Table: `public.latest_system_runs`
-- Canonical read order: `completed_at desc nulls last, created_at desc, id desc`
+- Canonical read order: `updated_at desc, created_at desc, id desc`
 - Bounded payload mapping target: existing `sections.latest_system_run` response contract only.
+- Surface intent: bounded latest-state/upsert-by-source read model (not a full audit/event ledger).
 
 ## Repository interfaces
 
@@ -24,11 +25,9 @@ get_latest_system_run() -> dict
 - Caller: `paper-daily-runner` only.
 - Use explicit allowlisted columns only (no `insert ... select *` style dynamic pass-through).
 - Enforce bounded contract before persistence:
-  - `run_status in {'success','failed','partial','unknown'}`
+  - `status in {'success','failed','partial','unknown'}`
   - `run_id` length `1..80`
-  - `summary` length `<= 500` when provided
-  - `limitations` array length `<= 5`
-  - each `limitations` item string length `<= 160`
+  - `summary_json.paper_trade_only=true`
 - No arbitrary JSON passthrough.
 - No raw logs storage.
 - No secret fields.
@@ -36,7 +35,7 @@ get_latest_system_run() -> dict
 ### `get_latest_system_run() -> dict`
 - Caller: Telegram webhook Mini App API read path only.
 - Query exactly one latest row ordered by:
-  - `completed_at desc nulls last`
+  - `updated_at desc`
   - `created_at desc`
   - `id desc`
 - Select explicit allowlisted columns only (never `select *`).

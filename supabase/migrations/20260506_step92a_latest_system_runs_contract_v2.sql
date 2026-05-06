@@ -29,6 +29,7 @@ begin
       and column_name = 'run_status'
   ) then
     execute 'update public.latest_system_runs set status = coalesce(status, run_status)';
+    execute 'alter table public.latest_system_runs alter column run_status drop not null';
   end if;
 end $$;
 

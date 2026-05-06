@@ -35,16 +35,14 @@ def _get(base: str, key: str, query: str) -> Any:
         return json.loads(resp.read().decode("utf-8", errors="replace"))
 
 
-def _optional_catalog_check(base: str, key: str, query: str, predicate) -> tuple[str, str]:
+def _required_catalog_check(base: str, key: str, query: str, predicate) -> tuple[str, str]:
     try:
         payload = _get(base, key, query)
         return ("PASS", "ok") if predicate(payload) else ("FAIL", "unexpected_payload")
     except HTTPError as exc:
-        if exc.code in (400, 401, 403, 404):
-            return "NOT_CONFIGURED", f"http_{exc.code}"
-        return "FAIL", f"http_{exc.code}"
+        return "FAIL", f"catalog_check_not_configured_http_{exc.code}"
     except Exception as exc:  # noqa: BLE001
-        return "NOT_CONFIGURED", exc.__class__.__name__
+        return "FAIL", f"catalog_check_not_configured_{exc.__class__.__name__}"
 
 
 def _safe_latest_row(row: dict[str, Any] | None) -> dict[str, Any] | None:
@@ -81,6 +79,22 @@ def _run_paper_daily_runner() -> dict[str, Any]:
         return {"mode": "github_runner_execution", "status": "FAIL", "error_kind": exc.__class__.__name__}
 
 
+def _compute_overall_status(report: dict[str, Any]) -> str:
+    gates = [
+        report["preflight"],
+        report["table_exists"],
+        report["rls_enabled"],
+        report["source_unique_index_exists"],
+        report["latest_read_index_exists"],
+        report["paper_daily_runner_row_count_lte_1"],
+    ]
+    if report["latest_row_readable"] == "PASS":
+        gates += [report["paper_trade_only_true_if_row_exists"], report["status_allowed_if_row_exists"]]
+    if report["run_paper_daily_runner"]:
+        gates.append(report["runner_execution"].get("status", "FAIL"))
+    return "PASS" if all(x == "PASS" for x in gates) else "FAIL"
+
+
 def _railway_probe() -> dict[str, Any]:
     token = os.getenv("RAILWAY_TOKEN", "").strip()
     environment_id = os.getenv("RAILWAY_ENVIRONMENT_ID", "").strip()
@@ -90,11 +104,8 @@ def _railway_probe() -> dict[str, Any]:
     result: dict[str, Any] = {"configured": bool(token and environment_id and service_ids), "railway_api_host_only": host, "status": "NOT_CONFIGURED"}
     if not result["configured"]:
         return result
-    body = json.dumps({
-        "query": "query($environmentId:String!, $filter:String, $beforeLimit:Int){environmentLogs(environmentId:$environmentId, filter:$filter, beforeLimit:$beforeLimit){timestamp}}",
-        "variables": {"environmentId": environment_id, "filter": " OR ".join([f"@service:{sid}" for sid in service_ids]), "beforeLimit": 10},
-    }).encode("utf-8")
-    req = request.Request(api_url, data=body, headers={"Content-Type": "application/json", "Accept": "application/json", "User-Agent": "ai-hk-invest-system-step92a/1.1 (+github-actions; read-only)", "Authorization": f"Bearer {token}"}, method="POST")
+    body = json.dumps({"query": "query($environmentId:String!, $filter:String, $beforeLimit:Int){environmentLogs(environmentId:$environmentId, filter:$filter, beforeLimit:$beforeLimit){timestamp}}", "variables": {"environmentId": environment_id, "filter": " OR ".join([f"@service:{sid}" for sid in service_ids]), "beforeLimit": 10}}).encode("utf-8")
+    req = request.Request(api_url, data=body, headers={"Content-Type": "application/json", "Accept": "application/json", "User-Agent": "ai-hk-invest-system-step92a/1.2 (+github-actions; read-only)", "Authorization": f"Bearer {token}"}, method="POST")
     try:
         with request.urlopen(req, timeout=30) as resp:
             payload = json.loads(resp.read().decode("utf-8", errors="replace"))
@@ -111,20 +122,33 @@ def _railway_probe() -> dict[str, Any]:
 
 
 def main() -> int:
-    args = argparse.ArgumentParser()
-    args.add_argument("--run-paper-daily-runner", choices=("true", "false"), default="false")
-    ns = args.parse_args()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--run-paper-daily-runner", choices=("true", "false"), default="false")
+    ns = parser.parse_args()
 
     base = os.getenv("SUPABASE_URL", "").strip()
     key, key_name = _resolve_key()
-    report: dict[str, Any] = {"generated_at": _now(), "preflight": "PASS" if base and key else "FAIL", "supabase_key_source": key_name,
-                              "run_paper_daily_runner": ns.run_paper_daily_runner == "true", "runner_execution": {"status": "SKIPPED"},
-                              "table_exists": "NOT_CHECKED", "rls_enabled": "NOT_CHECKED", "rls_check_reason": None,
-                              "source_unique_index_exists": "NOT_CHECKED", "source_unique_index_reason": None,
-                              "latest_read_index_exists": "NOT_CHECKED", "latest_read_index_reason": None,
-                              "paper_daily_runner_row_count_lte_1": "NOT_CHECKED", "latest_row_readable": "NOT_CHECKED",
-                              "paper_trade_only_true_if_row_exists": "NOT_CHECKED", "status_allowed_if_row_exists": "NOT_CHECKED",
-                              "safe_latest_row": None, "railway_evidence": _railway_probe(), "secrets_redacted": True}
+    report: dict[str, Any] = {
+        "generated_at": _now(),
+        "preflight": "PASS" if base and key else "FAIL",
+        "supabase_key_source": key_name,
+        "run_paper_daily_runner": ns.run_paper_daily_runner == "true",
+        "runner_execution": {"status": "SKIPPED"},
+        "table_exists": "NOT_CHECKED",
+        "rls_enabled": "NOT_CHECKED",
+        "rls_check_reason": None,
+        "source_unique_index_exists": "NOT_CHECKED",
+        "source_unique_index_reason": None,
+        "latest_read_index_exists": "NOT_CHECKED",
+        "latest_read_index_reason": None,
+        "paper_daily_runner_row_count_lte_1": "NOT_CHECKED",
+        "latest_row_readable": "NOT_CHECKED",
+        "paper_trade_only_true_if_row_exists": "NOT_CHECKED",
+        "status_allowed_if_row_exists": "NOT_CHECKED",
+        "safe_latest_row": None,
+        "railway_evidence": _railway_probe(),
+        "secrets_redacted": True,
+    }
 
     if report["run_paper_daily_runner"]:
         report["runner_execution"] = _run_paper_daily_runner()
@@ -134,12 +158,14 @@ def main() -> int:
             probe = _get(base, key or "", "latest_system_runs?select=id&limit=1")
             report["table_exists"] = "PASS" if isinstance(probe, list) else "FAIL"
 
-            s, r = _optional_catalog_check(base, key or "", "pg_catalog.pg_tables?select=rowsecurity&schemaname=eq.public&tablename=eq.latest_system_runs", lambda x: isinstance(x, list) and len(x) == 1 and x[0].get("rowsecurity") is True)
+            s, r = _required_catalog_check(base, key or "", "pg_catalog.pg_tables?select=rowsecurity&schemaname=eq.public&tablename=eq.latest_system_runs", lambda x: isinstance(x, list) and len(x) == 1 and x[0].get("rowsecurity") is True)
             report["rls_enabled"], report["rls_check_reason"] = s, r
 
-            s, r = _optional_catalog_check(base, key or "", "pg_indexes?select=indexname&schemaname=eq.public&tablename=eq.latest_system_runs", lambda x: isinstance(x, list) and {i.get('indexname') for i in x if isinstance(i, dict)}.issuperset({"idx_latest_system_runs_source_unique", "idx_latest_system_runs_latest_read"}))
-            report["source_unique_index_exists"], report["latest_read_index_exists"] = s, s
-            report["source_unique_index_reason"], report["latest_read_index_reason"] = r, r
+            s, r = _required_catalog_check(base, key or "", "pg_indexes?select=indexname&schemaname=eq.public&tablename=eq.latest_system_runs", lambda x: isinstance(x, list) and {i.get('indexname') for i in x if isinstance(i, dict)}.issuperset({"idx_latest_system_runs_source_unique", "idx_latest_system_runs_latest_read"}))
+            report["source_unique_index_exists"] = s
+            report["latest_read_index_exists"] = s
+            report["source_unique_index_reason"] = r
+            report["latest_read_index_reason"] = r
 
             rows = _get(base, key or "", "latest_system_runs?select=run_id,business_date,status,source,data_timestamp,summary_json,created_at,updated_at&source=eq.paper_daily_runner&order=updated_at.desc,created_at.desc&limit=10")
             report["paper_daily_runner_row_count_lte_1"] = "PASS" if isinstance(rows, list) and len(rows) <= 1 else "FAIL"
@@ -155,10 +181,7 @@ def main() -> int:
         except Exception as exc:  # noqa: BLE001
             report["error_kind"] = exc.__class__.__name__
 
-    hard = [report["preflight"], report["table_exists"], report["paper_daily_runner_row_count_lte_1"]]
-    if report["latest_row_readable"] == "PASS":
-        hard += [report["paper_trade_only_true_if_row_exists"], report["status_allowed_if_row_exists"]]
-    report["overall_status"] = "PASS" if all(x == "PASS" for x in hard) else "FAIL"
+    report["overall_status"] = _compute_overall_status(report)
 
     Path(REPORT_JSON).write_text(json.dumps(report, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     Path(REPORT_MD).write_text("# Step 92A Post-merge Smoke Report\n\n" + "\n".join([f"- {k}: {report[k]}" for k in ["overall_status", "preflight", "run_paper_daily_runner", "table_exists", "rls_enabled", "source_unique_index_exists", "latest_read_index_exists", "paper_daily_runner_row_count_lte_1", "latest_row_readable"]]), encoding="utf-8")

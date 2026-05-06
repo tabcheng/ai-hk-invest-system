@@ -1,85 +1,37 @@
 # AGENTS.md
 
 ## Documentation-first workflow (required)
-For any non-trivial task (anything beyond a tiny typo or formatting-only edit), read these files before doing implementation work:
+For any non-trivial task (beyond tiny typo/format edits), read before implementation:
 1. `AGENTS.md`
 2. `docs/spec.md`
 3. `docs/plans.md`
 4. `docs/status.md`
 
-## Project mission
-- This repository is an **internal AI Hong Kong equity investing system**.
-- Mainline model: **AI analysis team + AI team paper trading + human final decision + strategy improvement loop**.
-- The product supports analysis, AI simulated decisions, human paper decisions, simulated orders/positions/PnL, decision journal, outcome review, strategy review, risk control, and operator review surfaces.
-- The system must **not** connect to brokers, place live orders, or perform autonomous real-money execution.
-
-## Decision boundaries (must stay explicit)
-Always separate and label:
-1. **AI simulated decision**
-2. **Human paper decision**
-3. **Real trade decision outside system**
-
-All real-money decisions are made and executed outside this system by the human operator.
+## Mission + hard domain guardrails
+- Internal **AI Hong Kong equity investing** system.
+- Scope is **AI analysis + AI paper/simulated decisions + human review + strategy improvement loop**.
+- Must stay **paper-trading / decision-support only**:
+  - no broker connection,
+  - no live order placement,
+  - no autonomous real-money execution.
+- Always distinguish and label:
+  1. **AI simulated decision**
+  2. **Human paper decision**
+  3. **Real trade decision outside system**
 
 ## Product surfaces
-### Telegram Bot
-- Notifications
-- Quick commands
-- Smoke-test path
+- Telegram Bot (notifications, quick commands, smoke path)
+- Telegram Mini App / Web UI (review surfaces)
+- Backend + Supabase (system of record, audit trail, paper-trading/decision records)
 
-### Telegram Mini App / Web UI
-- Daily review surface
-- Multi-stock review
-- Decision journal review
-- Paper PnL / risk / outcome review
+## Security + access boundaries
+- Mini App frontend must never use Supabase service/secret keys.
+- Telegram `initData` must be validated server-side before access.
+- Backend production writes/reads after RLS must use backend-only elevated key class (`sb_secret_*` or service-role class).
+- Do **not** use `sb_publishable_*`, anon, or public keys for backend writes after RLS.
+- Never expose secrets/raw sensitive values in docs/logs/chat (including Supabase secrets, Telegram tokens/webhook secrets, vendor/broker secrets, raw Telegram initData, allowlist IDs, Railway token/raw fingerprint/full hash).
 
-### Backend + Supabase
-- System of record
-- Audit trail
-- Paper-trading records
-- Decision records
-
-## UI release phases
-1. **Phase 1: Read-only Review Shell**
-   - No write action
-   - No strategy change
-   - No paper order creation
-2. **Phase 2: Decision Capture**
-   - Bounded journal writes only
-   - No execution
-3. **Phase 3: AI Team Paper Decision Review**
-   - Review AI simulated decisions
-   - No broker/live execution
-4. **Phase 4: Controlled Simulated Order Creation**
-   - Only after risk gate
-   - Requires `strategy_version`, `data_source`, `data_timestamp`, `risk_check`, `paper_trade_only=true`
-
-## Market data guardrails
-- Introduce/keep a `MarketDataProvider` abstraction before vendor integration.
-- Strategy logic must not call vendor SDKs directly.
-- Track data source, timestamp, freshness, adjustment policy, and confidence/limitations.
-- Vendors may be used with justification, but avoid vendor lock-in.
-
-## Secrets + access guardrails
-Never expose these in browser/client/logs/docs:
-- `SUPABASE_SERVICE_ROLE_KEY`
-- `SUPABASE_SECRET_KEY`
-- vendor API secrets
-- webhook secrets
-- broker keys
-
-Mini App auth must validate Telegram `initData` server-side before granting access.
-
-## Environment strategy
-Use a lightweight formal path:
-- local dev
-- CI test
-- staging-lite when integration risk justifies it
-- production with post-deploy acceptance
-
-Do not overbuild full enterprise SDLC too early.
-
-## PR requirements
+## PR requirements (mandatory)
 Every PR must state:
 - goal
 - scope
@@ -89,40 +41,42 @@ Every PR must state:
 - Supabase impact
 - tests run
 - acceptance instructions
-- risk/limitation
+- risk / limitation
 - whether post-deploy smoke is required
 
-Runtime/DB/Telegram/UI/market-data/paper-trading PRs require stronger review.
-Docs-only PRs do not require runtime tests unless repository policy explicitly requires them, but must keep system-of-record docs consistent.
+## PR review hard gate (mandatory before approval)
+Reviewers must check all:
+1. PR metadata/scope
+2. diff/patch/changed files
+3. CI status/jobs/logs
+4. PR conversation comments
+5. issue/top-level comments
+6. review submissions
+7. inline review threads / Codex comments
+8. unresolved thread count
+9. outdated-but-unresolved thread count
+10. docs/status wording
+11. backlog updates
+12. domain guardrails
 
-## Review checklist (mandatory before approval)
-Inspect all of the following:
-- PR metadata
-- diff/patch
-- CI status
-- PR conversation comments
-- inline review threads / Codex comments
-- review submissions
-- docs/status wording
-- backlog updates
-- domain guardrails
+Do **not** approve if:
+- CI failed or still running (unless clearly irrelevant and explicitly explained),
+- any non-outdated unresolved reviewer/Codex thread affects correctness, audit trail, security, runtime behavior, domain guardrails, or docs-of-record,
+- any outdated-but-unresolved reviewer/Codex thread remains unresolved,
+- runtime/Supabase/Railway changes lack an explicit acceptance path.
 
-Do not approve when unresolved Codex comments affect correctness, audit trail, security, runtime behavior, or domain guardrails.
+## Step 91C / PR #98 runtime lesson
+- Step 91C Runtime Acceptance passed in GitHub Actions run **25424407687** after PR **#98** merge.
+- Railway Public API 403 in GitHub Actions was resolved by explicit `Accept` / `User-Agent` / `Authorization` headers.
+- Railway probes/log evidence must remain read-only and secret-safe (no raw logs).
 
 ## Post-merge checks (mandatory after every merge)
-Record both checks in docs:
-1. **Post-merge QA Check**
-   - output/function works
-   - success/error paths are clear
-   - docs/tests/display are consistent
-2. **Post-merge Domain Check**
-   - aligns with AI HK investing system
-   - paper trading / decision-support only
-   - no broker/live execution
-   - calculation/interpretation risk reviewed
+Record both in docs:
+1. **Post-merge QA Check** (output/function, success+error paths, docs/tests/display consistency)
+2. **Post-merge Domain Check** (AI HK alignment, paper-only boundary, no broker/live execution, interpretation risk reviewed)
 
-## Documentation alignment
-Keep the following aligned:
+## Documentation alignment (system-of-record set)
+Keep these aligned:
 - `AGENTS.md`
 - `docs/spec.md`
 - `docs/architecture-v3.md`
@@ -132,3 +86,9 @@ Keep the following aligned:
 - `docs/product-surface-strategy.md`
 - `docs/production-readiness-strategy.md`
 - `docs/market-data-strategy.md`
+- `docs/miniapp-readonly-data-boundary.md`
+- `docs/latest-system-run-storage-topology.md`
+- `docs/latest-system-runs-repository-contract.md`
+- `docs/railway-service-variables.md`
+- `docs/operator-runbook.md`
+- `docs/post-deploy-acceptance-checklist.md`

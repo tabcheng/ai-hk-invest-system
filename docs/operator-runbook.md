@@ -364,3 +364,10 @@ Use together with `docs/railway-service-variables.md` Step 91C and `docs/post-de
 - Default mode is read-only evidence (Supabase + optional Railway read-only probe). Contract evidence must use service-role-only RPC (`step92a_latest_system_runs_contract_evidence`) instead of direct PostgREST catalog paths.
 - Optional input `run_paper_daily_runner=true` enables controlled best-effort runner-path check; this does not add Telegram read integration or Mini App fetch integration.
 - Operator must review artifact reports for safe summary fields and acceptance gate status before Step 92B work.
+
+## Step 92B — `/latest_system_run` (read-only latest-state summary)
+- Command: `/latest_system_run`
+- Purpose: return one bounded latest row from `latest_system_runs` for `source=paper_daily_runner`.
+- Output fields: `business_date`, `status`, `run_id`, `data_timestamp`, `paper_trade_only`, `processed_tickers`, `successful_tickers`, `failed_tickers`, `updated_at`.
+- Fallbacks: bounded `no data` when missing row; bounded `failed` on internal lookup error (no raw exception details).
+- Boundary: review-only latest-state surface; no decision/order/broker/live execution behavior.

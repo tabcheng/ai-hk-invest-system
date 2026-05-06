@@ -36,6 +36,9 @@
 - Step 92A first manual smoke run `25458652930` failed only because REST catalog evidence paths (`pg_catalog`/`pg_indexes`) returned HTTP 404 on PostgREST surface.
 - Step 92A-S2 completed: replaced catalog REST evidence with service-role-only RPC `step92a_latest_system_runs_contract_evidence()` and preserved summary-only secret-safe report contract.
 
+- Step 92B completed: Telegram webhook operator read-only command `/latest_system_run` added; it reads one bounded latest row from `latest_system_runs` for `source=paper_daily_runner` via existing repository/provider and returns operator-safe summary fields only.
+- Step 92B boundary: no decision creation, no order placement, no broker/live execution, no Mini App fetch integration, and no Supabase schema change.
+
 ## Post-merge acceptance + wording discipline (system-of-record)
 - Every merged step must complete two mandatory acceptance checks:
   1. **Post-merge QA Check** — verify output/function correctness, success/error path clarity, and display/docs/tests consistency.

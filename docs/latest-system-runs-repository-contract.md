@@ -76,3 +76,8 @@ Write integration is best-effort from paper daily runner completion and does not
 - Security posture: `security invoker`, fixed search path `pg_catalog, public, pg_temp`, `revoke all` from `public`/`anon`/`authenticated`, `grant execute` to `service_role` only.
 - Access boundary: backend-only service-role / `sb_secret_*` key class; no browser/client access to this RPC.
 - No secrets/raw rows/tokens/initData/allowlist identifiers/vendor payloads/market data are returned.
+
+## Step 92B Telegram webhook read surface
+- Telegram operator command `/latest_system_run` now uses `get_latest_system_run(client, source="paper_daily_runner")` to fetch exactly one latest row.
+- Telegram response is bounded to safe summary fields only and must not include raw Supabase errors, secrets, tokens, initData, allowlist identifiers, vendor payloads, or raw logs.
+- On missing row: bounded unavailable/no-data response. On lookup failure: bounded operator-safe failure response.

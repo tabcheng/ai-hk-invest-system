@@ -14,11 +14,13 @@ from src.human_decision_journal import (
     record_run_level_decision_note,
     record_stock_level_decision_note,
 )
+from src.latest_system_runs_repository import get_latest_system_run
 from src.runs import get_latest_run_execution_summary, get_run_by_id, list_recent_runs
 
 _RUNS_COMMAND_PATTERN = re.compile(r"^/runs(?:\s+(\d+)d)?\s*$", re.IGNORECASE)
 _RISK_REVIEW_COMMAND_PATTERN = re.compile(r"^/risk_review(?:\s+(\S+))?\s*$", re.IGNORECASE)
 _RUNNER_STATUS_COMMAND_PATTERN = re.compile(r"^/runner_status\s*$", re.IGNORECASE)
+_LATEST_SYSTEM_RUN_COMMAND_PATTERN = re.compile(r"^/latest_system_run\s*$", re.IGNORECASE)
 _PNL_REVIEW_COMMAND_PATTERN = re.compile(r"^/pnl_review\s*$", re.IGNORECASE)
 _OUTCOME_REVIEW_COMMAND_PATTERN = re.compile(r"^/outcome_review(?:\s+(\S+))?\s*$", re.IGNORECASE)
 _DAILY_REVIEW_COMMAND_PATTERN = re.compile(r"^/daily_review\s*$", re.IGNORECASE)
@@ -136,6 +138,12 @@ def _parse_pnl_review_command(command_text: str) -> None:
     """
     if not _PNL_REVIEW_COMMAND_PATTERN.match(command_text or ""):
         raise ValueError("Usage: /pnl_review")
+
+
+def _parse_latest_system_run_command(command_text: str) -> None:
+    """Validate `/latest_system_run` with no extra tokens."""
+    if not _LATEST_SYSTEM_RUN_COMMAND_PATTERN.match(command_text or ""):
+        raise ValueError("Usage: /latest_system_run")
 
 
 def _parse_outcome_review_command(command_text: str) -> int | None:
@@ -427,6 +435,7 @@ def build_help_command_message() -> str:
             "- /runs : List recent run IDs from the last 5 days (最近 5 日 run 記錄).",
             "- /runs [days]d : Query a custom window, e.g. /runs 7d (自訂查詢日數).",
             "- /runner_status : Show latest daily runner execution summary (最新 runner 狀態摘要).",
+            "- /latest_system_run : Show latest bounded paper_daily_runner row summary (最新 bounded 系統 run 摘要).",
             "- /risk_review [run_id] : Run paper-trading risk review for one run (查看單次 run 風險回顧).",
             "- /pnl_review : Show paper position/PnL review snapshot (查看持倉與盈虧摘要).",
             "- /outcome_review [days] : Show closed-trade outcome summary (查看平倉結果摘要，可選天數視窗).",
@@ -641,6 +650,28 @@ def _build_outcome_review_command_message(summary: dict[str, Any]) -> str:
     )
 
 
+
+
+def _format_latest_system_run_message(row: dict[str, Any]) -> str:
+    summary = row.get("summary_json") or {}
+    return _build_operator_message(
+        command_label="/latest_system_run",
+        status="completed",
+        result="latest bounded paper_daily_runner summary",
+        fields=[
+            ("business_date", row.get("business_date") or "N/A"),
+            ("status", row.get("status") or "unknown"),
+            ("run_id", row.get("run_id") or "N/A"),
+            ("data_timestamp", row.get("data_timestamp") or "N/A"),
+            ("paper_trade_only", summary.get("paper_trade_only") is True),
+            ("processed_tickers", int(summary.get("processed_tickers") or 0)),
+            ("successful_tickers", int(summary.get("successful_tickers") or 0)),
+            ("failed_tickers", int(summary.get("failed_tickers") or 0)),
+            ("updated_at", row.get("updated_at") or "N/A"),
+            ("boundary", "read-only latest-state row; no broker/live execution"),
+        ],
+    )
+
 def _build_daily_review_command_message(client: Any) -> str:
     """Build short daily operator review packet (MVP, read-only aggregation)."""
     runner_status_result = "no data"
@@ -739,6 +770,7 @@ def handle_telegram_operator_command(client: Any, update: dict[str, Any]) -> str
     is_help_command = bool(_HELP_COMMAND_PATTERN.match(text))
     is_runs_command = text.lower().startswith("/runs")
     is_runner_status_command = bool(_RUNNER_STATUS_COMMAND_PATTERN.match(text))
+    is_latest_system_run_command = text.lower().startswith("/latest_system_run")
     is_risk_review_command = text.lower().startswith("/risk_review")
     is_pnl_review_command = text.lower().startswith("/pnl_review")
     is_outcome_review_command = text.lower().startswith("/outcome_review")
@@ -748,6 +780,7 @@ def handle_telegram_operator_command(client: Any, update: dict[str, Any]) -> str
         is_help_command
         or is_runs_command
         or is_runner_status_command
+        or is_latest_system_run_command
         or is_risk_review_command
         or is_pnl_review_command
         or is_outcome_review_command
@@ -825,6 +858,33 @@ def handle_telegram_operator_command(client: Any, update: dict[str, Any]) -> str
                     status="failed",
                     reason="latest summary formatting error",
                 )
+
+        if is_latest_system_run_command:
+            try:
+                _parse_latest_system_run_command(text)
+            except ValueError as exc:
+                return _build_usage_error_message(command_label="/latest_system_run", error_text=str(exc))
+            try:
+                latest_row = get_latest_system_run(client, source="paper_daily_runner")
+            except Exception as exc:
+                print(
+                    "Telegram /latest_system_run lookup failed: "
+                    f"chat_id={chat_id} user_id={user_id} error={exc!r}"
+                )
+                return _build_operator_message(
+                    command_label="/latest_system_run",
+                    status="failed",
+                    reason="internal latest-system-run lookup error",
+                )
+
+            if not latest_row:
+                return _build_operator_message(
+                    command_label="/latest_system_run",
+                    status="no data",
+                    reason="no matching records: latest bounded row is not available yet",
+                )
+
+            return _format_latest_system_run_message(latest_row)
 
         if is_pnl_review_command:
             try:

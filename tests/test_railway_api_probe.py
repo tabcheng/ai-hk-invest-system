@@ -51,6 +51,44 @@ def test_metadata_403_not_run_logs(tmp_path, monkeypatch):
     assert p["environment_logs_probe_status"] == "NOT_RUN"
 
 
+def test_account_http_error_still_runs_curl_probe(tmp_path, monkeypatch):
+    monkeypatch.setenv("RAILWAY_TOKEN", "t")
+    monkeypatch.setenv("RAILWAY_CONNECTIVITY_PROBE", "account")
+    monkeypatch.setenv("RAILWAY_CURL_PROBE", "on")
+    err = HTTPError("https://x", 403, "forbidden", hdrs=None, fp=BytesIO(b"forbidden Bearer abc"))
+    monkeypatch.setattr(s, "_graphql", lambda *_a, **_k: (_ for _ in ()).throw(err))
+
+    class R:
+        stdout = "200"
+
+    monkeypatch.setattr(s.subprocess, "run", lambda *a, **k: R())
+    p = _run(tmp_path, monkeypatch)
+    assert p["account_probe_status"] == "FAIL"
+    assert p["account_probe_http_status"] == 403
+    assert p["curl_account_probe_status"] == "PASS"
+    assert p["curl_account_probe_http_status"] == 200
+    assert p["project_metadata_status"] == "NOT_RUN"
+    assert "Bearer abc" not in json.dumps(p)
+
+
+def test_account_generic_error_still_runs_curl_probe(tmp_path, monkeypatch):
+    monkeypatch.setenv("RAILWAY_TOKEN", "t")
+    monkeypatch.setenv("RAILWAY_CONNECTIVITY_PROBE", "account")
+    monkeypatch.setenv("RAILWAY_CURL_PROBE", "on")
+    monkeypatch.setattr(s, "_graphql", lambda *_a, **_k: (_ for _ in ()).throw(RuntimeError("tls timeout")))
+
+    class R:
+        stdout = "403"
+
+    monkeypatch.setattr(s.subprocess, "run", lambda *a, **k: R())
+    p = _run(tmp_path, monkeypatch)
+    assert p["account_probe_status"] == "FAIL"
+    assert p["curl_account_probe_status"] == "FAIL"
+    assert p["curl_account_probe_http_status"] == 403
+    assert p["project_metadata_status"] == "NOT_RUN"
+    assert p["environment_logs_probe_status"] == "NOT_RUN"
+
+
 def test_metadata_pass_logs_403(tmp_path, monkeypatch):
     monkeypatch.setenv("RAILWAY_TOKEN", "t")
     monkeypatch.setenv("RAILWAY_PROJECT_ID", "p1")
@@ -207,6 +245,15 @@ def test_curl_probe_default_off(tmp_path, monkeypatch):
     payload = _run(tmp_path, monkeypatch)
     assert payload["curl_account_probe_status"] == "NOT_RUN"
     assert payload["curl_account_probe_http_status"] is None
+
+
+def test_account_fail_and_curl_off_stays_not_run(tmp_path, monkeypatch):
+    monkeypatch.setenv("RAILWAY_TOKEN", "t")
+    monkeypatch.setenv("RAILWAY_CONNECTIVITY_PROBE", "account")
+    monkeypatch.setattr(s, "_graphql", lambda *_a, **_k: (_ for _ in ()).throw(RuntimeError("dns fail")))
+    payload = _run(tmp_path, monkeypatch)
+    assert payload["account_probe_status"] == "FAIL"
+    assert payload["curl_account_probe_status"] == "NOT_RUN"
 
 
 def test_curl_probe_records_http_status_without_body(tmp_path, monkeypatch):

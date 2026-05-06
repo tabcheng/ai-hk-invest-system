@@ -44,6 +44,42 @@ def _graphql(api_url: str, token: str, query: str, variables: dict[str, Any]) ->
         return int(getattr(resp, "status", 200)), json.loads(resp.read().decode("utf-8", errors="replace"))
 
 
+def _run_curl_account_probe(api_url: str, token: str) -> tuple[str, int | None]:
+    try:
+        curl_res = subprocess.run(
+            [
+                "curl",
+                "-sS",
+                "-o",
+                "/dev/null",
+                "-w",
+                "%{http_code}",
+                "-X",
+                "POST",
+                api_url,
+                "-H",
+                "Content-Type: application/json",
+                "-H",
+                "Accept: application/json",
+                "-H",
+                "User-Agent: ai-hk-invest-system-step91c/1.0 (+github-actions; read-only-railway-probe)",
+                "-H",
+                f"Authorization: Bearer {token}",
+                "--data",
+                json.dumps({"query": "query { me { name email } }", "variables": {}}),
+            ],
+            capture_output=True,
+            text=True,
+            timeout=20,
+            check=False,
+        )
+        status = (curl_res.stdout or "").strip()
+        code = int(status) if status.isdigit() else None
+        return ("PASS" if status.startswith("2") else "FAIL"), code
+    except Exception:
+        return "FAIL", None
+
+
 def _safe_error(exc: Exception) -> tuple[str, int | None, str]:
     if isinstance(exc, HTTPError):
         try:
@@ -122,45 +158,25 @@ def main() -> int:
     current_stage = None
     try:
         if connectivity == "account":
-            current_stage = "account_probe"
-            http, payload = _graphql(api_url, token, "query { me { name email } }", {})
-            report["account_probe_http_status"] = http
-            report["account_probe_status"] = "PASS" if not payload.get("errors") else "FAIL"
+            try:
+                current_stage = "account_probe"
+                http, payload = _graphql(api_url, token, "query { me { name email } }", {})
+                report["account_probe_http_status"] = http
+                report["account_probe_status"] = "PASS" if not payload.get("errors") else "FAIL"
+            except Exception as exc:
+                kind, status, excerpt = _safe_error(exc)
+                report["account_probe_status"] = "FAIL"
+                report["account_probe_http_status"] = status
+                report["railway_api_error_kind"] = kind
+                report["railway_api_error_excerpt_redacted"] = excerpt
             if curl_probe == "on":
-                try:
-                    curl_res = subprocess.run(
-                        [
-                            "curl",
-                            "-sS",
-                            "-o",
-                            "/dev/null",
-                            "-w",
-                            "%{http_code}",
-                            "-X",
-                            "POST",
-                            api_url,
-                            "-H",
-                            "Content-Type: application/json",
-                            "-H",
-                            "Accept: application/json",
-                            "-H",
-                            "User-Agent: ai-hk-invest-system-step91c/1.0 (+github-actions; read-only-railway-probe)",
-                            "-H",
-                            f"Authorization: Bearer {token}",
-                            "--data",
-                            json.dumps({"query": "query { me { name email } }", "variables": {}}),
-                        ],
-                        capture_output=True,
-                        text=True,
-                        timeout=20,
-                        check=False,
-                    )
-                    status = (curl_res.stdout or "").strip()
-                    report["curl_account_probe_http_status"] = int(status) if status.isdigit() else None
-                    report["curl_account_probe_status"] = "PASS" if status.startswith("2") else "FAIL"
-                except Exception:
-                    report["curl_account_probe_status"] = "FAIL"
-                    report["curl_account_probe_http_status"] = None
+                report["curl_account_probe_status"], report["curl_account_probe_http_status"] = _run_curl_account_probe(api_url, token)
+            if report["account_probe_status"] == "FAIL":
+                report["project_metadata_status"] = "NOT_RUN"
+                report["environment_logs_probe_status"] = "NOT_RUN"
+                report["overall_status"] = "FAIL"
+                report["limitation"] = "Account probe failed; project metadata probe was skipped."
+                return _write_and_print(report)
 
         if not project_id:
             report["project_metadata_status"] = "NOT_CONFIGURED"

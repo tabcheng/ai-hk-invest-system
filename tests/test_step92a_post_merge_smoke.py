@@ -1,4 +1,7 @@
-from scripts.step92a_post_merge_smoke import _compute_overall_status, _safe_latest_row
+from urllib.error import HTTPError
+
+import scripts.step92a_post_merge_smoke as smoke
+from scripts.step92a_post_merge_smoke import _compute_overall_status, _contract_evidence_check, _safe_latest_row
 
 
 def test_safe_latest_row_only_safe_fields() -> None:
@@ -31,6 +34,33 @@ def test_safe_latest_row_only_safe_fields() -> None:
 
 def test_safe_latest_row_none() -> None:
     assert _safe_latest_row(None) is None
+
+
+def test_contract_evidence_rpc_pass_mapping(monkeypatch) -> None:
+    monkeypatch.setattr(smoke, "_get", lambda *_: {
+        "table_exists": True,
+        "rls_enabled": True,
+        "source_unique_index_exists": True,
+        "latest_read_index_exists": True,
+    })
+    mapped, reason = _contract_evidence_check("https://x.supabase.co", "k")
+    assert mapped == {
+        "table_exists": "PASS",
+        "rls_enabled": "PASS",
+        "source_unique_index_exists": "PASS",
+        "latest_read_index_exists": "PASS",
+    }
+    assert reason == "ok"
+
+
+def test_contract_evidence_rpc_404_fails(monkeypatch) -> None:
+    def _boom(*_args, **_kwargs):
+        raise HTTPError("https://x", 404, "not found", hdrs=None, fp=None)
+
+    monkeypatch.setattr(smoke, "_get", _boom)
+    mapped, reason = _contract_evidence_check("https://x.supabase.co", "k")
+    assert all(value == "FAIL" for value in mapped.values())
+    assert reason == "contract_evidence_rpc_not_configured_http_404"
 
 
 def _base_report() -> dict:

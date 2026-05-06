@@ -361,6 +361,6 @@ Use together with `docs/railway-service-variables.md` Step 91C and `docs/post-de
 
 ## Step 92A-S1 workflow (manual post-merge smoke)
 - Workflow: `.github/workflows/step92a-post-merge-smoke.yml` (`workflow_dispatch` only).
-- Default mode is read-only evidence (Supabase + optional Railway read-only probe).
+- Default mode is read-only evidence (Supabase + optional Railway read-only probe). Contract evidence must use service-role-only RPC (`step92a_latest_system_runs_contract_evidence`) instead of direct PostgREST catalog paths.
 - Optional input `run_paper_daily_runner=true` enables controlled best-effort runner-path check; this does not add Telegram read integration or Mini App fetch integration.
 - Operator must review artifact reports for safe summary fields and acceptance gate status before Step 92B work.

@@ -32,6 +32,9 @@
 - Step 92A-S1 completed: added manual-only GitHub Actions post-merge smoke workflow `.github/workflows/step92a-post-merge-smoke.yml` (`workflow_dispatch` only) for Step 92A acceptance evidence.
 - Step 92A-S1 acceptance boundary: secret-safe summary-only evidence output, read-only Supabase/Railway checks by default, optional best-effort runner-path toggle (`run_paper_daily_runner=true`) without Railway topology mutation.
 - Step 92A-S1 non-goals preserved: no Step 92B Telegram webhook read integration, no Mini App fetch integration, no Supabase schema change, no deploy/redeploy automation, no broker/live execution.
+- Step 92A acceptance (combined evidence) confirmed PASS: GitHub smoke data-path checks plus manual Supabase SQL evidence (`rls_enabled=true`, `idx_latest_system_runs_source_unique`, `idx_latest_system_runs_latest_read`, `paper_daily_runner` row_count=1).
+- Step 92A first manual smoke run `25458652930` failed only because REST catalog evidence paths (`pg_catalog`/`pg_indexes`) returned HTTP 404 on PostgREST surface.
+- Step 92A-S2 completed: replaced catalog REST evidence with service-role-only RPC `step92a_latest_system_runs_contract_evidence()` and preserved summary-only secret-safe report contract.
 
 ## Post-merge acceptance + wording discipline (system-of-record)
 - Every merged step must complete two mandatory acceptance checks:

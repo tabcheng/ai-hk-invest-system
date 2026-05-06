@@ -35,14 +35,27 @@ def _get(base: str, key: str, query: str) -> Any:
         return json.loads(resp.read().decode("utf-8", errors="replace"))
 
 
-def _required_catalog_check(base: str, key: str, query: str, predicate) -> tuple[str, str]:
+def _contract_evidence_check(base: str, key: str) -> tuple[dict[str, str], str | None]:
+    fail_result = {
+        "table_exists": "FAIL",
+        "rls_enabled": "FAIL",
+        "source_unique_index_exists": "FAIL",
+        "latest_read_index_exists": "FAIL",
+    }
     try:
-        payload = _get(base, key, query)
-        return ("PASS", "ok") if predicate(payload) else ("FAIL", "unexpected_payload")
+        payload = _get(base, key, "rpc/step92a_latest_system_runs_contract_evidence")
     except HTTPError as exc:
-        return "FAIL", f"catalog_check_not_configured_http_{exc.code}"
+        return fail_result, f"contract_evidence_rpc_not_configured_http_{exc.code}"
     except Exception as exc:  # noqa: BLE001
-        return "FAIL", f"catalog_check_not_configured_{exc.__class__.__name__}"
+        return fail_result, f"contract_evidence_rpc_not_configured_{exc.__class__.__name__}"
+
+    if not isinstance(payload, dict):
+        return fail_result, "contract_evidence_rpc_unexpected_payload"
+
+    mapped: dict[str, str] = {}
+    for key_name in ("table_exists", "rls_enabled", "source_unique_index_exists", "latest_read_index_exists"):
+        mapped[key_name] = "PASS" if payload.get(key_name) is True else "FAIL"
+    return mapped, "ok"
 
 
 def _safe_latest_row(row: dict[str, Any] | None) -> dict[str, Any] | None:
@@ -155,17 +168,14 @@ def main() -> int:
 
     if report["preflight"] == "PASS":
         try:
-            probe = _get(base, key or "", "latest_system_runs?select=id&limit=1")
-            report["table_exists"] = "PASS" if isinstance(probe, list) else "FAIL"
-
-            s, r = _required_catalog_check(base, key or "", "pg_catalog.pg_tables?select=rowsecurity&schemaname=eq.public&tablename=eq.latest_system_runs", lambda x: isinstance(x, list) and len(x) == 1 and x[0].get("rowsecurity") is True)
-            report["rls_enabled"], report["rls_check_reason"] = s, r
-
-            s, r = _required_catalog_check(base, key or "", "pg_indexes?select=indexname&schemaname=eq.public&tablename=eq.latest_system_runs", lambda x: isinstance(x, list) and {i.get('indexname') for i in x if isinstance(i, dict)}.issuperset({"idx_latest_system_runs_source_unique", "idx_latest_system_runs_latest_read"}))
-            report["source_unique_index_exists"] = s
-            report["latest_read_index_exists"] = s
-            report["source_unique_index_reason"] = r
-            report["latest_read_index_reason"] = r
+            contract_evidence, contract_reason = _contract_evidence_check(base, key or "")
+            report["table_exists"] = contract_evidence["table_exists"]
+            report["rls_enabled"] = contract_evidence["rls_enabled"]
+            report["source_unique_index_exists"] = contract_evidence["source_unique_index_exists"]
+            report["latest_read_index_exists"] = contract_evidence["latest_read_index_exists"]
+            report["rls_check_reason"] = contract_reason
+            report["source_unique_index_reason"] = contract_reason
+            report["latest_read_index_reason"] = contract_reason
 
             rows = _get(base, key or "", "latest_system_runs?select=run_id,business_date,status,source,data_timestamp,summary_json,created_at,updated_at&source=eq.paper_daily_runner&order=updated_at.desc,created_at.desc&limit=10")
             report["paper_daily_runner_row_count_lte_1"] = "PASS" if isinstance(rows, list) and len(rows) <= 1 else "FAIL"

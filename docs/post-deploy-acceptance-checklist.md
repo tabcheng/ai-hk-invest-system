@@ -128,6 +128,6 @@ Step 91A recorded result (PR #88):
 ## Step 92A-S1 Manual Post-merge Smoke (latest_system_runs)
 - Trigger only via GitHub Actions `workflow_dispatch` (`.github/workflows/step92a-post-merge-smoke.yml`).
 - Keep outputs secret-safe and summary-only; do not print raw keys/tokens/initData/allowlist values.
-- Validate `latest_system_runs` table/index/RLS/row-contract evidence and capture safe selected fields only.
+- Validate `latest_system_runs` table/index/RLS/row-contract evidence via service-role-only RPC (`/rest/v1/rpc/step92a_latest_system_runs_contract_evidence`) and capture safe selected fields only.
 - Optional `run_paper_daily_runner=true` is best-effort and must not force failed terminal status solely due to write-path best-effort behavior.
 - Confirm no Railway topology mutation, no deploy/redeploy, no variable mutation, and no broker/live execution behavior.

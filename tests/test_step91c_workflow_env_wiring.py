@@ -1,29 +1,28 @@
 from pathlib import Path
+import re
 
-import yaml
+
+WORKFLOW_PATH = Path('.github/workflows/step91c-runtime-acceptance.yml')
 
 
-def _find_step(workflow: dict, name: str) -> dict:
-    steps = workflow["jobs"]["step91c-acceptance"]["steps"]
-    for step in steps:
-        if step.get("name") == name:
-            return step
-    raise AssertionError(f"missing step: {name}")
+def _extract_step_block(text: str, step_name: str) -> str:
+    pattern = re.compile(
+        rf"^\s*- name: {re.escape(step_name)}\n(?P<body>(?:^\s{{8,}}.*\n)*)",
+        re.MULTILINE,
+    )
+    match = pattern.search(text)
+    assert match, f"missing step: {step_name}"
+    return match.group(0)
 
 
 def test_optional_railway_diagnostics_vars_wired_only_to_api_probe_step() -> None:
-    workflow = yaml.safe_load(
-        Path(".github/workflows/step91c-runtime-acceptance.yml").read_text(encoding="utf-8")
-    )
+    workflow_text = WORKFLOW_PATH.read_text(encoding='utf-8')
 
-    api_probe = _find_step(workflow, "Run Railway API probe (read-only)")
-    log_evidence = _find_step(workflow, "Run Railway log evidence (read-only)")
+    api_probe_block = _extract_step_block(workflow_text, 'Run Railway API probe (read-only)')
+    log_evidence_block = _extract_step_block(workflow_text, 'Run Railway log evidence (read-only)')
 
-    api_probe_env = api_probe.get("env", {})
-    log_evidence_env = log_evidence.get("env", {})
+    assert 'RAILWAY_TOKEN_SHA256_PREFIX: ${{ vars.RAILWAY_TOKEN_SHA256_PREFIX }}' in api_probe_block
+    assert 'RAILWAY_CURL_PROBE: ${{ vars.RAILWAY_CURL_PROBE }}' in api_probe_block
 
-    assert api_probe_env.get("RAILWAY_TOKEN_SHA256_PREFIX") == "${{ vars.RAILWAY_TOKEN_SHA256_PREFIX }}"
-    assert api_probe_env.get("RAILWAY_CURL_PROBE") == "${{ vars.RAILWAY_CURL_PROBE }}"
-
-    assert "RAILWAY_TOKEN_SHA256_PREFIX" not in log_evidence_env
-    assert "RAILWAY_CURL_PROBE" not in log_evidence_env
+    assert 'RAILWAY_TOKEN_SHA256_PREFIX' not in log_evidence_block
+    assert 'RAILWAY_CURL_PROBE' not in log_evidence_block

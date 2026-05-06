@@ -185,8 +185,9 @@ def test_account_probe_fail_without_project_is_overall_fail(tmp_path, monkeypatc
     p = _run(tmp_path, monkeypatch)
     assert p["account_probe_status"] == "FAIL"
     assert p["overall_status"] == "FAIL"
-    assert p["project_metadata_status"] == "NOT_CONFIGURED"
+    assert p["project_metadata_status"] == "NOT_RUN"
     assert p["environment_logs_probe_status"] == "NOT_RUN"
+    assert p["limitation"] == "Account probe failed; project metadata probe was skipped."
 
 
 def test_missing_project_not_configured(tmp_path, monkeypatch):

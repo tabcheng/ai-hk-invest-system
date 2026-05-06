@@ -107,8 +107,10 @@ def test_no_raw_message_and_redaction(tmp_path, monkeypatch):
 
     monkeypatch.setattr(s, "_graphql", fake)
     p = _run(tmp_path, monkeypatch)
-    assert "message" not in json.dumps(p)
-    assert "Bearer abc" not in (p["railway_api_error_excerpt_redacted"] or "")
+    report_text = json.dumps(p)
+    assert "Bearer abc" not in report_text
+    assert "forbidden Bearer abc" not in report_text
+    assert "[REDACTED]" in (p["railway_api_error_excerpt_redacted"] or "")
 
 
 def test_account_probe_default_not_run(tmp_path, monkeypatch):
@@ -120,6 +122,7 @@ def test_account_probe_default_not_run(tmp_path, monkeypatch):
 def test_account_probe_only_when_account(tmp_path, monkeypatch):
     monkeypatch.setenv("RAILWAY_TOKEN", "t")
     monkeypatch.setenv("RAILWAY_CONNECTIVITY_PROBE", "account")
+    monkeypatch.delenv("RAILWAY_PROJECT_ID", raising=False)
 
     def fake(*_a, **_k):
         return 200, {"data": {"me": {"name": "n", "email": "e"}}}
@@ -127,6 +130,24 @@ def test_account_probe_only_when_account(tmp_path, monkeypatch):
     monkeypatch.setattr(s, "_graphql", fake)
     p = _run(tmp_path, monkeypatch)
     assert p["account_probe_status"] == "PASS"
+    assert p["project_metadata_status"] == "NOT_CONFIGURED"
+    assert p["environment_logs_probe_status"] == "NOT_RUN"
+
+
+def test_account_probe_fail_without_project_is_overall_fail(tmp_path, monkeypatch):
+    monkeypatch.setenv("RAILWAY_TOKEN", "t")
+    monkeypatch.setenv("RAILWAY_CONNECTIVITY_PROBE", "account")
+    monkeypatch.delenv("RAILWAY_PROJECT_ID", raising=False)
+
+    def fake(*_a, **_k):
+        return 200, {"errors": [{"message": "forbidden"}]}
+
+    monkeypatch.setattr(s, "_graphql", fake)
+    p = _run(tmp_path, monkeypatch)
+    assert p["account_probe_status"] == "FAIL"
+    assert p["overall_status"] == "FAIL"
+    assert p["project_metadata_status"] == "NOT_CONFIGURED"
+    assert p["environment_logs_probe_status"] == "NOT_RUN"
 
 
 def test_missing_project_not_configured(tmp_path, monkeypatch):

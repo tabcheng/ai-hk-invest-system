@@ -32,3 +32,14 @@ def test_repository_payload_does_not_require_legacy_run_status() -> None:
         summary_json={"paper_trade_only": True},
     )
     assert "run_status" not in payload
+
+
+def test_migration_deduplicates_source_before_unique_index() -> None:
+    sql = _sql()
+    assert "partition by source" in sql
+    assert "delete from public.latest_system_runs l" in sql
+    assert "r.rn > 1" in sql
+    assert "create unique index if not exists idx_latest_system_runs_source_unique" in sql
+    assert sql.index("delete from public.latest_system_runs l") < sql.index(
+        "create unique index if not exists idx_latest_system_runs_source_unique"
+    )

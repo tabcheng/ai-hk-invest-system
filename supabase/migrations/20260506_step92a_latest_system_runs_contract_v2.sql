@@ -67,6 +67,20 @@ alter table public.latest_system_runs
   drop constraint if exists latest_system_runs_summary_paper_only_chk,
   add constraint latest_system_runs_summary_paper_only_chk check ((summary_json->>'paper_trade_only')::boolean is true);
 
+with ranked as (
+  select
+    id,
+    row_number() over (
+      partition by source
+      order by updated_at desc, created_at desc, id desc
+    ) as rn
+  from public.latest_system_runs
+)
+delete from public.latest_system_runs l
+using ranked r
+where l.id = r.id
+  and r.rn > 1;
+
 create unique index if not exists idx_latest_system_runs_source_unique
   on public.latest_system_runs (source);
 

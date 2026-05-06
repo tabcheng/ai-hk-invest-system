@@ -134,6 +134,22 @@ def test_account_probe_only_when_account(tmp_path, monkeypatch):
     assert p["environment_logs_probe_status"] == "NOT_RUN"
 
 
+def test_account_probe_fail_without_project_is_overall_fail(tmp_path, monkeypatch):
+    monkeypatch.setenv("RAILWAY_TOKEN", "t")
+    monkeypatch.setenv("RAILWAY_CONNECTIVITY_PROBE", "account")
+    monkeypatch.delenv("RAILWAY_PROJECT_ID", raising=False)
+
+    def fake(*_a, **_k):
+        return 200, {"errors": [{"message": "forbidden"}]}
+
+    monkeypatch.setattr(s, "_graphql", fake)
+    p = _run(tmp_path, monkeypatch)
+    assert p["account_probe_status"] == "FAIL"
+    assert p["overall_status"] == "FAIL"
+    assert p["project_metadata_status"] == "NOT_CONFIGURED"
+    assert p["environment_logs_probe_status"] == "NOT_RUN"
+
+
 def test_missing_project_not_configured(tmp_path, monkeypatch):
     monkeypatch.setenv("RAILWAY_TOKEN", "t")
     monkeypatch.delenv("RAILWAY_PROJECT_ID", raising=False)

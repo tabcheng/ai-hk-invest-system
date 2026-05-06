@@ -103,8 +103,15 @@ def main() -> int:
         if not project_id:
             report["project_metadata_status"] = "NOT_CONFIGURED"
             report["environment_logs_probe_status"] = "NOT_RUN"
-            report["overall_status"] = "PASS" if report["account_probe_status"] == "PASS" else "NOT_CONFIGURED"
-            report["limitation"] = "RAILWAY_PROJECT_ID is not configured."
+            if report["account_probe_status"] == "PASS":
+                report["overall_status"] = "PASS"
+                report["limitation"] = "RAILWAY_PROJECT_ID is not configured."
+            elif report["account_probe_status"] == "FAIL":
+                report["overall_status"] = "FAIL"
+                report["limitation"] = "Account probe failed and RAILWAY_PROJECT_ID is not configured."
+            else:
+                report["overall_status"] = "NOT_CONFIGURED"
+                report["limitation"] = "RAILWAY_PROJECT_ID is not configured."
             return _write_and_print(report)
 
         current_stage = "project_metadata"

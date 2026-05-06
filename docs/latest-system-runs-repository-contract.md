@@ -73,5 +73,6 @@ Write integration is best-effort from paper daily runner completion and does not
 ## Step 92A-S2 contract evidence RPC
 - Add backend-only evidence function `public.step92a_latest_system_runs_contract_evidence()` for smoke/runtime acceptance checks.
 - Function returns booleans only: `table_exists`, `rls_enabled`, `source_unique_index_exists`, `latest_read_index_exists`.
-- Security posture: `security definer`, fixed search path, `revoke all` from `public`/`anon`/`authenticated`, `grant execute` to `service_role` only.
+- Security posture: `security invoker`, fixed search path `pg_catalog, public, pg_temp`, `revoke all` from `public`/`anon`/`authenticated`, `grant execute` to `service_role` only.
+- Access boundary: backend-only service-role / `sb_secret_*` key class; no browser/client access to this RPC.
 - No secrets/raw rows/tokens/initData/allowlist identifiers/vendor payloads/market data are returned.

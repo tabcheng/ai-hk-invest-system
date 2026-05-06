@@ -23,4 +23,7 @@ def test_smoke_script_no_direct_catalog_rest_paths() -> None:
     text = SCRIPT_PATH.read_text(encoding='utf-8')
     assert 'pg_catalog.pg_tables' not in text
     assert 'pg_indexes?select=' not in text
-    assert 'rpc/step92a_latest_system_runs_contract_evidence' in text
+    assert '_post_rpc(' in text
+    assert 'step92a_latest_system_runs_contract_evidence' in text
+    assert 'method="POST"' in text
+    assert 'Content-Type' in text

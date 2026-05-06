@@ -226,3 +226,8 @@ Operator deploy + smoke evidence flow (manual):
 - `RAILWAY_LOG_SERVICE_IDS` is required for scoped Step 91C `environmentLogs` evidence.
 - If Railway token/project/environment are configured but service IDs are missing, evidence must fail with scoped-limit message; do not scan full environment logs.
 - `RAILWAY_LOG_SERVICE_NAMES` remains display/compatibility labels only.
+
+## Step 91C-6 probe variable
+- `RAILWAY_CONNECTIVITY_PROBE` (optional): `metadata`(default), `account`, `workspace`, `off`.
+- 預設 `metadata` 不跑 account query；只有 `account` 才跑 `query { me { name email } }`。
+- `scripts/railway_api_probe.py` 僅輸出狀態/HTTP/error 摘要與 count/timestamp，不輸出 token 或 raw message。

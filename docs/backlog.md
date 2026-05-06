@@ -212,3 +212,5 @@ Prioritization:
 | 91C-5 | Railway official environment logs query adoption | Replace guessed nested Railway logs query with official `environmentLogs` mode; add service-id filter envs + diagnostics/tests/docs alignment | In progress |
 
 | 91C-6 | Railway runner-side API probe diagnostics (read-only) | Add `scripts/railway_api_probe.py` + workflow artifact upload to distinguish token/project metadata access vs environmentLogs permission/query issues; keep existing evidence gate unchanged | In progress |
+
+| 91C-7A | Railway request-shape + fingerprint diagnostics (read-only) | Add explicit API headers in Railway probe scripts, add token fingerprint match gate (`RAILWAY_TOKEN_SHA256_PREFIX`), and optional same-runner curl account probe (`RAILWAY_CURL_PROBE`) to separate token mismatch vs urllib request-shape vs runner-edge 403; keep no raw logs/secrets and no Railway mutation/deploy | In progress |

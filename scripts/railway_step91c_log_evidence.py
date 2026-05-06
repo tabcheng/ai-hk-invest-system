@@ -50,7 +50,12 @@ def _read_only_graphql(token: str, query: str, variables: dict[str, Any], api_ur
     req = request.Request(
         api_url,
         data=body,
-        headers={"Content-Type": "application/json", "Authorization": f"Bearer {token}"},
+        headers={
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+            "User-Agent": "ai-hk-invest-system-step91c/1.0 (+github-actions; read-only-railway-probe)",
+            "Authorization": f"Bearer {token}",
+        },
         method="POST",
     )
     with request.urlopen(req, timeout=30) as resp:

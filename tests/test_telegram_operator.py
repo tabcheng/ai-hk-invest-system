@@ -209,6 +209,25 @@ def test_latest_system_run_failure_is_sanitized(monkeypatch):
     assert "raw db error" not in response
 
 
+def test_latest_system_run_failure_logs_are_sanitized(monkeypatch, capsys):
+    monkeypatch.setenv("TELEGRAM_CHAT_ID", "chat-1")
+    monkeypatch.setattr(
+        "src.telegram_operator.get_latest_system_run",
+        lambda *_a, **_k: (_ for _ in ()).throw(RuntimeError("sb_secret_x raw db error")),
+    )
+    response = handle_telegram_operator_command(object(), _build_update("/latest_system_run", chat_id="chat-1", user_id="u-1"))
+    captured = capsys.readouterr()
+    combined_logs = f"{captured.out}\n{captured.err}"
+
+    assert "internal latest-system-run lookup error" in response
+    assert "sb_secret_x" not in response
+    assert "raw db error" not in response
+    assert "sb_secret_x" not in combined_logs
+    assert "raw db error" not in combined_logs
+    assert "chat-1" not in combined_logs
+    assert "u-1" not in combined_logs
+
+
 def test_latest_system_run_returns_usage_on_malformed_tokens(monkeypatch):
     monkeypatch.setenv("TELEGRAM_CHAT_ID", "chat-1")
     response = handle_telegram_operator_command(object(), _build_update("/latest_system_run now"))

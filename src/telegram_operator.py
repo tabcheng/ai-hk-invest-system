@@ -791,14 +791,13 @@ def handle_telegram_operator_command(client: Any, update: dict[str, Any]) -> str
 
     print(
         "Telegram operator command received: "
-        f"text={text!r} chat_id={chat_id} user_id={user_id}"
+        f"text={text!r}"
     )
 
     auth_decision = get_operator_auth_decision(update)
     print(
         "Telegram operator auth decision: "
-        f"authorized={auth_decision.get('authorized')} reason={auth_decision.get('reason')} "
-        f"chat_id={chat_id} user_id={user_id}"
+        f"authorized={auth_decision.get('authorized')} reason={auth_decision.get('reason')}"
     )
     if not auth_decision.get("authorized"):
         command_label = text.split()[0].lower() if text else "/unknown"
@@ -869,7 +868,7 @@ def handle_telegram_operator_command(client: Any, update: dict[str, Any]) -> str
             except Exception as exc:
                 print(
                     "Telegram /latest_system_run lookup failed: "
-                    f"chat_id={chat_id} user_id={user_id} error={exc!r}"
+                    f"error_kind={type(exc).__name__}"
                 )
                 return _build_operator_message(
                     command_label="/latest_system_run",

@@ -1,3 +1,4 @@
+import json
 from urllib.error import HTTPError
 
 import scripts.step92a_post_merge_smoke as smoke
@@ -37,12 +38,33 @@ def test_safe_latest_row_none() -> None:
 
 
 def test_contract_evidence_rpc_pass_mapping(monkeypatch) -> None:
-    monkeypatch.setattr(smoke, "_get", lambda *_: {
-        "table_exists": True,
-        "rls_enabled": True,
-        "source_unique_index_exists": True,
-        "latest_read_index_exists": True,
-    })
+    class _Resp:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc, tb):
+            return False
+
+        def read(self):
+            return json.dumps(
+                {
+                    "table_exists": True,
+                    "rls_enabled": True,
+                    "source_unique_index_exists": True,
+                    "latest_read_index_exists": True,
+                }
+            ).encode("utf-8")
+
+    captured: dict[str, object] = {}
+
+    def _fake_urlopen(req, timeout=30):
+        captured["method"] = req.get_method()
+        captured["url"] = req.full_url
+        captured["content_type"] = req.get_header("Content-type")
+        captured["body"] = req.data
+        return _Resp()
+
+    monkeypatch.setattr(smoke.request, "urlopen", _fake_urlopen)
     mapped, reason = _contract_evidence_check("https://x.supabase.co", "k")
     assert mapped == {
         "table_exists": "PASS",
@@ -51,13 +73,17 @@ def test_contract_evidence_rpc_pass_mapping(monkeypatch) -> None:
         "latest_read_index_exists": "PASS",
     }
     assert reason == "ok"
+    assert captured["method"] == "POST"
+    assert str(captured["url"]).endswith("/rest/v1/rpc/step92a_latest_system_runs_contract_evidence")
+    assert captured["content_type"] == "application/json"
+    assert captured["body"] == b"{}"
 
 
 def test_contract_evidence_rpc_404_fails(monkeypatch) -> None:
     def _boom(*_args, **_kwargs):
         raise HTTPError("https://x", 404, "not found", hdrs=None, fp=None)
 
-    monkeypatch.setattr(smoke, "_get", _boom)
+    monkeypatch.setattr(smoke, "_post_rpc", _boom)
     mapped, reason = _contract_evidence_check("https://x.supabase.co", "k")
     assert all(value == "FAIL" for value in mapped.values())
     assert reason == "contract_evidence_rpc_not_configured_http_404"

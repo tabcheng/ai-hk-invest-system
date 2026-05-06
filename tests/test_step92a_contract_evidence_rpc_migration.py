@@ -12,8 +12,9 @@ def test_rpc_function_has_expected_security_shape() -> None:
     sql = _sql()
     assert "create or replace function public.step92a_latest_system_runs_contract_evidence()" in sql
     assert "returns jsonb" in sql
-    assert "security definer" in sql
-    assert "set search_path = public, pg_catalog" in sql
+    assert "security definer" not in sql
+    assert "security invoker" in sql
+    assert "set search_path = pg_catalog, public, pg_temp" in sql
 
 
 def test_rpc_function_only_granted_to_service_role() -> None:

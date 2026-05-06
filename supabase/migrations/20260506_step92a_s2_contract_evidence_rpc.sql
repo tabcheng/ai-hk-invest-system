@@ -1,8 +1,8 @@
 create or replace function public.step92a_latest_system_runs_contract_evidence()
 returns jsonb
 language sql
-security definer
-set search_path = public, pg_catalog
+security invoker
+set search_path = pg_catalog, public, pg_temp
 as $$
   select jsonb_build_object(
     'table_exists', exists (

@@ -35,6 +35,24 @@ def _get(base: str, key: str, query: str) -> Any:
         return json.loads(resp.read().decode("utf-8", errors="replace"))
 
 
+def _post_rpc(base: str, key: str, rpc_name: str, payload: dict[str, Any] | None = None) -> Any:
+    url = f"{base.rstrip('/')}/rest/v1/rpc/{rpc_name}"
+    body = json.dumps(payload or {}).encode("utf-8")
+    req = request.Request(
+        url,
+        data=body,
+        headers={
+            "apikey": key,
+            "Authorization": f"Bearer {key}",
+            "Accept": "application/json",
+            "Content-Type": "application/json",
+        },
+        method="POST",
+    )
+    with request.urlopen(req, timeout=30) as resp:
+        return json.loads(resp.read().decode("utf-8", errors="replace"))
+
+
 def _contract_evidence_check(base: str, key: str) -> tuple[dict[str, str], str | None]:
     fail_result = {
         "table_exists": "FAIL",
@@ -43,7 +61,7 @@ def _contract_evidence_check(base: str, key: str) -> tuple[dict[str, str], str |
         "latest_read_index_exists": "FAIL",
     }
     try:
-        payload = _get(base, key, "rpc/step92a_latest_system_runs_contract_evidence")
+        payload = _post_rpc(base, key, "step92a_latest_system_runs_contract_evidence", {})
     except HTTPError as exc:
         return fail_result, f"contract_evidence_rpc_not_configured_http_{exc.code}"
     except Exception as exc:  # noqa: BLE001

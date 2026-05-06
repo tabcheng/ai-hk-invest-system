@@ -301,3 +301,60 @@ def test_build_delivery_summary_json_includes_minimal_runtime_instrumentation_fi
     assert payload["correlation_id"] == "run-777-daily-summary-2026-03-11"
     assert payload["dedup_check_result"] == "send_path"
     assert payload["dedup_persist_result"] == "persisted"
+
+
+def test_latest_system_run_write_success_path(monkeypatch):
+    updates = []
+    latest_run_writes = []
+    monkeypatch.setattr(app, "TICKERS", ["A.HK"])
+    monkeypatch.setattr(app, "get_supabase_client", lambda: object())
+    monkeypatch.setattr(app, "create_run", lambda client: 140)
+    monkeypatch.setattr(
+        app,
+        "get_signal_for_ticker",
+        lambda ticker: {"stock": ticker, "signal": "HOLD", "price": 20.0, "reason": "ok"},
+    )
+    monkeypatch.setattr(app, "save_signal", lambda client, signal_data, run_id=None: None)
+    monkeypatch.setattr(app, "run_paper_trading_for_today", lambda client, run_id: {"trades": []})
+    monkeypatch.setattr(app, "update_run", lambda client, run_id, payload: updates.append(payload))
+    monkeypatch.setattr(app, "upsert_latest_system_run", lambda client, payload: latest_run_writes.append(payload))
+    monkeypatch.setattr(
+        app,
+        "send_daily_run_summary_with_telemetry",
+        lambda **kwargs: {"schema_version": 1, "attempted": True, "success": True, "counts": {},"context":{}},
+    )
+
+    app.main()
+    assert len(updates) == 1
+    assert len(latest_run_writes) == 1
+    assert latest_run_writes[0]["summary_json"]["paper_trade_only"] is True
+    assert "broker" not in latest_run_writes[0]
+
+
+def test_latest_system_run_write_failure_is_non_blocking(monkeypatch):
+    updates = []
+    monkeypatch.setattr(app, "TICKERS", ["A.HK"])
+    monkeypatch.setattr(app, "get_supabase_client", lambda: object())
+    monkeypatch.setattr(app, "create_run", lambda client: 141)
+    monkeypatch.setattr(
+        app,
+        "get_signal_for_ticker",
+        lambda ticker: {"stock": ticker, "signal": "HOLD", "price": 20.0, "reason": "ok"},
+    )
+    monkeypatch.setattr(app, "save_signal", lambda client, signal_data, run_id=None: None)
+    monkeypatch.setattr(app, "run_paper_trading_for_today", lambda client, run_id: {"trades": []})
+    monkeypatch.setattr(app, "update_run", lambda client, run_id, payload: updates.append(payload))
+    monkeypatch.setattr(
+        app,
+        "upsert_latest_system_run",
+        lambda client, payload: (_ for _ in ()).throw(RuntimeError("write failed")),
+    )
+    monkeypatch.setattr(
+        app,
+        "send_daily_run_summary_with_telemetry",
+        lambda **kwargs: {"schema_version": 1, "attempted": True, "success": True, "counts": {},"context":{}},
+    )
+
+    app.main()
+    assert len(updates) == 1
+    assert updates[0]["status"] == "SUCCESS"

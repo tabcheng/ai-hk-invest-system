@@ -9,6 +9,10 @@ from src.decision_ledger import (
 )
 from src.notifications import send_daily_run_summary, send_daily_run_summary_with_telemetry
 from src.paper_trading import run_paper_trading_for_today
+from src.latest_system_runs_repository import (
+    build_latest_system_run_upsert_payload,
+    upsert_latest_system_run,
+)
 from src.runs import create_run, update_run
 from src.signals import get_signal_for_ticker
 
@@ -124,6 +128,40 @@ def _write_decision_ledger_record_best_effort(
         signal_data=signal_data,
     )
     save_paper_trade_decision_record(client, decision_record)
+
+
+def _write_latest_system_run_best_effort(
+    *,
+    client,
+    run_id: int | None,
+    run_date,
+    terminal_status: str,
+    finished_at_iso: str,
+    processed_tickers: int,
+    successful_tickers: int,
+    failed_tickers: int,
+) -> None:
+    if run_id is None:
+        return
+
+    payload = build_latest_system_run_upsert_payload(
+        run_id=run_id,
+        business_date=run_date,
+        status=terminal_status.lower(),
+        source="paper_daily_runner",
+        data_timestamp=datetime.now(timezone.utc),
+        summary_json={
+            "run_id": run_id,
+            "status": terminal_status,
+            "processed_tickers": processed_tickers,
+            "successful_tickers": successful_tickers,
+            "failed_tickers": failed_tickers,
+            "finished_at": finished_at_iso,
+            "paper_trade_only": True,
+        },
+        risk_summary_json={},
+    )
+    upsert_latest_system_run(client, payload)
 
 
 def main() -> None:
@@ -291,6 +329,19 @@ def main() -> None:
                 # flip run status when ticker/post-processing succeeded.
                 terminal_status = "FAILED" if (ticker_errors or post_process_errors) else "SUCCESS"
                 update_run(client, run_id, _build_run_update_payload(status=terminal_status))
+                try:
+                    _write_latest_system_run_best_effort(
+                        client=client,
+                        run_id=run_id,
+                        run_date=run_date,
+                        terminal_status=terminal_status,
+                        finished_at_iso=finished_at,
+                        processed_tickers=processed_tickers,
+                        successful_tickers=successful_tickers,
+                        failed_tickers=failed_tickers,
+                    )
+                except Exception as latest_run_error:
+                    print(f"Latest system run write skipped: {latest_run_error}")
             except Exception as e:
                 print(f"Run observability update failed after notification handling: {e}")
     except Exception as e:

@@ -1,20 +1,20 @@
-# Latest System Runs Repository Contract (Step 91 Proposal)
+# Latest System Runs Repository Contract (Step 92A)
 
 ## Scope
-Step 91 defines **proposal-only** backend repository/provider contract for future Supabase/internal table `latest_system_runs` usage.
+Step 92A implements backend repository/provider contract for Supabase/internal table `latest_system_runs`.
 
 This step does **not**:
-- enable runtime Supabase write in `paper-daily-runner`;
-- enable runtime Supabase read in Telegram Mini App API;
-- enable Mini App frontend Supabase fetch;
+- enable Telegram webhook runtime read integration yet;
+- enable Mini App backend/frontend read-only fetch path yet;
 - introduce any write/order/execution path.
 
 ## Canonical storage target
 - Table: `public.latest_system_runs`
-- Canonical read order: `completed_at desc nulls last, created_at desc, id desc`
+- Canonical read order: `updated_at desc, created_at desc, id desc`
 - Bounded payload mapping target: existing `sections.latest_system_run` response contract only.
+- Surface intent: bounded latest-state/upsert-by-source read model (not a full audit/event ledger).
 
-## Proposed repository interfaces (future step)
+## Repository interfaces
 
 ```text
 write_latest_system_run(record) -> None
@@ -25,11 +25,9 @@ get_latest_system_run() -> dict
 - Caller: `paper-daily-runner` only.
 - Use explicit allowlisted columns only (no `insert ... select *` style dynamic pass-through).
 - Enforce bounded contract before persistence:
-  - `run_status in {'success','failed','partial','unknown'}`
+  - `status in {'success','failed','partial','unknown'}`
   - `run_id` length `1..80`
-  - `summary` length `<= 500` when provided
-  - `limitations` array length `<= 5`
-  - each `limitations` item string length `<= 160`
+  - `summary_json.paper_trade_only=true`
 - No arbitrary JSON passthrough.
 - No raw logs storage.
 - No secret fields.
@@ -37,7 +35,7 @@ get_latest_system_run() -> dict
 ### `get_latest_system_run() -> dict`
 - Caller: Telegram webhook Mini App API read path only.
 - Query exactly one latest row ordered by:
-  - `completed_at desc nulls last`
+  - `updated_at desc`
   - `created_at desc`
   - `id desc`
 - Select explicit allowlisted columns only (never `select *`).
@@ -51,10 +49,9 @@ get_latest_system_run() -> dict
 - RLS is enabled with deny-by-default posture; future step will add restricted backend role/service-role usage details.
 - `SUPABASE_SERVICE_ROLE_KEY` must remain server-only and never appear in client/logs/docs examples.
 
-## Non-goals (Step 91)
-- No runtime repository implementation.
+## Non-goals (Step 92A)
 - No Mini App route read switch to Supabase.
-- No runner write integration to Supabase.
+- No Telegram webhook read integration to Supabase.
 - No Railway topology change.
 - No broker/live execution behavior.
 
@@ -63,3 +60,11 @@ get_latest_system_run() -> dict
 - No runtime repository implementation is added in Step 91A.
 - No runner write integration and no Mini App Supabase read integration are added in Step 91A.
 - Step 92 should proceed only after Step 91A RLS runtime acceptance evidence is recorded.
+
+
+## Step 92A implemented interfaces
+- `build_latest_system_run_upsert_payload(...)`
+- `upsert_latest_system_run(client, payload)`
+- `get_latest_system_run(client, source="paper_daily_runner")`
+
+Write integration is best-effort from paper daily runner completion and does not block run success/failure terminal semantics.

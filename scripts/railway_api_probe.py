@@ -92,18 +92,22 @@ def main() -> int:
         report["project_metadata_status"] = "NOT_CONFIGURED"
         report["environment_logs_probe_status"] = "NOT_CONFIGURED"
         return _write_and_print(report)
-    if not project_id:
-        report["project_metadata_status"] = "NOT_CONFIGURED"
-        report["environment_logs_probe_status"] = "NOT_RUN"
-        report["limitation"] = "RAILWAY_PROJECT_ID is not configured."
-        return _write_and_print(report)
-
+    current_stage = None
     try:
         if connectivity == "account":
+            current_stage = "account_probe"
             http, payload = _graphql(api_url, token, "query { me { name email } }", {})
             report["account_probe_http_status"] = http
             report["account_probe_status"] = "PASS" if not payload.get("errors") else "FAIL"
 
+        if not project_id:
+            report["project_metadata_status"] = "NOT_CONFIGURED"
+            report["environment_logs_probe_status"] = "NOT_RUN"
+            report["overall_status"] = "PASS" if report["account_probe_status"] == "PASS" else "NOT_CONFIGURED"
+            report["limitation"] = "RAILWAY_PROJECT_ID is not configured."
+            return _write_and_print(report)
+
+        current_stage = "project_metadata"
         http, payload = _graphql(api_url, token, "query($projectId:String!){project(id:$projectId){id name}}", {"projectId": project_id})
         report["project_metadata_http_status"] = http
         if payload.get("errors") or not payload.get("data", {}).get("project"):
@@ -115,6 +119,7 @@ def main() -> int:
             return _write_and_print(report)
 
         report["project_metadata_status"] = "PASS"
+        current_stage = "project_services_environments"
         _, services_payload = _graphql(api_url, token, "query($projectId:String!){project(id:$projectId){id name environments{edges{node{id name}}} services{edges{node{id name}}}}}", {"projectId": project_id})
         if services_payload.get("errors"):
             report["project_services_environments_status"] = "FAIL"
@@ -137,6 +142,7 @@ def main() -> int:
             report["limitation"] = "RAILWAY_ENVIRONMENT_ID is not configured."
             return _write_and_print(report)
 
+        current_stage = "environment_logs"
         filter_expr = " OR ".join([f"@service:{sid}" for sid in service_ids]) if service_ids else None
         log_http, log_payload = _graphql(api_url, token, "query($environmentId:String!,$filter:String,$beforeLimit:Int){environmentLogs(environmentId:$environmentId,filter:$filter,beforeLimit:$beforeLimit){message severity timestamp}}", {"environmentId": environment_id, "filter": filter_expr, "beforeLimit": 1})
         report["environment_logs_http_status"] = log_http
@@ -163,11 +169,17 @@ def main() -> int:
         report["railway_api_error_kind"] = kind
         report["railway_api_error_excerpt_redacted"] = excerpt
         report["overall_status"] = "FAIL"
-        if report["project_metadata_status"] in {"NOT_RUN", "NOT_CONFIGURED"}:
+        if current_stage == "account_probe":
+            report["account_probe_status"] = "FAIL"
+            report["account_probe_http_status"] = status
+        elif current_stage == "project_metadata":
             report["project_metadata_status"] = "FAIL"
             report["project_metadata_http_status"] = status
             report["environment_logs_probe_status"] = "NOT_RUN"
-        elif report["environment_logs_probe_status"] == "NOT_RUN":
+        elif current_stage == "project_services_environments":
+            report["project_services_environments_status"] = "FAIL"
+            report["project_metadata_status"] = "PASS"
+        elif current_stage == "environment_logs":
             report["environment_logs_probe_status"] = "FAIL"
             report["environment_logs_http_status"] = status
 

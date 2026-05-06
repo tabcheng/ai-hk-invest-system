@@ -24,8 +24,10 @@
 - Probe/log evidence remains read-only and secret-safe (no raw logs/secrets).
 
 ### Next-step note
-- Recommended small cleanup before next product runtime slice: **Step 91C-7B** workflow env wiring for optional diagnostics (`RAILWAY_TOKEN_SHA256_PREFIX`, `RAILWAY_CURL_PROBE`).
-- Then proceed with `latest_system_runs` repository/provider path.
+- Step 91C-7B completed in repo: Step 91C workflow now wires optional diagnostics vars (`RAILWAY_TOKEN_SHA256_PREFIX`, `RAILWAY_CURL_PROBE`) into the Railway API probe step only (the only script that reads them).
+- Both diagnostics vars remain optional and read-only: unset values keep safe defaults (`NOT_CONFIGURED`/probe `off`) and must not be interpreted as fake PASS.
+- Railway 403 lesson remains preserved: explicit `Accept`/`User-Agent`/`Authorization` headers, redacted summary-only diagnostics, and no raw logs/secrets.
+- Next, proceed with `latest_system_runs` repository/provider path.
 
 ## Post-merge acceptance + wording discipline (system-of-record)
 - Every merged step must complete two mandatory acceptance checks:
@@ -375,4 +377,6 @@
 
 - Step 91C-6 in progress: added runner-side read-only Railway API probe plan to separate token/project metadata access failures from environmentLogs permission/query-specific failures, with secret-safe markdown/json artifacts and no runtime mutation/deploy actions.
 
-- Step 91C-7A in progress: added Railway request-shape diagnostics with explicit API headers (`Content-Type`, `Accept`, `User-Agent`, `Authorization`) for both Railway probe scripts, plus token fingerprint match gate (`RAILWAY_TOKEN_SHA256_PREFIX`) and optional same-runner curl account probe (`RAILWAY_CURL_PROBE`) for urllib-vs-curl 403 differentiation; diagnostics remain read-only/secret-safe with no Railway mutation/deploy/redeploy.
+- Step 91C-7A completed: added Railway request-shape diagnostics with explicit API headers (`Content-Type`, `Accept`, `User-Agent`, `Authorization`) for both Railway probe scripts, plus token fingerprint match gate (`RAILWAY_TOKEN_SHA256_PREFIX`) and optional same-runner curl account probe (`RAILWAY_CURL_PROBE`) for urllib-vs-curl 403 differentiation; diagnostics remain read-only/secret-safe with no Railway mutation/deploy/redeploy.
+
+- Step 91C-7B completed: `.github/workflows/step91c-runtime-acceptance.yml` now wires `RAILWAY_TOKEN_SHA256_PREFIX` and `RAILWAY_CURL_PROBE` from GitHub Actions `vars` into `Run Railway API probe (read-only)` only; diagnostics remain optional/read-only/secret-safe and non-configured behavior remains safe-default.

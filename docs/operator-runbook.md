@@ -357,3 +357,10 @@ Use together with `docs/railway-service-variables.md` Step 91C and `docs/post-de
   2) 再比對 `account_probe_status`（urllib）與 `curl_account_probe_status`（curl）是否分歧（request-shape/urllib 問題）。
   3) 若兩者都 403，偏向 GitHub runner/Railway edge 或 token權限問題。
 - 安全提醒：不要把 token 貼到 chat/docs/logs；Step 91C Railway evidence 維持 read-only，禁止 mutation/deploy/redeploy。
+
+
+## Step 92A-S1 workflow (manual post-merge smoke)
+- Workflow: `.github/workflows/step92a-post-merge-smoke.yml` (`workflow_dispatch` only).
+- Default mode is read-only evidence (Supabase + optional Railway read-only probe).
+- Optional input `run_paper_daily_runner=true` enables controlled best-effort runner-path check; this does not add Telegram read integration or Mini App fetch integration.
+- Operator must review artifact reports for safe summary fields and acceptance gate status before Step 92B work.

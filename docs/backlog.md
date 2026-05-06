@@ -218,3 +218,5 @@ Prioritization:
 - Step 91C-7B completed: wired optional workflow env vars `RAILWAY_TOKEN_SHA256_PREFIX` and `RAILWAY_CURL_PROBE` into Step 91C runtime acceptance workflow Railway API probe step only (no blind global env wiring); optional unset behavior remains safe defaults (`NOT_CONFIGURED` / probe `off`) and diagnostics remain read-only/secret-safe.
 
 - **Step 92A completed (runtime + docs):** implemented `src/latest_system_runs_repository.py`, added migration `supabase/migrations/20260506_step92a_latest_system_runs_contract_v2.sql`, and wired best-effort write from paper daily run completion. This table is bounded latest-state only (not full audit ledger); Telegram read + Mini App read-only fetch stay in follow-up steps.
+
+- **Step 92A-S1 completed (runtime smoke workflow + docs):** added manual-only post-merge smoke workflow + script/report contract for `latest_system_runs` acceptance evidence. Scope is summary-only and secret-safe; default mode remains read-only checks with optional best-effort runner-path toggle. Non-goals preserved: no Step 92B Telegram read, no Mini App fetch, no Railway topology change, no broker/live execution.

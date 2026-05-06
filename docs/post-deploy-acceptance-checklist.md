@@ -123,3 +123,11 @@ Step 91A recorded result (PR #88):
   - urllib FAIL + curl PASS => 偏向 Python urllib/request-shape 差異。
   - urllib FAIL + curl FAIL => 偏向 runner-edge/token-permission 問題。
 - 保持 secret-safe：不得在 artifact/chat/docs 粘貼 token 或 raw logs；只使用 redacted/summary fields。
+
+
+## Step 92A-S1 Manual Post-merge Smoke (latest_system_runs)
+- Trigger only via GitHub Actions `workflow_dispatch` (`.github/workflows/step92a-post-merge-smoke.yml`).
+- Keep outputs secret-safe and summary-only; do not print raw keys/tokens/initData/allowlist values.
+- Validate `latest_system_runs` table/index/RLS/row-contract evidence and capture safe selected fields only.
+- Optional `run_paper_daily_runner=true` is best-effort and must not force failed terminal status solely due to write-path best-effort behavior.
+- Confirm no Railway topology mutation, no deploy/redeploy, no variable mutation, and no broker/live execution behavior.

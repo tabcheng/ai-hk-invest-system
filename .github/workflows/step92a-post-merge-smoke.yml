@@ -1,0 +1,52 @@
+name: Step 92A Post-merge Smoke
+
+on:
+  workflow_dispatch:
+    inputs:
+      run_paper_daily_runner:
+        description: "Run one best-effort paper-daily-runner execution path check"
+        required: true
+        default: "false"
+
+jobs:
+  step92a-post-merge-smoke:
+    runs-on: ubuntu-latest
+    environment: production-smoke
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements.txt
+      - name: Run Step 92A post-merge smoke
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          RAILWAY_ENVIRONMENT_ID: ${{ vars.RAILWAY_ENVIRONMENT_ID }}
+          RAILWAY_LOG_SERVICE_IDS: ${{ vars.RAILWAY_LOG_SERVICE_IDS }}
+          RAILWAY_API_URL: ${{ vars.RAILWAY_API_URL }}
+        run: |
+          python scripts/step92a_post_merge_smoke.py \
+            --run-paper-daily-runner "${{ inputs.run_paper_daily_runner }}"
+      - name: Final gate
+        if: always()
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          payload = json.loads(Path("step92a_post_merge_smoke_report.json").read_text(encoding="utf-8"))
+          status = payload.get("overall_status")
+          print(f"overall_status={status}")
+          raise SystemExit(0 if status == "PASS" else 1)
+          PY
+      - name: Upload artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: step92a-post-merge-smoke-${{ github.run_id }}
+          path: |
+            step92a_post_merge_smoke_report.md
+            step92a_post_merge_smoke_report.json
+          retention-days: 7

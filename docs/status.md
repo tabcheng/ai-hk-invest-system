@@ -29,6 +29,9 @@
 - Railway 403 lesson remains preserved: explicit `Accept`/`User-Agent`/`Authorization` headers, redacted summary-only diagnostics, and no raw logs/secrets.
 - Step 92A completed: added backend `latest_system_runs` repository/provider and best-effort paper-daily-runner write path with bounded latest-row contract.
 - Step 92A scope boundary: Telegram webhook read and Mini App read-only fetch remain deferred to next steps.
+- Step 92A-S1 completed: added manual-only GitHub Actions post-merge smoke workflow `.github/workflows/step92a-post-merge-smoke.yml` (`workflow_dispatch` only) for Step 92A acceptance evidence.
+- Step 92A-S1 acceptance boundary: secret-safe summary-only evidence output, read-only Supabase/Railway checks by default, optional best-effort runner-path toggle (`run_paper_daily_runner=true`) without Railway topology mutation.
+- Step 92A-S1 non-goals preserved: no Step 92B Telegram webhook read integration, no Mini App fetch integration, no Supabase schema change, no deploy/redeploy automation, no broker/live execution.
 
 ## Post-merge acceptance + wording discipline (system-of-record)
 - Every merged step must complete two mandatory acceptance checks:

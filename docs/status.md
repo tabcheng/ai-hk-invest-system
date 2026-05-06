@@ -350,3 +350,5 @@
 - Step 91C-5 in progress: Railway evidence query path switched to official `environmentLogs(environmentId, filter, beforeLimit)` mode (default `RAILWAY_LOG_QUERY_MODE=environment`) with `RAILWAY_LOG_SERVICE_IDS` filter support, safe diagnostics (`railway_query_stage=environment_logs`), and unchanged read-only/no-secret/no-deploy guardrails.
 
 - Step 91C-6 in progress: added runner-side read-only Railway API probe plan to separate token/project metadata access failures from environmentLogs permission/query-specific failures, with secret-safe markdown/json artifacts and no runtime mutation/deploy actions.
+
+- Step 91C-7A in progress: added Railway request-shape diagnostics with explicit API headers (`Content-Type`, `Accept`, `User-Agent`, `Authorization`) for both Railway probe scripts, plus token fingerprint match gate (`RAILWAY_TOKEN_SHA256_PREFIX`) and optional same-runner curl account probe (`RAILWAY_CURL_PROBE`) for urllib-vs-curl 403 differentiation; diagnostics remain read-only/secret-safe with no Railway mutation/deploy/redeploy.

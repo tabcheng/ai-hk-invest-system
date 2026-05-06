@@ -345,3 +345,15 @@ Use together with `docs/railway-service-variables.md` Step 91C and `docs/post-de
   - metadata PASS 但 `configured_environment_id_found=false` 或 `missing_service_ids` 非空：環境/服務 ID 配置錯誤。
   - `environment_logs_probe_status=PASS` 但主 evidence 仍 FAIL：優先排查 log window 或 fallback warning 命中。
 - 探針維持 read-only，且不得在 chat/docs/logs 貼出 token 或原始 log message。
+
+
+## Step 91C-7A Railway request-shape + token-fingerprint diagnostics (read-only)
+- `scripts/railway_api_probe.py` / `scripts/railway_step91c_log_evidence.py` now send explicit API headers aligned with local successful request shape: `Content-Type`, `Accept`, `User-Agent`, `Authorization: Bearer`.
+- 新增 `RAILWAY_TOKEN_SHA256_PREFIX`（可選）用於 GitHub runner token 指紋比對；只回報 `token_fingerprint_expected_configured` / `token_fingerprint_match`，不輸出 token、prefix/suffix、完整 hash、raw token length。
+- 若 `token_fingerprint_match=false`，視為 fail-safe（避免在錯 token 上誤判 request-shape 問題）。
+- 新增可選 `RAILWAY_CURL_PROBE=on`（預設 off）：在 `RAILWAY_CONNECTIVITY_PROBE=account` 時，同 runner 內額外做 curl account probe，僅記錄 `curl_account_probe_status` / `curl_account_probe_http_status`，不輸出 response body。
+- 排查順序：
+  1) 先看 fingerprint 是否一致（token/secret mismatch）。
+  2) 再比對 `account_probe_status`（urllib）與 `curl_account_probe_status`（curl）是否分歧（request-shape/urllib 問題）。
+  3) 若兩者都 403，偏向 GitHub runner/Railway edge 或 token權限問題。
+- 安全提醒：不要把 token 貼到 chat/docs/logs；Step 91C Railway evidence 維持 read-only，禁止 mutation/deploy/redeploy。

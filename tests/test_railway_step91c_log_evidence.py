@@ -207,3 +207,27 @@ def test_scan_window():
     now = datetime.now(timezone.utc)
     m, r, in_window, unknown_ts, _ = s._scan_entries([{"message": "SUPABASE_KEY fallback", "timestamp": (now - timedelta(hours=3)).isoformat()}], now - timedelta(minutes=5))
     assert (m, r, in_window, unknown_ts) == (0, 0, 0, 0)
+
+
+def test_graphql_request_headers_include_accept_and_user_agent(monkeypatch):
+    captured = {}
+
+    class _Resp:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            return False
+
+        def read(self):
+            return b'{"data": {"environmentLogs": []}}'
+
+    def _fake(req, timeout):
+        captured["accept"] = req.get_header("Accept")
+        captured["user_agent"] = req.get_header("User-agent")
+        return _Resp()
+
+    monkeypatch.setattr(s.request, "urlopen", _fake)
+    s._read_only_graphql("t", "query{}", {}, s.RAILWAY_API_URL)
+    assert captured["accept"] == "application/json"
+    assert "ai-hk-invest-system-step91c/1.0" in (captured["user_agent"] or "")

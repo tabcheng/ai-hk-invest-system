@@ -231,3 +231,14 @@ Operator deploy + smoke evidence flow (manual):
 - `RAILWAY_CONNECTIVITY_PROBE` (optional): `metadata`(default), `account`, `workspace`, `off`.
 - 預設 `metadata` 不跑 account query；只有 `account` 才跑 `query { me { name email } }`。
 - `scripts/railway_api_probe.py` 僅輸出狀態/HTTP/error 摘要與 count/timestamp，不輸出 token 或 raw message。
+
+
+## Step 91C-7A diagnostics variables (read-only)
+- `RAILWAY_TOKEN_SHA256_PREFIX` (optional)
+  - 用途：GitHub runner 內 `RAILWAY_TOKEN` 指紋比對（`sha256(token.strip())[:12]`）。
+  - 安全：只輸出 match boolean，不輸出 hash/token 細節。
+- `RAILWAY_CURL_PROBE` (optional, default `off`)
+  - `on/off`；僅在 `RAILWAY_CONNECTIVITY_PROBE=account` 時啟用 curl account probe。
+  - 僅輸出 `curl_account_probe_status` 與 `curl_account_probe_http_status`，不輸出 response body。
+- `RAILWAY_CONNECTIVITY_PROBE`
+  - `account` 時可同時比較 urllib vs curl probe，有助定位 request-shape 與 runner-edge 差異。

@@ -111,3 +111,15 @@ Step 91A recorded result (PR #88):
   - metadata PASS + ID missing => vars 配置錯誤；
   - environmentLogs PASS + evidence FAIL => log window/fallback-warning 路徑問題。
 - Railway diagnostics artifact 必須保持 read-only，不得輸出 token 或 raw logs。
+
+
+### Step 91C-7A check additions
+- 若本機 curl/GraphiQL 成功但 GitHub Actions 失敗，必查 `railway_api_probe_report`：
+  - `token_fingerprint_expected_configured` / `token_fingerprint_match`
+  - `account_probe_status` (urllib)
+  - `curl_account_probe_status`（僅當 `RAILWAY_CURL_PROBE=on`）
+- 判讀：
+  - fingerprint mismatch => 優先判定為 GitHub runner secret mismatch。
+  - urllib FAIL + curl PASS => 偏向 Python urllib/request-shape 差異。
+  - urllib FAIL + curl FAIL => 偏向 runner-edge/token-permission 問題。
+- 保持 secret-safe：不得在 artifact/chat/docs 粘貼 token 或 raw logs；只使用 redacted/summary fields。

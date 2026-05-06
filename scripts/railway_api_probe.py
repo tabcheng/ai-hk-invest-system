@@ -4,6 +4,8 @@ from __future__ import annotations
 import json
 import os
 import re
+import hashlib
+import subprocess
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -27,9 +29,55 @@ def _redact(text: str, *, limit: int = 260) -> str:
 
 def _graphql(api_url: str, token: str, query: str, variables: dict[str, Any]) -> tuple[int, dict[str, Any]]:
     body = json.dumps({"query": query, "variables": variables}).encode("utf-8")
-    req = request.Request(api_url, data=body, headers={"Content-Type": "application/json", "Authorization": f"Bearer {token}"}, method="POST")
+    req = request.Request(
+        api_url,
+        data=body,
+        headers={
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+            "User-Agent": "ai-hk-invest-system-step91c/1.0 (+github-actions; read-only-railway-probe)",
+            "Authorization": f"Bearer {token}",
+        },
+        method="POST",
+    )
     with request.urlopen(req, timeout=20) as resp:
         return int(getattr(resp, "status", 200)), json.loads(resp.read().decode("utf-8", errors="replace"))
+
+
+def _run_curl_account_probe(api_url: str, token: str) -> tuple[str, int | None]:
+    try:
+        curl_res = subprocess.run(
+            [
+                "curl",
+                "-sS",
+                "-o",
+                "/dev/null",
+                "-w",
+                "%{http_code}",
+                "-X",
+                "POST",
+                api_url,
+                "-H",
+                "Content-Type: application/json",
+                "-H",
+                "Accept: application/json",
+                "-H",
+                "User-Agent: ai-hk-invest-system-step91c/1.0 (+github-actions; read-only-railway-probe)",
+                "-H",
+                f"Authorization: Bearer {token}",
+                "--data",
+                json.dumps({"query": "query { me { name email } }", "variables": {}}),
+            ],
+            capture_output=True,
+            text=True,
+            timeout=20,
+            check=False,
+        )
+        status = (curl_res.stdout or "").strip()
+        code = int(status) if status.isdigit() else None
+        return ("PASS" if status.startswith("2") else "FAIL"), code
+    except Exception:
+        return "FAIL", None
 
 
 def _safe_error(exc: Exception) -> tuple[str, int | None, str]:
@@ -48,7 +96,7 @@ def _write_and_print(report: dict[str, Any]) -> int:
         "\n".join(
             ["# Railway API Probe Report", ""]
             + [f"- {k}: {report.get(k)}" for k in [
-                "overall_status", "token_present", "api_url_host_only", "account_probe_status", "account_probe_http_status", "project_metadata_status", "project_metadata_http_status", "project_services_environments_status", "configured_environment_id_found", "configured_service_ids_found", "missing_service_ids", "environment_logs_probe_status", "environment_logs_http_status", "environment_logs_returned_count", "environment_logs_first_timestamp", "railway_api_error_kind", "railway_api_error_excerpt_redacted", "limitation",
+                "overall_status", "token_present", "api_url_host_only", "token_fingerprint_expected_configured", "token_fingerprint_match", "account_probe_status", "account_probe_http_status", "curl_account_probe_status", "curl_account_probe_http_status", "project_metadata_status", "project_metadata_http_status", "project_services_environments_status", "configured_environment_id_found", "configured_service_ids_found", "missing_service_ids", "environment_logs_probe_status", "environment_logs_http_status", "environment_logs_returned_count", "environment_logs_first_timestamp", "railway_api_error_kind", "railway_api_error_excerpt_redacted", "limitation",
             ]]
         ) + "\n",
         encoding="utf-8",
@@ -66,6 +114,10 @@ def main() -> int:
     if connectivity not in {"metadata", "account", "workspace", "off"}:
         connectivity = "metadata"
     api_url = os.getenv("RAILWAY_API_URL", DEFAULT_API_URL).strip() or DEFAULT_API_URL
+    expected_fingerprint = os.getenv("RAILWAY_TOKEN_SHA256_PREFIX", "").strip().lower()
+    curl_probe = (os.getenv("RAILWAY_CURL_PROBE", "off").strip().lower() or "off")
+    if curl_probe not in {"on", "off"}:
+        curl_probe = "off"
 
     report = {
         "generated_at": datetime.now(timezone.utc).isoformat(),
@@ -74,6 +126,10 @@ def main() -> int:
         "api_url_host_only": parse.urlparse(api_url).netloc or "unknown",
         "account_probe_status": "NOT_RUN",
         "account_probe_http_status": None,
+        "curl_account_probe_status": "NOT_RUN",
+        "curl_account_probe_http_status": None,
+        "token_fingerprint_expected_configured": bool(expected_fingerprint),
+        "token_fingerprint_match": None,
         "project_metadata_status": "NOT_RUN",
         "project_metadata_http_status": None,
         "project_services_environments_status": "NOT_RUN",
@@ -92,13 +148,35 @@ def main() -> int:
         report["project_metadata_status"] = "NOT_CONFIGURED"
         report["environment_logs_probe_status"] = "NOT_CONFIGURED"
         return _write_and_print(report)
+    if expected_fingerprint:
+        actual = hashlib.sha256(token.encode("utf-8")).hexdigest()[:12]
+        report["token_fingerprint_match"] = actual == expected_fingerprint
+        if report["token_fingerprint_match"] is False:
+            report["overall_status"] = "FAIL"
+            report["limitation"] = "GitHub runner RAILWAY_TOKEN fingerprint does not match expected prefix."
+            return _write_and_print(report)
     current_stage = None
     try:
         if connectivity == "account":
-            current_stage = "account_probe"
-            http, payload = _graphql(api_url, token, "query { me { name email } }", {})
-            report["account_probe_http_status"] = http
-            report["account_probe_status"] = "PASS" if not payload.get("errors") else "FAIL"
+            try:
+                current_stage = "account_probe"
+                http, payload = _graphql(api_url, token, "query { me { name email } }", {})
+                report["account_probe_http_status"] = http
+                report["account_probe_status"] = "PASS" if not payload.get("errors") else "FAIL"
+            except Exception as exc:
+                kind, status, excerpt = _safe_error(exc)
+                report["account_probe_status"] = "FAIL"
+                report["account_probe_http_status"] = status
+                report["railway_api_error_kind"] = kind
+                report["railway_api_error_excerpt_redacted"] = excerpt
+            if curl_probe == "on":
+                report["curl_account_probe_status"], report["curl_account_probe_http_status"] = _run_curl_account_probe(api_url, token)
+            if report["account_probe_status"] == "FAIL":
+                report["project_metadata_status"] = "NOT_RUN"
+                report["environment_logs_probe_status"] = "NOT_RUN"
+                report["overall_status"] = "FAIL"
+                report["limitation"] = "Account probe failed; project metadata probe was skipped."
+                return _write_and_print(report)
 
         if not project_id:
             report["project_metadata_status"] = "NOT_CONFIGURED"

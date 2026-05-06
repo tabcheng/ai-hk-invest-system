@@ -8,6 +8,27 @@ Build a long-horizon AI-assisted Hong Kong stock investing system with disciplin
 - AI-generated signals are used for disciplined decision support and for later paper-trading evaluation before any escalation in live usage.
 - Decision records for paper-trading must explicitly separate AI signal output from final human decisions for audit and review.
 
+
+## Current governance + runtime baseline (2026-05-06)
+- Product positioning remains: **internal AI Hong Kong equity investing product**.
+- Product surfaces remain:
+  - Telegram Bot
+  - Telegram Mini App / Web UI
+  - Backend + Supabase
+- UI release phases remain:
+  1. Read-only review shell
+  2. Decision capture (bounded journal writes only)
+  3. AI team paper decision review
+  4. Controlled simulated order creation only after risk gate with `strategy_version`, `data_source`, `data_timestamp`, `risk_check`, `paper_trade_only=true`
+- Supabase/RLS boundary:
+  - backend production writes/reads use `sb_secret_*` or service-role class keys
+  - Mini App frontend never uses secret/service-role keys
+- Railway/runtime boundary:
+  - Railway env changes require staged review plus deploy/smoke evidence
+  - Step 91C runtime acceptance passed (workflow run `25424407687`, after PR #98 merge)
+  - Railway probes/log evidence remain read-only and secret-safe
+- Delivery/operator semantics and historical step contracts in this spec remain preserved unless explicitly superseded by approved runtime steps.
+
 ## Non-Goals (current phase)
 - Fully autonomous live trading without human approval.
 - Frequent strategy churn without documented rationale.

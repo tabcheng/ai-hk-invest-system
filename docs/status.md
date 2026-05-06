@@ -1,7 +1,31 @@
 # Project Status
 
 ## Last reviewed date
-2026-05-02
+2026-05-06
+
+
+
+## 2026-05-06 — Step 91C Runtime Acceptance ledger update
+- repo merge completed: yes
+- PR #98 merged: yes
+- workflow run: `25424407687`
+- manual/platform acceptance completed: yes
+- Supabase backend key preflight: PASS
+- Operator smoke: PASS
+- Mini App smoke: PASS
+- Railway API probe: PASS
+- Railway log evidence: PASS
+- Step91C aggregate acceptance: PASS
+- Final gate: PASS
+
+### Railway lesson captured
+- Previous GitHub Actions -> Railway Public API 403 was resolved by explicit `Accept`/`User-Agent` headers (with authorization header retained).
+- Evidence path uses `environmentLogs` with scoped service IDs.
+- Probe/log evidence remains read-only and secret-safe (no raw logs/secrets).
+
+### Next-step note
+- Recommended small cleanup before next product runtime slice: **Step 91C-7B** workflow env wiring for optional diagnostics (`RAILWAY_TOKEN_SHA256_PREFIX`, `RAILWAY_CURL_PROBE`).
+- Then proceed with `latest_system_runs` repository/provider path.
 
 ## Post-merge acceptance + wording discipline (system-of-record)
 - Every merged step must complete two mandatory acceptance checks:

@@ -37,3 +37,27 @@ Improve reliability and observability while keeping human-in-the-loop decision a
 - Verify production flow remains stable and reproducible.
 - Verify rollout and rollback procedures are documented.
 - Verify controls continue to prevent autonomous real-trade execution.
+
+
+### Current roadmap checkpoint (post Step 91C)
+#### Completed
+- Step 91A/91B/91C runtime acceptance path completed.
+- PR #98 merged with Railway request-shape fix.
+- GitHub Actions workflow run `25424407687` passed as Step 91C acceptance evidence.
+
+#### Immediate cleanup (next small follow-up)
+- Step 91C-7B: wire optional Railway diagnostics into Step 91C workflow env:
+  - `RAILWAY_TOKEN_SHA256_PREFIX`
+  - `RAILWAY_CURL_PROBE`
+
+#### Next product sequence
+1. Implement `latest_system_runs` backend repository/provider.
+2. Make `paper-daily-runner` write `latest_system_runs`.
+3. Make `telegram-webhook` read latest bounded row.
+4. Deploy + smoke.
+5. Add Mini App frontend read-only fetch.
+
+#### Validation/guardrails for upcoming runtime changes
+- Any runtime/Railway/Supabase change must include an explicit acceptance path.
+- Mini App remains read-only until bounded decision-capture phase is explicitly approved.
+- No live-money execution path is introduced.

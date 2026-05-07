@@ -7,6 +7,7 @@ def test_step92c_review_shell_static_contract() -> None:
 
     required_text = [
         "AI HK Invest — Mini App Preview Shell",
+        "https://telegram.org/js/telegram-web-app.js",
         "Latest System Run",
         "Read-only",
         "paper_trade_only",

@@ -4,6 +4,9 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>AI HK Invest — Mini App Preview Shell</title>
+    <script>
+      window.MINIAPP_API_BASE_URL = window.MINIAPP_API_BASE_URL || "";
+    </script>
   </head>
   <body>
     <h1>AI HK Invest — Mini App Preview Shell</h1>
@@ -19,12 +22,17 @@
       <h2>Security / Auth TODO</h2>
       <ul>
         <li>validate Telegram initData server-side</li>
-        <li>Do not trust <code>initDataUnsafe</code></li>
+        <li>Do not trust initDataUnsafe</li>
         <li>No SUPABASE_SERVICE_ROLE_KEY in browser/client code</li>
       </ul>
     </section>
 
     <script>
+      function resolveApiBaseUrl() {
+        const configured = String(window.MINIAPP_API_BASE_URL || "").trim();
+        return configured.replace(/\/$/, "");
+      }
+
       function renderFieldList(section) {
         const fields = document.getElementById("latest-system-run-fields");
         fields.textContent = "";
@@ -54,9 +62,11 @@
       async function loadReviewShell() {
         const initData = (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initData) || "";
         const statusNode = document.getElementById("latest-system-run-status");
+        const apiBaseUrl = resolveApiBaseUrl();
+        const reviewShellUrl = `${apiBaseUrl}/miniapp/api/review-shell`;
 
         try {
-          const response = await fetch("/miniapp/api/review-shell", {
+          const response = await fetch(reviewShellUrl, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ init_data: initData }),

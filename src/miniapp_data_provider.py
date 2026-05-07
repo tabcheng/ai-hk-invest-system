@@ -63,9 +63,7 @@ class RailwayRuntimeEnvMiniAppReadDataProvider:
         )
         deployment_id = self._safe_env_get(self._env, "RAILWAY_DEPLOYMENT_ID")
 
-        status = (
-            "ok" if all([service_name, environment, git_branch, git_commit_sha_short]) else "unknown"
-        )
+        status = "ok" if all([service_name, environment, git_branch, git_commit_sha_short]) else "unknown"
 
         return {
             "status": status,
@@ -92,8 +90,6 @@ class RailwayRuntimeEnvMiniAppReadDataProvider:
         }
 
 
-
-
 def _format_hkt_display(value: Any) -> str | None:
     if not value:
         return None
@@ -106,25 +102,57 @@ def _format_hkt_display(value: Any) -> str | None:
     return parsed.astimezone(_HKT).strftime("%Y-%m-%d %H:%M:%S HKT")
 
 
+def _safe_int_counter(value: Any) -> int:
+    if value is None:
+        return 0
+    if isinstance(value, bool):
+        return int(value)
+    if isinstance(value, (int, float)):
+        return int(value)
+    if isinstance(value, str):
+        normalized = value.strip()
+        if not normalized:
+            return 0
+        try:
+            return int(float(normalized))
+        except ValueError:
+            return 0
+    return 0
+
+
 class SupabaseLatestSystemRunMiniAppReadDataProvider(RailwayRuntimeEnvMiniAppReadDataProvider):
     def __init__(self, *, client: Any | None, env: Mapping[str, str] | None = None, now: datetime | None = None):
         super().__init__(env=env, now=now)
         self._client = client
+
+    @staticmethod
+    def _unavailable(boundary: str) -> dict[str, Any]:
+        return {
+            "status": "unavailable",
+            "source": "latest_system_runs",
+            "reason": "latest bounded row is not available yet",
+            "boundary": boundary,
+        }
 
     def get_latest_system_run_summary(self) -> dict[str, Any]:
         from src.latest_system_runs_repository import get_latest_system_run
 
         boundary = "read-only latest-state row; no broker/live execution"
         if self._client is None:
-            return {"status":"unavailable","source":"latest_system_runs","reason":"latest bounded row is not available yet","boundary":boundary}
+            return self._unavailable(boundary)
+
         try:
             row = get_latest_system_run(self._client, source="paper_daily_runner")
         except Exception:
-            return {"status":"unavailable","source":"latest_system_runs","reason":"latest bounded row is not available yet","boundary":boundary}
+            return self._unavailable(boundary)
+
         if not isinstance(row, dict) or not row:
-            return {"status":"unavailable","source":"latest_system_runs","reason":"latest bounded row is not available yet","boundary":boundary}
+            return self._unavailable(boundary)
 
         summary = row.get("summary_json") if isinstance(row.get("summary_json"), dict) else {}
+        if summary.get("paper_trade_only") is not True:
+            return self._unavailable(boundary)
+
         return {
             "status": "ok",
             "source": "latest_system_runs",
@@ -134,9 +162,9 @@ class SupabaseLatestSystemRunMiniAppReadDataProvider(RailwayRuntimeEnvMiniAppRea
             "data_timestamp_hkt": _format_hkt_display(row.get("data_timestamp")),
             "updated_at_hkt": _format_hkt_display(row.get("updated_at")),
             "paper_trade_only": True,
-            "processed_tickers": int(summary.get("processed_tickers", 0) or 0),
-            "successful_tickers": int(summary.get("successful_tickers", 0) or 0),
-            "failed_tickers": int(summary.get("failed_tickers", 0) or 0),
+            "processed_tickers": _safe_int_counter(summary.get("processed_tickers")),
+            "successful_tickers": _safe_int_counter(summary.get("successful_tickers")),
+            "failed_tickers": _safe_int_counter(summary.get("failed_tickers")),
             "boundary": boundary,
         }
 

@@ -252,3 +252,4 @@ No broker integration or autonomous real-money execution is authorized by this p
 - Any Supabase secret-class key usage remains backend-only under API boundary with RLS enabled.
 - This step does not introduce frontend direct Supabase integration.
 - Step 92C: Mini App now fetches backend POST /miniapp/api/review-shell and displays read-only latest_system_run card from latest_system_runs with server-side initData validation + operator allowlist authorization + HKT display fields only; no frontend Supabase direct read/write, no decision capture/order creation/broker/live execution.
+- Step 92C routing note: Mini App static frontend must use non-secret MINIAPP_API_BASE_URL (telegram-webhook public URL) when frontend/backend are different origins; same-origin default is local/dev only.

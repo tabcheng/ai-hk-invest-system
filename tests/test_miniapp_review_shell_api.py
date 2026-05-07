@@ -229,3 +229,58 @@ def test_miniapp_review_shell_latest_system_run_unavailable_on_failure(monkeypat
     assert section["status"] == "unavailable"
     assert section["reason"] == "latest bounded row is not available yet"
     assert "secret error" not in json.dumps(payload)
+
+
+def test_miniapp_review_shell_latest_system_run_bad_counters_are_bounded(monkeypatch):
+    monkeypatch.setenv("TELEGRAM_BOT_TOKEN", FAKE_BOT_TOKEN)
+    monkeypatch.setenv("MINIAPP_ALLOWED_TELEGRAM_USER_IDS", "42")
+    monkeypatch.setattr("src.miniapp_auth.time.time", lambda: NOW_TS)
+
+    class _Client: pass
+
+    monkeypatch.setattr("src.telegram_webhook_server._load_supabase_client", lambda: _Client())
+    monkeypatch.setattr(
+        "src.latest_system_runs_repository.get_latest_system_run",
+        lambda client, source="paper_daily_runner": {
+            "business_date": "2026-05-06",
+            "run_id": "42",
+            "status": "success",
+            "data_timestamp": "2026-05-06T01:02:03+00:00",
+            "updated_at": "2026-05-06T01:03:03+00:00",
+            "summary_json": {"processed_tickers": "N/A", "successful_tickers": "bad-value", "failed_tickers": None, "paper_trade_only": True},
+        },
+    )
+    status, payload = _call("/miniapp/api/review-shell", "POST", _authorized_request(monkeypatch))
+    assert status.startswith("200")
+    section = payload["sections"]["latest_system_run"]
+    assert section["status"] == "ok"
+    assert section["processed_tickers"] == 0
+    assert section["successful_tickers"] == 0
+    assert section["failed_tickers"] == 0
+
+
+def test_miniapp_review_shell_latest_system_run_requires_paper_trade_only_true(monkeypatch):
+    monkeypatch.setenv("TELEGRAM_BOT_TOKEN", FAKE_BOT_TOKEN)
+    monkeypatch.setenv("MINIAPP_ALLOWED_TELEGRAM_USER_IDS", "42")
+    monkeypatch.setattr("src.miniapp_auth.time.time", lambda: NOW_TS)
+
+    class _Client: pass
+
+    monkeypatch.setattr("src.telegram_webhook_server._load_supabase_client", lambda: _Client())
+    monkeypatch.setattr(
+        "src.latest_system_runs_repository.get_latest_system_run",
+        lambda client, source="paper_daily_runner": {
+            "business_date": "2026-05-06",
+            "run_id": "42",
+            "status": "success",
+            "data_timestamp": "2026-05-06T01:02:03+00:00",
+            "updated_at": "2026-05-06T01:03:03+00:00",
+            "summary_json": {"processed_tickers": 3, "successful_tickers": 3, "failed_tickers": 0, "paper_trade_only": False},
+        },
+    )
+    status, payload = _call("/miniapp/api/review-shell", "POST", _authorized_request(monkeypatch))
+    assert status.startswith("200")
+    section = payload["sections"]["latest_system_run"]
+    assert section["status"] == "unavailable"
+    assert section["reason"] == "latest bounded row is not available yet"
+    assert section.get("paper_trade_only") is not True

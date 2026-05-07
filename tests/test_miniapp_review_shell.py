@@ -13,7 +13,7 @@ def test_step92c_review_shell_static_contract() -> None:
         "data_timestamp_hkt",
         "updated_at_hkt",
         "validate Telegram initData server-side",
-        "Do not trust <code>initDataUnsafe</code>",
+        "Do not trust initDataUnsafe",
         "/miniapp/api/review-shell",
         "init_data",
         "no broker connection",
@@ -34,5 +34,14 @@ def test_step92c_review_shell_static_contract() -> None:
     for text in forbidden_text:
         assert text not in html
 
+    forbidden_init_data_unsafe_patterns = [
+        r"window\.Telegram\.WebApp\.initDataUnsafe",
+        r"Telegram\.WebApp\.initDataUnsafe",
+        r"telegram\.initDataUnsafe",
+    ]
+    for pattern in forbidden_init_data_unsafe_patterns:
+        assert re.search(pattern, html, flags=re.IGNORECASE) is None
+
+    assert "MINIAPP_API_BASE_URL" in html
     assert re.search(r"Telegram\.WebApp\.initData", html)
-    assert "/miniapp/api/review-shell" in html
+    assert "`${apiBaseUrl}/miniapp/api/review-shell`" in html

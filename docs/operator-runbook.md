@@ -372,3 +372,5 @@ Use together with `docs/railway-service-variables.md` Step 91C and `docs/post-de
 - Display semantics: operator/user-facing timestamps are shown in HKT only; persisted DB timestamp values remain UTC/ISO semantics.
 - Fallbacks: bounded `no data` when missing row; bounded `failed` on internal lookup error (no raw exception details).
 - Boundary: review-only latest-state surface; no decision/order/broker/live execution behavior.
+- Step 92C: Mini App now fetches backend POST /miniapp/api/review-shell and displays read-only latest_system_run card from latest_system_runs with server-side initData validation + operator allowlist authorization + HKT display fields only; no frontend Supabase direct read/write, no decision capture/order creation/broker/live execution.
+- Step 92C routing note: Mini App static frontend must use non-secret MINIAPP_API_BASE_URL (telegram-webhook public URL) when frontend/backend are different origins; same-origin default is local/dev only.

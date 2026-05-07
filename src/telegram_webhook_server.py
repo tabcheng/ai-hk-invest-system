@@ -12,6 +12,7 @@ from src.miniapp_auth import (
 )
 
 from src.miniapp_read_model import build_miniapp_review_shell_response
+from src.miniapp_data_provider import SupabaseLatestSystemRunMiniAppReadDataProvider
 
 def _parse_miniapp_allowed_telegram_user_ids(raw_value: str | None) -> list[int]:
     if raw_value is None:
@@ -102,7 +103,13 @@ def _handle_miniapp_review_shell_request(raw_body: bytes) -> tuple[str, dict[str
         )
     except MiniAppAuthValidationError:
         return "403 Forbidden", {"ok": False, "error": "operator_not_authorized"}
-    return "200 OK", build_miniapp_review_shell_response(operator=operator, env=os.environ)
+    supabase_client = None
+    try:
+        supabase_client = _load_supabase_client()
+    except Exception:
+        supabase_client = None
+    provider = SupabaseLatestSystemRunMiniAppReadDataProvider(client=supabase_client, env=os.environ)
+    return "200 OK", build_miniapp_review_shell_response(operator=operator, env=os.environ, provider=provider)
 
 
 def _load_supabase_client() -> Any:

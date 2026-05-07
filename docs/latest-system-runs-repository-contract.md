@@ -87,3 +87,4 @@ Write integration is best-effort from paper daily runner completion and does not
 - Upsert payload now carries timezone-aware UTC `updated_at` so both insert and conflict-update paths refresh row freshness deterministically.
 - Telegram response is bounded to safe summary fields only and must not include raw Supabase errors, secrets, tokens, initData, allowlist identifiers, vendor payloads, or raw logs.
 - On missing row: bounded unavailable/no-data response. On lookup failure: bounded operator-safe failure response.
+- Step 92C: Mini App now fetches backend POST /miniapp/api/review-shell and displays read-only latest_system_run card from latest_system_runs with server-side initData validation + operator allowlist authorization + HKT display fields only; no frontend Supabase direct read/write, no decision capture/order creation/broker/live execution.

@@ -38,6 +38,8 @@
 
 - Step 92B completed: Telegram webhook operator read-only command `/latest_system_run` added; it reads one bounded latest row from `latest_system_runs` for `source=paper_daily_runner` via existing repository/provider and returns operator-safe summary fields only.
 - Step 92B boundary: no decision creation, no order placement, no broker/live execution, no Mini App fetch integration, and no Supabase schema change.
+- Step 92B-1 completed: `/latest_system_run` operator display now renders `data_timestamp_hkt` and `updated_at_hkt` (HKT display-only conversion), while stored DB timestamp semantics remain unchanged (UTC/ISO persistence).
+- Step 92B-1 completed: `latest_system_runs` upsert payload now includes timezone-aware UTC `updated_at` so latest-state row freshness updates on both insert and conflict-update paths.
 
 ## Post-merge acceptance + wording discipline (system-of-record)
 - Every merged step must complete two mandatory acceptance checks:

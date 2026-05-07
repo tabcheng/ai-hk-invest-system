@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import date, datetime
+from datetime import date, datetime, timezone
 from typing import Any
 
 TABLE_NAME = "latest_system_runs"
@@ -30,6 +30,7 @@ def build_latest_system_run_upsert_payload(
         raise ValueError("status must be one of success/failed/partial/unknown")
 
     payload = {
+        "updated_at": datetime.now(timezone.utc).isoformat(),
         "run_id": str(run_id),
         "business_date": business_date.isoformat(),
         "status": normalized_status,
@@ -46,9 +47,11 @@ def build_latest_system_run_upsert_payload(
 
 
 def upsert_latest_system_run(client: Any, payload: dict[str, Any]) -> None:
+    payload_for_write = dict(payload)
+    payload_for_write["updated_at"] = datetime.now(timezone.utc).isoformat()
     (
         client.table(TABLE_NAME)
-        .upsert(payload, on_conflict="source", returning="minimal")
+        .upsert(payload_for_write, on_conflict="source", returning="minimal")
         .execute()
     )
 

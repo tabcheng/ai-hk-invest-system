@@ -79,5 +79,11 @@ Write integration is best-effort from paper daily runner completion and does not
 
 ## Step 92B Telegram webhook read surface
 - Telegram operator command `/latest_system_run` now uses `get_latest_system_run(client, source="paper_daily_runner")` to fetch exactly one latest row.
+- Operator-facing timestamp labels for this command are display-only HKT fields: `data_timestamp_hkt` and `updated_at_hkt`.
+- Persistence semantics remain unchanged: storage keeps database UTC/ISO timestamp semantics; HKT conversion is render-time only.
+- `latest_system_runs` remains bounded latest-state surface (not an audit ledger).
+
+## Step 92B-1 freshness + display hardening
+- Upsert payload now carries timezone-aware UTC `updated_at` so both insert and conflict-update paths refresh row freshness deterministically.
 - Telegram response is bounded to safe summary fields only and must not include raw Supabase errors, secrets, tokens, initData, allowlist identifiers, vendor payloads, or raw logs.
 - On missing row: bounded unavailable/no-data response. On lookup failure: bounded operator-safe failure response.

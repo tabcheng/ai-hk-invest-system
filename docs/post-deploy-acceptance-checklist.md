@@ -135,6 +135,9 @@ Step 91A recorded result (PR #88):
 ## Step 92B Telegram latest-system-run smoke
 - [ ] Deploy `telegram-webhook` runtime (if code changed).
 - [ ] Trigger `/latest_system_run` from allowlisted operator chat/user.
+- [ ] Verify response includes `data_timestamp_hkt` and `updated_at_hkt` (HKT display boundary).
+- [ ] Verify raw labels `data_timestamp` and `updated_at` are not shown in operator-facing output.
 - [ ] Verify response shows bounded latest row fields only (no secrets/raw errors).
+- [ ] Verify `latest_system_runs.updated_at` refreshes after upsert (freshness ambiguity removed).
 - [ ] Verify missing-row fallback and safe internal-error fallback behavior.
 - [ ] Verify no broker/live execution language or behavior is introduced.

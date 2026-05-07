@@ -186,6 +186,10 @@ def test_latest_system_run_returns_bounded_summary(monkeypatch):
     response = handle_telegram_operator_command(object(), _build_update("/latest_system_run"))
     assert "Command: /latest_system_run" in response
     assert "Status: completed." in response
+    assert "- data_timestamp_hkt: 2026-05-06 20:00:00 HKT" in response
+    assert "- updated_at_hkt: 2026-05-06 20:05:00 HKT" in response
+    assert "data_timestamp:" not in response
+    assert "updated_at:" not in response
     assert "- paper_trade_only: True" in response
     assert "- processed_tickers: 30" in response
     assert "no broker/live execution" in response

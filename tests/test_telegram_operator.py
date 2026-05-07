@@ -249,7 +249,7 @@ def test_latest_system_run_malformed_counters_degrade_to_zero_without_leak(monke
                 "paper_trade_only": True,
                 "processed_tickers": "N/A",
                 "successful_tickers": "bad-value",
-                "failed_tickers": "",
+                "failed_tickers": "1e309",
             },
             "updated_at": "2026-05-07T12:05:00+00:00",
         },

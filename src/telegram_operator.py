@@ -396,7 +396,7 @@ def _safe_int_counter(value: Any) -> int:
         if not raw:
             return 0
         return int(float(raw))
-    except (TypeError, ValueError):
+    except (TypeError, ValueError, OverflowError):
         return 0
 
 

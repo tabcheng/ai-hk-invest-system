@@ -106,7 +106,7 @@ def _safe_int_counter(value: Any) -> int:
     if value is None:
         return 0
     if isinstance(value, bool):
-        return int(value)
+        return 0
     if isinstance(value, (int, float)):
         return int(value)
     if isinstance(value, str):

@@ -38,6 +38,7 @@ def test_step92c_review_shell_static_contract() -> None:
         r"window\.Telegram\.WebApp\.initDataUnsafe",
         r"Telegram\.WebApp\.initDataUnsafe",
         r"telegram\.initDataUnsafe",
+        r"\.initDataUnsafe",
     ]
     for pattern in forbidden_init_data_unsafe_patterns:
         assert re.search(pattern, html, flags=re.IGNORECASE) is None

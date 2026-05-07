@@ -251,3 +251,4 @@ No broker integration or autonomous real-money execution is authorized by this p
 - Mini App frontend/static preview must never contain backend Supabase keys (`SUPABASE_SECRET_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, or transitional `SUPABASE_KEY`).
 - Any Supabase secret-class key usage remains backend-only under API boundary with RLS enabled.
 - This step does not introduce frontend direct Supabase integration.
+- Step 92C: Mini App now fetches backend POST /miniapp/api/review-shell and displays read-only latest_system_run card from latest_system_runs with server-side initData validation + operator allowlist authorization + HKT display fields only; no frontend Supabase direct read/write, no decision capture/order creation/broker/live execution.

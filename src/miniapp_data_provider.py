@@ -92,6 +92,55 @@ class RailwayRuntimeEnvMiniAppReadDataProvider:
         }
 
 
+
+
+def _format_hkt_display(value: Any) -> str | None:
+    if not value:
+        return None
+    try:
+        parsed = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=timezone.utc)
+    return parsed.astimezone(_HKT).strftime("%Y-%m-%d %H:%M:%S HKT")
+
+
+class SupabaseLatestSystemRunMiniAppReadDataProvider(RailwayRuntimeEnvMiniAppReadDataProvider):
+    def __init__(self, *, client: Any | None, env: Mapping[str, str] | None = None, now: datetime | None = None):
+        super().__init__(env=env, now=now)
+        self._client = client
+
+    def get_latest_system_run_summary(self) -> dict[str, Any]:
+        from src.latest_system_runs_repository import get_latest_system_run
+
+        boundary = "read-only latest-state row; no broker/live execution"
+        if self._client is None:
+            return {"status":"unavailable","source":"latest_system_runs","reason":"latest bounded row is not available yet","boundary":boundary}
+        try:
+            row = get_latest_system_run(self._client, source="paper_daily_runner")
+        except Exception:
+            return {"status":"unavailable","source":"latest_system_runs","reason":"latest bounded row is not available yet","boundary":boundary}
+        if not isinstance(row, dict) or not row:
+            return {"status":"unavailable","source":"latest_system_runs","reason":"latest bounded row is not available yet","boundary":boundary}
+
+        summary = row.get("summary_json") if isinstance(row.get("summary_json"), dict) else {}
+        return {
+            "status": "ok",
+            "source": "latest_system_runs",
+            "business_date": str(row.get("business_date") or ""),
+            "run_id": str(row.get("run_id") or ""),
+            "runner_status": str(row.get("status") or "unknown"),
+            "data_timestamp_hkt": _format_hkt_display(row.get("data_timestamp")),
+            "updated_at_hkt": _format_hkt_display(row.get("updated_at")),
+            "paper_trade_only": True,
+            "processed_tickers": int(summary.get("processed_tickers", 0) or 0),
+            "successful_tickers": int(summary.get("successful_tickers", 0) or 0),
+            "failed_tickers": int(summary.get("failed_tickers", 0) or 0),
+            "boundary": boundary,
+        }
+
+
 class LocalArtifactMiniAppReadDataProvider(RailwayRuntimeEnvMiniAppReadDataProvider):
     """Bounded provider for latest-system-run based on local JSON artifact only."""
 

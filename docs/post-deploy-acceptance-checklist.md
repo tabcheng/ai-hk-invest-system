@@ -141,3 +141,4 @@ Step 91A recorded result (PR #88):
 - [ ] Verify `latest_system_runs.updated_at` refreshes after upsert (freshness ambiguity removed).
 - [ ] Verify missing-row fallback and safe internal-error fallback behavior.
 - [ ] Verify no broker/live execution language or behavior is introduced.
+- Step 92C: Mini App now fetches backend POST /miniapp/api/review-shell and displays read-only latest_system_run card from latest_system_runs with server-side initData validation + operator allowlist authorization + HKT display fields only; no frontend Supabase direct read/write, no decision capture/order creation/broker/live execution.

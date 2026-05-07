@@ -87,7 +87,7 @@ def test_miniapp_review_shell_success_runner_status_bounded_runtime_source(monke
     latest_system_run = payload["sections"]["latest_system_run"]
     assert latest_system_run["status"] in {"unavailable", "ok", "unknown"}
     if latest_system_run["status"] == "unavailable":
-        assert latest_system_run["source"] == "not_configured"
+        assert latest_system_run["source"] in {"not_configured", "latest_system_runs"}
 
 
 
@@ -181,3 +181,51 @@ def test_miniapp_route_does_not_require_supabase_client(monkeypatch):
     status, payload = _call("/miniapp/api/review-shell", "POST", json.dumps({"init_data": init_data}).encode())
     assert status.startswith("200")
     assert payload["status"] == "ok"
+
+
+def test_miniapp_review_shell_latest_system_run_ok(monkeypatch):
+    monkeypatch.setenv("TELEGRAM_BOT_TOKEN", FAKE_BOT_TOKEN)
+    monkeypatch.setenv("MINIAPP_ALLOWED_TELEGRAM_USER_IDS", "42")
+    monkeypatch.setattr("src.miniapp_auth.time.time", lambda: NOW_TS)
+
+    class _Client: pass
+
+    monkeypatch.setattr("src.telegram_webhook_server._load_supabase_client", lambda: _Client())
+    monkeypatch.setattr(
+        "src.latest_system_runs_repository.get_latest_system_run",
+        lambda client, source="paper_daily_runner": {
+            "business_date": "2026-05-06",
+            "run_id": "42",
+            "status": "success",
+            "data_timestamp": "2026-05-06T01:02:03+00:00",
+            "updated_at": "2026-05-06T01:03:03+00:00",
+            "summary_json": {"processed_tickers": 3, "successful_tickers": 3, "failed_tickers": 0, "paper_trade_only": True},
+        },
+    )
+    status, payload = _call("/miniapp/api/review-shell", "POST", _authorized_request(monkeypatch))
+    assert status.startswith("200")
+    section = payload["sections"]["latest_system_run"]
+    assert section["status"] == "ok"
+    assert section["paper_trade_only"] is True
+    assert section["data_timestamp_hkt"].endswith("HKT")
+    assert section["updated_at_hkt"].endswith("HKT")
+    assert "data_timestamp" not in section
+    assert "updated_at" not in section
+
+
+def test_miniapp_review_shell_latest_system_run_unavailable_on_failure(monkeypatch):
+    monkeypatch.setenv("TELEGRAM_BOT_TOKEN", FAKE_BOT_TOKEN)
+    monkeypatch.setenv("MINIAPP_ALLOWED_TELEGRAM_USER_IDS", "42")
+    monkeypatch.setattr("src.miniapp_auth.time.time", lambda: NOW_TS)
+
+    class _Client: pass
+
+    monkeypatch.setattr("src.telegram_webhook_server._load_supabase_client", lambda: _Client())
+    monkeypatch.setattr("src.latest_system_runs_repository.get_latest_system_run", lambda client, source="paper_daily_runner": (_ for _ in ()).throw(RuntimeError("secret error")))
+
+    status, payload = _call("/miniapp/api/review-shell", "POST", _authorized_request(monkeypatch))
+    assert status.startswith("200")
+    section = payload["sections"]["latest_system_run"]
+    assert section["status"] == "unavailable"
+    assert section["reason"] == "latest bounded row is not available yet"
+    assert "secret error" not in json.dumps(payload)

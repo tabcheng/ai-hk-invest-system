@@ -377,6 +377,29 @@ def _format_stock_display(*, stock_id: Any, stock_name: Any) -> str:
     return f"stock_id={stock_id_text} | name_unavailable"
 
 
+def _safe_int_counter(value: Any) -> int:
+    """
+    Parse summary counters defensively for operator output.
+
+    Returns 0 for empty/malformed/non-numeric values and never raises.
+    """
+    if value is None:
+        return 0
+    if isinstance(value, bool):
+        return int(value)
+    if isinstance(value, int):
+        return value
+    if isinstance(value, float):
+        return int(value)
+    try:
+        raw = str(value).strip()
+        if not raw:
+            return 0
+        return int(float(raw))
+    except (TypeError, ValueError):
+        return 0
+
+
 def _format_runner_status_message(latest_summary_row: dict[str, Any]) -> str:
     """Build operator-facing response for `/runner_status` from latest persisted run."""
     started_at = _parse_iso_datetime(latest_summary_row.get("created_at"), field_name="created_at")
@@ -664,9 +687,9 @@ def _format_latest_system_run_message(row: dict[str, Any]) -> str:
             ("run_id", row.get("run_id") or "N/A"),
             ("data_timestamp", row.get("data_timestamp") or "N/A"),
             ("paper_trade_only", summary.get("paper_trade_only") is True),
-            ("processed_tickers", int(summary.get("processed_tickers") or 0)),
-            ("successful_tickers", int(summary.get("successful_tickers") or 0)),
-            ("failed_tickers", int(summary.get("failed_tickers") or 0)),
+            ("processed_tickers", _safe_int_counter(summary.get("processed_tickers"))),
+            ("successful_tickers", _safe_int_counter(summary.get("successful_tickers"))),
+            ("failed_tickers", _safe_int_counter(summary.get("failed_tickers"))),
             ("updated_at", row.get("updated_at") or "N/A"),
             ("boundary", "read-only latest-state row; no broker/live execution"),
         ],

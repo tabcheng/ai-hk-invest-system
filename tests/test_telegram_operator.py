@@ -235,6 +235,43 @@ def test_latest_system_run_returns_usage_on_malformed_tokens(monkeypatch):
     assert "Status: failed." in response
     assert "Usage: /latest_system_run" in response
 
+
+def test_latest_system_run_malformed_counters_degrade_to_zero_without_leak(monkeypatch, capsys):
+    monkeypatch.setenv("TELEGRAM_CHAT_ID", "chat-1")
+    monkeypatch.setattr(
+        "src.telegram_operator.get_latest_system_run",
+        lambda _client, source="paper_daily_runner": {
+            "business_date": "2026-05-07",
+            "status": "partial",
+            "run_id": "r-legacy",
+            "data_timestamp": "2026-05-07T12:00:00+00:00",
+            "summary_json": {
+                "paper_trade_only": True,
+                "processed_tickers": "N/A",
+                "successful_tickers": "bad-value",
+                "failed_tickers": "",
+            },
+            "updated_at": "2026-05-07T12:05:00+00:00",
+        },
+    )
+    response = handle_telegram_operator_command(object(), _build_update("/latest_system_run", chat_id="chat-1", user_id="u-1"))
+    captured = capsys.readouterr()
+    combined_logs = f"{captured.out}\n{captured.err}"
+
+    assert "Command: /latest_system_run" in response
+    assert "Status: completed." in response
+    assert "- processed_tickers: 0" in response
+    assert "- successful_tickers: 0" in response
+    assert "- failed_tickers: 0" in response
+    assert "internal command processing error" not in response
+    assert "Traceback" not in response
+    assert "sb_secret_x" not in response
+    assert "raw db error" not in response
+    assert "sb_secret_x" not in combined_logs
+    assert "raw db error" not in combined_logs
+    assert "chat-1" not in combined_logs
+    assert "u-1" not in combined_logs
+
 def test_handle_help_command_rejects_unauthorized_chat(monkeypatch):
     monkeypatch.setenv("TELEGRAM_CHAT_ID", "chat-allowed")
     response = handle_telegram_operator_command(object(), _build_update("/help", chat_id="chat-other"))

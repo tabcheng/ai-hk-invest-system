@@ -59,6 +59,7 @@ def test_build_payload_requires_paper_trade_only_true():
     assert payload["run_id"] == "123"
     assert payload["status"] == "success"
     assert payload["summary_json"]["paper_trade_only"] is True
+    assert payload["updated_at"].endswith("+00:00")
 
 
 def test_upsert_uses_source_conflict_key():
@@ -69,6 +70,33 @@ def test_upsert_uses_source_conflict_key():
 
     assert recorder["table"] == "latest_system_runs"
     assert recorder["on_conflict"] == "source"
+    assert "updated_at" in recorder["payload"]
+
+
+def test_upsert_overrides_stale_updated_at_with_fresh_utc_time():
+    recorder = {}
+    client = _Client(recorder)
+
+    repo.upsert_latest_system_run(client, {"source": "paper_daily_runner", "updated_at": "2000-01-01T00:00:00+00:00"})
+
+    parsed = datetime.fromisoformat(recorder["payload"]["updated_at"])
+    assert parsed.tzinfo is not None
+    assert recorder["payload"]["updated_at"] != "2000-01-01T00:00:00+00:00"
+
+
+def test_build_payload_sets_updated_at_from_app_utc_time():
+    payload = repo.build_latest_system_run_upsert_payload(
+        run_id=123,
+        business_date=date(2026, 5, 6),
+        status="success",
+        source="paper_daily_runner",
+        data_timestamp=datetime(2026, 5, 6, tzinfo=timezone.utc),
+        summary_json={"paper_trade_only": True, "processed_tickers": 3},
+        risk_summary_json={},
+    )
+
+    parsed = datetime.fromisoformat(payload["updated_at"])
+    assert parsed.tzinfo is not None
 
 
 def test_read_latest_returns_single_safe_row():

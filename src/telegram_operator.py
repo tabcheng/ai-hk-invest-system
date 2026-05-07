@@ -685,12 +685,18 @@ def _format_latest_system_run_message(row: dict[str, Any]) -> str:
             ("business_date", row.get("business_date") or "N/A"),
             ("status", row.get("status") or "unknown"),
             ("run_id", row.get("run_id") or "N/A"),
-            ("data_timestamp", row.get("data_timestamp") or "N/A"),
+            (
+                "data_timestamp_hkt",
+                _format_display_timestamp_hkt(row.get("data_timestamp"), field_name="data_timestamp"),
+            ),
             ("paper_trade_only", summary.get("paper_trade_only") is True),
             ("processed_tickers", _safe_int_counter(summary.get("processed_tickers"))),
             ("successful_tickers", _safe_int_counter(summary.get("successful_tickers"))),
             ("failed_tickers", _safe_int_counter(summary.get("failed_tickers"))),
-            ("updated_at", row.get("updated_at") or "N/A"),
+            (
+                "updated_at_hkt",
+                _format_display_timestamp_hkt(row.get("updated_at"), field_name="updated_at"),
+            ),
             ("boundary", "read-only latest-state row; no broker/live execution"),
         ],
     )

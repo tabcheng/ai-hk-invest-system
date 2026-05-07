@@ -368,6 +368,7 @@ Use together with `docs/railway-service-variables.md` Step 91C and `docs/post-de
 ## Step 92B — `/latest_system_run` (read-only latest-state summary)
 - Command: `/latest_system_run`
 - Purpose: return one bounded latest row from `latest_system_runs` for `source=paper_daily_runner`.
-- Output fields: `business_date`, `status`, `run_id`, `data_timestamp`, `paper_trade_only`, `processed_tickers`, `successful_tickers`, `failed_tickers`, `updated_at`.
+- Output fields: `business_date`, `status`, `run_id`, `data_timestamp_hkt`, `paper_trade_only`, `processed_tickers`, `successful_tickers`, `failed_tickers`, `updated_at_hkt`.
+- Display semantics: operator/user-facing timestamps are shown in HKT only; persisted DB timestamp values remain UTC/ISO semantics.
 - Fallbacks: bounded `no data` when missing row; bounded `failed` on internal lookup error (no raw exception details).
 - Boundary: review-only latest-state surface; no decision/order/broker/live execution behavior.

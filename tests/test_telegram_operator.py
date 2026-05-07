@@ -143,6 +143,7 @@ def test_help_message_contains_guardrails_and_command_list():
     assert "/runs" in message
     assert "/runs [days]d" in message
     assert "/runner_status" in message
+    assert "/latest_system_run" in message
     assert "/risk_review [run_id]" in message
     assert "/pnl_review" in message
     assert "/daily_review" in message
@@ -161,6 +162,115 @@ def test_handle_runs_command_invalid_parameter_message_is_html_safe(monkeypatch)
     assert "/runs [days]d" in response_text
     assert re.search(r"<[a-zA-Z][^>]*>", response_text) is None
 
+
+
+
+def test_latest_system_run_returns_bounded_summary(monkeypatch):
+    monkeypatch.setenv("TELEGRAM_CHAT_ID", "chat-1")
+    monkeypatch.setattr(
+        "src.telegram_operator.get_latest_system_run",
+        lambda _client, source="paper_daily_runner": {
+            "business_date": "2026-05-06",
+            "status": "success",
+            "run_id": "r-92a",
+            "data_timestamp": "2026-05-06T12:00:00+00:00",
+            "summary_json": {
+                "paper_trade_only": True,
+                "processed_tickers": 30,
+                "successful_tickers": 28,
+                "failed_tickers": 2,
+            },
+            "updated_at": "2026-05-06T12:05:00+00:00",
+        },
+    )
+    response = handle_telegram_operator_command(object(), _build_update("/latest_system_run"))
+    assert "Command: /latest_system_run" in response
+    assert "Status: completed." in response
+    assert "- paper_trade_only: True" in response
+    assert "- processed_tickers: 30" in response
+    assert "no broker/live execution" in response
+
+
+def test_latest_system_run_no_data_fallback(monkeypatch):
+    monkeypatch.setenv("TELEGRAM_CHAT_ID", "chat-1")
+    monkeypatch.setattr("src.telegram_operator.get_latest_system_run", lambda *_a, **_k: None)
+    response = handle_telegram_operator_command(object(), _build_update("/latest_system_run"))
+    assert "Status: no data." in response
+    assert "latest bounded row is not available yet" in response
+
+
+def test_latest_system_run_failure_is_sanitized(monkeypatch):
+    monkeypatch.setenv("TELEGRAM_CHAT_ID", "chat-1")
+    monkeypatch.setattr("src.telegram_operator.get_latest_system_run", lambda *_a, **_k: (_ for _ in ()).throw(RuntimeError("sb_secret_x raw db error")))
+    response = handle_telegram_operator_command(object(), _build_update("/latest_system_run"))
+    assert "Status: failed." in response
+    assert "internal latest-system-run lookup error" in response
+    assert "sb_secret_x" not in response
+    assert "raw db error" not in response
+
+
+def test_latest_system_run_failure_logs_are_sanitized(monkeypatch, capsys):
+    monkeypatch.setenv("TELEGRAM_CHAT_ID", "chat-1")
+    monkeypatch.setattr(
+        "src.telegram_operator.get_latest_system_run",
+        lambda *_a, **_k: (_ for _ in ()).throw(RuntimeError("sb_secret_x raw db error")),
+    )
+    response = handle_telegram_operator_command(object(), _build_update("/latest_system_run", chat_id="chat-1", user_id="u-1"))
+    captured = capsys.readouterr()
+    combined_logs = f"{captured.out}\n{captured.err}"
+
+    assert "internal latest-system-run lookup error" in response
+    assert "sb_secret_x" not in response
+    assert "raw db error" not in response
+    assert "sb_secret_x" not in combined_logs
+    assert "raw db error" not in combined_logs
+    assert "chat-1" not in combined_logs
+    assert "u-1" not in combined_logs
+
+
+def test_latest_system_run_returns_usage_on_malformed_tokens(monkeypatch):
+    monkeypatch.setenv("TELEGRAM_CHAT_ID", "chat-1")
+    response = handle_telegram_operator_command(object(), _build_update("/latest_system_run now"))
+    assert "Command: /latest_system_run" in response
+    assert "Status: failed." in response
+    assert "Usage: /latest_system_run" in response
+
+
+def test_latest_system_run_malformed_counters_degrade_to_zero_without_leak(monkeypatch, capsys):
+    monkeypatch.setenv("TELEGRAM_CHAT_ID", "chat-1")
+    monkeypatch.setattr(
+        "src.telegram_operator.get_latest_system_run",
+        lambda _client, source="paper_daily_runner": {
+            "business_date": "2026-05-07",
+            "status": "partial",
+            "run_id": "r-legacy",
+            "data_timestamp": "2026-05-07T12:00:00+00:00",
+            "summary_json": {
+                "paper_trade_only": True,
+                "processed_tickers": "N/A",
+                "successful_tickers": "bad-value",
+                "failed_tickers": "1e309",
+            },
+            "updated_at": "2026-05-07T12:05:00+00:00",
+        },
+    )
+    response = handle_telegram_operator_command(object(), _build_update("/latest_system_run", chat_id="chat-1", user_id="u-1"))
+    captured = capsys.readouterr()
+    combined_logs = f"{captured.out}\n{captured.err}"
+
+    assert "Command: /latest_system_run" in response
+    assert "Status: completed." in response
+    assert "- processed_tickers: 0" in response
+    assert "- successful_tickers: 0" in response
+    assert "- failed_tickers: 0" in response
+    assert "internal command processing error" not in response
+    assert "Traceback" not in response
+    assert "sb_secret_x" not in response
+    assert "raw db error" not in response
+    assert "sb_secret_x" not in combined_logs
+    assert "raw db error" not in combined_logs
+    assert "chat-1" not in combined_logs
+    assert "u-1" not in combined_logs
 
 def test_handle_help_command_rejects_unauthorized_chat(monkeypatch):
     monkeypatch.setenv("TELEGRAM_CHAT_ID", "chat-allowed")

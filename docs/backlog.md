@@ -223,3 +223,5 @@ Prioritization:
 
 - **Step 92A runtime acceptance note:** manual run `25458652930` failed aggregate only due to PostgREST catalog endpoint 404 for RLS/index evidence; combined GitHub data-path + manual Supabase SQL evidence still confirms Step 92A acceptance PASS.
 - **Step 92A-S2 planned/fix scope:** replace direct `pg_catalog`/`pg_indexes` REST checks with service-role-only RPC evidence (`step92a_latest_system_runs_contract_evidence`) returning booleans only; keep secret-safe summary report, no Step 92B Telegram read, no Mini App fetch, no Railway topology change, no broker/live execution.
+
+- **Step 92B completed:** Telegram webhook now supports read-only `/latest_system_run` command for bounded `latest_system_runs` latest-state summary (source=`paper_daily_runner`) with safe no-data/error fallbacks; Mini App read-only fetch remains deferred.

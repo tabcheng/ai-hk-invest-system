@@ -135,6 +135,8 @@ class SupabaseLatestSystemRunMiniAppReadDataProvider(RailwayRuntimeEnvMiniAppRea
     def __init__(self, *, client: Any | None, env: Mapping[str, str] | None = None, now: datetime | None = None):
         super().__init__(env=env, now=now)
         self._client = client
+        self._cached_latest_row: dict[str, Any] | None = None
+        self._latest_row_loaded = False
 
     @staticmethod
     def _unavailable(boundary: str) -> dict[str, Any]:
@@ -146,16 +148,8 @@ class SupabaseLatestSystemRunMiniAppReadDataProvider(RailwayRuntimeEnvMiniAppRea
         }
 
     def get_latest_system_run_summary(self) -> dict[str, Any]:
-        from src.latest_system_runs_repository import get_latest_system_run
-
         boundary = "read-only latest-state row; no broker/live execution"
-        if self._client is None:
-            return self._unavailable(boundary)
-
-        try:
-            row = get_latest_system_run(self._client, source="paper_daily_runner")
-        except Exception:
-            return self._unavailable(boundary)
+        row = self._get_latest_row()
 
         if not isinstance(row, dict) or not row:
             return self._unavailable(boundary)
@@ -190,16 +184,15 @@ class SupabaseLatestSystemRunMiniAppReadDataProvider(RailwayRuntimeEnvMiniAppRea
         if self._client is None:
             return unavailable
 
-        from src.latest_system_runs_repository import get_latest_system_run
-        try:
-            row = get_latest_system_run(self._client, source="paper_daily_runner")
-        except Exception:
-            return unavailable
+        row = self._get_latest_row()
         if not isinstance(row, dict) or not row:
             return unavailable
         summary = row.get("summary_json") if isinstance(row.get("summary_json"), dict) else {}
         if summary.get("paper_trade_only") is not True:
             return unavailable
+        available_sections = ["latest_system_run"]
+        unavailable_sections = ["signals", "paper_pnl", "risk"]
+        review_readiness = "ready" if len(unavailable_sections) == 0 else "partial"
         return {
             "status": "ok",
             "source": "daily_review_read_model",
@@ -209,15 +202,31 @@ class SupabaseLatestSystemRunMiniAppReadDataProvider(RailwayRuntimeEnvMiniAppRea
             "data_timestamp_hkt": _format_hkt_display(row.get("data_timestamp")),
             "updated_at_hkt": _format_hkt_display(row.get("updated_at")),
             "paper_trade_only": True,
-            "review_readiness": "ready",
+            "review_readiness": review_readiness,
             "processed_tickers": _safe_int_counter(summary.get("processed_tickers")),
             "successful_tickers": _safe_int_counter(summary.get("successful_tickers")),
             "failed_tickers": _safe_int_counter(summary.get("failed_tickers")),
-            "available_sections": ["latest_system_run"],
-            "unavailable_sections": ["signals", "paper_pnl", "risk"],
-            "operator_note": "Read-only daily review summary; human final decision remains outside system.",
+            "available_sections": available_sections,
+            "unavailable_sections": unavailable_sections,
+            "operator_note": "Read-only partial daily review summary from latest system run only; human final decision remains outside system.",
             "boundary": boundary,
         }
+
+    def _get_latest_row(self) -> dict[str, Any] | None:
+        if self._latest_row_loaded:
+            return self._cached_latest_row
+        self._latest_row_loaded = True
+        if self._client is None:
+            self._cached_latest_row = None
+            return None
+        from src.latest_system_runs_repository import get_latest_system_run
+        try:
+            row = get_latest_system_run(self._client, source="paper_daily_runner")
+        except Exception:
+            self._cached_latest_row = None
+            return None
+        self._cached_latest_row = row if isinstance(row, dict) else None
+        return self._cached_latest_row
 
 
 class LocalArtifactMiniAppReadDataProvider(RailwayRuntimeEnvMiniAppReadDataProvider):

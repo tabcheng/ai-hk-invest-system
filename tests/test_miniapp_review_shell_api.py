@@ -219,6 +219,9 @@ def test_miniapp_review_shell_latest_system_run_ok(monkeypatch):
     daily = payload["sections"]["daily_review_summary"]
     assert daily["status"] == "ok"
     assert daily["paper_trade_only"] is True
+    assert daily["review_readiness"] == "partial"
+    assert daily["available_sections"] == ["latest_system_run"]
+    assert daily["unavailable_sections"] == ["signals", "paper_pnl", "risk"]
     assert daily["data_timestamp_hkt"].endswith("HKT")
     assert daily["updated_at_hkt"].endswith("HKT")
     assert "data_timestamp" not in daily
@@ -390,3 +393,4 @@ def test_miniapp_review_shell_latest_system_run_bool_counter_is_bounded(monkeypa
     assert daily["processed_tickers"] == 0
     assert daily["successful_tickers"] == 0
     assert daily["failed_tickers"] == 0
+    assert daily["review_readiness"] == "partial"

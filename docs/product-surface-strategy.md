@@ -153,3 +153,10 @@ Mini App should **not**:
 - Mini App current read-only surface is now mobile-first professional card dashboard with Traditional Chinese primary wording.
 - Card sequence follows current strategy: 今日檢視 -> 最新系統運行 -> 每日檢視摘要 -> 信號摘要 -> 安全與邊界說明.
 - This step is presentation-only: no new product capability, no decision capture, no write/order/execution semantics.
+
+
+## Step 112 UX bundle update (Daily Overview operator clarity)
+- Daily Overview now separates `System Run Status` and `Daily Review Coverage` to avoid interpretation conflict.
+- Availability display uses explicit labels (`已載入`, `未有資料`, `部分完成`) and does not treat missing PnL/risk as run failure.
+- Signal section keeps simulated stock-level detail while warning that unknown confidence/risk/PnL means incomplete decision context.
+- Safety boundary is layered: short top banner + detailed bottom guardrail section; no broker/live execution wording introduced.

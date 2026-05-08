@@ -274,3 +274,9 @@ No broker integration or autonomous real-money execution is authorized by this p
 - 不新增 Supabase schema/migration、不新增任何 write path。
 - 不新增決策提交、下單、券商連接、真實交易執行。
 - 信號顯示仍為 AI 模擬/紙上交易檢視用途，並非買賣指示；最終真實交易決定仍在系統外由人作出。
+
+
+## Step 112 presentation note (read-only UX only)
+- Step 112 is UI presentation/readability refinement only for Daily Overview in Mini App/Web UI.
+- No backend auth contract change (`initData` still server-validated), no frontend secret usage, no Supabase schema migration, and no Railway topology/config mutation.
+- UX wording explicitly reinforces simulated/paper-trading-only interpretation and forbids real trade instruction semantics.

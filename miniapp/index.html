@@ -25,14 +25,14 @@
       .app-header h1 { margin: 0 0 6px; font-size: 1.4rem; }
       .app-header p { margin: 0 0 4px; color: var(--muted-text); font-size: .92rem; }
       .boundary-banner,.overview-card,.section-card,.footer-guardrail { background: var(--card-background); border: 1px solid var(--border); border-radius: 14px; padding: 14px; box-shadow: 0 2px 8px rgba(15, 23, 42, .05); margin-bottom: 12px; }
-      .status-chip { display:inline-block; font-size:.8rem; font-weight:600; border-radius:999px; padding:4px 10px; border:1px solid; }
+      .status-chip,.availability-chip { display:inline-block; font-size:.8rem; font-weight:600; border-radius:999px; padding:4px 10px; border:1px solid; }
       .status-success { color: var(--success); border-color: #87c8a4; background: #e9f7ef; }
       .status-warning { color: var(--warning); border-color: #e7c48a; background: #fff8ec; }
       .status-unavailable { color: var(--unavailable); border-color: #c9d0db; background: #f2f4f7; }
       .status-danger { color: var(--danger); border-color: #e6a5a0; background: #fdf1f0; }
-      .metric-grid { display:grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap:8px; margin:10px 0; }
-      .metric-item { border:1px solid var(--border); border-radius:10px; padding:8px; background:#fafcff; }
-      .metric-item .label { color: var(--muted-text); font-size: .8rem; }
+      .metric-grid,.availability-grid { display:grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap:8px; margin:10px 0; }
+      .metric-item,.availability-item { border:1px solid var(--border); border-radius:10px; padding:8px; background:#fafcff; }
+      .metric-item .label,.availability-item .label { color: var(--muted-text); font-size: .8rem; }
       .metric-item .value { font-size: 1rem; font-weight: 650; }
       .signal-list { margin: 8px 0 0; padding: 0; list-style: none; display: grid; gap: 8px; }
       .signal-item { border:1px solid var(--border); border-radius:10px; padding:10px; background:#fcfdff; }
@@ -51,7 +51,7 @@
         <p>只限模擬交易 · 決策支援 · 不連接券商 · 不作真實落盤</p>
         <p>Paper trading only · No broker/live execution</p>
       </header>
-      <section class="boundary-banner">信號只供模擬檢視，並非買賣指示；最終真實交易決定由人手於系統外作出。</section>
+      <section class="boundary-banner">只限模擬交易 · 決策支援 · 不連接券商 · 不作真實落盤</section>
       <section id="overview-card" class="overview-card"><h2>今日檢視 / Daily Overview</h2><p class="helper-text">載入中...</p></section>
       <section id="latest-card" class="section-card"><h2>最新系統運行</h2></section>
       <section id="daily-card" class="section-card"><h2>每日檢視摘要</h2></section>
@@ -59,59 +59,53 @@
       <section class="footer-guardrail"><h2>安全與邊界說明</h2><ul><li>Telegram initData 只在後端驗證</li><li>前端不使用 initDataUnsafe 作授權</li><li>前端不保存 Supabase secret / service role key</li><li>系統不連接券商、不作真實落盤</li><li>所有信號只供模擬檢視，並非買賣指示</li></ul></section>
     </main>
     <script>
-      const STATUS_TEXT = { success: "成功", failed: "失敗", partial: "部分完成", unavailable: "暫時未有資料", ready: "已準備好", ok: "成功", unknown: "暫時未有資料" };
+      const STATUS_TEXT = { success: "成功", failed: "失敗", partial: "部分完成", unavailable: "暫時未有資料", ready: "已準備好", ok: "成功", unknown: "未有資料" };
+      const AVAILABILITY_TEXT = { available: "已載入", unavailable: "未有資料" };
       const SIGNAL_LABEL = { positive: "正面模擬信號", neutral: "觀望 / 中性信號", negative: "負面模擬信號", unknown: "未知信號" };
-      const CONFIDENCE_LABEL = { high: "較高", medium: "中等", low: "較低", unknown: "未知" };
       const SECTION_NAME_MAP = { latest_system_run: "最新系統運行", daily_review_summary: "每日檢視摘要", signals: "信號摘要", paper_pnl: "模擬盈虧", risk: "風險摘要" };
-      const UI_NOTE = {
-        latestBoundary: "只限讀取最新系統狀態；系統不連接券商、不作真實落盤。",
-        dailyNote: "目前每日檢視仍屬部分完成；請同時查看系統運行狀態及信號摘要。真實交易決定由人手在系統外作出。",
-        dailyBoundary: "只限每日檢視摘要；不提交決策、不建立訂單、不連接券商。",
-        signalsBoundary: "信號只供模擬檢視，並非買賣指示；不建立訂單、不作真實交易。",
-      };
       function resolveApiBaseUrl() { return String(window.MINIAPP_API_BASE_URL || "").trim().replace(/\/$/, ""); }
       function statusClass(value) { if (["success","ready","ok"].includes(value)) return "status-success"; if (value === "partial") return "status-warning"; if (value === "failed") return "status-danger"; return "status-unavailable"; }
       function renderStatusChip(value) { const chip = document.createElement("span"); chip.className = `status-chip ${statusClass(value)}`; chip.textContent = STATUS_TEXT[String(value)] || STATUS_TEXT.unavailable; return chip; }
+      function renderAvailabilityChip(isAvailable) { const chip = document.createElement("span"); chip.className = `availability-chip ${isAvailable ? "status-success" : "status-unavailable"}`; chip.textContent = isAvailable ? AVAILABILITY_TEXT.available : AVAILABILITY_TEXT.unavailable; return chip; }
       function renderMetricGrid(items) { const grid = document.createElement("div"); grid.className = "metric-grid"; items.forEach((item) => { const node = document.createElement("div"); node.className = "metric-item"; const l = document.createElement("div"); l.className = "label"; l.textContent = item.label; const v = document.createElement("div"); v.className = "value"; v.textContent = String(item.value ?? "-"); node.append(l,v); grid.appendChild(node); }); return grid; }
       function asSectionNames(values) { return Array.isArray(values) ? values.map((v) => SECTION_NAME_MAP[String(v)] || String(v)) : []; }
-      function renderSignalItems(items) { const list = document.createElement("ul"); list.className = "signal-list"; (Array.isArray(items) ? items : []).forEach((item) => { const li = document.createElement("li"); li.className = "signal-item"; const ticker = document.createElement("div"); ticker.textContent = `股票：${String(item.ticker || "-")}`; const sig = document.createElement("div"); sig.textContent = `模擬信號：${SIGNAL_LABEL[String(item.signal_label)] || SIGNAL_LABEL.unknown}`; const c = document.createElement("div"); c.textContent = `信心：${CONFIDENCE_LABEL[String(item.confidence_label)] || CONFIDENCE_LABEL.unknown}`; const r = document.createElement("div"); r.textContent = `原因：${String(item.reason_short || "未提供")}`; li.append(ticker,sig,c,r); list.appendChild(li); }); return list; }
-      function fillUnavailable(cardId, title){ const card=document.getElementById(cardId); card.textContent=""; const h=document.createElement("h2"); h.textContent=title; const chip=renderStatusChip("unavailable"); const p=document.createElement("p"); p.className="helper-text"; p.textContent=`${title}暫時未有資料`; card.append(h,chip,p); }
+      function renderSignalItems(items) { const list = document.createElement("ul"); list.className = "signal-list"; (Array.isArray(items) ? items : []).forEach((item) => { const li = document.createElement("li"); li.className = "signal-item"; const ticker = document.createElement("div"); ticker.textContent = `股票：${String(item.ticker || "-")}`; const sig = document.createElement("div"); sig.textContent = `模擬信號方向：${SIGNAL_LABEL[String(item.signal_label)] || SIGNAL_LABEL.unknown}`; const confidenceLabel = String(item.confidence_label || "unknown").toLowerCase() === "unknown" ? "未提供 / Unknown" : String(item.confidence_label || "-"); const c = document.createElement("div"); c.textContent = `信心：${confidenceLabel}`; const r = document.createElement("div"); r.textContent = `原因：${String(item.reason_short || "未提供")}`; li.append(ticker,sig,c,r); list.appendChild(li); }); return list; }
+      function fillUnavailable(cardId, title){ const card=document.getElementById(cardId); card.textContent=""; const h=document.createElement("h2"); h.textContent=title; const chip=renderStatusChip("unavailable"); const p=document.createElement("p"); p.className="helper-text"; p.textContent=`${title}未有資料（Data not available yet）`; card.append(h,chip,p); }
       function renderOverview(latest,daily,signals){
         const card=document.getElementById("overview-card");
         card.textContent="";
         const h=document.createElement("h2");
         h.textContent="今日檢視 / Daily Overview";
+        const hasLatest = latest?.status === "ok";
+        const hasSignals = signals?.status === "ok";
+        const availableSections = asSectionNames(daily?.available_sections);
+        const missingSections = asSectionNames(daily?.unavailable_sections);
+        const coverage = missingSections.length > 0 ? "partial" : (availableSections.length > 0 ? "ready" : "unavailable");
         const date=latest?.business_date || daily?.business_date || signals?.business_date || "-";
         const ts=latest?.data_timestamp_hkt || signals?.data_timestamp_hkt || "-";
-        const hasLatest = latest?.status === "ok";
-        const hasDaily = daily?.status === "ok";
-        const hasSignals = signals?.status === "ok";
-        let status = "unavailable";
-        if (hasLatest && daily?.review_readiness === "ready" && (signals?.review_readiness === "ready" || hasSignals)) {
-          status = "ready";
-        } else if (hasLatest || hasDaily || hasSignals) {
-          status = "partial";
-        }
-        const row1=document.createElement("p");
-        row1.className="row";
-        row1.textContent=`交易日：${date}`;
-        const row2=document.createElement("p");
-        row2.className="row";
-        row2.textContent=`今日狀態：${STATUS_TEXT[status] || STATUS_TEXT.unavailable}`;
-        const row3=document.createElement("p");
-        row3.className="row";
-        row3.textContent=`資料時間：${ts}`;
-        const row4=document.createElement("p");
-        row4.className="helper-text";
-        row4.textContent="提示：信號只供模擬檢視，並非買賣指示";
-        card.append(h, renderStatusChip(status), row1,row2,row3,row4);
+
+        const line1=document.createElement("p"); line1.className="row"; line1.textContent=`交易日：${date}`;
+        const line2=document.createElement("p"); line2.className="row"; line2.textContent="System Run Status：";
+        const line3=document.createElement("p"); line3.className="row"; line3.textContent="Daily Review Coverage：";
+        const line4=document.createElement("p"); line4.className="row"; line4.textContent=`資料時間（HKT）：${ts}`;
+        const availabilityGrid = document.createElement("div"); availabilityGrid.className = "availability-grid";
+        [
+          { label: "最新系統運行", available: hasLatest },
+          { label: "信號摘要", available: hasSignals },
+          { label: "模擬盈虧", available: !missingSections.includes("模擬盈虧") && availableSections.includes("模擬盈虧") },
+          { label: "風險摘要", available: !missingSections.includes("風險摘要") && availableSections.includes("風險摘要") },
+        ].forEach((entry) => { const item=document.createElement("div"); item.className="availability-item"; const l=document.createElement("div"); l.className="label"; l.textContent=entry.label; item.append(l, renderAvailabilityChip(entry.available)); availabilityGrid.appendChild(item); });
+
+        const note=document.createElement("p"); note.className="helper-text";
+        note.textContent="部分完成表示部分檢視區塊仍未有資料，並不代表最新系統運行失敗。";
+        card.append(h,line1,line2,renderStatusChip(hasLatest ? (latest?.runner_status || "success") : "unavailable"),line3,renderStatusChip(coverage),line4,availabilityGrid,note);
       }
       function renderLatest(latest){ if (!latest || latest.status !== "ok") return fillUnavailable("latest-card","最新系統運行"); const card=document.getElementById("latest-card"); card.textContent=""; const h=document.createElement("h2"); h.textContent="最新系統運行"; card.append(h, renderStatusChip(latest.runner_status || "unknown")); [
           `運行編號：${latest.run_id || "-"}`,
           `資料時間（香港時間）：${latest.data_timestamp_hkt || "-"}`
-        ].forEach((txt)=>{const p=document.createElement("p"); p.className="row"; p.textContent=txt; card.appendChild(p);}); card.appendChild(renderMetricGrid([{label:"處理股票數",value:latest.processed_tickers},{label:"成功股票數",value:latest.successful_tickers},{label:"失敗股票數",value:latest.failed_tickers}])); const hp=document.createElement("p"); hp.className="helper-text"; hp.textContent=UI_NOTE.latestBoundary; card.appendChild(hp); }
-      function renderDaily(daily){ if (!daily || daily.status !== "ok") return fillUnavailable("daily-card","每日檢視摘要"); const card=document.getElementById("daily-card"); card.textContent=""; const h=document.createElement("h2"); h.textContent="每日檢視摘要"; card.append(h, renderStatusChip(daily.review_readiness || "unknown")); const ops=document.createElement("p"); ops.className="row"; ops.textContent=`操作提示：${UI_NOTE.dailyNote}`; card.appendChild(ops); const has=document.createElement("h3"); has.textContent="已有資料"; const hasList=document.createElement("div"); hasList.className="chip-list"; asSectionNames(daily.available_sections).forEach((x)=>{const c=document.createElement("span");c.className="mini-chip";c.textContent=x;hasList.appendChild(c);}); const miss=document.createElement("h3"); miss.textContent="未有資料"; const missList=document.createElement("div"); missList.className="chip-list"; asSectionNames(daily.unavailable_sections).forEach((x)=>{const c=document.createElement("span");c.className="mini-chip";c.textContent=x;missList.appendChild(c);}); card.append(has,hasList,miss,missList); const hp=document.createElement("p"); hp.className="helper-text"; hp.textContent=UI_NOTE.dailyBoundary; card.appendChild(hp); }
-      function renderSignals(signals){ if (!signals || signals.status !== "ok") return fillUnavailable("signals-card","信號摘要"); const card=document.getElementById("signals-card"); card.textContent=""; const h=document.createElement("h2"); h.textContent="信號摘要"; card.append(h, renderStatusChip(signals.review_readiness || signals.status)); const warn=document.createElement("p"); warn.className="helper-text"; warn.textContent=UI_NOTE.signalsBoundary; card.appendChild(warn); card.appendChild(renderMetricGrid([{label:"覆蓋股票數",value:signals.covered_tickers},{label:"顯示信號數",value:signals.shown_signals},{label:"顯示正面模擬信號",value:signals.shown_positive_signals},{label:"顯示觀望 / 中性信號",value:signals.shown_neutral_signals},{label:"顯示負面模擬信號",value:signals.shown_negative_signals},{label:"顯示未知信號",value:signals.shown_unknown_signals}])); card.appendChild(renderSignalItems(signals.top_items)); }
+        ].forEach((txt)=>{const p=document.createElement("p"); p.className="row"; p.textContent=txt; card.appendChild(p);}); card.appendChild(renderMetricGrid([{label:"處理股票數",value:latest.processed_tickers},{label:"成功股票數",value:latest.successful_tickers},{label:"失敗股票數",value:latest.failed_tickers}])); }
+      function renderDaily(daily){ if (!daily || daily.status !== "ok") return fillUnavailable("daily-card","每日檢視摘要"); const card=document.getElementById("daily-card"); card.textContent=""; const h=document.createElement("h2"); h.textContent="每日檢視摘要"; card.append(h, renderStatusChip(daily.review_readiness || "unknown")); const has=document.createElement("h3"); has.textContent="已有資料"; const hasList=document.createElement("div"); hasList.className="chip-list"; asSectionNames(daily.available_sections).forEach((x)=>{const c=document.createElement("span");c.className="mini-chip";c.textContent=x;hasList.appendChild(c);}); const miss=document.createElement("h3"); miss.textContent="未有資料"; const missList=document.createElement("div"); missList.className="chip-list"; asSectionNames(daily.unavailable_sections).forEach((x)=>{const c=document.createElement("span");c.className="mini-chip";c.textContent=x;missList.appendChild(c);}); const helper=document.createElement("p"); helper.className="helper-text"; helper.textContent="「未有資料」代表 data not available yet，並非系統錯誤。"; card.append(has,hasList,miss,missList,helper); }
+      function renderSignals(signals){ if (!signals || signals.status !== "ok") return fillUnavailable("signals-card","信號摘要"); const card=document.getElementById("signals-card"); card.textContent=""; const h=document.createElement("h2"); h.textContent="信號摘要"; card.append(h, renderStatusChip(signals.review_readiness || signals.status)); const warn=document.createElement("p"); warn.className="helper-text"; warn.textContent="目前只顯示技術信號方向；信心、風險、模擬盈虧未完整，因此不應視為完整決策。"; card.appendChild(warn); card.appendChild(renderMetricGrid([{label:"覆蓋股票數",value:signals.covered_tickers},{label:"顯示信號數",value:signals.shown_signals},{label:"顯示正面模擬信號",value:signals.shown_positive_signals},{label:"顯示觀望 / 中性信號",value:signals.shown_neutral_signals},{label:"顯示負面模擬信號",value:signals.shown_negative_signals},{label:"顯示未知信號",value:signals.shown_unknown_signals}])); card.appendChild(renderSignalItems(signals.top_items)); }
       async function loadReviewShell() {
         const initData = (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initData) || "";
         const apiBaseUrl = resolveApiBaseUrl();

@@ -69,6 +69,7 @@ const byId = {{
   "latest-card": new Element("section"),
   "daily-card": new Element("section"),
   "signals-card": new Element("section"),
+  "build-meta": new Element("p"),
 }};
 
 const document = {{

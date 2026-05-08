@@ -65,7 +65,7 @@ def test_step92c_review_shell_static_contract() -> None:
     assert re.search(r"Telegram\.WebApp\.initData", html)
     assert "`${apiBaseUrl}/miniapp/api/review-shell`" in html
     assert "missing_daily_review_summary_section" not in html
-    assert "daily review summary is not available yet" in html
+    assert "每日檢視摘要暫時未有資料" in html
 
     raw_key_as_label_patterns = [
         r"dt\.textContent\s*=\s*key",

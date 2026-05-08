@@ -28,7 +28,7 @@
     </section>
 
     <section>
-      <h2>Security / Auth TODO</h2>
+      <h2>安全與授權說明</h2>
       <ul>
         <li>validate Telegram initData server-side</li>
         <li>Do not trust initDataUnsafe</li>
@@ -50,7 +50,7 @@
         processed_tickers: "處理股票數",
         successful_tickers: "成功股票數",
         failed_tickers: "失敗股票數",
-        total_signals: "信號總數",
+        shown_signals: "顯示信號數",
         covered_tickers: "覆蓋股票數",
         positive_signals: "正面模擬信號",
         neutral_signals: "觀望 / 中性信號",
@@ -62,17 +62,37 @@
 
       const VALUE_MAP = {
         status: { success: "成功", failed: "失敗", partial: "部分完成", unavailable: "暫時未有資料", unknown: "未知", ok: "成功" },
+        runner_status: { success: "成功", failed: "失敗", partial: "部分完成", unknown: "未知" },
         paper_trade_only: { true: "只限模擬（Paper Trading）", false: "不符合模擬交易要求" },
         review_readiness: { ready: "已準備好", partial: "部分完成", unavailable: "暫時未有資料", unknown: "未知" },
         signal_label: { positive: "正面模擬信號", neutral: "觀望 / 中性信號", negative: "負面模擬信號", unknown: "未知信號" },
         confidence_label: { high: "較高", medium: "中等", low: "較低", unknown: "未知" },
       };
 
+
+      const SECTION_NAME_MAP = {
+        latest_system_run: "最新系統運行",
+        daily_review_summary: "每日檢視摘要",
+        signals: "信號摘要",
+        paper_pnl: "模擬盈虧",
+        risk: "風險摘要",
+      };
+
       function resolveApiBaseUrl() {
         return String(window.MINIAPP_API_BASE_URL || "").trim().replace(/\/$/, "");
       }
 
+      function mapSectionList(value) {
+        if (Array.isArray(value)) {
+          return value.map((item) => SECTION_NAME_MAP[String(item)] || String(item)).join("、");
+        }
+        return value;
+      }
+
       function mapValue(key, value) {
+        if (key === "available_sections" || key === "unavailable_sections") {
+          return mapSectionList(value);
+        }
         const keyMap = VALUE_MAP[key];
         if (keyMap && Object.prototype.hasOwnProperty.call(keyMap, String(value))) {
           return keyMap[String(value)];
@@ -136,7 +156,7 @@
           const signals = payload?.sections?.signals_summary;
 
           if (!latest || latest.status !== "ok") {
-            latestStatusNode.textContent = latest?.reason || "latest_system_run is temporarily unavailable";
+            latestStatusNode.textContent = latest?.reason || "最新系統運行暫時未有資料";
           } else {
             latestStatusNode.textContent = "最新系統運行已載入";
             renderFields("latest-system-run-fields", [
@@ -154,7 +174,7 @@
           }
 
           if (!daily || daily.status !== "ok") {
-            dailyStatusNode.textContent = daily?.reason || "daily review summary is not available yet";
+            dailyStatusNode.textContent = daily?.reason || "每日檢視摘要暫時未有資料";
           } else {
             dailyStatusNode.textContent = "每日檢視摘要已載入";
             renderFields("daily-review-summary-fields", [
@@ -165,15 +185,15 @@
               ["updated_at_hkt", daily.updated_at_hkt],
               ["paper_trade_only", daily.paper_trade_only],
               ["review_readiness", daily.review_readiness],
-              ["available_sections", (daily.available_sections || []).join(", ")],
-              ["unavailable_sections", (daily.unavailable_sections || []).join(", ")],
+              ["available_sections", daily.available_sections || []],
+              ["unavailable_sections", daily.unavailable_sections || []],
               ["operator_note", daily.operator_note],
               ["boundary", daily.boundary],
             ]);
           }
 
           if (!signals || signals.status !== "ok") {
-            signalsStatusNode.textContent = signals?.reason || "signals_summary is temporarily unavailable";
+            signalsStatusNode.textContent = signals?.reason || "信號摘要暫時未有資料";
           } else {
             signalsStatusNode.textContent = "信號摘要已載入（只供模擬檢視，並非買賣指示）";
             renderFields("signals-summary-fields", [
@@ -184,7 +204,7 @@
               ["paper_trade_only", signals.paper_trade_only],
               ["review_readiness", signals.review_readiness],
               ["covered_tickers", signals.covered_tickers],
-              ["total_signals", signals.total_signals],
+              ["shown_signals", signals.shown_signals],
               ["positive_signals", signals.positive_signals],
               ["neutral_signals", signals.neutral_signals],
               ["negative_signals", signals.negative_signals],
@@ -195,9 +215,9 @@
             ]);
           }
         } catch (_error) {
-          latestStatusNode.textContent = "latest_system_run is temporarily unavailable";
-          dailyStatusNode.textContent = "daily_review_summary is temporarily unavailable";
-          signalsStatusNode.textContent = "signals_summary is temporarily unavailable";
+          latestStatusNode.textContent = "最新系統運行暫時未有資料";
+          dailyStatusNode.textContent = "每日檢視摘要暫時未有資料";
+          signalsStatusNode.textContent = "信號摘要暫時未有資料";
         }
       }
 

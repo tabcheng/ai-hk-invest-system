@@ -241,11 +241,16 @@ class SupabaseLatestSystemRunMiniAppReadDataProvider(RailwayRuntimeEnvMiniAppRea
             return unavailable
         if self._client is None:
             return unavailable
+        run_id = row.get("run_id")
+        if run_id is None:
+            return unavailable
+
         try:
             result = (
                 self._client.table("signals")
                 .select("stock,signal,reason,date,run_id")
                 .eq("date", str(row.get("business_date") or ""))
+                .eq("run_id", run_id)
                 .order("id", desc=False)
                 .limit(20)
                 .execute()
@@ -288,7 +293,7 @@ class SupabaseLatestSystemRunMiniAppReadDataProvider(RailwayRuntimeEnvMiniAppRea
             "updated_at_hkt": _format_hkt_display(row.get("updated_at")),
             "paper_trade_only": True,
             "review_readiness": "ready",
-            "total_signals": len(signal_rows),
+            "shown_signals": len(signal_rows),
             "covered_tickers": len(ticker_set),
             "positive_signals": counts["positive"],
             "neutral_signals": counts["neutral"],

@@ -120,6 +120,8 @@ def test_provider_injection_can_override_runtime_status_and_latest_system_run():
             }
         def get_daily_review_summary(self):
             return {"status": "ok", "source": "stub_daily_review", "paper_trade_only": True}
+        def get_signals_summary(self):
+            return {"status": "unavailable", "source": "stub_signals"}
 
     payload = build_miniapp_review_shell_response(
         operator={"telegram_user_id": 42},
@@ -130,6 +132,7 @@ def test_provider_injection_can_override_runtime_status_and_latest_system_run():
     assert payload["sections"]["latest_system_run"]["source"] == "stub_system_run"
     assert payload["sections"]["latest_system_run"]["run_id"] == 86
     assert payload["sections"]["daily_review_summary"]["source"] == "stub_daily_review"
+    assert payload["sections"]["signals_summary"]["source"] == "stub_signals"
 
 
 def test_local_artifact_provider_reads_latest_system_run_summary(tmp_path):

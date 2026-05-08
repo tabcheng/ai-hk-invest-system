@@ -406,3 +406,5 @@
 - Step 92D-UX impact: docs-only (GitHub documentation updates); Railway impact none; Supabase impact none.
 - Step 92D-UX non-goals preserved: no runtime code changes, no Telegram runtime changes, no Supabase schema changes, no write path, no decision capture, no broker/live execution.
 - Next implementation step remains: Step 92E Signals Summary read-only card.
+
+- Step 92E: Mini App 新增「信號摘要」read-only card，信號僅作 AI 模擬／paper-trading 檢視證據，不構成買賣指示；前端開始統一以繁體中文顯示標籤（後端 snake_case 合約保留）；無 schema/migration、無寫入路徑、無決策提交、無下單、無 broker/live execution。

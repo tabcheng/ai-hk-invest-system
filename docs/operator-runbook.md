@@ -387,3 +387,5 @@ Use this checklist when reviewing Mini App read-only surfaces:
 3. All user-facing timestamps are HKT-only display.
 4. No raw technical keys, secrets, or raw Telegram `initData` appear in UI.
 5. No broker/live execution wording appears, except explicit no-broker boundary reminders.
+
+- Step 92E: Mini App 新增「信號摘要」read-only card，信號僅作 AI 模擬／paper-trading 檢視證據，不構成買賣指示；前端開始統一以繁體中文顯示標籤（後端 snake_case 合約保留）；無 schema/migration、無寫入路徑、無決策提交、無下單、無 broker/live execution。

@@ -148,3 +148,5 @@ Step 91A recorded result (PR #88):
 - Step 92C-1 deploy-risk reminder: verify Railway `miniapp-static-preview` is configured to build using `miniapp/Dockerfile` (or equivalent Dockerfile path). Adding Dockerfile to repo alone does not enable runtime `/config.js` injection.
 - Step 92C-1 deploy-risk reminder: if deployment still uses old static/Caddy path without Dockerfile startup flow, `/config.js` injection will not work.
 - Step 92D post-deploy smoke required: verify Mini App still shows Latest System Run card and now shows Daily Review Summary card with HKT-only timestamp labels; confirm `paper_trade_only=true`; confirm no raw `data_timestamp` / `updated_at` labels and no secrets/raw initData/allowlist/chat/user IDs exposed; confirm no write path/decision capture/order creation/broker/live execution.
+
+- Step 92E: Mini App 新增「信號摘要」read-only card，信號僅作 AI 模擬／paper-trading 檢視證據，不構成買賣指示；前端開始統一以繁體中文顯示標籤（後端 snake_case 合約保留）；無 schema/migration、無寫入路徑、無決策提交、無下單、無 broker/live execution。

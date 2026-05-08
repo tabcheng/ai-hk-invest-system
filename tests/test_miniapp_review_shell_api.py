@@ -394,3 +394,44 @@ def test_miniapp_review_shell_latest_system_run_bool_counter_is_bounded(monkeypa
     assert daily["successful_tickers"] == 0
     assert daily["failed_tickers"] == 0
     assert daily["review_readiness"] == "partial"
+
+
+def test_miniapp_review_shell_signals_summary_ok(monkeypatch):
+    monkeypatch.setenv("TELEGRAM_BOT_TOKEN", FAKE_BOT_TOKEN)
+    monkeypatch.setenv("MINIAPP_ALLOWED_TELEGRAM_USER_IDS", "42")
+    monkeypatch.setattr("src.miniapp_auth.time.time", lambda: NOW_TS)
+
+    class _Result:
+        def __init__(self, data): self.data = data
+    class _Query:
+        def __init__(self, data): self._data = data
+        def select(self, *_a, **_k): return self
+        def eq(self, *_a, **_k): return self
+        def order(self, *_a, **_k): return self
+        def limit(self, *_a, **_k): return self
+        def execute(self): return _Result(self._data)
+    class _Client:
+        def table(self, name):
+            if name == "signals":
+                return _Query([
+                    {"stock": "0005.HK", "signal": "BUY", "reason": "trend up"},
+                    {"stock": "0700.HK", "signal": "HOLD", "reason": "wait"},
+                    {"stock": "1299.HK", "signal": "SELL", "reason": "trend down"},
+                ])
+            return _Query([])
+
+    monkeypatch.setattr("src.telegram_webhook_server._load_supabase_client", lambda: _Client())
+    monkeypatch.setattr("src.latest_system_runs_repository.get_latest_system_run", lambda client, source="paper_daily_runner": {"business_date":"2026-05-06","run_id":"42","status":"success","data_timestamp":"2026-05-06T01:02:03+00:00","updated_at":"2026-05-06T01:03:03+00:00","summary_json":{"paper_trade_only":True}})
+    status, _headers, payload = _call("/miniapp/api/review-shell", "POST", _authorized_request(monkeypatch))
+    assert status.startswith("200")
+    section = payload["sections"]["signals_summary"]
+    assert section["status"] == "ok"
+    assert section["paper_trade_only"] is True
+    assert section["data_timestamp_hkt"].endswith("HKT")
+    assert section["updated_at_hkt"].endswith("HKT")
+    assert section["positive_signals"] == 1
+    assert section["neutral_signals"] == 1
+    assert section["negative_signals"] == 1
+    assert "data_timestamp" not in section
+    assert "updated_at" not in section
+

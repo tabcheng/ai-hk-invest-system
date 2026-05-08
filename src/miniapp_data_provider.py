@@ -31,6 +31,9 @@ class MiniAppReadDataProvider(Protocol):
     def get_daily_review_summary(self) -> dict[str, Any]:
         """Return bounded daily-review-summary contract for Mini App daily_review_summary section."""
 
+    def get_signals_summary(self) -> dict[str, Any]:
+        """Return bounded signals-summary contract for Mini App signals_summary section."""
+
 
 class RailwayRuntimeEnvMiniAppReadDataProvider:
     """Bounded internal provider backed by Railway runtime environment metadata only."""
@@ -98,6 +101,15 @@ class RailwayRuntimeEnvMiniAppReadDataProvider:
             "source": "daily_review_read_model",
             "reason": "daily review summary is not available yet",
             "boundary": "read-only review surface; no decision capture, no order creation, no broker/live execution",
+        }
+
+    def get_signals_summary(self) -> dict[str, Any]:
+        return {
+            "status": "unavailable",
+            "source": "signals_read_model",
+            "reason": "signals summary is not available yet",
+            "operator_note": "信號摘要暫時未有資料；可先檢視系統運行狀態及每日檢視摘要。",
+            "boundary": "read-only signals summary; no decision capture, no order creation, no broker/live execution",
         }
 
 
@@ -209,6 +221,81 @@ class SupabaseLatestSystemRunMiniAppReadDataProvider(RailwayRuntimeEnvMiniAppRea
             "available_sections": available_sections,
             "unavailable_sections": unavailable_sections,
             "operator_note": "Read-only partial daily review summary from latest system run only; human final decision remains outside system.",
+            "boundary": boundary,
+        }
+
+    def get_signals_summary(self) -> dict[str, Any]:
+        boundary = "read-only signals summary; no decision capture, no order creation, no broker/live execution"
+        unavailable = {
+            "status": "unavailable",
+            "source": "signals_read_model",
+            "reason": "signals summary is not available yet",
+            "operator_note": "信號摘要暫時未有資料；可先檢視系統運行狀態及每日檢視摘要。",
+            "boundary": boundary,
+        }
+        row = self._get_latest_row()
+        if not isinstance(row, dict) or not row:
+            return unavailable
+        summary = row.get("summary_json") if isinstance(row.get("summary_json"), dict) else {}
+        if summary.get("paper_trade_only") is not True:
+            return unavailable
+        if self._client is None:
+            return unavailable
+        try:
+            result = (
+                self._client.table("signals")
+                .select("stock,signal,reason,date,run_id")
+                .eq("date", str(row.get("business_date") or ""))
+                .order("id", desc=False)
+                .limit(20)
+                .execute()
+            )
+            signal_rows = result.data if isinstance(result.data, list) else []
+        except Exception:
+            return unavailable
+        if not signal_rows:
+            return unavailable
+
+        def _norm_signal(value: Any) -> str:
+            normalized = str(value or "").strip().upper()
+            return {"BUY": "positive", "HOLD": "neutral", "SELL": "negative"}.get(normalized, "unknown")
+
+        counts = {"positive": 0, "neutral": 0, "negative": 0, "unknown": 0}
+        ticker_set: set[str] = set()
+        top_items: list[dict[str, Any]] = []
+        for item in signal_rows:
+            ticker = str(item.get("stock") or "").strip()
+            label = _norm_signal(item.get("signal"))
+            counts[label] += 1
+            if ticker:
+                ticker_set.add(ticker)
+            if len(top_items) < 5:
+                top_items.append({
+                    "ticker": ticker,
+                    "display_name": ticker,
+                    "signal_label": label,
+                    "confidence_label": "unknown",
+                    "reason_short": str(item.get("reason") or "").strip()[:120] or None,
+                    "data_timestamp_hkt": _format_hkt_display(row.get("data_timestamp")),
+                })
+
+        return {
+            "status": "ok",
+            "source": "signals_read_model",
+            "business_date": str(row.get("business_date") or ""),
+            "run_id": str(row.get("run_id") or ""),
+            "data_timestamp_hkt": _format_hkt_display(row.get("data_timestamp")),
+            "updated_at_hkt": _format_hkt_display(row.get("updated_at")),
+            "paper_trade_only": True,
+            "review_readiness": "ready",
+            "total_signals": len(signal_rows),
+            "covered_tickers": len(ticker_set),
+            "positive_signals": counts["positive"],
+            "neutral_signals": counts["neutral"],
+            "negative_signals": counts["negative"],
+            "unknown_signals": counts["unknown"],
+            "top_items": top_items,
+            "operator_note": "AI 模擬信號只供檢視，不是買賣指示；真實交易決定仍由人類在系統外作出。",
             "boundary": boundary,
         }
 

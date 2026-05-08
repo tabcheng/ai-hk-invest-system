@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="zh-Hant">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -12,14 +12,19 @@
     <p>Phase 1 · Read-only · Paper trading only · Decision support only · no broker connection · no real-money execution</p>
 
     <section>
-      <h2>Latest System Run</h2>
+      <h2>最新系統運行</h2>
       <p id="latest-system-run-status">Loading...</p>
       <dl id="latest-system-run-fields"></dl>
     </section>
     <section>
-      <h2>Daily Review Summary</h2>
+      <h2>每日檢視摘要</h2>
       <p id="daily-review-summary-status">Loading...</p>
       <dl id="daily-review-summary-fields"></dl>
+    </section>
+    <section>
+      <h2>信號摘要</h2>
+      <p id="signals-summary-status">Loading...</p>
+      <dl id="signals-summary-fields"></dl>
     </section>
 
     <section>
@@ -27,77 +32,96 @@
       <ul>
         <li>validate Telegram initData server-side</li>
         <li>Do not trust initDataUnsafe</li>
-        <li>No SUPABASE_SERVICE_ROLE_KEY in browser/client code</li>
       </ul>
     </section>
 
     <script>
+      const LABELS = {
+        business_date: "交易日",
+        runner_status: "系統狀態",
+        run_id: "運行編號",
+        data_timestamp_hkt: "資料時間（香港時間）",
+        updated_at_hkt: "更新時間（香港時間）",
+        paper_trade_only: "交易模式",
+        review_readiness: "檢視狀態",
+        available_sections: "已有資料",
+        unavailable_sections: "未有資料",
+        boundary: "邊界說明",
+        processed_tickers: "處理股票數",
+        successful_tickers: "成功股票數",
+        failed_tickers: "失敗股票數",
+        total_signals: "信號總數",
+        covered_tickers: "覆蓋股票數",
+        positive_signals: "正面模擬信號",
+        neutral_signals: "觀望 / 中性信號",
+        negative_signals: "負面模擬信號",
+        unknown_signals: "未知信號",
+        top_items: "重點股票",
+        operator_note: "操作提示",
+      };
+
+      const VALUE_MAP = {
+        status: { success: "成功", failed: "失敗", partial: "部分完成", unavailable: "暫時未有資料", unknown: "未知", ok: "成功" },
+        paper_trade_only: { true: "只限模擬（Paper Trading）", false: "不符合模擬交易要求" },
+        review_readiness: { ready: "已準備好", partial: "部分完成", unavailable: "暫時未有資料", unknown: "未知" },
+        signal_label: { positive: "正面模擬信號", neutral: "觀望 / 中性信號", negative: "負面模擬信號", unknown: "未知信號" },
+        confidence_label: { high: "較高", medium: "中等", low: "較低", unknown: "未知" },
+      };
+
       function resolveApiBaseUrl() {
-        const configured = String(window.MINIAPP_API_BASE_URL || "").trim();
-        return configured.replace(/\/$/, "");
+        return String(window.MINIAPP_API_BASE_URL || "").trim().replace(/\/$/, "");
       }
 
-      function renderFieldList(section) {
-        const fields = document.getElementById("latest-system-run-fields");
+      function mapValue(key, value) {
+        const keyMap = VALUE_MAP[key];
+        if (keyMap && Object.prototype.hasOwnProperty.call(keyMap, String(value))) {
+          return keyMap[String(value)];
+        }
+        return value;
+      }
+
+      function renderFields(elementId, orderedFields) {
+        const fields = document.getElementById(elementId);
         fields.textContent = "";
-        const orderedFields = [
-          ["business_date", section.business_date],
-          ["runner_status", section.runner_status],
-          ["run_id", section.run_id],
-          ["data_timestamp_hkt", section.data_timestamp_hkt],
-          ["updated_at_hkt", section.updated_at_hkt],
-          ["paper_trade_only", section.paper_trade_only],
-          ["processed_tickers", section.processed_tickers],
-          ["successful_tickers", section.successful_tickers],
-          ["failed_tickers", section.failed_tickers],
-          ["boundary", section.boundary],
-        ];
 
         orderedFields.forEach(([key, value]) => {
           const dt = document.createElement("dt");
-          dt.textContent = key;
+          dt.textContent = LABELS[key] || key;
+
           const dd = document.createElement("dd");
-          dd.textContent = String(value ?? "");
+          dd.textContent = String(mapValue(key, value) ?? "");
+
           fields.appendChild(dt);
           fields.appendChild(dd);
         });
       }
 
-      function renderDailyReviewSummaryFieldList(section) {
-        const fields = document.getElementById("daily-review-summary-fields");
-        fields.textContent = "";
-        const orderedFields = [
-          ["business_date", section.business_date],
-          ["runner_status", section.runner_status],
-          ["run_id", section.run_id],
-          ["data_timestamp_hkt", section.data_timestamp_hkt],
-          ["updated_at_hkt", section.updated_at_hkt],
-          ["paper_trade_only", section.paper_trade_only],
-          ["review_readiness", section.review_readiness],
-          ["processed_tickers", section.processed_tickers],
-          ["successful_tickers", section.successful_tickers],
-          ["failed_tickers", section.failed_tickers],
-          ["available_sections", (section.available_sections || []).join(", ")],
-          ["unavailable_sections", (section.unavailable_sections || []).join(", ")],
-          ["operator_note", section.operator_note],
-          ["boundary", section.boundary],
-        ];
-        orderedFields.forEach(([key, value]) => {
-          const dt = document.createElement("dt");
-          dt.textContent = key;
-          const dd = document.createElement("dd");
-          dd.textContent = String(value ?? "");
-          fields.appendChild(dt);
-          fields.appendChild(dd);
-        });
+      function renderSignalsTopItems(items) {
+        if (!Array.isArray(items)) {
+          return "";
+        }
+
+        return items
+          .map((item) => {
+            const ticker = String(item.ticker || "");
+            const signalLabel = mapValue("signal_label", item.signal_label);
+            const confidenceLabel = mapValue("confidence_label", item.confidence_label);
+            const reason = String(item.reason_short || "").trim();
+            return reason
+              ? `${ticker} · ${signalLabel} · ${confidenceLabel} · ${reason}`
+              : `${ticker} · ${signalLabel} · ${confidenceLabel}`;
+          })
+          .join("; ");
       }
 
       async function loadReviewShell() {
         const initData = (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initData) || "";
-        const statusNode = document.getElementById("latest-system-run-status");
-        const dailyStatusNode = document.getElementById("daily-review-summary-status");
         const apiBaseUrl = resolveApiBaseUrl();
         const reviewShellUrl = `${apiBaseUrl}/miniapp/api/review-shell`;
+
+        const latestStatusNode = document.getElementById("latest-system-run-status");
+        const dailyStatusNode = document.getElementById("daily-review-summary-status");
+        const signalsStatusNode = document.getElementById("signals-summary-status");
 
         try {
           const response = await fetch(reviewShellUrl, {
@@ -106,27 +130,74 @@
             body: JSON.stringify({ init_data: initData }),
           });
           const payload = await response.json();
-          const section = payload && payload.sections && payload.sections.latest_system_run;
-          if (!section) {
-            throw new Error("missing_latest_system_run_section");
-          }
-          const dailySummary = payload && payload.sections && payload.sections.daily_review_summary;
 
-          if (section.status !== "ok") {
-            statusNode.textContent = section.reason || "latest bounded row is not available yet";
+          const latest = payload?.sections?.latest_system_run;
+          const daily = payload?.sections?.daily_review_summary;
+          const signals = payload?.sections?.signals_summary;
+
+          if (!latest || latest.status !== "ok") {
+            latestStatusNode.textContent = latest?.reason || "latest_system_run is temporarily unavailable";
           } else {
-            statusNode.textContent = "Latest System Run loaded.";
-            renderFieldList(section);
+            latestStatusNode.textContent = "最新系統運行已載入";
+            renderFields("latest-system-run-fields", [
+              ["business_date", latest.business_date],
+              ["runner_status", latest.runner_status],
+              ["run_id", latest.run_id],
+              ["data_timestamp_hkt", latest.data_timestamp_hkt],
+              ["updated_at_hkt", latest.updated_at_hkt],
+              ["paper_trade_only", latest.paper_trade_only],
+              ["processed_tickers", latest.processed_tickers],
+              ["successful_tickers", latest.successful_tickers],
+              ["failed_tickers", latest.failed_tickers],
+              ["boundary", latest.boundary],
+            ]);
           }
-          if (!dailySummary || dailySummary.status !== "ok") {
-            dailyStatusNode.textContent = (dailySummary && dailySummary.reason) || "daily review summary is not available yet";
+
+          if (!daily || daily.status !== "ok") {
+            dailyStatusNode.textContent = daily?.reason || "daily review summary is not available yet";
           } else {
-            dailyStatusNode.textContent = "Daily Review Summary loaded.";
-            renderDailyReviewSummaryFieldList(dailySummary);
+            dailyStatusNode.textContent = "每日檢視摘要已載入";
+            renderFields("daily-review-summary-fields", [
+              ["business_date", daily.business_date],
+              ["runner_status", daily.runner_status],
+              ["run_id", daily.run_id],
+              ["data_timestamp_hkt", daily.data_timestamp_hkt],
+              ["updated_at_hkt", daily.updated_at_hkt],
+              ["paper_trade_only", daily.paper_trade_only],
+              ["review_readiness", daily.review_readiness],
+              ["available_sections", (daily.available_sections || []).join(", ")],
+              ["unavailable_sections", (daily.unavailable_sections || []).join(", ")],
+              ["operator_note", daily.operator_note],
+              ["boundary", daily.boundary],
+            ]);
+          }
+
+          if (!signals || signals.status !== "ok") {
+            signalsStatusNode.textContent = signals?.reason || "signals_summary is temporarily unavailable";
+          } else {
+            signalsStatusNode.textContent = "信號摘要已載入（只供模擬檢視，並非買賣指示）";
+            renderFields("signals-summary-fields", [
+              ["business_date", signals.business_date],
+              ["run_id", signals.run_id],
+              ["data_timestamp_hkt", signals.data_timestamp_hkt],
+              ["updated_at_hkt", signals.updated_at_hkt],
+              ["paper_trade_only", signals.paper_trade_only],
+              ["review_readiness", signals.review_readiness],
+              ["covered_tickers", signals.covered_tickers],
+              ["total_signals", signals.total_signals],
+              ["positive_signals", signals.positive_signals],
+              ["neutral_signals", signals.neutral_signals],
+              ["negative_signals", signals.negative_signals],
+              ["unknown_signals", signals.unknown_signals],
+              ["top_items", renderSignalsTopItems(signals.top_items)],
+              ["operator_note", signals.operator_note],
+              ["boundary", signals.boundary],
+            ]);
           }
         } catch (_error) {
-          statusNode.textContent = "latest_system_run is temporarily unavailable";
+          latestStatusNode.textContent = "latest_system_run is temporarily unavailable";
           dailyStatusNode.textContent = "daily_review_summary is temporarily unavailable";
+          signalsStatusNode.textContent = "signals_summary is temporarily unavailable";
         }
       }
 

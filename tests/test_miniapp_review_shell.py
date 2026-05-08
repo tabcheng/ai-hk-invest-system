@@ -7,10 +7,18 @@ def test_step92c_review_shell_static_contract() -> None:
     config_js = Path("miniapp/config.js").read_text(encoding="utf-8")
 
     required_text = [
+        "顯示負面模擬信號",
+        "顯示觀望 / 中性信號",
+        "顯示正面模擬信號",
+        "檢視狀態",
+        "交易模式",
+        "更新時間（香港時間）",
+        "資料時間（香港時間）",
+        "信號摘要",
         "AI HK Invest — Mini App Preview Shell",
         "https://telegram.org/js/telegram-web-app.js",
-        "Latest System Run",
-        "Daily Review Summary",
+        "最新系統運行",
+        "每日檢視摘要",
         "Read-only",
         "paper_trade_only",
         "data_timestamp_hkt",
@@ -19,8 +27,8 @@ def test_step92c_review_shell_static_contract() -> None:
         "available_sections",
         "unavailable_sections",
         "operator_note",
-        "validate Telegram initData server-side",
-        "Do not trust initDataUnsafe",
+        "Telegram initData 只在後端驗證",
+        "前端不使用 initDataUnsafe",
         "/miniapp/api/review-shell",
         "init_data",
         "no broker connection",
@@ -56,9 +64,14 @@ def test_step92c_review_shell_static_contract() -> None:
     assert "window.MINIAPP_API_BASE_URL = window.MINIAPP_API_BASE_URL || \"\";" in config_js
     assert re.search(r"Telegram\.WebApp\.initData", html)
     assert "`${apiBaseUrl}/miniapp/api/review-shell`" in html
-    assert "return;" not in html.split("if (section.status !== \"ok\")", 1)[1].split("if (dailySummary.status !== \"ok\")", 1)[0]
     assert "missing_daily_review_summary_section" not in html
-    assert "daily review summary is not available yet" in html
+    assert "每日檢視摘要暫時未有資料" in html
+
+    raw_key_as_label_patterns = [
+        r"dt\.textContent\s*=\s*key",
+    ]
+    for pattern in raw_key_as_label_patterns:
+        assert re.search(pattern, html) is None
 
 
 def test_step92c_runtime_config_container_contract() -> None:

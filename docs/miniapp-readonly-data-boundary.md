@@ -265,3 +265,5 @@ No broker integration or autonomous real-money execution is authorized by this p
 - Do not expose raw technical label names like `data_timestamp` or `updated_at` directly to operator UI.
 - Timestamp display remains HKT-only in user-facing UI wording.
 - Paper-trading/decision-support-only boundary wording must remain explicit on card/page surfaces.
+
+- Step 92E: Mini App 新增「信號摘要」read-only card，信號僅作 AI 模擬／paper-trading 檢視證據，不構成買賣指示；前端開始統一以繁體中文顯示標籤（後端 snake_case 合約保留）；無 schema/migration、無寫入路徑、無決策提交、無下單、無 broker/live execution。

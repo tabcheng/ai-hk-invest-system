@@ -394,3 +394,87 @@ def test_miniapp_review_shell_latest_system_run_bool_counter_is_bounded(monkeypa
     assert daily["successful_tickers"] == 0
     assert daily["failed_tickers"] == 0
     assert daily["review_readiness"] == "partial"
+
+
+def test_miniapp_review_shell_signals_summary_ok(monkeypatch):
+    monkeypatch.setenv("TELEGRAM_BOT_TOKEN", FAKE_BOT_TOKEN)
+    monkeypatch.setenv("MINIAPP_ALLOWED_TELEGRAM_USER_IDS", "42")
+    monkeypatch.setattr("src.miniapp_auth.time.time", lambda: NOW_TS)
+
+    class _Result:
+        def __init__(self, data): self.data = data
+    class _Query:
+        def __init__(self, data): self._data = data
+        def select(self, *_a, **_k): return self
+        def eq(self, *_a, **_k): return self
+        def order(self, *_a, **_k): return self
+        def limit(self, *_a, **_k): return self
+        def execute(self): return _Result(self._data)
+    class _Client:
+        def table(self, name):
+            if name == "signals":
+                return _Query([
+                    {"stock": "0005.HK", "signal": "BUY", "reason": "trend up"},
+                    {"stock": "0700.HK", "signal": "HOLD", "reason": "wait"},
+                    {"stock": "1299.HK", "signal": "SELL", "reason": "trend down"},
+                ])
+            return _Query([])
+
+    monkeypatch.setattr("src.telegram_webhook_server._load_supabase_client", lambda: _Client())
+    monkeypatch.setattr("src.latest_system_runs_repository.get_latest_system_run", lambda client, source="paper_daily_runner": {"business_date":"2026-05-06","run_id":"42","status":"success","data_timestamp":"2026-05-06T01:02:03+00:00","updated_at":"2026-05-06T01:03:03+00:00","summary_json":{"paper_trade_only":True}})
+    status, _headers, payload = _call("/miniapp/api/review-shell", "POST", _authorized_request(monkeypatch))
+    assert status.startswith("200")
+    section = payload["sections"]["signals_summary"]
+    assert section["status"] == "ok"
+    assert section["paper_trade_only"] is True
+    assert section["data_timestamp_hkt"].endswith("HKT")
+    assert section["updated_at_hkt"].endswith("HKT")
+    assert section["shown_positive_signals"] == 1
+    assert section["shown_neutral_signals"] == 1
+    assert section["shown_negative_signals"] == 1
+    assert section["shown_unknown_signals"] == 0
+    assert section["shown_signals"] == 3
+    assert section["top_items_limit"] == 5
+    assert "data_timestamp" not in section
+    assert "updated_at" not in section
+
+
+
+def test_miniapp_review_shell_signals_summary_requires_matching_run_id(monkeypatch):
+    monkeypatch.setenv("TELEGRAM_BOT_TOKEN", FAKE_BOT_TOKEN)
+    monkeypatch.setenv("MINIAPP_ALLOWED_TELEGRAM_USER_IDS", "42")
+    monkeypatch.setattr("src.miniapp_auth.time.time", lambda: NOW_TS)
+
+    class _Result:
+        def __init__(self, data):
+            self.data = data
+
+    class _Query:
+        def __init__(self):
+            self.filters = []
+        def select(self, *_a, **_k): return self
+        def eq(self, key, value):
+            self.filters.append((key, value))
+            return self
+        def order(self, *_a, **_k): return self
+        def limit(self, *_a, **_k): return self
+        def execute(self):
+            if ("date", "2026-05-06") in self.filters and ("run_id", 42) in self.filters:
+                return _Result([])
+            return _Result([{"stock": "0005.HK", "signal": "BUY", "reason": "x"}])
+
+    query = _Query()
+    class _Client:
+        def table(self, name):
+            assert name == "signals"
+            return query
+
+    monkeypatch.setattr("src.telegram_webhook_server._load_supabase_client", lambda: _Client())
+    monkeypatch.setattr("src.latest_system_runs_repository.get_latest_system_run", lambda client, source="paper_daily_runner": {"business_date":"2026-05-06","run_id":42,"status":"success","data_timestamp":"2026-05-06T01:02:03+00:00","updated_at":"2026-05-06T01:03:03+00:00","summary_json":{"paper_trade_only":True}})
+
+    status, _headers, payload = _call("/miniapp/api/review-shell", "POST", _authorized_request(monkeypatch))
+    assert status.startswith("200")
+    section = payload["sections"]["signals_summary"]
+    assert ("date", "2026-05-06") in query.filters
+    assert ("run_id", 42) in query.filters
+    assert section["status"] == "unavailable"

@@ -42,6 +42,10 @@
       h2 { margin: 0 0 10px; font-size: 1.08rem; }
       h3 { margin: 8px 0 6px; font-size: .9rem; color: var(--muted-text); }
       .row { margin: 2px 0; word-break: break-word; }
+      .row-inline { margin: 4px 0; display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+      .time-label { white-space: nowrap; }
+      .time-value { word-break: normal; white-space: nowrap; }
+      .time-row { display:flex; flex-wrap:wrap; gap:4px; align-items:baseline; }
     </style>
   </head>
   <body>
@@ -85,9 +89,12 @@
         const ts=latest?.data_timestamp_hkt || signals?.data_timestamp_hkt || "-";
 
         const line1=document.createElement("p"); line1.className="row"; line1.textContent=`交易日：${date}`;
-        const line2=document.createElement("p"); line2.className="row"; line2.textContent="System Run Status：";
-        const line3=document.createElement("p"); line3.className="row"; line3.textContent="Daily Review Coverage：";
-        const line4=document.createElement("p"); line4.className="row"; line4.textContent=`資料時間（HKT）：${ts}`;
+        const line2=document.createElement("p"); line2.className="row-inline"; line2.textContent="System Run Status：";
+        const line3=document.createElement("p"); line3.className="row-inline"; line3.textContent="Daily Review Coverage：";
+        const line4=document.createElement("p"); line4.className="row time-row";
+        const timeLabel=document.createElement("span"); timeLabel.className="time-label"; timeLabel.textContent="資料時間（HKT）：";
+        const timeValue=document.createElement("span"); timeValue.className="time-value"; timeValue.textContent=ts;
+        line4.append(timeLabel,timeValue);
         const availabilityGrid = document.createElement("div"); availabilityGrid.className = "availability-grid";
         [
           { label: "最新系統運行", available: hasLatest },
@@ -104,7 +111,13 @@
           `運行編號：${latest.run_id || "-"}`,
           `資料時間（香港時間）：${latest.data_timestamp_hkt || "-"}`
         ].forEach((txt)=>{const p=document.createElement("p"); p.className="row"; p.textContent=txt; card.appendChild(p);}); card.appendChild(renderMetricGrid([{label:"處理股票數",value:latest.processed_tickers},{label:"成功股票數",value:latest.successful_tickers},{label:"失敗股票數",value:latest.failed_tickers}])); }
-      function renderDaily(daily){ if (!daily || daily.status !== "ok") return fillUnavailable("daily-card","每日檢視摘要"); const card=document.getElementById("daily-card"); card.textContent=""; const h=document.createElement("h2"); h.textContent="每日檢視摘要"; card.append(h, renderStatusChip(daily.review_readiness || "unknown")); const has=document.createElement("h3"); has.textContent="已有資料"; const hasList=document.createElement("div"); hasList.className="chip-list"; asSectionNames(daily.available_sections).forEach((x)=>{const c=document.createElement("span");c.className="mini-chip";c.textContent=x;hasList.appendChild(c);}); const miss=document.createElement("h3"); miss.textContent="未有資料"; const missList=document.createElement("div"); missList.className="chip-list"; asSectionNames(daily.unavailable_sections).forEach((x)=>{const c=document.createElement("span");c.className="mini-chip";c.textContent=x;missList.appendChild(c);}); const helper=document.createElement("p"); helper.className="helper-text"; helper.textContent="「未有資料」代表 data not available yet，並非系統錯誤。"; card.append(has,hasList,miss,missList,helper); }
+      function renderDaily(daily, signals){ if (!daily || daily.status !== "ok") return fillUnavailable("daily-card","每日檢視摘要"); const card=document.getElementById("daily-card"); card.textContent=""; const h=document.createElement("h2"); h.textContent="每日檢視摘要"; card.append(h, renderStatusChip(daily.review_readiness || "unknown"));
+      const available = new Set(asSectionNames(daily.available_sections));
+      const missing = new Set(asSectionNames(daily.unavailable_sections));
+      if (signals?.status === "ok") { available.add("信號摘要"); missing.delete("信號摘要"); }
+      const has=document.createElement("h3"); has.textContent="已有資料"; const hasList=document.createElement("div"); hasList.className="chip-list"; [...available].forEach((x)=>{const c=document.createElement("span");c.className="mini-chip";c.textContent=x;hasList.appendChild(c);});
+      const miss=document.createElement("h3"); miss.textContent="未有資料"; const missList=document.createElement("div"); missList.className="chip-list"; [...missing].forEach((x)=>{const c=document.createElement("span");c.className="mini-chip";c.textContent=x;missList.appendChild(c);});
+      const helper=document.createElement("p"); helper.className="helper-text"; helper.textContent="「未有資料」代表 data not available yet，並非系統錯誤。"; card.append(has,hasList,miss,missList,helper); }
       function renderSignals(signals){ if (!signals || signals.status !== "ok") return fillUnavailable("signals-card","信號摘要"); const card=document.getElementById("signals-card"); card.textContent=""; const h=document.createElement("h2"); h.textContent="信號摘要"; card.append(h, renderStatusChip(signals.review_readiness || signals.status)); const warn=document.createElement("p"); warn.className="helper-text"; warn.textContent="目前只顯示技術信號方向；信心、風險、模擬盈虧未完整，因此不應視為完整決策。"; card.appendChild(warn); card.appendChild(renderMetricGrid([{label:"覆蓋股票數",value:signals.covered_tickers},{label:"顯示信號數",value:signals.shown_signals},{label:"顯示正面模擬信號",value:signals.shown_positive_signals},{label:"顯示觀望 / 中性信號",value:signals.shown_neutral_signals},{label:"顯示負面模擬信號",value:signals.shown_negative_signals},{label:"顯示未知信號",value:signals.shown_unknown_signals}])); card.appendChild(renderSignalItems(signals.top_items)); }
       async function loadReviewShell() {
         const initData = (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initData) || "";
@@ -118,7 +131,7 @@
           const signals = payload?.sections?.signals_summary;
           renderOverview(latest, daily, signals);
           renderLatest(latest);
-          renderDaily(daily);
+          renderDaily(daily, signals);
           renderSignals(signals);
         } catch (_error) {
           renderOverview(null, null, null);

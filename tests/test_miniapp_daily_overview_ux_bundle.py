@@ -20,6 +20,19 @@ def test_data_availability_card_wording_present() -> None:
     assert "data not available yet" in INDEX_HTML
 
 
+def test_daily_summary_availability_consistency_guard_present() -> None:
+    assert "function renderDaily(daily, signals)" in INDEX_HTML
+    assert "if (signals?.status === \"ok\") { available.add(\"信號摘要\"); missing.delete(\"信號摘要\"); }" in INDEX_HTML
+    assert "renderDaily(daily, signals);" in INDEX_HTML
+
+
+def test_layout_polish_rows_and_timestamp_wrap_guard_present() -> None:
+    assert "row-inline" in INDEX_HTML
+    assert "time-label" in INDEX_HTML
+    assert "time-value" in INDEX_HTML
+    assert "line4.append(timeLabel,timeValue);" in INDEX_HTML
+
+
 def test_signal_warning_and_unknown_confidence_present() -> None:
     assert "未提供 / Unknown" in INDEX_HTML
     assert "目前只顯示技術信號方向；信心、風險、模擬盈虧未完整，因此不應視為完整決策。" in INDEX_HTML
@@ -31,3 +44,9 @@ def test_safety_boundary_copy_present() -> None:
     assert "前端不使用 initDataUnsafe 作授權" in INDEX_HTML
     assert "前端不保存 Supabase secret / service role key" in INDEX_HTML
     assert "所有信號只供模擬檢視，並非買賣指示" in INDEX_HTML
+
+
+def test_no_submit_order_or_broker_execution_wording_present() -> None:
+    assert "submit" not in INDEX_HTML.lower()
+    assert "live execution" in INDEX_HTML
+    assert "不連接券商" in INDEX_HTML

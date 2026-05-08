@@ -7,9 +7,9 @@ def test_step92c_review_shell_static_contract() -> None:
     config_js = Path("miniapp/config.js").read_text(encoding="utf-8")
 
     required_text = [
-        "負面模擬信號",
-        "觀望 / 中性信號",
-        "正面模擬信號",
+        "顯示負面模擬信號",
+        "顯示觀望 / 中性信號",
+        "顯示正面模擬信號",
         "檢視狀態",
         "交易模式",
         "更新時間（香港時間）",

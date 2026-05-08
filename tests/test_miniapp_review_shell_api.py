@@ -429,10 +429,12 @@ def test_miniapp_review_shell_signals_summary_ok(monkeypatch):
     assert section["paper_trade_only"] is True
     assert section["data_timestamp_hkt"].endswith("HKT")
     assert section["updated_at_hkt"].endswith("HKT")
-    assert section["positive_signals"] == 1
-    assert section["neutral_signals"] == 1
-    assert section["negative_signals"] == 1
+    assert section["shown_positive_signals"] == 1
+    assert section["shown_neutral_signals"] == 1
+    assert section["shown_negative_signals"] == 1
+    assert section["shown_unknown_signals"] == 0
     assert section["shown_signals"] == 3
+    assert section["top_items_limit"] == 5
     assert "data_timestamp" not in section
     assert "updated_at" not in section
 

@@ -1,0 +1,1 @@
+window.MINIAPP_API_BASE_URL = window.MINIAPP_API_BASE_URL || "";

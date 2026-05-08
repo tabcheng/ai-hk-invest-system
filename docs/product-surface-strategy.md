@@ -160,3 +160,9 @@ Mini App should **not**:
 - Availability display uses explicit labels (`已載入`, `未有資料`, `部分完成`) and does not treat missing PnL/risk as run failure.
 - Signal section keeps simulated stock-level detail while warning that unknown confidence/risk/PnL means incomplete decision context.
 - Safety boundary is layered: short top banner + detailed bottom guardrail section; no broker/live execution wording introduced.
+
+## Step 113 consistency patch (Daily Overview availability + render acceptance)
+- Daily Summary availability chips must align with actually rendered sections in the same payload context.
+- If `signals_summary.status=ok`, Daily Summary must not simultaneously show `信號摘要` inside `未有資料`.
+- Missing `paper_pnl` / `risk` remains explicit `未有資料` and must not be interpreted as system failure.
+- Mobile-first polish keeps status labels/chips visually tighter and reduces `HKT` orphan wrapping risk in timestamp rows.

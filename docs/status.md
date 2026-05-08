@@ -439,3 +439,10 @@
 - Added section-level fallback rendering so one section unavailable does not collapse other cards.
 - Scope guardrails preserved: no schema/migration, no write path, no decision capture, no order creation, no broker/live execution.
 - Signal wording remains simulated/read-only and not trade instruction; final real-money decision remains outside system.
+
+## 2026-05-08 — Step 114 Mini App build freshness + cache-bust visibility
+- Step 114 completed: Mini App now renders low-profile build metadata (`UI build`, `Deployed build`) from runtime `/config.js` injection; fallback is `unknown` when commit/build vars are missing.
+- Step 114 completed: static serving cache policy updated so `/` + `/index.html` and `/config.js` use revalidation-oriented `Cache-Control` headers to reduce stale Telegram WebView bundle risk.
+- Step 114 completed: static contract/render tests now assert build metadata injection/rendering and cache-control contract strings.
+- Step 114 post-deploy smoke required: operator must verify build version visibility, build/deploy version alignment, Daily Summary signals availability consistency, PnL/risk unavailable state, and safety boundary card presence.
+- Step 114 boundary preserved: read-only frontend only, no write path, no Supabase schema change, no Telegram auth flow change, no broker/live execution.

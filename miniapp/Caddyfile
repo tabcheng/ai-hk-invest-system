@@ -1,4 +1,11 @@
 :8080 {
     root * /srv
+
+    @index path / /index.html
+    header @index Cache-Control "no-cache, no-store, must-revalidate"
+
+    @config path /config.js
+    header @config Cache-Control "no-cache, must-revalidate"
+
     file_server
 }

@@ -166,3 +166,8 @@ Mini App should **not**:
 - If `signals_summary.status=ok`, Daily Summary must not simultaneously show `信號摘要` inside `未有資料`.
 - Missing `paper_pnl` / `risk` remains explicit `未有資料` and must not be interpreted as system failure.
 - Mobile-first polish keeps status labels/chips visually tighter and reduces `HKT` orphan wrapping risk in timestamp rows.
+
+## Step 114 Mini App freshness visibility policy
+- Mini App review surface includes low-profile non-secret build metadata (`UI build`, `Deployed build`) for deploy freshness validation during Telegram/WebView smoke.
+- Runtime config injection remains frontend read-only (`/config.js`) and must not include secrets/initData/allowlist identifiers.
+- Static hosting cache posture for `index.html` and `config.js` is revalidation-oriented to reduce stale shell/config risk after deploy.

@@ -17,51 +17,29 @@ Prioritization:
    - PR review checklist must explicitly include inline review threads / Codex comments.
    - Unresolved Codex comments remain blockers when they affect correctness, audit trail, security, runtime behavior, or domain guardrails.
 
-3. **Mini App backend endpoint wiring follow-up (active)**
-   - Before any data-enabled Mini App access, wire both backend helpers into endpoint path:
-     - server-side Telegram `initData` validation
-     - backend operator authorization by Telegram numeric user id allowlist
-   - `initDataUnsafe` and username must never be trusted for authorization decisions.
-
-4. **Data-enabled read-only Mini App API surface (active)**
-   - Keep as future bounded scope after auth boundary is in place.
-   - Must remain read-only first; no write path or execution semantics.
-
-5. **Mini App decision capture / paper order creation (active, deferred)**
+3. **Mini App decision capture / paper order creation (active, deferred)**
    - Decision capture is Phase 2 follow-up and must remain bounded/non-execution.
    - Paper order creation is later controlled phase only after risk-gate requirements.
 
-6. **Mini App domain + environment decisions (active)**
+4. **Mini App domain + environment decisions (active)**
    - Decide custom domain policy for Mini App preview/production path.
    - Decide PR preview environment policy for Mini App changes.
 
-7. **Mini App frontend framework migration decision (active, deferred)**
+5. **Mini App frontend framework migration decision (active, deferred)**
    - Keep static shell baseline for now; evaluate framework migration only if needed later.
 
-8. **Step 67 future plan — scheduled daily health check**
+6. **Step 67 future plan — scheduled daily health check**
    - Keep as future plan only; do not implement scheduled automation until explicitly approved in a future step.
 
-9. **GitHub Actions Node.js 20 deprecation maintenance**
+7. **GitHub Actions Node.js 20 deprecation maintenance**
    - Track and update workflows/actions before Node.js 20 deprecation deadlines impact CI/manual QA workflows.
    - Keep maintenance bounded to workflow/runtime compatibility, with no strategy/paper-trading logic side effects.
 
-10. **Step 80 — controlled Railway Mini App API smoke (active)**
-   - Execute operator-triggered Railway env/manual smoke for `POST /miniapp/api/review-shell` using Step 80 runbook evidence checklist.
-   - Verify pre-env safe failures (`503/415/413`), then post-env negative auth checks (`401/403`), then post-env authorized mock `200` path while preserving mock-only/read-only boundary.
-
-11. **First bounded read-only internal/Supabase data source design (active)**
-   - Keep production data-read blocked until bounded data contract, auth boundary, and acceptance criteria are explicitly approved.
-
-12. **Mini App frontend fetch decision (active, deferred)**
-   - Decide whether/when to wire frontend fetch only after Step 80 smoke evidence and bounded data-read design acceptance.
-
-13. **Rate limiting / interaction-frequency hardening (active)**
+8. **Rate limiting / interaction-frequency hardening (active)**
    - Define bounded backend protections for Mini App API request burst/abuse control without introducing write/execution semantics.
 
-14. **Production data-read acceptance (active, deferred)**
-   - Add explicit acceptance checklist for first production data-read enablement after bounded design + controlled smoke evidence are approved.
-
 ### P1
+
 1. **Operator smoke report wording normalization / possible future test-mode echo**
    - Continue clarifying transport verification vs response-text verification semantics.
    - Revisit test-mode echo feasibility only as a future bounded QA-harness enhancement.
@@ -113,6 +91,15 @@ Prioritization:
 
 #### AI Team Paper Trading Track
 - Expand AI team paper-decision capture/review loops with human final decision preserved.
+
+
+### Mini App read-only baseline completion note (92C/92C-1/92D)
+- The following items are no longer active pending because they were completed/superseded by Step 92C / 92C-1 / 92D:
+  - Mini App backend endpoint wiring follow-up
+  - Data-enabled read-only Mini App API surface
+  - Mini App frontend fetch decision (for latest_system_runs read-only baseline)
+  - Production data-read acceptance for latest_system_runs baseline
+- Subsequent active Mini App expansion starts from Step 92E Signals Summary read-only card.
 
 ## Completed backlog (archived)
 

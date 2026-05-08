@@ -26,17 +26,22 @@ Telegram should **not** carry:
 - long-form review content
 - complex multi-section analysis that is better reviewed in structured UI
 
-### Mini App (structured, read-only review)
-Use Mini App for:
-- daily review
-- latest system run
-- signals summary
-- risk summary
-- paper PnL
-- AI team review
-- decision journal
-- outcome review
-- multi-stock comparison
+### Mini App (structured review surface by phase)
+Currently available (completed):
+- Latest System Run
+- Daily Review Summary
+
+Planned read-only next (Step 92E+ sequence):
+- Signals Summary
+- Risk Summary
+- Paper PnL
+- Outcome Review
+
+Future phase (not yet implemented):
+- AI Team Review
+- Decision Journal
+- Decision capture
+- Controlled simulated order creation
 
 Mini App should **not**:
 - replace Telegram alerting
@@ -49,10 +54,10 @@ Mini App should **not**:
 | Short alert / quick status ping | Primary | Secondary |
 | Quick command interaction | Primary | Secondary |
 | Deploy/runtime smoke path | Primary | Secondary |
-| Structured daily review | Link-out only | Primary |
-| Multi-section read-only review | Not recommended | Primary |
+| Structured daily review (Latest System Run / Daily Review Summary) | Link-out only | Primary (current) |
+| Multi-section read-only review | Not recommended | Primary (expands in Step 92E+) |
 | Dense multi-stock comparison | Not recommended | Primary |
-| Decision journal review surface | Secondary (shortcut only) | Primary |
+| Decision journal review surface | Secondary (shortcut only) | Future phase |
 
 ## Mini App information architecture
 

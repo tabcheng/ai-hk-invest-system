@@ -257,3 +257,11 @@ No broker integration or autonomous real-money execution is authorized by this p
 - Step 92C-1: telegram-webhook must set `MINIAPP_ALLOWED_ORIGIN` to exact miniapp-static-preview public origin to allow cross-origin `POST/OPTIONS /miniapp/api/review-shell` while keeping server-side initData validation + operator allowlist and paper-trading/no-broker boundaries unchanged.
 - Step 92D: backend extends review-shell response with `sections.daily_review_summary` using existing data only (anchored on `latest_system_runs` bounded latest row and safe fallback); frontend adds read-only Daily Review Summary card display only.
 - Step 92D boundaries preserved: no Supabase schema/migration changes, no write path, no decision/journal/order creation, no broker/live execution, and all operator-facing timestamp fields remain HKT display labels.
+
+## Step 92D-UX UI label/display boundary update (docs-only)
+- Mini App frontend user-facing display must use user-friendly Traditional Chinese labels by default.
+- Backend response contract may keep technical snake_case fields for stability and implementation clarity.
+- Frontend must translate backend keys/values into operator-readable labels.
+- Do not expose raw technical label names like `data_timestamp` or `updated_at` directly to operator UI.
+- Timestamp display remains HKT-only in user-facing UI wording.
+- Paper-trading/decision-support-only boundary wording must remain explicit on card/page surfaces.

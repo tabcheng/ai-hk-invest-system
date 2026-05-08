@@ -398,3 +398,11 @@
 - Step 92C-1 CORS boundary: backend `telegram-webhook` now supports `MINIAPP_ALLOWED_ORIGIN` for `OPTIONS/POST /miniapp/api/review-shell` with exact-origin allow policy (`Access-Control-Allow-Origin`, `POST, OPTIONS`, `Content-Type`, `Vary: Origin`), preserving auth/initData validation and operator allowlist checks.
 - Step 92D: Mini App review-shell now includes `sections.daily_review_summary` from backend bounded read model anchored on `latest_system_runs` existing data only; no schema/migration/write-path changes.
 - Step 92D: Mini App frontend now displays read-only **Daily Review Summary** card below **Latest System Run**, with HKT-only display fields and explicit paper-trade-only boundary wording.
+
+## 2026-05-08 — Step 92D-UX docs-of-record alignment (planning/design only)
+- Step 92D-UX completed: updated product surface strategy + Mini App UI/UX wording principles + information architecture decision record (Option A now, Option B later, Option C deferred).
+- Step 92D-UX completed: standardized Mini App home card order and backend-value-to-Chinese status wording map for consistent operator display.
+- Step 92D-UX completed: synchronized Mini App read-only data boundary and operator runbook with Chinese-friendly label policy, HKT-only display, and no raw technical/secrets/initData exposure guidance.
+- Step 92D-UX impact: docs-only (GitHub documentation updates); Railway impact none; Supabase impact none.
+- Step 92D-UX non-goals preserved: no runtime code changes, no Telegram runtime changes, no Supabase schema changes, no write path, no decision capture, no broker/live execution.
+- Next implementation step remains: Step 92E Signals Summary read-only card.

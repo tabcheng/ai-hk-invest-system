@@ -35,6 +35,11 @@ def test_step92f_ui_review_shell_static_contract() -> None:
         "createClient(",
         "SUPABASE_SECRET_KEY",
         "SUPABASE_SERVICE_ROLE_KEY=",
+        "<form",
+        'type="submit"',
+        "Read-only partial daily review summary from latest system run only; human final decision remains outside system.",
+        "read-only latest-state row; no broker/live execution",
+        "read-only review surface; no decision capture, no order creation, no broker/live execution",
     ]
 
     for text in required_text:
@@ -66,6 +71,15 @@ def test_step92f_ui_review_shell_static_contract() -> None:
     ]
     for pattern in raw_key_as_label_patterns:
         assert re.search(pattern, html) is None
+
+    forbidden_write_ui_patterns = [
+        r"<form\b",
+        r"<button[^>]*type=['\"]submit['\"]",
+        r"<button[^>]*>\s*(提交決策|建立訂單|立即落盤|place order|submit decision|decision capture)\s*</button>",
+        r"<input[^>]*type=['\"]submit['\"]",
+    ]
+    for pattern in forbidden_write_ui_patterns:
+        assert re.search(pattern, html, flags=re.IGNORECASE) is None
 
 
 def test_step92c_runtime_config_container_contract() -> None:

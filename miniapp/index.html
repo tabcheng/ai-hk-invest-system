@@ -105,7 +105,9 @@
 
         const note=document.createElement("p"); note.className="helper-text";
         note.textContent="部分完成表示部分檢視區塊仍未有資料，並不代表最新系統運行失敗。";
-        card.append(h,line1,line2,renderStatusChip(hasLatest ? (latest?.runner_status || "success") : "unavailable"),line3,renderStatusChip(coverage),line4,availabilityGrid,note);
+        line2.appendChild(renderStatusChip(hasLatest ? (latest?.runner_status || "success") : "unavailable"));
+        line3.appendChild(renderStatusChip(coverage));
+        card.append(h,line1,line2,line3,line4,availabilityGrid,note);
       }
       function renderLatest(latest){ if (!latest || latest.status !== "ok") return fillUnavailable("latest-card","最新系統運行"); const card=document.getElementById("latest-card"); card.textContent=""; const h=document.createElement("h2"); h.textContent="最新系統運行"; card.append(h, renderStatusChip(latest.runner_status || "unknown")); [
           `運行編號：${latest.run_id || "-"}`,

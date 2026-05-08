@@ -117,7 +117,7 @@ Prioritization:
 
 ### Recently completed (Steps 40–60)
 - **Step 112 completed:** delivered Daily Overview Operator UX Bundle for Mini App/Web UI (status hierarchy split, data-availability cards, unknown-confidence warning copy, layered safety boundary presentation, and mobile-first readability polish) with focused UI copy/render tests; read-only/paper-trading boundary preserved; no Railway/Supabase schema changes.
-- **Step 113 completed:** fixed Daily Overview availability inconsistency in Mini App render layer so `signals_summary.status=ok` no longer conflicts with Daily Summary missing-section chips; added layout polish for status label/chip rows and timestamp wrapping guard; expanded focused render acceptance assertions for contradiction prevention + missing PnL/risk semantics + safety boundary/no execution wording. GitHub impact only; no Railway topology/config change; no Supabase schema change.
+- **Step 113 completed:** fixed Daily Overview availability inconsistency in Mini App render layer so `signals_summary.status=ok` no longer conflicts with Daily Summary missing-section chips; adjusted status/coverage chips to append inside same inline rows; expanded focused **render-level** DOM simulation assertions (sample payload execution) for contradiction prevention + missing PnL/risk semantics + safety boundary/no execution wording. GitHub impact only; no Railway topology/config change; no Supabase schema change.
 
 - **Step 40 completed:** normalized operator response shape for `/runs`, `/runner_status`, `/risk_review` and centralized HTML-safe rendering contract.
 - **Step 41 completed:** added read-only paper position/PnL snapshot helper and `/pnl_review` operator command, including input/correctness hardening.

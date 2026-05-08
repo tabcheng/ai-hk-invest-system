@@ -266,7 +266,7 @@
   - Fix scope: remove Daily Overview inconsistency where Overview showed `信號摘要：已載入` but Daily Summary simultaneously listed `信號摘要` as missing.
   - Frontend presentation update: Daily Summary availability now merges actual rendered section availability (when `signals_summary.status=ok`, Daily Summary no longer marks `信號摘要` as missing).
   - Layout polish scope: keep `System Run Status` + `Daily Review Coverage` labels/chips in tighter same-row rendering and reduce timestamp wrapping risk so `HKT` does not drop alone.
-  - Acceptance coverage scope: focused render/DOM assertions now include mixed payload expectation (`latest_system_run=ok`, `signals_summary=ok`, `daily_review_summary=partial`, `paper_pnl=risk=missing`) and confirm no contradictory signal-availability wording.
+  - Acceptance coverage scope: focused render-level DOM simulation now executes frontend script with sample review-shell payload (`latest_system_run=ok`, `signals_summary=ok`, `daily_review_summary=partial`, `unavailable_sections` contains `signals/paper_pnl/risk`) and confirms no contradictory signal-availability wording.
   - Platform impact expectation: GitHub-only frontend/test/docs updates; no Railway topology/config change expected; no Supabase schema change expected.
   - Domain boundary unchanged: paper-trading / decision-support only; no broker integration, no real-money execution, no decision-capture/write path expansion.
 - Step 62 `/decision_note` runtime MVP implemented (run-level only), with explicit journaling-only boundary and stock-level not-implemented response.

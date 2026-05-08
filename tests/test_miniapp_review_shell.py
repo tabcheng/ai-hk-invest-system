@@ -61,6 +61,7 @@ def test_step92c_runtime_config_container_contract() -> None:
     assert "FROM caddy:" in dockerfile
     assert "COPY config.js /srv/config.js" in dockerfile
     assert "COPY entrypoint.sh /entrypoint.sh" in dockerfile
+    assert "RUN chmod +x /entrypoint.sh" in dockerfile
     assert "MINIAPP_API_BASE_URL" in entrypoint
     assert 'window.MINIAPP_API_BASE_URL = "${escaped_base_url}";' in entrypoint
     assert "set -eu" in entrypoint

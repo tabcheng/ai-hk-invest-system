@@ -1,7 +1,7 @@
 # Project Status
 
 ## Last reviewed date
-2026-05-06
+2026-05-08
 
 
 
@@ -249,6 +249,18 @@
 - Production platform settings (GitHub/Railway/Supabase project posture) still require periodic manual verification outside repository files.
 
 ## Recent completion notes
+
+- Step 112 repo merge completed: Daily Overview Operator UX Bundle for Telegram Mini App/Web UI read-only surface.
+  - Status hierarchy split into two explicit layers: `System Run Status` and `Daily Review Coverage` to prevent run-success vs partial-coverage confusion.
+  - Added data-availability dashboard cards/badges for latest run/signals/PnL/risk with explicit wording: `已載入`, `未有資料`, and `部分完成`.
+  - Signal summary copy now keeps stock-level simulated list while explicitly rendering unknown confidence as `信心：未提供 / Unknown` and includes interpretation warning that this is not a complete decision.
+  - Safety boundary presentation now uses top short boundary banner + bottom detailed guardrail list with reduced mid-section duplication.
+  - Mobile-first readability polish: spacing/card grouping/label-first status semantics (status not color-only).
+  - Added focused Mini App UI copy/render contract test coverage for hierarchy, empty-state wording, unknown-confidence wording, and safety boundary persistence.
+  - GitHub impact: frontend static Mini App page + focused tests + docs alignment updates.
+  - Railway impact: none discovered in this step.
+  - Supabase schema/data impact: none discovered in this step.
+  - Domain boundary unchanged: paper-trading/decision-support only; no broker integration; no live execution.
 - Step 62 `/decision_note` runtime MVP implemented (run-level only), with explicit journaling-only boundary and stock-level not-implemented response.
 - Step 62 platform ownership: GitHub runtime/tests/docs + Supabase table migration; Railway no change.
 - Step 62 Post-merge QA Check: pass (local focused tests for success/validation/auth/help coverage).

@@ -8,34 +8,46 @@ Prioritization:
 ## Active backlog (pending)
 
 ### P0
-1. **Step 92E — Signals Summary read-only card (next implementation step)**
+1. **Operator-facing runner status surface refinement (future)**
+   - Keep improving operator-facing run-status readability and hierarchy beyond Step 112 baseline.
+
+2. **PnL / risk summary future cards enrichment**
+   - Expand future read-only card details once data contracts are ready; keep empty-state semantics clear and non-failure.
+
+3. **Richer signal confidence model**
+   - Introduce better confidence semantics only as bounded read-only follow-up; avoid trade-instruction wording.
+
+4. **UI accessibility follow-up**
+   - Review Mini App readability/accessibility (contrast, semantic labels, spacing) while preserving mobile-first compactness.
+
+5. **Step 92E — Signals Summary read-only card (next implementation step)**
    - Implement Mini App read-only Signals Summary card after Step 92D-UX docs-of-record alignment.
    - Keep backend/frontend scope read-only and preserve paper-trading/no-broker boundary.
 
-2. **Step 70 — GitHub / Codex instruction guardrails update**
+6. **Step 70 — GitHub / Codex instruction guardrails update**
    - Update repo-level instruction guardrails in `AGENTS.md` to reflect current project direction and governance baseline.
    - PR review checklist must explicitly include inline review threads / Codex comments.
    - Unresolved Codex comments remain blockers when they affect correctness, audit trail, security, runtime behavior, or domain guardrails.
 
-3. **Mini App decision capture / paper order creation (active, deferred)**
+7. **Mini App decision capture / paper order creation (active, deferred)**
    - Decision capture is Phase 2 follow-up and must remain bounded/non-execution.
    - Paper order creation is later controlled phase only after risk-gate requirements.
 
-4. **Mini App domain + environment decisions (active)**
+8. **Mini App domain + environment decisions (active)**
    - Decide custom domain policy for Mini App preview/production path.
    - Decide PR preview environment policy for Mini App changes.
 
-5. **Mini App frontend framework migration decision (active, deferred)**
+9. **Mini App frontend framework migration decision (active, deferred)**
    - Keep static shell baseline for now; evaluate framework migration only if needed later.
 
-6. **Step 67 future plan — scheduled daily health check**
+10. **Step 67 future plan — scheduled daily health check**
    - Keep as future plan only; do not implement scheduled automation until explicitly approved in a future step.
 
-7. **GitHub Actions Node.js 20 deprecation maintenance**
+11. **GitHub Actions Node.js 20 deprecation maintenance**
    - Track and update workflows/actions before Node.js 20 deprecation deadlines impact CI/manual QA workflows.
    - Keep maintenance bounded to workflow/runtime compatibility, with no strategy/paper-trading logic side effects.
 
-8. **Rate limiting / interaction-frequency hardening (active)**
+12. **Rate limiting / interaction-frequency hardening (active)**
    - Define bounded backend protections for Mini App API request burst/abuse control without introducing write/execution semantics.
 
 ### P1
@@ -104,6 +116,8 @@ Prioritization:
 ## Completed backlog (archived)
 
 ### Recently completed (Steps 40–60)
+- **Step 112 completed:** delivered Daily Overview Operator UX Bundle for Mini App/Web UI (status hierarchy split, data-availability cards, unknown-confidence warning copy, layered safety boundary presentation, and mobile-first readability polish) with focused UI copy/render tests; read-only/paper-trading boundary preserved; no Railway/Supabase schema changes.
+
 - **Step 40 completed:** normalized operator response shape for `/runs`, `/runner_status`, `/risk_review` and centralized HTML-safe rendering contract.
 - **Step 41 completed:** added read-only paper position/PnL snapshot helper and `/pnl_review` operator command, including input/correctness hardening.
 - **Step 42 completed:** added market-data provider boundary (`MARKET_DATA_PROVIDER`) with `yfinance` baseline and deterministic `mock` provider.

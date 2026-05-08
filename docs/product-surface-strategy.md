@@ -148,3 +148,8 @@ Mini App should **not**:
 - Telegram `initData` validation must remain backend-side before data access.
 - Backend writes/privileged reads after RLS must use backend secret/service-role key class only.
 - No product surface may introduce broker/live execution semantics.
+
+## Step 92F-UI surface update (Mini App read-only UX)
+- Mini App current read-only surface is now mobile-first professional card dashboard with Traditional Chinese primary wording.
+- Card sequence follows current strategy: 今日檢視 -> 最新系統運行 -> 每日檢視摘要 -> 信號摘要 -> 安全與邊界說明.
+- This step is presentation-only: no new product capability, no decision capture, no write/order/execution semantics.

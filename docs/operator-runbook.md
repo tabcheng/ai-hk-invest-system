@@ -389,3 +389,10 @@ Use this checklist when reviewing Mini App read-only surfaces:
 5. No broker/live execution wording appears, except explicit no-broker boundary reminders.
 
 - Step 92E: Mini App 新增「信號摘要」read-only card，信號僅作 AI 模擬／paper-trading 檢視證據，不構成買賣指示；前端開始統一以繁體中文顯示標籤（後端 snake_case 合約保留）；無 schema/migration、無寫入路徑、無決策提交、無下單、無 broker/live execution。
+
+## Step 92F-UI Mini App 前端驗收重點
+- Mini App 首屏應顯示：`今日檢視`（置頂）、`最新系統運行`、`每日檢視摘要`、`信號摘要`、`安全與邊界說明`。
+- UI 必須手機友善單欄、不可水平捲動、狀態以中文 status chip 顯示。
+- 信號區塊要明確顯示「AI 模擬信號只供檢視，並非買賣指示」。
+- `top_items` 必須逐行/逐項顯示，不可用單段分號長字串。
+- Mini App 仍屬 read-only：不得出現寫入、決策提交、落盤、券商連接行為。

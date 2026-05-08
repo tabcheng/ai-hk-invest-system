@@ -2,37 +2,31 @@ import re
 from pathlib import Path
 
 
-def test_step92c_review_shell_static_contract() -> None:
+def test_step92f_ui_review_shell_static_contract() -> None:
     html = Path("miniapp/index.html").read_text(encoding="utf-8")
     config_js = Path("miniapp/config.js").read_text(encoding="utf-8")
 
     required_text = [
-        "顯示負面模擬信號",
-        "顯示觀望 / 中性信號",
-        "顯示正面模擬信號",
-        "檢視狀態",
-        "交易模式",
-        "更新時間（香港時間）",
-        "資料時間（香港時間）",
-        "信號摘要",
-        "AI HK Invest — Mini App Preview Shell",
-        "https://telegram.org/js/telegram-web-app.js",
+        "AI 港股投資系統",
+        "今日檢視",
         "最新系統運行",
         "每日檢視摘要",
-        "Read-only",
-        "paper_trade_only",
-        "data_timestamp_hkt",
-        "updated_at_hkt",
-        "review_readiness",
-        "available_sections",
-        "unavailable_sections",
-        "operator_note",
-        "Telegram initData 只在後端驗證",
-        "前端不使用 initDataUnsafe",
+        "信號摘要",
+        "安全與邊界說明",
+        "只限模擬交易",
+        "不連接券商",
+        "不作真實落盤",
+        "並非買賣指示",
+        "app-shell",
+        "section-card",
+        "status-chip",
+        "metric-grid",
+        "signal-list",
+        "footer-guardrail",
+        "https://telegram.org/js/telegram-web-app.js",
         "/miniapp/api/review-shell",
         "init_data",
-        "no broker connection",
-        "no real-money execution",
+        "Paper trading only",
     ]
 
     forbidden_text = [
@@ -41,6 +35,11 @@ def test_step92c_review_shell_static_contract() -> None:
         "createClient(",
         "SUPABASE_SECRET_KEY",
         "SUPABASE_SERVICE_ROLE_KEY=",
+        "<form",
+        'type="submit"',
+        "Read-only partial daily review summary from latest system run only; human final decision remains outside system.",
+        "read-only latest-state row; no broker/live execution",
+        "read-only review surface; no decision capture, no order creation, no broker/live execution",
     ]
 
     for text in required_text:
@@ -65,13 +64,22 @@ def test_step92c_review_shell_static_contract() -> None:
     assert re.search(r"Telegram\.WebApp\.initData", html)
     assert "`${apiBaseUrl}/miniapp/api/review-shell`" in html
     assert "missing_daily_review_summary_section" not in html
-    assert "每日檢視摘要暫時未有資料" in html
+    assert "暫時未有資料" in html
 
     raw_key_as_label_patterns = [
         r"dt\.textContent\s*=\s*key",
     ]
     for pattern in raw_key_as_label_patterns:
         assert re.search(pattern, html) is None
+
+    forbidden_write_ui_patterns = [
+        r"<form\b",
+        r"<button[^>]*type=['\"]submit['\"]",
+        r"<button[^>]*>\s*(提交決策|建立訂單|立即落盤|place order|submit decision|decision capture)\s*</button>",
+        r"<input[^>]*type=['\"]submit['\"]",
+    ]
+    for pattern in forbidden_write_ui_patterns:
+        assert re.search(pattern, html, flags=re.IGNORECASE) is None
 
 
 def test_step92c_runtime_config_container_contract() -> None:

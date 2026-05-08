@@ -150,3 +150,18 @@ Step 91A recorded result (PR #88):
 - Step 92D post-deploy smoke required: verify Mini App still shows Latest System Run card and now shows Daily Review Summary card with HKT-only timestamp labels; confirm `paper_trade_only=true`; confirm no raw `data_timestamp` / `updated_at` labels and no secrets/raw initData/allowlist/chat/user IDs exposed; confirm no write path/decision capture/order creation/broker/live execution.
 
 - Step 92E: Mini App 新增「信號摘要」read-only card，信號僅作 AI 模擬／paper-trading 檢視證據，不構成買賣指示；前端開始統一以繁體中文顯示標籤（後端 snake_case 合約保留）；無 schema/migration、無寫入路徑、無決策提交、無下單、無 broker/live execution。
+
+## Step 92F-UI Post-deploy smoke (required)
+- [ ] Deploy `miniapp-static-preview`.
+- [ ] Deploy `telegram-webhook` only if backend changed (Step 92F-UI pure frontend normally no backend deploy).
+- [ ] Confirm `miniapp-static-preview` build path仍使用 `miniapp/Dockerfile`.
+- [ ] Confirm runtime `/config.js` 注入的 `MINIAPP_API_BASE_URL` 指向 telegram-webhook public URL.
+- [ ] Telegram 內開啟 Mini App，確認單欄手機介面且無水平捲動。
+- [ ] 確認 `今日檢視` 在最上方。
+- [ ] 確認 `最新系統運行` / `每日檢視摘要` / `信號摘要` 為清晰分離卡片。
+- [ ] 確認 status chip 以繁中顯示（例如 成功/部分完成/暫時未有資料）。
+- [ ] 確認指標欄位可讀，且不顯示 raw snake_case 作為前台標籤。
+- [ ] 確認 signal `top_items` 為多列項目顯示，不是單段長文。
+- [ ] 確認顯示為 HKT 欄位語意，並保留「模擬/非買賣指示」邊界文字。
+- [ ] 確認未暴露 secrets、raw initData、allowlist/chat/user IDs。
+- [ ] 確認無 write path / decision capture / order creation / broker/live execution。

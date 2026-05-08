@@ -267,3 +267,10 @@ No broker integration or autonomous real-money execution is authorized by this p
 - Paper-trading/decision-support-only boundary wording must remain explicit on card/page surfaces.
 
 - Step 92E: Mini App 新增「信號摘要」read-only card，信號僅作 AI 模擬／paper-trading 檢視證據，不構成買賣指示；前端開始統一以繁體中文顯示標籤（後端 snake_case 合約保留）；無 schema/migration、無寫入路徑、無決策提交、無下單、無 broker/live execution。
+
+## Step 92F-UI boundary note (frontend polish only)
+- Step 92F-UI 屬 Mini App 前端呈現重設：專業、統一、手機友善、繁體中文卡片式 dashboard。
+- 屬 UI/UX polish；不新增資料來源、不更改 backend response 合約。
+- 不新增 Supabase schema/migration、不新增任何 write path。
+- 不新增決策提交、下單、券商連接、真實交易執行。
+- 信號顯示仍為 AI 模擬/紙上交易檢視用途，並非買賣指示；最終真實交易決定仍在系統外由人作出。

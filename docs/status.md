@@ -410,3 +410,12 @@
 - Step 92E: Mini App 新增「信號摘要」read-only card，信號僅作 AI 模擬／paper-trading 檢視證據，不構成買賣指示；前端開始統一以繁體中文顯示標籤（後端 snake_case 合約保留）；無 schema/migration、無寫入路徑、無決策提交、無下單、無 broker/live execution。
 - Step 92E follow-up: `signals_summary` now strictly filters `signals` by both `business_date` and matching latest `run_id`; UI wording updates use 繁中 value mapping (含 runner_status/section names) and `shown_signals`（顯示信號數）to avoid implying full-day total when query is bounded.
 - Step 92E bounded-count follow-up: signals summary counters now use explicit shown/bounded semantics (`shown_signals`, `shown_positive_signals`, `shown_neutral_signals`, `shown_negative_signals`, `shown_unknown_signals`, `top_items_limit`) so operators do not misread them as full-day totals under query limit.
+
+## 2026-05-08 — Step 92F-UI Mini App read-only dashboard redesign
+- Step 92F-UI completed: Mini App frontend (`miniapp/index.html`) upgraded to mobile-first card dashboard with Traditional Chinese operator labels.
+- Added card order: 今日檢視、最新系統運行、每日檢視摘要、信號摘要、安全與邊界說明.
+- Added reusable UI classes and CSS tokens (`app-shell`, `section-card`, `status-chip`, `metric-grid`, `signal-list`, `footer-guardrail`) with no framework/build-step change.
+- Kept backend contract unchanged and frontend behavior read-only (`/config.js` + `Telegram.WebApp.initData` + `POST /miniapp/api/review-shell`).
+- Added section-level fallback rendering so one section unavailable does not collapse other cards.
+- Scope guardrails preserved: no schema/migration, no write path, no decision capture, no order creation, no broker/live execution.
+- Signal wording remains simulated/read-only and not trade instruction; final real-money decision remains outside system.

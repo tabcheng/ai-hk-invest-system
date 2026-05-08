@@ -30,8 +30,8 @@
     <section>
       <h2>安全與授權說明</h2>
       <ul>
-        <li>validate Telegram initData server-side</li>
-        <li>Do not trust initDataUnsafe</li>
+        <li>Telegram initData 只在後端驗證</li>
+        <li>前端不使用 initDataUnsafe</li>
       </ul>
     </section>
 
@@ -156,7 +156,7 @@
           const signals = payload?.sections?.signals_summary;
 
           if (!latest || latest.status !== "ok") {
-            latestStatusNode.textContent = latest?.reason || "最新系統運行暫時未有資料";
+            latestStatusNode.textContent = "最新系統運行暫時未有資料";
           } else {
             latestStatusNode.textContent = "最新系統運行已載入";
             renderFields("latest-system-run-fields", [
@@ -174,7 +174,7 @@
           }
 
           if (!daily || daily.status !== "ok") {
-            dailyStatusNode.textContent = daily?.reason || "每日檢視摘要暫時未有資料";
+            dailyStatusNode.textContent = "每日檢視摘要暫時未有資料";
           } else {
             dailyStatusNode.textContent = "每日檢視摘要已載入";
             renderFields("daily-review-summary-fields", [
@@ -193,7 +193,7 @@
           }
 
           if (!signals || signals.status !== "ok") {
-            signalsStatusNode.textContent = signals?.reason || "信號摘要暫時未有資料";
+            signalsStatusNode.textContent = "信號摘要暫時未有資料";
           } else {
             signalsStatusNode.textContent = "信號摘要已載入（只供模擬檢視，並非買賣指示）";
             renderFields("signals-summary-fields", [

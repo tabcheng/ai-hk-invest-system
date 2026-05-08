@@ -65,6 +65,9 @@ def test_step92f_ui_review_shell_static_contract() -> None:
     assert "`${apiBaseUrl}/miniapp/api/review-shell`" in html
     assert "missing_daily_review_summary_section" not in html
     assert "暫時未有資料" in html
+    assert "renderBuildMeta();" in html
+    assert "UI build:" in html
+    assert "Deployed build:" in html
 
     raw_key_as_label_patterns = [
         r"dt\.textContent\s*=\s*key",
@@ -92,7 +95,16 @@ def test_step92c_runtime_config_container_contract() -> None:
     assert "COPY entrypoint.sh /entrypoint.sh" in dockerfile
     assert "RUN chmod +x /entrypoint.sh" in dockerfile
     assert "MINIAPP_API_BASE_URL" in entrypoint
+    assert "RAILWAY_GIT_COMMIT_SHA" in entrypoint
+    assert "MINIAPP_UI_BUILD_VERSION" in entrypoint
+    assert "MINIAPP_DEPLOYED_BUILD" in entrypoint
     assert 'window.MINIAPP_API_BASE_URL = "${escaped_base_url}";' in entrypoint
+    assert 'window.MINIAPP_UI_BUILD_VERSION = "${escaped_ui_build_version}";' in entrypoint
+    assert 'window.MINIAPP_DEPLOYED_BUILD = "${escaped_deployed_build}";' in entrypoint
     assert "set -eu" in entrypoint
     assert "root * /srv" in caddyfile
+    assert "@index path / /index.html" in caddyfile
+    assert "@config path /config.js" in caddyfile
+    assert 'header @index Cache-Control "no-cache, no-store, must-revalidate"' in caddyfile
+    assert 'header @config Cache-Control "no-cache, must-revalidate"' in caddyfile
     assert "file_server" in caddyfile

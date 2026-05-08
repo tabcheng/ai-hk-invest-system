@@ -241,3 +241,7 @@ Prioritization:
 - Step 92E: Mini App 新增「信號摘要」read-only card，信號僅作 AI 模擬／paper-trading 檢視證據，不構成買賣指示；前端開始統一以繁體中文顯示標籤（後端 snake_case 合約保留）；無 schema/migration、無寫入路徑、無決策提交、無下單、無 broker/live execution。
 
 - **Step 92F-UI completed:** Mini App read-only dashboard UI refreshed to professional mobile-first card layout with Traditional Chinese labels and explicit paper-trading boundary wording; no backend contract/schema/write-path expansion.
+
+## 2026-05-08 — Step 114 Mini App build freshness follow-up
+- Add Telegram Mini App post-deploy smoke evidence requirement: confirm UI footer build version exists and matches latest Railway deploy commit (or explicit deploy build label).
+- Keep `index.html` + `config.js` cache headers on revalidation policy; revisit only if Telegram WebView behavior still shows stale bundle evidence.

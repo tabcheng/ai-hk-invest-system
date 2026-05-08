@@ -61,6 +61,7 @@
       <section id="daily-card" class="section-card"><h2>每日檢視摘要</h2></section>
       <section id="signals-card" class="section-card"><h2>信號摘要</h2></section>
       <section class="footer-guardrail"><h2>安全與邊界說明</h2><ul><li>Telegram initData 只在後端驗證</li><li>前端不使用 initDataUnsafe 作授權</li><li>前端不保存 Supabase secret / service role key</li><li>系統不連接券商、不作真實落盤</li><li>所有信號只供模擬檢視，並非買賣指示</li></ul></section>
+          <p id="build-meta" class="helper-text">UI build: unknown · Deployed build: unknown</p>
     </main>
     <script>
       const STATUS_TEXT = { success: "成功", failed: "失敗", partial: "部分完成", unavailable: "暫時未有資料", ready: "已準備好", ok: "成功", unknown: "未有資料" };
@@ -68,6 +69,8 @@
       const SIGNAL_LABEL = { positive: "正面模擬信號", neutral: "觀望 / 中性信號", negative: "負面模擬信號", unknown: "未知信號" };
       const SECTION_NAME_MAP = { latest_system_run: "最新系統運行", daily_review_summary: "每日檢視摘要", signals: "信號摘要", paper_pnl: "模擬盈虧", risk: "風險摘要" };
       function resolveApiBaseUrl() { return String(window.MINIAPP_API_BASE_URL || "").trim().replace(/\/$/, ""); }
+      function resolveBuildVersion(key) { const value = String(window[key] || "").trim(); return value || "unknown"; }
+      function renderBuildMeta() { const node = document.getElementById("build-meta"); if (!node) return; node.textContent = `UI build: ${resolveBuildVersion("MINIAPP_UI_BUILD_VERSION")} · Deployed build: ${resolveBuildVersion("MINIAPP_DEPLOYED_BUILD")}`; }
       function statusClass(value) { if (["success","ready","ok"].includes(value)) return "status-success"; if (value === "partial") return "status-warning"; if (value === "failed") return "status-danger"; return "status-unavailable"; }
       function renderStatusChip(value) { const chip = document.createElement("span"); chip.className = `status-chip ${statusClass(value)}`; chip.textContent = STATUS_TEXT[String(value)] || STATUS_TEXT.unavailable; return chip; }
       function renderAvailabilityChip(isAvailable) { const chip = document.createElement("span"); chip.className = `availability-chip ${isAvailable ? "status-success" : "status-unavailable"}`; chip.textContent = isAvailable ? AVAILABILITY_TEXT.available : AVAILABILITY_TEXT.unavailable; return chip; }
@@ -142,6 +145,7 @@
           fillUnavailable("signals-card", "信號摘要");
         }
       }
+      renderBuildMeta();
       loadReviewShell();
     </script>
   </body>

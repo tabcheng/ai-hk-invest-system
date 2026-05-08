@@ -69,6 +69,7 @@ const byId = {{
   "latest-card": new Element("section"),
   "daily-card": new Element("section"),
   "signals-card": new Element("section"),
+  "build-meta": new Element("p"),
 }};
 
 const document = {{
@@ -99,6 +100,7 @@ globalThis.fetch = fetch;
     daily_missing_has_signals: dailyCardText.includes("未有資料") && dailyCardText.includes("未有資料信號摘要"),
     daily_missing_has_pnl: dailyCardText.includes("未有資料") && dailyCardText.includes("模擬盈虧"),
     daily_missing_has_risk: dailyCardText.includes("未有資料") && dailyCardText.includes("風險摘要"),
+    build_meta_visible: byId["build-meta"].textContent.includes("UI build:") && byId["build-meta"].textContent.includes("Deployed build:"),
     boundary_visible: byId["overview-card"].textContent.includes("Daily Overview"),
     system_row_has_chip_text: systemRowText.includes("System Run Status") && systemRowText.includes("成功"),
     coverage_row_has_chip_text: coverageRowText.includes("Daily Review Coverage") && coverageRowText.includes("部分完成"),
@@ -141,6 +143,7 @@ def test_render_level_daily_summary_availability_consistency() -> None:
     assert rendered["boundary_visible"] is True
     assert rendered["system_row_has_chip_text"] is True
     assert rendered["coverage_row_has_chip_text"] is True
+    assert rendered["build_meta_visible"] is True
 
     full_text = str(rendered["full_render_text"]).lower()
     assert "submit" not in full_text
@@ -168,3 +171,5 @@ def test_safety_boundary_copy_present() -> None:
     assert "前端不使用 initDataUnsafe 作授權" in INDEX_HTML
     assert "前端不保存 Supabase secret / service role key" in INDEX_HTML
     assert "所有信號只供模擬檢視，並非買賣指示" in INDEX_HTML
+    assert "UI build:" in INDEX_HTML
+    assert "Deployed build:" in INDEX_HTML

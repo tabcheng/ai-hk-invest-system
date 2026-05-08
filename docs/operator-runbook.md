@@ -396,3 +396,11 @@ Use this checklist when reviewing Mini App read-only surfaces:
 - 信號區塊要明確顯示「AI 模擬信號只供檢視，並非買賣指示」。
 - `top_items` 必須逐行/逐項顯示，不可用單段分號長字串。
 - Mini App 仍屬 read-only：不得出現寫入、決策提交、落盤、券商連接行為。
+
+## Step 114 — Mini App post-deploy freshness smoke (required)
+- Open Telegram Mini App after Railway deploy complete.
+- Verify footer build metadata exists: `UI build: ... · Deployed build: ...`.
+- Verify build value matches latest deploy commit/version label (default source is `RAILWAY_GIT_COMMIT_SHA` short; fallback `unknown`).
+- Verify 「每日檢視摘要」**不會**把「信號摘要」同時列在「未有資料」(when signals summary status is ok).
+- Verify `PnL / risk` remains shown as 「未有資料」when backend still reports unavailable.
+- Verify safety boundary copy remains visible (paper-only, no broker/live execution).

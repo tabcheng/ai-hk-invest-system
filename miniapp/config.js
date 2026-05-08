@@ -1,1 +1,3 @@
 window.MINIAPP_API_BASE_URL = window.MINIAPP_API_BASE_URL || "";
+window.MINIAPP_UI_BUILD_VERSION = window.MINIAPP_UI_BUILD_VERSION || "unknown";
+window.MINIAPP_DEPLOYED_BUILD = window.MINIAPP_DEPLOYED_BUILD || "unknown";

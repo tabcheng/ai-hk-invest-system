@@ -4,6 +4,7 @@ from pathlib import Path
 
 def test_step92c_review_shell_static_contract() -> None:
     html = Path("miniapp/index.html").read_text(encoding="utf-8")
+    config_js = Path("miniapp/config.js").read_text(encoding="utf-8")
 
     required_text = [
         "AI HK Invest — Mini App Preview Shell",
@@ -44,6 +45,25 @@ def test_step92c_review_shell_static_contract() -> None:
     for pattern in forbidden_init_data_unsafe_patterns:
         assert re.search(pattern, html, flags=re.IGNORECASE) is None
 
+    assert '<script src="/config.js"></script>' in html
+    assert html.index('<script src="/config.js"></script>') < html.index("function resolveApiBaseUrl()")
     assert "MINIAPP_API_BASE_URL" in html
+    assert "window.MINIAPP_API_BASE_URL = window.MINIAPP_API_BASE_URL || \"\";" in config_js
     assert re.search(r"Telegram\.WebApp\.initData", html)
     assert "`${apiBaseUrl}/miniapp/api/review-shell`" in html
+
+
+def test_step92c_runtime_config_container_contract() -> None:
+    dockerfile = Path("miniapp/Dockerfile").read_text(encoding="utf-8")
+    entrypoint = Path("miniapp/entrypoint.sh").read_text(encoding="utf-8")
+    caddyfile = Path("miniapp/Caddyfile").read_text(encoding="utf-8")
+
+    assert "FROM caddy:" in dockerfile
+    assert "COPY config.js /srv/config.js" in dockerfile
+    assert "COPY entrypoint.sh /entrypoint.sh" in dockerfile
+    assert "RUN chmod +x /entrypoint.sh" in dockerfile
+    assert "MINIAPP_API_BASE_URL" in entrypoint
+    assert 'window.MINIAPP_API_BASE_URL = "${escaped_base_url}";' in entrypoint
+    assert "set -eu" in entrypoint
+    assert "root * /srv" in caddyfile
+    assert "file_server" in caddyfile

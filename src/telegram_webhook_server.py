@@ -197,6 +197,7 @@ def handle_telegram_webhook_update(
 
 def create_wsgi_app() -> Any:
     """Create a minimal WSGI app exposing `POST /telegram/webhook` for Telegram ingress."""
+    allowed_miniapp_origin = str(os.getenv("MINIAPP_ALLOWED_ORIGIN", "") or "").strip()
 
     def _is_webhook_request_authorized(environ: dict[str, Any]) -> bool:
         """
@@ -223,8 +224,30 @@ def create_wsgi_app() -> Any:
     def _app(environ: dict[str, Any], start_response: Any) -> list[bytes]:
         path = environ.get("PATH_INFO", "")
         method = environ.get("REQUEST_METHOD", "")
+        request_origin = str(environ.get("HTTP_ORIGIN", "") or "").strip()
+        allow_cors_origin = (
+            request_origin
+            if path == "/miniapp/api/review-shell"
+            and request_origin
+            and allowed_miniapp_origin
+            and request_origin == allowed_miniapp_origin
+            else None
+        )
+        response_headers: list[tuple[str, str]] = []
 
-        if path not in {"/telegram/webhook", "/miniapp/api/review-shell"}:
+        if path == "/miniapp/api/review-shell" and method == "OPTIONS":
+            if allow_cors_origin:
+                response_headers.extend(
+                    [
+                        ("Access-Control-Allow-Origin", allow_cors_origin),
+                        ("Access-Control-Allow-Methods", "POST, OPTIONS"),
+                        ("Access-Control-Allow-Headers", "Content-Type"),
+                        ("Vary", "Origin"),
+                    ]
+                )
+            start_response("204 No Content", response_headers)
+            return [b""]
+        elif path not in {"/telegram/webhook", "/miniapp/api/review-shell"}:
             status = "404 Not Found"
             payload = {"ok": False, "error": "not_found"}
         elif method != "POST":
@@ -277,13 +300,21 @@ def create_wsgi_app() -> Any:
                     code, payload = handle_telegram_webhook_update(client=client, update=update)
                     status = f"{code} OK"
 
+        if allow_cors_origin:
+            if ("Access-Control-Allow-Origin", allow_cors_origin) not in response_headers:
+                response_headers.append(("Access-Control-Allow-Origin", allow_cors_origin))
+            if ("Vary", "Origin") not in response_headers:
+                response_headers.append(("Vary", "Origin"))
         response_body = json.dumps(payload).encode("utf-8")
-        start_response(
-            status,
+        response_headers.extend(
             [
                 ("Content-Type", "application/json; charset=utf-8"),
                 ("Content-Length", str(len(response_body))),
-            ],
+            ]
+        )
+        start_response(
+            status,
+            response_headers,
         )
         return [response_body]
 

@@ -143,3 +143,7 @@ Step 91A recorded result (PR #88):
 - [ ] Verify no broker/live execution language or behavior is introduced.
 - Step 92C: Mini App now fetches backend POST /miniapp/api/review-shell and displays read-only latest_system_run card from latest_system_runs with server-side initData validation + operator allowlist authorization + HKT display fields only; no frontend Supabase direct read/write, no decision capture/order creation/broker/live execution.
 - Step 92C routing note: Mini App static frontend must use non-secret MINIAPP_API_BASE_URL (telegram-webhook public URL) when frontend/backend are different origins; same-origin default is local/dev only.
+- Step 92C-1: miniapp-static-preview must provide non-secret `MINIAPP_API_BASE_URL` (telegram-webhook public URL) through runtime `/config.js` injection; Railway variable changes require deploy for effect.
+- Step 92C-1: telegram-webhook must set `MINIAPP_ALLOWED_ORIGIN` to exact miniapp-static-preview public origin to allow cross-origin `POST/OPTIONS /miniapp/api/review-shell` while keeping server-side initData validation + operator allowlist and paper-trading/no-broker boundaries unchanged.
+- Step 92C-1 deploy-risk reminder: verify Railway `miniapp-static-preview` is configured to build using `miniapp/Dockerfile` (or equivalent Dockerfile path). Adding Dockerfile to repo alone does not enable runtime `/config.js` injection.
+- Step 92C-1 deploy-risk reminder: if deployment still uses old static/Caddy path without Dockerfile startup flow, `/config.js` injection will not work.

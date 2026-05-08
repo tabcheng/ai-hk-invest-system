@@ -216,6 +216,16 @@ def test_miniapp_review_shell_latest_system_run_ok(monkeypatch):
     assert section["updated_at_hkt"].endswith("HKT")
     assert "data_timestamp" not in section
     assert "updated_at" not in section
+    daily = payload["sections"]["daily_review_summary"]
+    assert daily["status"] == "ok"
+    assert daily["paper_trade_only"] is True
+    assert daily["review_readiness"] == "partial"
+    assert daily["available_sections"] == ["latest_system_run"]
+    assert daily["unavailable_sections"] == ["signals", "paper_pnl", "risk"]
+    assert daily["data_timestamp_hkt"].endswith("HKT")
+    assert daily["updated_at_hkt"].endswith("HKT")
+    assert "data_timestamp" not in daily
+    assert "updated_at" not in daily
 
 
 def test_miniapp_review_shell_latest_system_run_unavailable_on_failure(monkeypatch):
@@ -233,6 +243,9 @@ def test_miniapp_review_shell_latest_system_run_unavailable_on_failure(monkeypat
     section = payload["sections"]["latest_system_run"]
     assert section["status"] == "unavailable"
     assert section["reason"] == "latest bounded row is not available yet"
+    daily = payload["sections"]["daily_review_summary"]
+    assert daily["status"] == "unavailable"
+    assert daily["reason"] == "daily review summary is not available yet"
     assert "secret error" not in json.dumps(payload)
 
 
@@ -347,6 +360,8 @@ def test_miniapp_review_shell_latest_system_run_requires_paper_trade_only_true(m
     assert section["status"] == "unavailable"
     assert section["reason"] == "latest bounded row is not available yet"
     assert section.get("paper_trade_only") is not True
+    daily = payload["sections"]["daily_review_summary"]
+    assert daily["status"] == "unavailable"
 
 
 def test_miniapp_review_shell_latest_system_run_bool_counter_is_bounded(monkeypatch):
@@ -374,3 +389,8 @@ def test_miniapp_review_shell_latest_system_run_bool_counter_is_bounded(monkeypa
     assert section["processed_tickers"] == 0
     assert section["successful_tickers"] == 0
     assert section["failed_tickers"] == 0
+    daily = payload["sections"]["daily_review_summary"]
+    assert daily["processed_tickers"] == 0
+    assert daily["successful_tickers"] == 0
+    assert daily["failed_tickers"] == 0
+    assert daily["review_readiness"] == "partial"

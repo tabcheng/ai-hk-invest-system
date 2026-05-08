@@ -47,6 +47,7 @@ def build_miniapp_review_shell_response(
         "sections": {
             "runner_status": data_provider.get_runtime_status_summary(),
             "latest_system_run": data_provider.get_latest_system_run_summary(),
+            "daily_review_summary": data_provider.get_daily_review_summary(),
             "daily_review": {"status": "mock"},
             "pnl_snapshot": {"status": "mock"},
             "outcome_review": {"status": "mock"},

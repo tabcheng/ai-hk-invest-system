@@ -64,6 +64,9 @@ def test_default_latest_system_run_is_unavailable_contract():
         "summary": None,
         "limitations": ["No production data source configured in Step 86."],
     }
+    daily_review_summary = payload["sections"]["daily_review_summary"]
+    assert daily_review_summary["status"] == "unavailable"
+    assert daily_review_summary["source"] == "daily_review_read_model"
 
 
 def test_review_shell_response_guardrails_and_mock_sections():
@@ -115,6 +118,8 @@ def test_provider_injection_can_override_runtime_status_and_latest_system_run():
                 "summary": "stub",
                 "limitations": [],
             }
+        def get_daily_review_summary(self):
+            return {"status": "ok", "source": "stub_daily_review", "paper_trade_only": True}
 
     payload = build_miniapp_review_shell_response(
         operator={"telegram_user_id": 42},
@@ -124,6 +129,7 @@ def test_provider_injection_can_override_runtime_status_and_latest_system_run():
     assert payload["sections"]["runner_status"] == {"status": "ok", "source": "stub_runtime"}
     assert payload["sections"]["latest_system_run"]["source"] == "stub_system_run"
     assert payload["sections"]["latest_system_run"]["run_id"] == 86
+    assert payload["sections"]["daily_review_summary"]["source"] == "stub_daily_review"
 
 
 def test_local_artifact_provider_reads_latest_system_run_summary(tmp_path):

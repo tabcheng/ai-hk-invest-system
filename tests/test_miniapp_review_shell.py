@@ -10,10 +10,15 @@ def test_step92c_review_shell_static_contract() -> None:
         "AI HK Invest — Mini App Preview Shell",
         "https://telegram.org/js/telegram-web-app.js",
         "Latest System Run",
+        "Daily Review Summary",
         "Read-only",
         "paper_trade_only",
         "data_timestamp_hkt",
         "updated_at_hkt",
+        "review_readiness",
+        "available_sections",
+        "unavailable_sections",
+        "operator_note",
         "validate Telegram initData server-side",
         "Do not trust initDataUnsafe",
         "/miniapp/api/review-shell",
@@ -51,6 +56,9 @@ def test_step92c_review_shell_static_contract() -> None:
     assert "window.MINIAPP_API_BASE_URL = window.MINIAPP_API_BASE_URL || \"\";" in config_js
     assert re.search(r"Telegram\.WebApp\.initData", html)
     assert "`${apiBaseUrl}/miniapp/api/review-shell`" in html
+    assert "return;" not in html.split("if (section.status !== \"ok\")", 1)[1].split("if (dailySummary.status !== \"ok\")", 1)[0]
+    assert "missing_daily_review_summary_section" not in html
+    assert "daily review summary is not available yet" in html
 
 
 def test_step92c_runtime_config_container_contract() -> None:

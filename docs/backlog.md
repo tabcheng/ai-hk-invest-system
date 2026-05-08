@@ -8,53 +8,57 @@ Prioritization:
 ## Active backlog (pending)
 
 ### P0
-1. **Step 70 — GitHub / Codex instruction guardrails update**
+1. **Step 92E — Signals Summary read-only card (next implementation step)**
+   - Implement Mini App read-only Signals Summary card after Step 92D-UX docs-of-record alignment.
+   - Keep backend/frontend scope read-only and preserve paper-trading/no-broker boundary.
+
+2. **Step 70 — GitHub / Codex instruction guardrails update**
    - Update repo-level instruction guardrails in `AGENTS.md` to reflect current project direction and governance baseline.
    - PR review checklist must explicitly include inline review threads / Codex comments.
    - Unresolved Codex comments remain blockers when they affect correctness, audit trail, security, runtime behavior, or domain guardrails.
 
-2. **Mini App backend endpoint wiring follow-up (active)**
+3. **Mini App backend endpoint wiring follow-up (active)**
    - Before any data-enabled Mini App access, wire both backend helpers into endpoint path:
      - server-side Telegram `initData` validation
      - backend operator authorization by Telegram numeric user id allowlist
    - `initDataUnsafe` and username must never be trusted for authorization decisions.
 
-3. **Data-enabled read-only Mini App API surface (active)**
+4. **Data-enabled read-only Mini App API surface (active)**
    - Keep as future bounded scope after auth boundary is in place.
    - Must remain read-only first; no write path or execution semantics.
 
-4. **Mini App decision capture / paper order creation (active, deferred)**
+5. **Mini App decision capture / paper order creation (active, deferred)**
    - Decision capture is Phase 2 follow-up and must remain bounded/non-execution.
    - Paper order creation is later controlled phase only after risk-gate requirements.
 
-5. **Mini App domain + environment decisions (active)**
+6. **Mini App domain + environment decisions (active)**
    - Decide custom domain policy for Mini App preview/production path.
    - Decide PR preview environment policy for Mini App changes.
 
-6. **Mini App frontend framework migration decision (active, deferred)**
+7. **Mini App frontend framework migration decision (active, deferred)**
    - Keep static shell baseline for now; evaluate framework migration only if needed later.
 
-7. **Step 67 future plan — scheduled daily health check**
+8. **Step 67 future plan — scheduled daily health check**
    - Keep as future plan only; do not implement scheduled automation until explicitly approved in a future step.
 
-8. **GitHub Actions Node.js 20 deprecation maintenance**
+9. **GitHub Actions Node.js 20 deprecation maintenance**
    - Track and update workflows/actions before Node.js 20 deprecation deadlines impact CI/manual QA workflows.
    - Keep maintenance bounded to workflow/runtime compatibility, with no strategy/paper-trading logic side effects.
 
-9. **Step 80 — controlled Railway Mini App API smoke (active)**
+10. **Step 80 — controlled Railway Mini App API smoke (active)**
    - Execute operator-triggered Railway env/manual smoke for `POST /miniapp/api/review-shell` using Step 80 runbook evidence checklist.
    - Verify pre-env safe failures (`503/415/413`), then post-env negative auth checks (`401/403`), then post-env authorized mock `200` path while preserving mock-only/read-only boundary.
 
-10. **First bounded read-only internal/Supabase data source design (active)**
+11. **First bounded read-only internal/Supabase data source design (active)**
    - Keep production data-read blocked until bounded data contract, auth boundary, and acceptance criteria are explicitly approved.
 
-11. **Mini App frontend fetch decision (active, deferred)**
+12. **Mini App frontend fetch decision (active, deferred)**
    - Decide whether/when to wire frontend fetch only after Step 80 smoke evidence and bounded data-read design acceptance.
 
-12. **Rate limiting / interaction-frequency hardening (active)**
+13. **Rate limiting / interaction-frequency hardening (active)**
    - Define bounded backend protections for Mini App API request burst/abuse control without introducing write/execution semantics.
 
-13. **Production data-read acceptance (active, deferred)**
+14. **Production data-read acceptance (active, deferred)**
    - Add explicit acceptance checklist for first production data-read enablement after bounded design + controlled smoke evidence are approved.
 
 ### P1

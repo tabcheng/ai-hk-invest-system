@@ -379,3 +379,11 @@ Use together with `docs/railway-service-variables.md` Step 91C and `docs/post-de
 - Step 92C-1 deploy-risk reminder: adding `miniapp/Dockerfile` in GitHub is not sufficient by itself; Railway `miniapp-static-preview` must actually build with `miniapp/Dockerfile` (or equivalent configured Dockerfile path) or runtime `/config.js` injection will not activate.
 - Step 92C-1 deploy-risk reminder: if Railway service remains on legacy static/Caddy auto path instead of the Dockerfile startup flow, `/config.js` env injection will not work and Mini App may post same-origin to static host.
 - Step 92D: Mini App review shell additionally shows read-only **Daily Review Summary** card (`sections.daily_review_summary`) with HKT fields only (`data_timestamp_hkt`, `updated_at_hkt`), explicit `paper_trade_only=true` guardrail, and unavailable fallback when data/guardrail/read fails.
+
+## Step 92D-UX — Mini App operator-facing UI acceptance checklist (docs-only)
+Use this checklist when reviewing Mini App read-only surfaces:
+1. Chinese labels are understandable for non-technical operators.
+2. Paper-trading/decision-support boundary is visible and explicit.
+3. All user-facing timestamps are HKT-only display.
+4. No raw technical keys, secrets, or raw Telegram `initData` appear in UI.
+5. No broker/live execution wording appears, except explicit no-broker boundary reminders.

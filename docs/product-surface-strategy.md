@@ -1,70 +1,145 @@
-# Product Surface Strategy (Step 69 System-of-Record)
+# Product Surface Strategy (Step 92D-UX System-of-Record)
 
-## Purpose
-Define role boundaries between Telegram Bot and upcoming Mini App / Web UI surfaces while preserving paper-trading decision-support governance.
+## Goal
+Document the current Telegram + Mini App product-surface strategy before Step 92E expansion, with explicit UI wording and paper-trading boundary guardrails.
 
-## Telegram Bot responsibilities
-- Deliver run notifications and concise summary alerts.
-- Provide quick operator command actions and smoke-test verification path.
-- Support fast operational checks when users are mobile or in low-context situations.
+## Current state summary (Step 92C / 92C-1 / 92D completed)
+- Telegram command `/latest_system_run` is available for quick operator read-only checks.
+- Mini App has backend-authenticated read-only cards for:
+  - Latest System Run
+  - Daily Review Summary
+- Step 92C / 92C-1 / 92D post-deploy smoke path is already completed and passed.
+- Product direction is now beyond Telegram-only and uses split surfaces by responsibility.
 
-## Mini App / Web UI responsibilities
-- Provide richer daily review surface (multi-run, multi-stock, and journal context inspection).
-- Improve readability and audit navigation as command count and data density grow.
-- Serve as product-review surface for AI team paper decisions and outcome follow-up.
+## Surface responsibility split
 
-## Why Telegram-only is insufficient (at current growth stage)
-- Command-by-command chat flow becomes high-friction as review breadth increases.
-- Multi-entity comparison in chat output is harder to scan and validate consistently.
-- Structured governance artifacts (decision journal, risk gates, outcome reviews) need denser visual review surfaces.
+### Telegram Bot (short, fast, operational)
+Use Telegram for:
+- short alerts
+- quick commands
+- deploy/runtime smoke checks
+- short summaries
+- link-out to Mini App
 
-## Phased release roadmap
-### Phase 1 — Read-only Review Shell
-- Scope: read-only review only; must not alter strategy settings or paper orders.
-- Required labeling: explicit paper/simulation status on relevant views.
-- Acceptance: post-deploy acceptance evidence is mandatory before phase closure.
-- Step 71 MVP baseline: static/mock Mini App-compatible review shell is allowed for low-risk rollout, with no production Supabase read, no write controls, and explicit security/auth TODOs (`initData` server-side validation required; no service-role/vendor secrets in browser).
-- Step 72 deployment-path decision: adopt Railway static-site/service as the default preview path for Phase 1 shell exposure (separate from webhook ingress service), keep shell static/read-only, and keep all data/auth/write/vendor integration out of scope.
-- Step 73 execution runbook: add operator runbook (`docs/miniapp-static-preview-runbook.md`) to execute dedicated Railway static preview deployment (`miniapp-static-preview`) with explicit `/miniapp` Root Directory and strict separation from `telegram-webhook` and `paper-daily-runner` service responsibilities.
-- Step 75 boundary plan (docs-only): add `docs/miniapp-readonly-data-boundary.md` to define the future read-only data surface boundary (recommended data path, rejected path, candidate read-only sections, deferred scope, conceptual response contract, and future acceptance criteria) without enabling runtime API/auth/data-fetch changes in this step.
-- Step 75 dependency rule: Mini App production data-read phase must not begin until server-side Telegram `initData` validation and authorization boundary are implemented and accepted.
+Telegram should **not** carry:
+- dense multi-stock tables
+- long-form review content
+- complex multi-section analysis that is better reviewed in structured UI
 
-### Step 72 decision record — Mini App preview/deployment path
-- **Recommended option (default):** Railway dedicated static site/static service with independent preview URL for operator access.
-- **Not recommended as long-term default:** existing webhook service static serving (only acceptable as short-term preview fallback due to ingress coupling and routing ambiguity risk).
-- **Alternative viable option:** external static host (low setup cost but adds extra platform governance and deployment/access-policy overhead).
-- **Deferred option:** local-only preview (safest for platform change, but insufficient for Telegram Mini App URL rehearsal and operator URL access).
-- **Step 72 explicit non-goals:** no data access, no production Supabase read, no service-role backend endpoint, no vendor SDK integration, no write action, no strategy change, no paper order creation, no broker/live execution.
-- **Security/auth guardrails:** browser/client must never hold `SUPABASE_SERVICE_ROLE_KEY` or vendor secrets; future data-enabled Mini App must validate Telegram `initData` server-side before any access grant.
-- **GitHub impact:** docs-only decision synchronization; no runtime/test/dependency/workflow behavior change.
-- **Railway impact:** decision is to add a separate static service in a later execution step; this step does not create/modify running services.
-- **Supabase impact:** no schema/policy/data-path/runtime query changes in Step 72.
-- **Acceptance checklist (for deployment execution follow-up):**
-  1) preview URL opens `miniapp/index.html` read-only shell;
-  2) no write controls/actions are exposed;
-  3) no production Supabase read path exists;
-  4) no service-role/vendor secret appears in browser artifacts;
-  5) paper-trading/decision-support-only labeling remains explicit.
-- **Rollback plan:** unpublish/disable static preview service and revert Mini App entry URL to local-only/internal preview path while keeping shell artifact unchanged.
-- **Future path to Telegram Mini App URL:** after static preview stabilization, bind Telegram Mini App URL to the dedicated static service URL, then introduce server-side `initData` validation before any data/API enablement.
+### Mini App (structured, read-only review)
+Use Mini App for:
+- daily review
+- latest system run
+- signals summary
+- risk summary
+- paper PnL
+- AI team review
+- decision journal
+- outcome review
+- multi-stock comparison
+
+Mini App should **not**:
+- replace Telegram alerting
+- expose secrets/raw Telegram `initData`
+- use direct frontend Supabase privileged access
+
+## Surface responsibility matrix
+| Capability | Telegram | Mini App |
+|---|---|---|
+| Short alert / quick status ping | Primary | Secondary |
+| Quick command interaction | Primary | Secondary |
+| Deploy/runtime smoke path | Primary | Secondary |
+| Structured daily review | Link-out only | Primary |
+| Multi-section read-only review | Not recommended | Primary |
+| Dense multi-stock comparison | Not recommended | Primary |
+| Decision journal review surface | Secondary (shortcut only) | Primary |
+
+## Mini App information architecture
+
+### Option A — Card List Layout (adopt now)
+- Phase: current read-only Phase 1.
+- Pattern: vertically stacked cards.
+- Reason: best fit for Telegram Mini App mobile viewport and low cognitive load.
+
+### Option B — Dashboard + Tabs (prepare for medium-term)
+- Introduce after section count increases.
+- Proposed tabs:
+  - 總覽
+  - 信號
+  - 風險
+  - 模擬倉
+  - 回顧
+
+### Option C — Guided Review Flow (defer)
+- Use later in decision-capture phase.
+- Step-by-step review flow for operator decision journaling.
+
+### Current decision
+- Adopt **Option A** now.
+- Prepare docs and transition path for **Option B**.
+- Defer **Option C** until decision-capture phase is explicitly approved.
+
+## Standard Mini App home card order
+1. 今日總覽 / Daily Overview
+2. Latest System Run / 系統運行狀態
+3. Daily Review Summary / 每日檢視摘要
+4. Signals Summary / 信號摘要
+5. Risk Summary / 風險摘要
+6. Paper PnL / 模擬盈虧
+7. Decision Journal / 決策紀錄
+8. Outcome Review / 結果回顧
+
+## Mini App UI/UX wording principles
+- User-facing display language must be primarily **Traditional Chinese**.
+- English may be used only for widely understood technical labels (for example `HKT`, `Paper Trading`).
+- UI text must be understandable for non-technical operators.
+- Prefer user-facing labels over raw backend keys.
+
+### Label translation examples
+- `paper_trade_only` -> `交易模式：只限模擬（Paper Trading）`
+- `review_readiness=partial` -> `檢視狀態：部分完成`
+- `data_timestamp_hkt` -> `資料時間（香港時間）`
+- `updated_at_hkt` -> `更新時間（香港時間）`
+
+### Card-level readability rule (every card must answer)
+1. Current status
+2. What it means
+3. What the operator should review next
+
+### Domain boundary wording rule (every page/card)
+- Must explicitly preserve paper-trading / decision-support-only boundary.
+- Must not imply broker connection, live order placement, or autonomous real-money behavior.
+
+## Standard status wording map (backend value -> display)
+- `ready` -> `已準備好`
+- `partial` -> `部分完成`
+- `unavailable` -> `暫時未有資料`
+- `success` -> `成功`
+- `failed` -> `失敗`
+- `unknown` -> `未知`
+- `true` -> `是`
+- `false` -> `否`
 
 
-### Phase 2 — Decision Capture
-- Add bounded decision-capture forms for human paper decisions/journals only.
-- Preserve no-execution boundary and human-final-decision governance.
-- Require post-deploy acceptance before rollout completion.
+## Phased release roadmap (aligned with responsibility split)
+### Phase 1 — Read-only review shell (current)
+- Keep review surfaces read-only and paper-trading labeled.
+- No decision write path, no order creation, no broker/live execution.
 
-### Phase 3 — AI Team Paper Decision Review
-- Add dedicated review workflows for AI team simulated decisions, outcomes, and discussion context.
-- Keep outputs as decision-support evidence only; no broker/live execution path.
-- Require post-deploy acceptance before rollout completion.
+### Phase 2 — Decision capture (future, bounded)
+- Add bounded human paper decision journal capture only.
+- Keep execution boundary explicit: no broker/live execution.
 
-### Phase 4 — Controlled Simulated Order Creation
-- Allow controlled simulated-order creation only after risk-gate checks and full metadata capture.
-- Required metadata: `strategy_version`, `data_source`, `data_timestamp`, `risk_check`, `paper_trade_only=true`.
-- Require post-deploy acceptance before rollout completion.
+### Phase 3 — AI team paper decision review (future)
+- Add richer review and discussion surfaces for simulated decision quality.
+- Keep outputs as decision-support evidence only.
 
-## Global UI governance rules
-- Every phase requires explicit post-deploy acceptance.
-- UI must clearly label paper/simulation status to avoid live-trading interpretation risk.
-- No UI phase may introduce broker integration or real-money autonomous execution.
+### Phase 4 — Controlled simulated order creation (future, gated)
+- Allow only controlled simulated-order creation after risk-gate + metadata completeness checks.
+- Required fields remain: `strategy_version`, `data_source`, `data_timestamp`, `risk_check`, `paper_trade_only=true`.
+
+## Security and boundary reminders
+- Mini App frontend must never hold Supabase service/secret keys.
+- Telegram `initData` validation must remain backend-side before data access.
+- Backend writes/privileged reads after RLS must use backend secret/service-role key class only.
+- No product surface may introduce broker/live execution semantics.

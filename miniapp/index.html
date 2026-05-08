@@ -111,9 +111,6 @@
             throw new Error("missing_latest_system_run_section");
           }
           const dailySummary = payload && payload.sections && payload.sections.daily_review_summary;
-          if (!dailySummary) {
-            throw new Error("missing_daily_review_summary_section");
-          }
 
           if (section.status !== "ok") {
             statusNode.textContent = section.reason || "latest bounded row is not available yet";
@@ -121,8 +118,8 @@
             statusNode.textContent = "Latest System Run loaded.";
             renderFieldList(section);
           }
-          if (dailySummary.status !== "ok") {
-            dailyStatusNode.textContent = dailySummary.reason || "daily review summary is not available yet";
+          if (!dailySummary || dailySummary.status !== "ok") {
+            dailyStatusNode.textContent = (dailySummary && dailySummary.reason) || "daily review summary is not available yet";
           } else {
             dailyStatusNode.textContent = "Daily Review Summary loaded.";
             renderDailyReviewSummaryFieldList(dailySummary);

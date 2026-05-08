@@ -57,6 +57,8 @@ def test_step92c_review_shell_static_contract() -> None:
     assert re.search(r"Telegram\.WebApp\.initData", html)
     assert "`${apiBaseUrl}/miniapp/api/review-shell`" in html
     assert "return;" not in html.split("if (section.status !== \"ok\")", 1)[1].split("if (dailySummary.status !== \"ok\")", 1)[0]
+    assert "missing_daily_review_summary_section" not in html
+    assert "daily review summary is not available yet" in html
 
 
 def test_step92c_runtime_config_container_contract() -> None:

@@ -236,8 +236,6 @@ def create_wsgi_app() -> Any:
         response_headers: list[tuple[str, str]] = []
 
         if path == "/miniapp/api/review-shell" and method == "OPTIONS":
-            status = "204 No Content"
-            payload = {}
             if allow_cors_origin:
                 response_headers.extend(
                     [
@@ -247,6 +245,8 @@ def create_wsgi_app() -> Any:
                         ("Vary", "Origin"),
                     ]
                 )
+            start_response("204 No Content", response_headers)
+            return [b""]
         elif path not in {"/telegram/webhook", "/miniapp/api/review-shell"}:
             status = "404 Not Found"
             payload = {"ok": False, "error": "not_found"}

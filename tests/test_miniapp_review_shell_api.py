@@ -36,7 +36,10 @@ def _call(path: str, method: str, body: bytes, *, content_type: str | None = "ap
         captured["headers"] = headers
 
     response = app(environ, _start_response)
-    return captured["status"], dict(captured["headers"]), json.loads(response[0].decode("utf-8"))
+    raw_body = b"".join(response)
+    if raw_body == b"":
+        return captured["status"], dict(captured["headers"]), raw_body
+    return captured["status"], dict(captured["headers"]), json.loads(raw_body.decode("utf-8"))
 
 
 def _authorized_request(monkeypatch):
@@ -271,11 +274,25 @@ def test_miniapp_review_shell_cors_options_allowed_origin(monkeypatch):
         origin="https://miniapp.example.com",
     )
     assert status.startswith("204")
-    assert payload == {}
+    assert payload == b""
     assert headers["Access-Control-Allow-Origin"] == "https://miniapp.example.com"
     assert headers["Access-Control-Allow-Methods"] == "POST, OPTIONS"
     assert headers["Access-Control-Allow-Headers"] == "Content-Type"
     assert headers["Vary"] == "Origin"
+
+
+def test_miniapp_review_shell_cors_options_disallowed_origin(monkeypatch):
+    monkeypatch.setenv("MINIAPP_ALLOWED_ORIGIN", "https://miniapp.example.com")
+    status, headers, payload = _call(
+        "/miniapp/api/review-shell",
+        "OPTIONS",
+        b"",
+        content_type=None,
+        origin="https://other.example.com",
+    )
+    assert status.startswith("204")
+    assert payload == b""
+    assert "Access-Control-Allow-Origin" not in headers
 
 
 def test_miniapp_review_shell_cors_post_allowed_origin_missing_init_data(monkeypatch):

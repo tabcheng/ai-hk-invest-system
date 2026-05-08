@@ -88,3 +88,4 @@ Write integration is best-effort from paper daily runner completion and does not
 - Telegram response is bounded to safe summary fields only and must not include raw Supabase errors, secrets, tokens, initData, allowlist identifiers, vendor payloads, or raw logs.
 - On missing row: bounded unavailable/no-data response. On lookup failure: bounded operator-safe failure response.
 - Step 92C: Mini App now fetches backend POST /miniapp/api/review-shell and displays read-only latest_system_run card from latest_system_runs with server-side initData validation + operator allowlist authorization + HKT display fields only; no frontend Supabase direct read/write, no decision capture/order creation/broker/live execution.
+- Step 92D: Mini App backend read model can derive read-only `daily_review_summary` from the same bounded latest-state row (`source=paper_daily_runner`) plus safe defaults/unavailable fallback; this remains latest-state projection only and not an audit ledger.

@@ -396,3 +396,5 @@
 - Step 92C routing note: Mini App static frontend must use non-secret MINIAPP_API_BASE_URL (telegram-webhook public URL) when frontend/backend are different origins; same-origin default is local/dev only.
 - Step 92C-1: fixed split-service Mini App routing/runtime config by adding static runtime `/config.js` injection (from non-secret `MINIAPP_API_BASE_URL`) so deployed `miniapp-static-preview` posts to `telegram-webhook` instead of same-origin static host.
 - Step 92C-1 CORS boundary: backend `telegram-webhook` now supports `MINIAPP_ALLOWED_ORIGIN` for `OPTIONS/POST /miniapp/api/review-shell` with exact-origin allow policy (`Access-Control-Allow-Origin`, `POST, OPTIONS`, `Content-Type`, `Vary: Origin`), preserving auth/initData validation and operator allowlist checks.
+- Step 92D: Mini App review-shell now includes `sections.daily_review_summary` from backend bounded read model anchored on `latest_system_runs` existing data only; no schema/migration/write-path changes.
+- Step 92D: Mini App frontend now displays read-only **Daily Review Summary** card below **Latest System Run**, with HKT-only display fields and explicit paper-trade-only boundary wording.

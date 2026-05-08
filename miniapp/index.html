@@ -16,6 +16,11 @@
       <p id="latest-system-run-status">Loading...</p>
       <dl id="latest-system-run-fields"></dl>
     </section>
+    <section>
+      <h2>Daily Review Summary</h2>
+      <p id="daily-review-summary-status">Loading...</p>
+      <dl id="daily-review-summary-fields"></dl>
+    </section>
 
     <section>
       <h2>Security / Auth TODO</h2>
@@ -58,9 +63,39 @@
         });
       }
 
+      function renderDailyReviewSummaryFieldList(section) {
+        const fields = document.getElementById("daily-review-summary-fields");
+        fields.textContent = "";
+        const orderedFields = [
+          ["business_date", section.business_date],
+          ["runner_status", section.runner_status],
+          ["run_id", section.run_id],
+          ["data_timestamp_hkt", section.data_timestamp_hkt],
+          ["updated_at_hkt", section.updated_at_hkt],
+          ["paper_trade_only", section.paper_trade_only],
+          ["review_readiness", section.review_readiness],
+          ["processed_tickers", section.processed_tickers],
+          ["successful_tickers", section.successful_tickers],
+          ["failed_tickers", section.failed_tickers],
+          ["available_sections", (section.available_sections || []).join(", ")],
+          ["unavailable_sections", (section.unavailable_sections || []).join(", ")],
+          ["operator_note", section.operator_note],
+          ["boundary", section.boundary],
+        ];
+        orderedFields.forEach(([key, value]) => {
+          const dt = document.createElement("dt");
+          dt.textContent = key;
+          const dd = document.createElement("dd");
+          dd.textContent = String(value ?? "");
+          fields.appendChild(dt);
+          fields.appendChild(dd);
+        });
+      }
+
       async function loadReviewShell() {
         const initData = (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initData) || "";
         const statusNode = document.getElementById("latest-system-run-status");
+        const dailyStatusNode = document.getElementById("daily-review-summary-status");
         const apiBaseUrl = resolveApiBaseUrl();
         const reviewShellUrl = `${apiBaseUrl}/miniapp/api/review-shell`;
 
@@ -75,16 +110,26 @@
           if (!section) {
             throw new Error("missing_latest_system_run_section");
           }
+          const dailySummary = payload && payload.sections && payload.sections.daily_review_summary;
+          if (!dailySummary) {
+            throw new Error("missing_daily_review_summary_section");
+          }
 
           if (section.status !== "ok") {
             statusNode.textContent = section.reason || "latest bounded row is not available yet";
-            return;
+          } else {
+            statusNode.textContent = "Latest System Run loaded.";
+            renderFieldList(section);
           }
-
-          statusNode.textContent = "Latest System Run loaded.";
-          renderFieldList(section);
+          if (dailySummary.status !== "ok") {
+            dailyStatusNode.textContent = dailySummary.reason || "daily review summary is not available yet";
+          } else {
+            dailyStatusNode.textContent = "Daily Review Summary loaded.";
+            renderDailyReviewSummaryFieldList(dailySummary);
+          }
         } catch (_error) {
           statusNode.textContent = "latest_system_run is temporarily unavailable";
+          dailyStatusNode.textContent = "daily_review_summary is temporarily unavailable";
         }
       }
 

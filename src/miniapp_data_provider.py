@@ -28,6 +28,9 @@ class MiniAppReadDataProvider(Protocol):
     def get_latest_system_run_summary(self) -> dict[str, Any]:
         """Return bounded latest-system-run contract for Mini App latest_system_run section."""
 
+    def get_daily_review_summary(self) -> dict[str, Any]:
+        """Return bounded daily-review-summary contract for Mini App daily_review_summary section."""
+
 
 class RailwayRuntimeEnvMiniAppReadDataProvider:
     """Bounded internal provider backed by Railway runtime environment metadata only."""
@@ -87,6 +90,14 @@ class RailwayRuntimeEnvMiniAppReadDataProvider:
             "data_timestamp_hkt": None,
             "summary": None,
             "limitations": ["No production data source configured in Step 86."],
+        }
+
+    def get_daily_review_summary(self) -> dict[str, Any]:
+        return {
+            "status": "unavailable",
+            "source": "daily_review_read_model",
+            "reason": "daily review summary is not available yet",
+            "boundary": "read-only review surface; no decision capture, no order creation, no broker/live execution",
         }
 
 
@@ -165,6 +176,46 @@ class SupabaseLatestSystemRunMiniAppReadDataProvider(RailwayRuntimeEnvMiniAppRea
             "processed_tickers": _safe_int_counter(summary.get("processed_tickers")),
             "successful_tickers": _safe_int_counter(summary.get("successful_tickers")),
             "failed_tickers": _safe_int_counter(summary.get("failed_tickers")),
+            "boundary": boundary,
+        }
+
+    def get_daily_review_summary(self) -> dict[str, Any]:
+        boundary = "read-only review surface; no decision capture, no order creation, no broker/live execution"
+        unavailable = {
+            "status": "unavailable",
+            "source": "daily_review_read_model",
+            "reason": "daily review summary is not available yet",
+            "boundary": boundary,
+        }
+        if self._client is None:
+            return unavailable
+
+        from src.latest_system_runs_repository import get_latest_system_run
+        try:
+            row = get_latest_system_run(self._client, source="paper_daily_runner")
+        except Exception:
+            return unavailable
+        if not isinstance(row, dict) or not row:
+            return unavailable
+        summary = row.get("summary_json") if isinstance(row.get("summary_json"), dict) else {}
+        if summary.get("paper_trade_only") is not True:
+            return unavailable
+        return {
+            "status": "ok",
+            "source": "daily_review_read_model",
+            "business_date": str(row.get("business_date") or ""),
+            "run_id": str(row.get("run_id") or ""),
+            "runner_status": str(row.get("status") or "unknown"),
+            "data_timestamp_hkt": _format_hkt_display(row.get("data_timestamp")),
+            "updated_at_hkt": _format_hkt_display(row.get("updated_at")),
+            "paper_trade_only": True,
+            "review_readiness": "ready",
+            "processed_tickers": _safe_int_counter(summary.get("processed_tickers")),
+            "successful_tickers": _safe_int_counter(summary.get("successful_tickers")),
+            "failed_tickers": _safe_int_counter(summary.get("failed_tickers")),
+            "available_sections": ["latest_system_run"],
+            "unavailable_sections": ["signals", "paper_pnl", "risk"],
+            "operator_note": "Read-only daily review summary; human final decision remains outside system.",
             "boundary": boundary,
         }
 

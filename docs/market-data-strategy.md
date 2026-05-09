@@ -36,3 +36,5 @@
 - No vendor SDK boundary or market-data freshness semantics are changed in this step.
 
 - Step 119 implementation note: Mini App decision context uses existing-source-only market context contract; no new vendor adapter/SDK added in strategy path. Provider output is bounded (`ok/partial/unavailable`) and includes source/timestamp/freshness/limitations fields.
+
+- Step 120 planned: Mini App segmented tabs (今日/信號/Context/Journal), conservative readiness=不足 for no-market-data state, Chinese-first missing context; no vendor/broker/live execution changes.

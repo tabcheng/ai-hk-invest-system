@@ -297,3 +297,5 @@ No broker integration or autonomous real-money execution is authorized by this p
 - Journal write contract remains existing `/miniapp/api/human-paper-decision`; no schema migration and no auth boundary change.
 
 - Step 119 boundary refinement: `decision_context_summary` is read-only bounded projection; raw provider payload/exception details/secrets/initData are excluded. Market data unavailable does not fail full review-shell response.
+
+- Step 120 planned: Mini App segmented tabs (今日/信號/Context/Journal), conservative readiness=不足 for no-market-data state, Chinese-first missing context; no vendor/broker/live execution changes.

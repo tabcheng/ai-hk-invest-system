@@ -518,3 +518,5 @@ Proposed table: `human_decision_journal_entries` with draft columns:
 - Boundary unchanged: paper-trading decision-support only; no broker/live execution/order creation/simulated-order creation.
 
 - Step 119: Mini App decision context now supports read-only `decision_context_summary` with explicit market-data availability status; unavailable fields must remain explicit and must not be fabricated.
+
+- Step 120 planned: Mini App segmented tabs (今日/信號/Context/Journal), conservative readiness=不足 for no-market-data state, Chinese-first missing context; no vendor/broker/live execution changes.

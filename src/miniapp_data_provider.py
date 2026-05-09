@@ -690,7 +690,7 @@ class SupabaseLatestSystemRunMiniAppReadDataProvider(RailwayRuntimeEnvMiniAppRea
             "business_date": str(row.get("business_date") or ""),
             "data_timestamp_hkt": signals.get("data_timestamp_hkt"),
             "source": "review_shell_decision_context",
-            "context_readiness": "partial",
+            "context_readiness": "insufficient",
             "tickers": tickers,
             "global_limitations": [
                 "Market data fields unavailable from current bounded read sources."

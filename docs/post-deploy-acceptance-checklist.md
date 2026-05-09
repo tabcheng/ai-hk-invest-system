@@ -191,3 +191,5 @@ Step 91A recorded result (PR #88):
 - [ ] Confirm no broker/live execution/real-money/order creation action wording appears.
 
 - Step 119 add: verify `decision_context_summary` rendered for selected ticker, readiness chip uses `不足/部分/基本`, and no broker/live execution/order wording appears.
+
+- Step 120 planned: Mini App segmented tabs (今日/信號/Context/Journal), conservative readiness=不足 for no-market-data state, Chinese-first missing context; no vendor/broker/live execution changes.

@@ -477,3 +477,5 @@
 - Decision Context Pack now surfaces per-selected-ticker grouped Signal/Market Data/Paper Position-Risk/Missing Context with explicit readiness chip (`不足/部分/基本`) and paper-only wording.
 - Market fields include source/timestamp/freshness/adjustment/confidence slots; when unavailable, UI/API return explicit unavailable (no invented values).
 - Boundaries preserved: no broker/live execution, no real-money path, no order/simulated-order creation, no Supabase schema migration, no frontend secrets/vendor keys.
+
+- Step 120 planned: Mini App segmented tabs (今日/信號/Context/Journal), conservative readiness=不足 for no-market-data state, Chinese-first missing context; no vendor/broker/live execution changes.

@@ -156,10 +156,17 @@ def _handle_miniapp_human_paper_decision_request(raw_body: bytes) -> tuple[str, 
     if confidence_label is not None and str(confidence_label).strip().lower() not in ALLOWED_MINIAPP_CONFIDENCE:
         return "400 Bad Request", {"ok": False, "error": "invalid_confidence_label"}
     quantity_intent = payload.get("quantity_intent")
-    if quantity_intent is not None and (not isinstance(quantity_intent, int) or quantity_intent < 0 or quantity_intent > 1_000_000):
+    if quantity_intent is not None and (
+        isinstance(quantity_intent, bool)
+        or not isinstance(quantity_intent, int)
+        or quantity_intent < 0
+        or quantity_intent > 1_000_000
+    ):
         return "400 Bad Request", {"ok": False, "error": "invalid_quantity_intent"}
     notional_intent = payload.get("notional_intent")
     if notional_intent is not None and (
+        isinstance(notional_intent, bool)
+        or
         not isinstance(notional_intent, (int, float)) or notional_intent < 0 or notional_intent > 1_000_000_000
     ):
         return "400 Bad Request", {"ok": False, "error": "invalid_notional_intent"}
@@ -176,7 +183,7 @@ def _handle_miniapp_human_paper_decision_request(raw_body: bytes) -> tuple[str, 
             ticker=ticker,
             decision_type=decision_type,
             rationale_text=rationale_text,
-            operator_user_id_hash_or_label=_build_operator_label_from_telegram_user_id(operator.get("user_id")),
+            operator_user_id_hash_or_label=_build_operator_label_from_telegram_user_id(operator.get("telegram_user_id")),
             confidence_label=(str(confidence_label).strip().lower() if confidence_label is not None else None),
             quantity_intent=quantity_intent,
             notional_intent=notional_intent,

@@ -34,7 +34,9 @@ def test_human_paper_decision_validation_and_bounded_success(monkeypatch):
     assert payload["paper_trade_only"] is True
     assert captured["operator_user_id_hash_or_label"].startswith("tg_user_hash:")
     assert "42" not in captured["operator_user_id_hash_or_label"]
+    assert captured["operator_user_id_hash_or_label"] != "tg_user_hash:unknown"
     assert "init_data" not in captured
+    assert "MINIAPP_ALLOWED_TELEGRAM_USER_IDS" not in json.dumps(captured)
 
 
 def test_human_paper_decision_rejects_invalid_decision_type(monkeypatch):
@@ -70,6 +72,20 @@ def test_human_paper_decision_rejects_invalid_quantity_and_notional(monkeypatch)
 
     body = json.loads(_decision_body(monkeypatch).decode())
     body["notional_intent"] = -1
+    status, _, payload = _call("/miniapp/api/human-paper-decision", "POST", json.dumps(body).encode())
+    assert status.startswith("400")
+    assert payload["error"] == "invalid_notional_intent"
+
+
+def test_human_paper_decision_rejects_bool_numeric_intents(monkeypatch):
+    body = json.loads(_decision_body(monkeypatch).decode())
+    body["quantity_intent"] = True
+    status, _, payload = _call("/miniapp/api/human-paper-decision", "POST", json.dumps(body).encode())
+    assert status.startswith("400")
+    assert payload["error"] == "invalid_quantity_intent"
+
+    body = json.loads(_decision_body(monkeypatch).decode())
+    body["notional_intent"] = False
     status, _, payload = _call("/miniapp/api/human-paper-decision", "POST", json.dumps(body).encode())
     assert status.startswith("400")
     assert payload["error"] == "invalid_notional_intent"

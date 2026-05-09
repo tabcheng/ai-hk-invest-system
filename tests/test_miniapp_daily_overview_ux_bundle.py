@@ -12,43 +12,8 @@ def _extract_inline_script_source() -> str:
     return INDEX_HTML[start:end]
 
 
-def _render_with_sample_payload() -> dict[str, object]:
+def _render_with_sample_payload(payload: dict[str, object]) -> dict[str, object]:
     script_source = _extract_inline_script_source()
-    payload = {
-        "sections": {
-            "latest_system_run": {
-                "status": "ok",
-                "runner_status": "ok",
-                "business_date": "2026-05-08",
-                "data_timestamp_hkt": "2026-05-08 20:00:00 HKT",
-                "run_id": "run-113",
-                "processed_tickers": 10,
-                "successful_tickers": 8,
-                "failed_tickers": 2,
-            },
-            "signals_summary": {
-                "status": "ok",
-                "review_readiness": "ok",
-                "business_date": "2026-05-08",
-                "data_timestamp_hkt": "2026-05-08 20:00:00 HKT",
-                "covered_tickers": 3,
-                "shown_signals": 3,
-                "shown_positive_signals": 1,
-                "shown_neutral_signals": 1,
-                "shown_negative_signals": 1,
-                "shown_unknown_signals": 0,
-                "top_items": [],
-            },
-            "daily_review_summary": {
-                "status": "ok",
-                "review_readiness": "partial",
-                "available_sections": ["latest_system_run"],
-                "unavailable_sections": ["signals", "paper_pnl", "risk"],
-            },
-            "paper_pnl_summary": {"status": "unavailable"},
-            "risk_summary": {"status": "unavailable"},
-        }
-    }
 
     node_script = f"""
 const payload = {json.dumps(payload)};
@@ -123,10 +88,22 @@ globalThis.fetch = fetch;
     return json.loads(run.stdout)
 
 
+def _base_sections() -> dict[str, object]:
+    return {
+        "latest_system_run": {"status": "ok", "runner_status": "success", "business_date": "2026-05-08", "data_timestamp_hkt": "2026-05-08 20:00:00 HKT", "run_id": "run-113", "processed_tickers": 10, "successful_tickers": 8, "failed_tickers": 2},
+        "signals_summary": {"status": "ok", "review_readiness": "ok", "business_date": "2026-05-08", "data_timestamp_hkt": "2026-05-08 20:00:00 HKT", "covered_tickers": 3, "shown_signals": 3, "shown_positive_signals": 1, "shown_neutral_signals": 1, "shown_negative_signals": 1, "shown_unknown_signals": 0, "top_items": []},
+        "daily_review_summary": {"status": "ok", "review_readiness": "partial", "available_sections": ["latest_system_run"], "unavailable_sections": ["signals", "paper_pnl", "risk"]},
+        "paper_pnl_summary": {"status": "unavailable"},
+        "risk_summary": {"status": "unavailable"},
+    }
+
+
 def test_status_hierarchy_labels_present() -> None:
     assert "System Run Status" in INDEX_HTML
     assert "Daily Review Coverage" in INDEX_HTML
     assert "部分完成表示部分檢視區塊仍未有資料，並不代表最新系統運行失敗" in INDEX_HTML
+    assert "今日主要檢視區塊已載入；內容只供模擬交易檢視及決策支援。" in INDEX_HTML
+    assert "每日檢視暫時未完整載入；請先檢查最新系統運行狀態。" in INDEX_HTML
 
 
 def test_data_availability_card_wording_present() -> None:
@@ -140,7 +117,7 @@ def test_data_availability_card_wording_present() -> None:
 
 
 def test_render_level_daily_summary_availability_consistency() -> None:
-    rendered = _render_with_sample_payload()
+    rendered = _render_with_sample_payload({"sections": _base_sections()})
 
     assert rendered["daily_has_signals"] is True
     assert rendered["daily_missing_has_signals"] is False
@@ -157,6 +134,34 @@ def test_render_level_daily_summary_availability_consistency() -> None:
     assert "submit" not in full_text
     assert "order" not in full_text
     assert "broker" not in full_text
+
+
+def test_ready_copy_and_no_empty_missing_chip_area() -> None:
+    sections = _base_sections()
+    sections["daily_review_summary"] = {"status": "ok", "available_sections": ["latest_system_run", "signals", "paper_pnl", "risk"], "unavailable_sections": []}
+    sections["paper_pnl_summary"] = {"status": "ok", "currency": "HKD", "total_positions": 1, "open_positions": 1, "closed_positions": 0, "realized_pnl": 0, "unrealized_pnl": 1, "total_pnl": 1, "data_timestamp_hkt": "2026-05-08 20:00:00 HKT", "limitations": ["bounded"]}
+    sections["risk_summary"] = {"status": "ok", "risk_level": "low", "warnings": [], "limitations": ["bounded"], "data_timestamp_hkt": "2026-05-08 20:00:00 HKT"}
+    rendered = _render_with_sample_payload(
+        {"sections": sections}
+    )
+    full_text = str(rendered["full_render_text"])
+    assert "今日主要檢視區塊已載入；內容只供模擬交易檢視及決策支援。" in full_text
+    assert "暫無缺失區塊" in full_text
+    assert "未有資料信號摘要" not in full_text
+    assert "以上為模擬 / paper-trading 盈虧" in full_text
+    assert "貨幣HKD" in full_text
+    assert "資料時間：" in full_text
+    assert "風險摘要只供 review，不會自動阻止或建立任何真實交易。" in full_text
+    assert "暫無風險警示" in full_text
+
+
+def test_unavailable_coverage_copy_present() -> None:
+    sections = _base_sections()
+    sections["latest_system_run"] = {"status": "unavailable"}
+    sections["signals_summary"] = {"status": "unavailable"}
+    sections["daily_review_summary"] = {"status": "ok", "available_sections": [], "unavailable_sections": []}
+    rendered = _render_with_sample_payload({"sections": sections})
+    assert "每日檢視暫時未完整載入；請先檢查最新系統運行狀態。" in str(rendered["full_render_text"])
 
 
 def test_layout_polish_rows_and_timestamp_wrap_guard_present() -> None:

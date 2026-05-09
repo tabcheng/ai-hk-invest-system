@@ -452,3 +452,10 @@
 - Step 115 completed: `sections.daily_review_summary` availability now reflects PnL/risk section status (`paper_pnl`, `risk`) while preserving latest-run success semantics and partial readiness behavior.
 - Step 115 completed: Mini App UI adds read-only cards for **模擬盈虧摘要** and **風險摘要**; unavailable states render as `未有資料` (not failure), and shown values are explicitly paper/review context only.
 - Step 115 boundary preserved: no broker/live execution, no order/decision submission path, no write-path expansion, no Supabase schema migration.
+
+## 2026-05-09 — Step 116 Daily Review Dashboard Completion Bundle
+- Step 115 post-deploy smoke passed (`UI build=584aa88`, `Deployed build=584aa88`).
+- Step 116 completed: Daily Overview helper copy now differentiates `ready` / `partial` / `unavailable` coverage states and keeps explicit text labels (not color-only).
+- Step 116 completed: Daily Summary no longer renders empty `未有資料` chip area when `unavailable_sections=[]`; ready path shows neutral `暫無缺失區塊`.
+- Step 116 completed: Paper PnL and Risk cards now include richer read-only context (Paper/模擬 helper copy, currency/timestamp/limitations, risk warnings neutral/explicit list).
+- Step 116 boundary preserved: read-only only, paper-trading only, decision-support only; no broker/live execution, no real-money execution, no order creation, no decision capture, no write-path expansion, no Supabase schema migration.

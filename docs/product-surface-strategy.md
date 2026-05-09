@@ -176,3 +176,13 @@ Mini App should **not**:
 - Risk/PnL display remains review-only paper-trading context; no order placement, no broker integration, no live-money execution semantics.
 - Runtime config injection remains frontend read-only (`/config.js`) and must not include secrets/initData/allowlist identifiers.
 - Static hosting cache posture for `index.html` and `config.js` is revalidation-oriented to reduce stale shell/config risk after deploy.
+
+## Step 116 Daily Review dashboard completion (read-only UX polish)
+- `Daily Review Coverage` copy policy:
+  - `ready`: `今日主要檢視區塊已載入；內容只供模擬交易檢視及決策支援。`
+  - `partial`: keep existing non-failure interpretation copy.
+  - `unavailable`: `每日檢視暫時未完整載入；請先檢查最新系統運行狀態。`
+- `每日檢視摘要` missing section policy:
+  - if no missing sections, do not render empty `未有資料` chip area; show neutral `暫無缺失區塊`.
+  - if missing sections exist, render bounded chips.
+- PnL/Risk cards remain read-only paper-review evidence surfaces only; wording must not imply real-money execution or trade instruction.

@@ -165,3 +165,12 @@ Step 91A recorded result (PR #88):
 - [ ] 確認顯示為 HKT 欄位語意，並保留「模擬/非買賣指示」邊界文字。
 - [ ] 確認未暴露 secrets、raw initData、allowlist/chat/user IDs。
 - [ ] 確認無 write path / decision capture / order creation / broker/live execution。
+
+## Step 116 Post-deploy smoke (required)
+- [ ] 確認 `UI build` 與 `Deployed build` 可見，且與本次 merge commit 一致。
+- [ ] 確認 `Daily Review Coverage=已準備好` 時顯示 ready copy（不是 partial copy）。
+- [ ] 確認 `每日檢視摘要` 在無缺失區塊時不顯示空白 missing chip area（可見 `暫無缺失區塊`）。
+- [ ] 確認 PnL 卡有 Paper/模擬語境（非真實戶口語意），且有貨幣/資料時間（如資料提供）。
+- [ ] 確認 Risk 卡有 review-only 語境；warnings 空時顯示中性文案 `暫無風險警示`。
+- [ ] 確認安全邊界說明仍可見。
+- [ ] 確認無 broker/live execution/real-money/order/submit 文案。

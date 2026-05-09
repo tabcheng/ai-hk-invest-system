@@ -411,3 +411,12 @@ Use this checklist when reviewing Mini App read-only surfaces:
 - Verify 「每日檢視摘要」**不會**把「信號摘要」同時列在「未有資料」(when signals summary status is ok).
 - Verify `PnL / risk` remains shown as 「未有資料」when backend still reports unavailable.
 - Verify safety boundary copy remains visible (paper-only, no broker/live execution).
+
+## Step 116 — Daily Review dashboard completion smoke additions
+- Verify `Daily Review Coverage=已準備好` 時，Overview 顯示 ready copy（不是 partial copy）。
+- Verify `Daily Review Coverage=部分完成` 時，保留 partial 說明文案。
+- Verify coverage unavailable 路徑顯示 operator-friendly unavailable copy。
+- Verify `每日檢視摘要` 在 `unavailable_sections=[]` 時不會顯示空白 `未有資料` chips（可顯示 `暫無缺失區塊`）。
+- Verify PnL card 顯示 Paper/模擬 helper text、貨幣（例如 HKD）及資料時間（如有）。
+- Verify Risk card 顯示 review-only helper text；warnings 空時顯示 `暫無風險警示`，有值時為 bounded list。
+- Verify no broker/live execution/real-money/order/submit wording appears.

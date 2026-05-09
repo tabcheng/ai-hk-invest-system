@@ -4,6 +4,7 @@ import io
 import json
 from urllib.parse import urlencode
 
+from src.miniapp_data_provider import SupabaseLatestSystemRunMiniAppReadDataProvider
 from src.telegram_webhook_server import MINIAPP_REVIEW_SHELL_MAX_BODY_BYTES, create_wsgi_app
 
 FAKE_BOT_TOKEN = "123456:TEST_FAKE_BOT_TOKEN"
@@ -681,3 +682,106 @@ def test_miniapp_review_shell_signals_summary_requires_matching_run_id(monkeypat
     assert ("date", "2026-05-06") in query.filters
     assert ("run_id", 42) in query.filters
     assert section["status"] == "unavailable"
+
+def test_miniapp_review_shell_decision_context_summary_partial_with_unavailable_market_data(monkeypatch):
+    monkeypatch.setenv("TELEGRAM_BOT_TOKEN", FAKE_BOT_TOKEN)
+    monkeypatch.setenv("MINIAPP_ALLOWED_TELEGRAM_USER_IDS", "42")
+    monkeypatch.setattr("src.miniapp_auth.time.time", lambda: NOW_TS)
+
+    class _Result:
+        def __init__(self, data):
+            self.data = data
+
+    class _Query:
+        def select(self, *_a, **_k): return self
+        def eq(self, *_a, **_k): return self
+        def order(self, *_a, **_k): return self
+        def limit(self, *_a, **_k): return self
+        def execute(self):
+            return _Result([{"stock": "0700.HK", "signal": "BUY", "reason": "momentum"}])
+
+    class _Client:
+        def table(self, name):
+            assert name == "signals"
+            return _Query()
+
+    monkeypatch.setattr("src.telegram_webhook_server._load_supabase_client", lambda: _Client())
+    monkeypatch.setattr(
+        "src.latest_system_runs_repository.get_latest_system_run",
+        lambda client, source="paper_daily_runner": {
+            "business_date": "2026-05-06",
+            "run_id": 42,
+            "status": "success",
+            "data_timestamp": "2026-05-06T01:02:03+00:00",
+            "updated_at": "2026-05-06T01:03:03+00:00",
+            "summary_json": {"paper_trade_only": True},
+        },
+    )
+
+    status, _headers, payload = _call("/miniapp/api/review-shell", "POST", _authorized_request(monkeypatch))
+    assert status.startswith("200")
+    section = payload["sections"]["decision_context_summary"]
+    assert section["status"] == "partial"
+    assert section["context_readiness"] == "partial"
+    assert section["tickers"][0]["market"]["status"] == "unavailable"
+    assert "strategy_version missing" in section["tickers"][0]["missing_context"]
+
+def test_decision_context_reuses_cached_signals_and_risk_summaries(monkeypatch):
+    class _Result:
+        def __init__(self, data):
+            self.data = data
+
+    class _Query:
+        def __init__(self, counter):
+            self.counter = counter
+        def select(self, *_a, **_k): return self
+        def eq(self, *_a, **_k): return self
+        def order(self, *_a, **_k): return self
+        def limit(self, *_a, **_k): return self
+        def execute(self):
+            self.counter["signals_query"] += 1
+            return _Result([{"stock": "0700.HK", "signal": "BUY", "reason": "ok"}])
+
+    class _Client:
+        def __init__(self, counter):
+            self.counter = counter
+        def table(self, name):
+            assert name == "signals"
+            return _Query(self.counter)
+
+    counter = {"signals_query": 0, "risk_helper": 0}
+
+    def _risk_helper(_client, run_id):
+        counter["risk_helper"] += 1
+        return {"total_blocked_buys": 0, "total_warning_buys": 1, "total_executed_buys": 1}
+
+    monkeypatch.setattr("src.paper_trading.get_paper_risk_review_for_run", _risk_helper)
+
+    monkeypatch.setattr(
+        "src.latest_system_runs_repository.get_latest_system_run",
+        lambda client, source="paper_daily_runner": {
+            "business_date": "2026-05-06",
+            "run_id": 42,
+            "status": "success",
+            "data_timestamp": "2026-05-06T01:02:03+00:00",
+            "updated_at": "2026-05-06T01:03:03+00:00",
+            "summary_json": {"paper_trade_only": True},
+        },
+    )
+    provider = SupabaseLatestSystemRunMiniAppReadDataProvider(client=_Client(counter))
+
+    signals = provider.get_signals_summary()
+    risk = provider.get_risk_summary()
+    decision_context = provider.get_decision_context_summary()
+
+    assert signals["status"] == "ok"
+    assert risk["status"] == "ok"
+    assert decision_context["status"] == "partial"
+    assert counter["signals_query"] == 1
+    assert counter["risk_helper"] == 1
+    assert decision_context["tickers"][0]["signal"]["direction"] == signals["top_items"][0]["signal_label"]
+    assert decision_context["tickers"][0]["risk"]["risk_level"] == risk["risk_level"]
+    assert "raw_rows" not in decision_context
+    assert "exception" not in decision_context
+    assert "broker_execution" not in decision_context
+    assert "order_creation" not in decision_context

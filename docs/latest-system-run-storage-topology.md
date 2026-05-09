@@ -108,3 +108,5 @@ Proposed internal table: `latest_system_runs`
 - `latest_system_runs` remains a bounded latest-state surface for operator/product read models, not a full event/audit ledger.
 - System-of-record audit trail remains in `runs`, paper-trading records, and decision records tables.
 - Telegram webhook read integration and Mini App frontend read-only fetch are explicitly deferred.
+
+- Step 119 note: storage topology unchanged; decision-context enrichment remains bounded to existing latest run + internal read models, with market fields marked unavailable when no canonical source is present.

@@ -516,3 +516,5 @@ Proposed table: `human_decision_journal_entries` with draft columns:
 - Journal pre-submit area includes bounded Decision Context Pack from existing payload only (signal direction/confidence/reason/timestamp; paper PnL/risk when available).
 - Missing data must be explicitly labeled `未有資料 / not available yet`; no invention of price/liquidity/fundamentals/news/valuation/position exposure.
 - Boundary unchanged: paper-trading decision-support only; no broker/live execution/order creation/simulated-order creation.
+
+- Step 119: Mini App decision context now supports read-only `decision_context_summary` with explicit market-data availability status; unavailable fields must remain explicit and must not be fabricated.

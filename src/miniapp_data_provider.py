@@ -40,6 +40,9 @@ class MiniAppReadDataProvider(Protocol):
     def get_risk_summary(self) -> dict[str, Any]:
         """Return bounded risk-summary contract for Mini App risk_summary section."""
 
+    def get_decision_context_summary(self) -> dict[str, Any]:
+        """Return bounded per-ticker decision context summary for review-shell."""
+
 
 class RailwayRuntimeEnvMiniAppReadDataProvider:
     """Bounded internal provider backed by Railway runtime environment metadata only."""
@@ -156,6 +159,18 @@ class RailwayRuntimeEnvMiniAppReadDataProvider:
             "limitations": ["No production risk summary read model configured yet."],
         }
 
+    def get_decision_context_summary(self) -> dict[str, Any]:
+        return {
+            "status": "unavailable",
+            "paper_trade_only": True,
+            "business_date": None,
+            "data_timestamp_hkt": None,
+            "source": "review_shell_decision_context",
+            "context_readiness": "insufficient",
+            "tickers": [],
+            "global_limitations": ["No production decision context source configured yet."],
+        }
+
 
 def _format_hkt_display(value: Any) -> str | None:
     if not value:
@@ -227,6 +242,12 @@ class SupabaseLatestSystemRunMiniAppReadDataProvider(RailwayRuntimeEnvMiniAppRea
         self._client = client
         self._cached_latest_row: dict[str, Any] | None = None
         self._latest_row_loaded = False
+        self._cached_signals_summary: dict[str, Any] | None = None
+        self._signals_summary_loaded = False
+        self._cached_paper_pnl_summary: dict[str, Any] | None = None
+        self._paper_pnl_summary_loaded = False
+        self._cached_risk_summary: dict[str, Any] | None = None
+        self._risk_summary_loaded = False
 
     @staticmethod
     def _unavailable(boundary: str) -> dict[str, Any]:
@@ -318,6 +339,8 @@ class SupabaseLatestSystemRunMiniAppReadDataProvider(RailwayRuntimeEnvMiniAppRea
         }
 
     def get_paper_pnl_summary(self) -> dict[str, Any]:
+        if self._paper_pnl_summary_loaded and self._cached_paper_pnl_summary is not None:
+            return self._cached_paper_pnl_summary
         boundary = "read-only paper summary; no order creation, no broker/live execution"
         unavailable = {
             "status": "unavailable",
@@ -339,16 +362,24 @@ class SupabaseLatestSystemRunMiniAppReadDataProvider(RailwayRuntimeEnvMiniAppRea
         }
         row = self._get_latest_row()
         if not isinstance(row, dict) or not row or self._client is None:
+            self._paper_pnl_summary_loaded = True
+            self._cached_paper_pnl_summary = unavailable
             return unavailable
         summary = row.get("summary_json") if isinstance(row.get("summary_json"), dict) else {}
         if summary.get("paper_trade_only") is not True:
+            self._paper_pnl_summary_loaded = True
+            self._cached_paper_pnl_summary = unavailable
             return unavailable
         from src.paper_trading import get_paper_position_pnl_review_snapshot
         try:
             snap = get_paper_position_pnl_review_snapshot(self._client)
         except Exception:
+            self._paper_pnl_summary_loaded = True
+            self._cached_paper_pnl_summary = unavailable
             return unavailable
         if not isinstance(snap, dict):
+            self._paper_pnl_summary_loaded = True
+            self._cached_paper_pnl_summary = unavailable
             return unavailable
         per_symbol_raw = snap.get("per_symbol")
         per_symbol = per_symbol_raw if isinstance(per_symbol_raw, list) else []
@@ -366,7 +397,7 @@ class SupabaseLatestSystemRunMiniAppReadDataProvider(RailwayRuntimeEnvMiniAppRea
             ]
         ):
             limitations.append("one or more numeric fields were malformed; bounded defaults applied")
-        return {
+        result = {
             "status": "ok",
             "source": "paper_pnl_read_model",
             "paper_trade_only": True,
@@ -383,8 +414,13 @@ class SupabaseLatestSystemRunMiniAppReadDataProvider(RailwayRuntimeEnvMiniAppRea
             "limitations": limitations[:_MAX_LIMITATIONS],
             "boundary": boundary,
         }
+        self._paper_pnl_summary_loaded = True
+        self._cached_paper_pnl_summary = result
+        return result
 
     def get_risk_summary(self) -> dict[str, Any]:
+        if self._risk_summary_loaded and self._cached_risk_summary is not None:
+            return self._cached_risk_summary
         boundary = "read-only risk summary; review only, no order creation, no broker/live execution"
         unavailable = {
             "status": "unavailable",
@@ -406,16 +442,24 @@ class SupabaseLatestSystemRunMiniAppReadDataProvider(RailwayRuntimeEnvMiniAppRea
         }
         row = self._get_latest_row()
         if not isinstance(row, dict) or not row or self._client is None:
+            self._risk_summary_loaded = True
+            self._cached_risk_summary = unavailable
             return unavailable
         summary = row.get("summary_json") if isinstance(row.get("summary_json"), dict) else {}
         if summary.get("paper_trade_only") is not True:
+            self._risk_summary_loaded = True
+            self._cached_risk_summary = unavailable
             return unavailable
         from src.paper_trading import get_paper_risk_review_for_run
         try:
             risk = get_paper_risk_review_for_run(self._client, run_id=int(row.get("run_id")))
         except Exception:
+            self._risk_summary_loaded = True
+            self._cached_risk_summary = unavailable
             return unavailable
         if not isinstance(risk, dict):
+            self._risk_summary_loaded = True
+            self._cached_risk_summary = unavailable
             return unavailable
         blocked = _safe_int_metric(risk.get("total_blocked_buys"), default=0)
         warned = _safe_int_metric(risk.get("total_warning_buys"), default=0)
@@ -435,7 +479,7 @@ class SupabaseLatestSystemRunMiniAppReadDataProvider(RailwayRuntimeEnvMiniAppRea
             warnings.append(f"{blocked} blocked paper buy risk event(s)")
         if warned > 0:
             warnings.append(f"{warned} warning paper buy risk event(s)")
-        return {
+        result = {
             "status": "ok",
             "source": "risk_read_model",
             "paper_trade_only": True,
@@ -447,8 +491,13 @@ class SupabaseLatestSystemRunMiniAppReadDataProvider(RailwayRuntimeEnvMiniAppRea
             "limitations": limitations[:_MAX_LIMITATIONS],
             "boundary": boundary,
         }
+        self._risk_summary_loaded = True
+        self._cached_risk_summary = result
+        return result
 
     def get_signals_summary(self) -> dict[str, Any]:
+        if self._signals_summary_loaded and self._cached_signals_summary is not None:
+            return self._cached_signals_summary
         boundary = "read-only signals summary; no decision capture, no order creation, no broker/live execution"
         unavailable = {
             "status": "unavailable",
@@ -459,14 +508,22 @@ class SupabaseLatestSystemRunMiniAppReadDataProvider(RailwayRuntimeEnvMiniAppRea
         }
         row = self._get_latest_row()
         if not isinstance(row, dict) or not row:
+            self._signals_summary_loaded = True
+            self._cached_signals_summary = unavailable
             return unavailable
         summary = row.get("summary_json") if isinstance(row.get("summary_json"), dict) else {}
         if summary.get("paper_trade_only") is not True:
+            self._signals_summary_loaded = True
+            self._cached_signals_summary = unavailable
             return unavailable
         if self._client is None:
+            self._signals_summary_loaded = True
+            self._cached_signals_summary = unavailable
             return unavailable
         run_id = row.get("run_id")
         if run_id is None:
+            self._signals_summary_loaded = True
+            self._cached_signals_summary = unavailable
             return unavailable
 
         try:
@@ -481,8 +538,12 @@ class SupabaseLatestSystemRunMiniAppReadDataProvider(RailwayRuntimeEnvMiniAppRea
             )
             signal_rows = result.data if isinstance(result.data, list) else []
         except Exception:
+            self._signals_summary_loaded = True
+            self._cached_signals_summary = unavailable
             return unavailable
         if not signal_rows:
+            self._signals_summary_loaded = True
+            self._cached_signals_summary = unavailable
             return unavailable
 
         def _norm_signal(value: Any) -> str:
@@ -508,7 +569,7 @@ class SupabaseLatestSystemRunMiniAppReadDataProvider(RailwayRuntimeEnvMiniAppRea
                     "data_timestamp_hkt": _format_hkt_display(row.get("data_timestamp")),
                 })
 
-        return {
+        result = {
             "status": "ok",
             "source": "signals_read_model",
             "business_date": str(row.get("business_date") or ""),
@@ -527,6 +588,113 @@ class SupabaseLatestSystemRunMiniAppReadDataProvider(RailwayRuntimeEnvMiniAppRea
             "top_items": top_items,
             "operator_note": "AI 模擬信號只供檢視，不是買賣指示；真實交易決定仍由人類在系統外作出。",
             "boundary": boundary,
+        }
+        self._signals_summary_loaded = True
+        self._cached_signals_summary = result
+        return result
+
+    def get_decision_context_summary(self) -> dict[str, Any]:
+        default_provider = RailwayRuntimeEnvMiniAppReadDataProvider()
+        row = self._get_latest_row()
+        if not isinstance(row, dict) or not row or self._client is None:
+            return default_provider.get_decision_context_summary()
+        summary = row.get("summary_json") if isinstance(row.get("summary_json"), dict) else {}
+        if summary.get("paper_trade_only") is not True:
+            return default_provider.get_decision_context_summary()
+
+        signals = self.get_signals_summary()
+        risk = self.get_risk_summary()
+        if signals.get("status") != "ok":
+            return {
+                "status": "partial",
+                "paper_trade_only": True,
+                "business_date": str(row.get("business_date") or ""),
+                "data_timestamp_hkt": _format_hkt_display(row.get("data_timestamp")),
+                "source": "review_shell_decision_context",
+                "context_readiness": "insufficient",
+                "tickers": [],
+                "global_limitations": ["Signals unavailable; ticker-level decision context not ready."],
+            }
+
+        tickers: list[dict[str, Any]] = []
+        risk_level = risk.get("risk_level", "unknown") if risk.get("status") == "ok" else "unknown"
+        risk_warnings = risk.get("warnings", []) if risk.get("status") == "ok" else []
+        risk_limitations = (
+            risk.get("limitations", [])
+            if risk.get("status") == "ok"
+            else ["Risk data not available yet."]
+        )
+
+        for item in signals.get("top_items", [])[:5]:
+            missing_context = [
+                "latest price missing",
+                "liquidity missing",
+                "fundamentals missing",
+                "news/catalyst missing",
+                "valuation missing",
+                "per-position exposure missing",
+                "data_source missing",
+            ]
+            if not summary.get("strategy_version"):
+                missing_context.append("strategy_version missing")
+            tickers.append(
+                {
+                    "ticker": str(item.get("ticker") or "").strip(),
+                    "signal": {
+                        "direction": item.get("signal_label"),
+                        "confidence": item.get("confidence_label", "unknown"),
+                        "reason": item.get("reason_short"),
+                        "strategy_version": summary.get("strategy_version"),
+                        "data_timestamp_hkt": item.get("data_timestamp_hkt")
+                        or signals.get("data_timestamp_hkt"),
+                    },
+                    "market": {
+                        "status": "unavailable",
+                        "reference_price": None,
+                        "previous_close": None,
+                        "change": None,
+                        "change_pct": None,
+                        "volume": None,
+                        "turnover": None,
+                        "currency": "HKD",
+                        "market": "HKEX",
+                        "data_source": None,
+                        "data_timestamp_hkt": None,
+                        "freshness_status": "unknown",
+                        "adjustment_policy": None,
+                        "confidence": "unknown",
+                        "limitations": ["未有資料 / not available yet"],
+                    },
+                    "paper_position": {
+                        "status": "unavailable",
+                        "position_qty": None,
+                        "avg_cost": None,
+                        "unrealized_pnl": None,
+                        "exposure_pct": None,
+                        "limitations": ["Selected ticker position/exposure not available yet."],
+                    },
+                    "risk": {
+                        "risk_level": risk_level,
+                        "warnings": risk_warnings,
+                        "limitations": risk_limitations,
+                    },
+                    "missing_context": missing_context,
+                    "limitations": [
+                        "Existing-source-only mode; no external market vendor integration in Step 119."
+                    ],
+                }
+            )
+        return {
+            "status": "partial",
+            "paper_trade_only": True,
+            "business_date": str(row.get("business_date") or ""),
+            "data_timestamp_hkt": signals.get("data_timestamp_hkt"),
+            "source": "review_shell_decision_context",
+            "context_readiness": "partial",
+            "tickers": tickers,
+            "global_limitations": [
+                "Market data fields unavailable from current bounded read sources."
+            ],
         }
 
     def _get_latest_row(self) -> dict[str, Any] | None:

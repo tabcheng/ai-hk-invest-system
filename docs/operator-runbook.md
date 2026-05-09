@@ -429,3 +429,5 @@ Use this checklist when reviewing Mini App read-only surfaces:
 - Confirm ticker selector shows monitored signal tickers and no-data disabled state when signals unavailable.
 - Confirm Decision Context Pack updates per selected ticker and includes explicit missing-context checklist.
 - Confirm success/error copy remains no-order/paper-only and no broker/live execution wording appears.
+
+- Step 119 smoke checks: verify selected ticker Decision Context shows grouped sections, explicit unavailable text when market fields missing, and source/timestamp/freshness when present; confirm paper-only/no-order wording remains visible.

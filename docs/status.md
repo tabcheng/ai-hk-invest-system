@@ -470,3 +470,10 @@
 - Step 118 completed: ticker entry path changed to monitored signal ticker picker (`signals_summary.top_items`) with disabled no-data state.
 - Step 118 completed: added bounded Decision Context Pack before journal form using existing read-only payload only (signal direction/confidence/reason/timestamp + paper PnL/risk if available + explicit missing-context checklist).
 - Step 118 preserved boundaries: no broker/live execution, no order creation, no simulated order creation, no market-data/news/fundamental vendor integration, no Telegram auth change, no Supabase schema migration.
+
+## 2026-05-09 — Step 119 Decision Context / Market Data Enrichment Bundle
+- Step 118 post-deploy smoke baseline confirmed: `UI build=599d9da`, `Deployed build=599d9da`.
+- Added read-only `decision_context_summary` section and bounded market context contract in review-shell response, existing-source-only with explicit `unavailable/partial` semantics (no vendor SDK integration).
+- Decision Context Pack now surfaces per-selected-ticker grouped Signal/Market Data/Paper Position-Risk/Missing Context with explicit readiness chip (`不足/部分/基本`) and paper-only wording.
+- Market fields include source/timestamp/freshness/adjustment/confidence slots; when unavailable, UI/API return explicit unavailable (no invented values).
+- Boundaries preserved: no broker/live execution, no real-money path, no order/simulated-order creation, no Supabase schema migration, no frontend secrets/vendor keys.

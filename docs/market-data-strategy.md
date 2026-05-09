@@ -34,3 +34,5 @@
 ## Step 90 cross-doc note (storage/topology decision)
 - Step 90 decides runner-to-miniapp `latest_system_run` storage/topology direction (future Supabase/internal table), but introduces no market-data provider/runtime changes.
 - No vendor SDK boundary or market-data freshness semantics are changed in this step.
+
+- Step 119 implementation note: Mini App decision context uses existing-source-only market context contract; no new vendor adapter/SDK added in strategy path. Provider output is bounded (`ok/partial/unavailable`) and includes source/timestamp/freshness/limitations fields.

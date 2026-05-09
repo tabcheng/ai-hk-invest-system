@@ -136,7 +136,7 @@
       function renderSignals(signals){ if (!signals || signals.status !== "ok") return fillUnavailable("signals-card","信號摘要"); const card=document.getElementById("signals-card"); card.textContent=""; const h=document.createElement("h2"); h.textContent="信號摘要"; card.append(h, renderStatusChip(signals.review_readiness || signals.status)); const warn=document.createElement("p"); warn.className="helper-text"; warn.textContent="目前只顯示技術信號方向；信心、風險、模擬盈虧未完整，因此不應視為完整決策。"; card.appendChild(warn); card.appendChild(renderMetricGrid([{label:"覆蓋股票數",value:signals.covered_tickers},{label:"顯示信號數",value:signals.shown_signals},{label:"顯示正面模擬信號",value:signals.shown_positive_signals},{label:"顯示觀望 / 中性信號",value:signals.shown_neutral_signals},{label:"顯示負面模擬信號",value:signals.shown_negative_signals},{label:"顯示未知信號",value:signals.shown_unknown_signals}])); card.appendChild(renderSignalItems(signals.top_items)); }
       function renderPaperPnl(pnl){ if (!pnl || pnl.status !== "ok") return fillUnavailable("paper-pnl-card","模擬盈虧摘要"); const card=document.getElementById("paper-pnl-card"); card.textContent=""; const h=document.createElement("h2"); h.textContent="模擬盈虧摘要"; card.append(h, renderStatusChip(pnl.status)); card.appendChild(renderMetricGrid([{label:"貨幣",value:pnl.currency || "HKD"},{label:"總持倉數",value:pnl.total_positions},{label:"開倉數",value:pnl.open_positions},{label:"平倉數",value:pnl.closed_positions},{label:"已實現盈虧 (Paper/模擬)",value:pnl.realized_pnl},{label:"未實現盈虧 (Paper/模擬)",value:pnl.unrealized_pnl},{label:"總盈虧 (Paper/模擬)",value:pnl.total_pnl}])); const ts = pnl.data_timestamp_hkt || pnl.updated_at_hkt; if (ts) { const t=document.createElement("p"); t.className="row"; t.textContent=`資料時間：${ts}`; card.appendChild(t); } if (Array.isArray(pnl.limitations) && pnl.limitations.length > 0) { const h3=document.createElement("h3"); h3.textContent="限制"; const ul=document.createElement("ul"); pnl.limitations.forEach((x)=>{const li=document.createElement("li"); li.textContent=String(x); ul.appendChild(li);}); card.append(h3,ul); } const helper=document.createElement("p"); helper.className="helper-text"; helper.textContent="以上為模擬 / paper-trading 盈虧，只供檢視，不代表真實戶口表現。"; card.appendChild(helper); }
       function renderRisk(risk){ if (!risk || risk.status !== "ok") return fillUnavailable("risk-card","風險摘要"); const card=document.getElementById("risk-card"); card.textContent=""; const h=document.createElement("h2"); h.textContent="風險摘要"; card.append(h, renderStatusChip(risk.status)); const p=document.createElement("p"); p.className="row"; p.textContent=`Risk level（Paper review）：${String(risk.risk_level||"unknown")}`; card.appendChild(p); const ts=risk.data_timestamp_hkt || risk.updated_at_hkt; if (ts) { const t=document.createElement("p"); t.className="row"; t.textContent=`資料時間：${ts}`; card.appendChild(t); } const w=document.createElement("h3"); w.textContent="風險警示"; card.appendChild(w); if (Array.isArray(risk.warnings) && risk.warnings.length > 0) { const ul=document.createElement("ul"); risk.warnings.forEach((x)=>{const li=document.createElement("li"); li.textContent=String(x); ul.appendChild(li);}); card.appendChild(ul);} else { const none=document.createElement("p"); none.className="helper-text"; none.textContent="暫無風險警示"; card.appendChild(none);} if (Array.isArray(risk.limitations) && risk.limitations.length > 0) { const h3=document.createElement("h3"); h3.textContent="限制"; const ul=document.createElement("ul"); risk.limitations.forEach((x)=>{const li=document.createElement("li"); li.textContent=String(x); ul.appendChild(li);}); card.append(h3,ul);} const helper=document.createElement("p"); helper.className="helper-text"; helper.textContent="風險摘要只供 review，不會自動阻止或建立任何真實交易。"; card.appendChild(helper); }
-      function renderJournal(latest, signals, paperPnl, risk){
+      function renderJournal(latest, signals, paperPnl, risk, decisionContext){
         const card=document.getElementById("journal-card"); card.textContent="";
         card.innerHTML = `<h2>人手模擬決策日誌</h2><p class="helper-text">Human Paper Decision Journal</p><p class="helper-text">此區只記錄人手 paper decision，不建立訂單、不連接券商、不作真實落盤。真實交易決定仍由人手在系統外作出。</p><div id="journal-context" class="metric-item"><h3>決策參考資料 / Decision Context</h3><p class="helper-text">目前資料只足夠作 paper review，不足以作完整投資判斷。</p></div><form id="journal-form" class="journal-form"><label>股票 / Ticker<select id="journal-ticker" required></select></label><label>人手模擬決策 / Human paper decision<select id="journal-decision-type" required><option value="watch">觀察</option><option value="paper_buy">模擬買入傾向</option><option value="paper_sell">模擬賣出傾向</option><option value="paper_hold">模擬持有</option><option value="skip">跳過</option></select></label><label>決策原因 / Rationale<textarea id="journal-rationale" maxlength="500" required placeholder="請記錄你的人手模擬決策原因，例如：為何觀察、為何模擬持有、需要補充哪些資料。不要填寫真實交易指令。"></textarea><small id="journal-counter">已輸入 0 / 500 字</small></label><label>信心程度 / Confidence<select id="journal-confidence"><option value="">未選擇</option><option value="low">低</option><option value="medium">中</option><option value="high">高</option><option value="unknown">未知</option></select></label><label><input id="journal-ack" type="checkbox" required> 風險確認 / Guardrail acknowledgement：我確認這只是人手模擬決策日誌，不會建立訂單、不會連接券商、不是真實交易決定。</label><button id="journal-submit" type="submit">記錄人手模擬決策</button></form><p id="journal-result" class="helper-text"></p>`;
         const topItems = Array.isArray(signals?.top_items) ? signals.top_items : [];
@@ -164,6 +164,7 @@
         const appendList = (parent, title, values) => { const h = document.createElement("h3"); h.textContent = title; parent.appendChild(h); const ul = document.createElement("ul"); values.forEach((entry) => { const li = document.createElement("li"); li.textContent = String(entry); ul.appendChild(li); }); parent.appendChild(ul); };
         const renderContext = () => {
           const selected = topItems.find((x) => String(x.ticker || "") === String(ticker.value || ""));
+          const dcTicker = Array.isArray(decisionContext?.tickers) ? decisionContext.tickers.find((x) => String(x?.ticker || "") === String(ticker.value || "")) : null;
           const cMap = { low: "低", medium: "中", high: "高", unknown: "未知" };
           context.textContent = "";
           const h3 = document.createElement("h3"); h3.textContent = "決策參考資料 / Decision Context"; context.appendChild(h3);
@@ -172,15 +173,25 @@
           appendRow(context, "模擬信號方向", selected ? (SIGNAL_LABEL[String(selected.signal_label)] || SIGNAL_LABEL.unknown) : "未有資料 / not available yet");
           appendRow(context, "信心程度", selected ? (cMap[String(selected.confidence_label || "unknown")] || "未知") : "未有資料 / not available yet");
           appendRow(context, "信號原因", selected?.reason_short || "未有資料 / not available yet");
-          appendRow(context, "資料時間 HKT", selected?.data_timestamp_hkt || signals?.data_timestamp_hkt || "未有資料 / not available yet");
+          appendRow(context, "資料時間 HKT", dcTicker?.signal?.data_timestamp_hkt || selected?.data_timestamp_hkt || signals?.data_timestamp_hkt || "未有資料 / not available yet");
+          appendRow(context, "Strategy version", dcTicker?.signal?.strategy_version || "未有資料 / not available yet");
+          appendRow(context, "最新價 / Reference price", dcTicker?.market?.reference_price ?? "未有資料 / not available yet");
+          appendRow(context, "前收 / Previous close", dcTicker?.market?.previous_close ?? "未有資料 / not available yet");
+          appendRow(context, "升跌 / Change", dcTicker?.market?.change ?? "未有資料 / not available yet");
+          appendRow(context, "升跌幅 / Change %", dcTicker?.market?.change_pct ?? "未有資料 / not available yet");
+          appendRow(context, "成交量 / Volume", dcTicker?.market?.volume ?? "未有資料 / not available yet");
+          appendRow(context, "成交額 / Turnover", dcTicker?.market?.turnover ?? "未有資料 / not available yet");
+          appendRow(context, "資料來源 / Data source", dcTicker?.market?.data_source || "未有資料 / not available yet");
+          appendRow(context, "資料新鮮度 / Freshness", dcTicker?.market?.freshness_status || "unknown");
           appendRow(context, "Paper PnL（模擬）總盈虧 / 已實現 / 未實現", paperPnl?.status === "ok" ? `${String(paperPnl.total_pnl ?? "-")} / ${String(paperPnl.realized_pnl ?? "-")} / ${String(paperPnl.unrealized_pnl ?? "-")}` : "未有資料 / not available yet");
+          appendRow(context, "參考資料完整度", decisionContext?.context_readiness === "basic" ? "基本" : (decisionContext?.context_readiness === "partial" ? "部分" : "不足"));
           appendRow(context, "Risk level", risk?.status === "ok" ? String(risk.risk_level || "unknown") : "未有資料 / not available yet");
           if (!risk || risk.status !== "ok") appendRow(context, "Warnings", "未有資料 / not available yet");
           else if (!Array.isArray(risk.warnings) || risk.warnings.length === 0) appendRow(context, "Warnings", "暫無風險警示");
           else appendList(context, "Warnings", risk.warnings);
           if (paperPnl?.status === "ok" && Array.isArray(paperPnl.limitations) && paperPnl.limitations.length > 0) appendList(context, "Paper PnL 限制", paperPnl.limitations);
           if (risk?.status === "ok" && Array.isArray(risk.limitations) && risk.limitations.length > 0) appendList(context, "Risk 限制", risk.limitations);
-          appendList(context, "缺失資料 / Missing Context", ["最新價 / Reference price：未有資料","成交額 / Liquidity：未有資料","基本面 / Fundamentals：未有資料","新聞 / Catalyst：未有資料","估值 / Valuation：未有資料","持倉級別 exposure：未有資料","Strategy version：未有資料","資料來源 / Data source：未有資料"]);
+          appendList(context, "缺失資料 / Missing Context", Array.isArray(dcTicker?.missing_context) && dcTicker.missing_context.length > 0 ? dcTicker.missing_context : ["未有資料 / not available yet"]);
         };
         renderContext();
         ticker.addEventListener("change", renderContext);
@@ -212,7 +223,8 @@
           renderSignals(signals);
           renderPaperPnl(pnl);
           renderRisk(risk);
-          renderJournal(latest, signals, pnl, risk);
+          const decisionContext = payload?.sections?.decision_context_summary;
+          renderJournal(latest, signals, pnl, risk, decisionContext);
         } catch (_error) {
           renderOverview(null, null, null);
           fillUnavailable("latest-card", "最新系統運行");
@@ -220,7 +232,7 @@
           fillUnavailable("signals-card", "信號摘要");
           fillUnavailable("paper-pnl-card", "模擬盈虧摘要");
           fillUnavailable("risk-card", "風險摘要");
-          renderJournal(null, null, null, null);
+          renderJournal(null, null, null, null, null);
         }
       }
       renderBuildMeta();

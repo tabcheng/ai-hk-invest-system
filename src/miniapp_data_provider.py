@@ -625,18 +625,23 @@ class SupabaseLatestSystemRunMiniAppReadDataProvider(RailwayRuntimeEnvMiniAppRea
             else ["Risk data not available yet."]
         )
 
+        def _missing_item(key: str, zh: str, en: str) -> dict[str, Any]:
+            return {"key": key, "label_zh": zh, "label_en": en, "status": "missing"}
+
         for item in signals.get("top_items", [])[:5]:
             missing_context = [
-                "latest price missing",
-                "liquidity missing",
-                "fundamentals missing",
-                "news/catalyst missing",
-                "valuation missing",
-                "per-position exposure missing",
-                "data_source missing",
+                _missing_item("latest_price_missing", "最新價 / Reference price：未有資料", "Reference price: unavailable"),
+                _missing_item("liquidity_missing", "流動性 / 成交額：未有資料", "Liquidity / turnover: unavailable"),
+                _missing_item("fundamentals_missing", "基本面 / Fundamentals：未有資料", "Fundamentals: unavailable"),
+                _missing_item("news_catalyst_missing", "新聞 / Catalyst：未有資料", "News / catalyst: unavailable"),
+                _missing_item("valuation_missing", "估值 / Valuation：未有資料", "Valuation: unavailable"),
+                _missing_item("per_position_exposure_missing", "持倉級別 exposure：未有資料", "Position-level exposure: unavailable"),
+                _missing_item("data_source_missing", "資料來源 / Data source：未有資料", "Data source: unavailable"),
             ]
             if not summary.get("strategy_version"):
-                missing_context.append("strategy_version missing")
+                missing_context.append(
+                    _missing_item("strategy_version_missing", "策略版本 / Strategy version：未有資料", "Strategy version: unavailable")
+                )
             tickers.append(
                 {
                     "ticker": str(item.get("ticker") or "").strip(),
@@ -684,13 +689,42 @@ class SupabaseLatestSystemRunMiniAppReadDataProvider(RailwayRuntimeEnvMiniAppRea
                     ],
                 }
             )
+        context_readiness = "basic"
+        if tickers:
+            readiness_by_ticker: list[str] = []
+            for ticker_entry in tickers:
+                signal = ticker_entry.get("signal") if isinstance(ticker_entry.get("signal"), dict) else {}
+                market = ticker_entry.get("market") if isinstance(ticker_entry.get("market"), dict) else {}
+                risk_ctx = ticker_entry.get("risk") if isinstance(ticker_entry.get("risk"), dict) else {}
+                has_signal = bool(signal.get("direction"))
+                has_timestamp = bool(signal.get("data_timestamp_hkt"))
+                has_strategy = bool(signal.get("strategy_version"))
+                has_data_source = bool(market.get("data_source"))
+                has_reference_price = market.get("reference_price") is not None
+                has_freshness = str(market.get("freshness_status") or "").lower() not in {"", "unknown"}
+                has_risk_or_paper = bool(risk_ctx.get("risk_level")) or ticker_entry.get("paper_position", {}).get("status") == "ok"
+                if (not has_signal) or (has_signal and not has_reference_price and not has_data_source and not has_strategy):
+                    readiness_by_ticker.append("insufficient")
+                elif has_signal and has_reference_price and has_freshness and has_risk_or_paper:
+                    readiness_by_ticker.append("partial")
+                elif has_signal and has_timestamp and (has_strategy or has_data_source):
+                    readiness_by_ticker.append("basic")
+                else:
+                    readiness_by_ticker.append("insufficient")
+            if all(value == "partial" for value in readiness_by_ticker):
+                context_readiness = "partial"
+            elif any(value == "basic" for value in readiness_by_ticker):
+                context_readiness = "basic"
+            else:
+                context_readiness = "insufficient"
+
         return {
             "status": "partial",
             "paper_trade_only": True,
             "business_date": str(row.get("business_date") or ""),
             "data_timestamp_hkt": signals.get("data_timestamp_hkt"),
             "source": "review_shell_decision_context",
-            "context_readiness": "partial",
+            "context_readiness": context_readiness,
             "tickers": tickers,
             "global_limitations": [
                 "Market data fields unavailable from current bounded read sources."

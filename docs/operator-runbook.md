@@ -431,3 +431,5 @@ Use this checklist when reviewing Mini App read-only surfaces:
 - Confirm success/error copy remains no-order/paper-only and no broker/live execution wording appears.
 
 - Step 119 smoke checks: verify selected ticker Decision Context shows grouped sections, explicit unavailable text when market fields missing, and source/timestamp/freshness when present; confirm paper-only/no-order wording remains visible.
+
+- Step 120: Mini App IA segmented tabs (今日/信號/Context/Journal), conservative readiness semantics (no-market-data => 不足), Chinese-first missing context labels, grouped context display, no vendor integration/no broker-live-real-money/order execution changes. Step 119 smoke baseline build: 7f5c5d6.

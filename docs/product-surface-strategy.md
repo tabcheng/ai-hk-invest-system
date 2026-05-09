@@ -196,3 +196,5 @@ Mini App should **not**:
 - Decision Context Pack is bounded and must show explicit missing-context checklist to prevent over-interpretation as full investment recommendation.
 
 - Step 119: selected ticker Decision Context Pack now includes grouped Signal / Market Data / Paper Position-PnL / Risk / Missing Context with explicit completeness wording (not trade readiness).
+
+- Step 120: Mini App IA segmented tabs (今日/信號/Context/Journal), conservative readiness semantics (no-market-data => 不足), Chinese-first missing context labels, grouped context display, no vendor integration/no broker-live-real-money/order execution changes. Step 119 smoke baseline build: 7f5c5d6.

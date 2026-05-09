@@ -91,3 +91,5 @@ Write integration is best-effort from paper daily runner completion and does not
 - Step 92D: Mini App backend read model can derive read-only `daily_review_summary` from the same bounded latest-state row (`source=paper_daily_runner`) plus safe defaults/unavailable fallback; this remains latest-state projection only and not an audit ledger.
 
 - Step 119 compatibility note: `decision_context_summary` may consume `summary_json.strategy_version` when present; absence must remain explicit (`strategy_version missing`) and must not block response.
+
+- Step 120: Mini App IA segmented tabs (今日/信號/Context/Journal), conservative readiness semantics (no-market-data => 不足), Chinese-first missing context labels, grouped context display, no vendor integration/no broker-live-real-money/order execution changes. Step 119 smoke baseline build: 7f5c5d6.

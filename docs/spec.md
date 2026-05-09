@@ -518,3 +518,5 @@ Proposed table: `human_decision_journal_entries` with draft columns:
 - Boundary unchanged: paper-trading decision-support only; no broker/live execution/order creation/simulated-order creation.
 
 - Step 119: Mini App decision context now supports read-only `decision_context_summary` with explicit market-data availability status; unavailable fields must remain explicit and must not be fabricated.
+
+- Step 120: Mini App IA segmented tabs (今日/信號/Context/Journal), conservative readiness semantics (no-market-data => 不足), Chinese-first missing context labels, grouped context display, no vendor integration/no broker-live-real-money/order execution changes. Step 119 smoke baseline build: 7f5c5d6.

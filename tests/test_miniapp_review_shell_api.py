@@ -722,9 +722,11 @@ def test_miniapp_review_shell_decision_context_summary_partial_with_unavailable_
     assert status.startswith("200")
     section = payload["sections"]["decision_context_summary"]
     assert section["status"] == "partial"
-    assert section["context_readiness"] == "partial"
+    assert section["context_readiness"] == "insufficient"
     assert section["tickers"][0]["market"]["status"] == "unavailable"
-    assert "strategy_version missing" in section["tickers"][0]["missing_context"]
+    missing = section["tickers"][0]["missing_context"]
+    assert any(item["key"] == "strategy_version_missing" for item in missing)
+    assert any("最新價 / Reference price" in item["label_zh"] for item in missing)
 
 def test_decision_context_reuses_cached_signals_and_risk_summaries(monkeypatch):
     class _Result:

@@ -226,6 +226,8 @@ def test_miniapp_review_shell_latest_system_run_ok(monkeypatch):
     assert daily["updated_at_hkt"].endswith("HKT")
     assert "data_timestamp" not in daily
     assert "updated_at" not in daily
+    assert payload["sections"]["paper_pnl_summary"]["paper_trade_only"] is True
+    assert payload["sections"]["risk_summary"]["paper_trade_only"] is True
 
 
 def test_miniapp_review_shell_latest_system_run_unavailable_on_failure(monkeypatch):
@@ -246,6 +248,8 @@ def test_miniapp_review_shell_latest_system_run_unavailable_on_failure(monkeypat
     daily = payload["sections"]["daily_review_summary"]
     assert daily["status"] == "unavailable"
     assert daily["reason"] == "daily review summary is not available yet"
+    assert payload["sections"]["paper_pnl_summary"]["status"] == "unavailable"
+    assert payload["sections"]["risk_summary"]["status"] == "unavailable"
     assert "secret error" not in json.dumps(payload)
 
 
@@ -275,6 +279,205 @@ def test_miniapp_review_shell_latest_system_run_bad_counters_are_bounded(monkeyp
     assert section["processed_tickers"] == 0
     assert section["successful_tickers"] == 0
     assert section["failed_tickers"] == 0
+
+
+def test_miniapp_review_shell_paper_pnl_and_risk_summary_ok(monkeypatch):
+    monkeypatch.setenv("TELEGRAM_BOT_TOKEN", FAKE_BOT_TOKEN)
+    monkeypatch.setenv("MINIAPP_ALLOWED_TELEGRAM_USER_IDS", "42")
+    monkeypatch.setattr("src.miniapp_auth.time.time", lambda: NOW_TS)
+
+    class _Client: pass
+
+    monkeypatch.setattr("src.telegram_webhook_server._load_supabase_client", lambda: _Client())
+    monkeypatch.setattr(
+        "src.latest_system_runs_repository.get_latest_system_run",
+        lambda client, source="paper_daily_runner": {
+            "business_date": "2026-05-06",
+            "run_id": "42",
+            "status": "success",
+            "data_timestamp": "2026-05-06T01:02:03+00:00",
+            "updated_at": "2026-05-06T01:03:03+00:00",
+            "summary_json": {"processed_tickers": 3, "successful_tickers": 3, "failed_tickers": 0, "paper_trade_only": True},
+        },
+    )
+    monkeypatch.setattr(
+        "src.paper_trading.get_paper_position_pnl_review_snapshot",
+        lambda _client: {
+            "per_symbol": [{"stock": "0700.HK"}],
+            "open_positions_count": 1,
+            "closed_positions_count": 0,
+            "total_realized_pnl": 12.0,
+            "total_unrealized_pnl": -2.0,
+        },
+    )
+    monkeypatch.setattr(
+        "src.paper_trading.get_paper_risk_review_for_run",
+        lambda _client, run_id: {"total_blocked_buys": 0, "total_warning_buys": 1, "total_executed_buys": 1},
+    )
+    status, _headers, payload = _call("/miniapp/api/review-shell", "POST", _authorized_request(monkeypatch))
+    assert status.startswith("200")
+    pnl = payload["sections"]["paper_pnl_summary"]
+    risk = payload["sections"]["risk_summary"]
+    daily = payload["sections"]["daily_review_summary"]
+    assert pnl["status"] == "ok"
+    assert pnl["total_pnl"] == 10.0
+    assert pnl["currency"] == "HKD"
+    assert risk["status"] == "ok"
+    assert risk["risk_level"] == "medium"
+    assert daily["available_sections"] == ["latest_system_run", "paper_pnl", "risk"]
+
+
+def test_miniapp_review_shell_paper_pnl_malformed_snapshot_is_unavailable_and_safe(monkeypatch):
+    monkeypatch.setenv("TELEGRAM_BOT_TOKEN", FAKE_BOT_TOKEN)
+    monkeypatch.setenv("MINIAPP_ALLOWED_TELEGRAM_USER_IDS", "42")
+    monkeypatch.setattr("src.miniapp_auth.time.time", lambda: NOW_TS)
+
+    class _Client: pass
+
+    monkeypatch.setattr("src.telegram_webhook_server._load_supabase_client", lambda: _Client())
+    monkeypatch.setattr(
+        "src.latest_system_runs_repository.get_latest_system_run",
+        lambda client, source="paper_daily_runner": {
+            "business_date": "2026-05-06",
+            "run_id": "42",
+            "status": "success",
+            "data_timestamp": "2026-05-06T01:02:03+00:00",
+            "updated_at": "2026-05-06T01:03:03+00:00",
+            "summary_json": {"processed_tickers": 3, "successful_tickers": 3, "failed_tickers": 0, "paper_trade_only": True},
+        },
+    )
+    monkeypatch.setattr("src.paper_trading.get_paper_position_pnl_review_snapshot", lambda _client: "N/A")
+    status, _headers, payload = _call("/miniapp/api/review-shell", "POST", _authorized_request(monkeypatch))
+    assert status.startswith("200")
+    assert payload["sections"]["paper_pnl_summary"]["status"] == "unavailable"
+
+
+def test_miniapp_review_shell_risk_malformed_result_is_unavailable_and_safe(monkeypatch):
+    monkeypatch.setenv("TELEGRAM_BOT_TOKEN", FAKE_BOT_TOKEN)
+    monkeypatch.setenv("MINIAPP_ALLOWED_TELEGRAM_USER_IDS", "42")
+    monkeypatch.setattr("src.miniapp_auth.time.time", lambda: NOW_TS)
+
+    class _Client: pass
+
+    monkeypatch.setattr("src.telegram_webhook_server._load_supabase_client", lambda: _Client())
+    monkeypatch.setattr(
+        "src.latest_system_runs_repository.get_latest_system_run",
+        lambda client, source="paper_daily_runner": {
+            "business_date": "2026-05-06",
+            "run_id": "42",
+            "status": "success",
+            "data_timestamp": "2026-05-06T01:02:03+00:00",
+            "updated_at": "2026-05-06T01:03:03+00:00",
+            "summary_json": {"processed_tickers": 3, "successful_tickers": 3, "failed_tickers": 0, "paper_trade_only": True},
+        },
+    )
+    monkeypatch.setattr(
+        "src.paper_trading.get_paper_position_pnl_review_snapshot",
+        lambda _client: {"per_symbol": [], "open_positions_count": "N/A", "closed_positions_count": True, "total_realized_pnl": "bad", "total_unrealized_pnl": False},
+    )
+    monkeypatch.setattr("src.paper_trading.get_paper_risk_review_for_run", lambda _client, run_id: "bad-risk-payload")
+    status, _headers, payload = _call("/miniapp/api/review-shell", "POST", _authorized_request(monkeypatch))
+    assert status.startswith("200")
+    assert payload["sections"]["risk_summary"]["status"] == "unavailable"
+    assert payload["sections"]["paper_pnl_summary"]["status"] == "ok"
+    assert payload["sections"]["paper_pnl_summary"]["open_positions"] == 0
+    assert payload["sections"]["paper_pnl_summary"]["closed_positions"] == 0
+    assert payload["sections"]["paper_pnl_summary"]["total_pnl"] == 0.0
+    assert payload["sections"]["paper_pnl_summary"]["limitations"]
+
+
+def test_miniapp_review_shell_pnl_risk_helper_exceptions_do_not_leak_error_or_secret(monkeypatch):
+    monkeypatch.setenv("TELEGRAM_BOT_TOKEN", FAKE_BOT_TOKEN)
+    monkeypatch.setenv("MINIAPP_ALLOWED_TELEGRAM_USER_IDS", "42")
+    monkeypatch.setattr("src.miniapp_auth.time.time", lambda: NOW_TS)
+
+    class _Client: pass
+
+    monkeypatch.setattr("src.telegram_webhook_server._load_supabase_client", lambda: _Client())
+    monkeypatch.setattr(
+        "src.latest_system_runs_repository.get_latest_system_run",
+        lambda client, source="paper_daily_runner": {
+            "business_date": "2026-05-06",
+            "run_id": "42",
+            "status": "success",
+            "data_timestamp": "2026-05-06T01:02:03+00:00",
+            "updated_at": "2026-05-06T01:03:03+00:00",
+            "summary_json": {"processed_tickers": 3, "successful_tickers": 3, "failed_tickers": 0, "paper_trade_only": True},
+        },
+    )
+    monkeypatch.setattr("src.paper_trading.get_paper_position_pnl_review_snapshot", lambda _client: (_ for _ in ()).throw(RuntimeError("secret-db-token")))
+    monkeypatch.setattr("src.paper_trading.get_paper_risk_review_for_run", lambda _client, run_id: (_ for _ in ()).throw(RuntimeError("secret-risk-token")))
+    status, _headers, payload = _call("/miniapp/api/review-shell", "POST", _authorized_request(monkeypatch))
+    assert status.startswith("200")
+    assert payload["sections"]["paper_pnl_summary"]["status"] == "unavailable"
+    assert payload["sections"]["risk_summary"]["status"] == "unavailable"
+    serialized = json.dumps(payload)
+    assert "secret-db-token" not in serialized
+    assert "secret-risk-token" not in serialized
+
+
+def test_miniapp_review_shell_risk_bool_counts_are_bounded_with_limitation(monkeypatch):
+    monkeypatch.setenv("TELEGRAM_BOT_TOKEN", FAKE_BOT_TOKEN)
+    monkeypatch.setenv("MINIAPP_ALLOWED_TELEGRAM_USER_IDS", "42")
+    monkeypatch.setattr("src.miniapp_auth.time.time", lambda: NOW_TS)
+
+    class _Client: pass
+
+    monkeypatch.setattr("src.telegram_webhook_server._load_supabase_client", lambda: _Client())
+    monkeypatch.setattr(
+        "src.latest_system_runs_repository.get_latest_system_run",
+        lambda client, source="paper_daily_runner": {
+            "business_date": "2026-05-06",
+            "run_id": "42",
+            "status": "success",
+            "data_timestamp": "2026-05-06T01:02:03+00:00",
+            "updated_at": "2026-05-06T01:03:03+00:00",
+            "summary_json": {"processed_tickers": 3, "successful_tickers": 3, "failed_tickers": 0, "paper_trade_only": True},
+        },
+    )
+    monkeypatch.setattr(
+        "src.paper_trading.get_paper_position_pnl_review_snapshot",
+        lambda _client: {"per_symbol": [], "open_positions_count": 0, "closed_positions_count": 0, "total_realized_pnl": 0.0, "total_unrealized_pnl": 0.0},
+    )
+    monkeypatch.setattr(
+        "src.paper_trading.get_paper_risk_review_for_run",
+        lambda _client, run_id: {"total_blocked_buys": False, "total_warning_buys": True, "total_executed_buys": True},
+    )
+    status, _headers, payload = _call("/miniapp/api/review-shell", "POST", _authorized_request(monkeypatch))
+    assert status.startswith("200")
+    risk = payload["sections"]["risk_summary"]
+    assert risk["status"] == "ok"
+    assert risk["risk_level"] == "unknown"
+    assert risk["limitations"]
+
+
+def test_miniapp_review_shell_risk_summary_unavailable_when_latest_row_not_paper_only(monkeypatch):
+    monkeypatch.setenv("TELEGRAM_BOT_TOKEN", FAKE_BOT_TOKEN)
+    monkeypatch.setenv("MINIAPP_ALLOWED_TELEGRAM_USER_IDS", "42")
+    monkeypatch.setattr("src.miniapp_auth.time.time", lambda: NOW_TS)
+
+    class _Client: pass
+
+    monkeypatch.setattr("src.telegram_webhook_server._load_supabase_client", lambda: _Client())
+    monkeypatch.setattr(
+        "src.latest_system_runs_repository.get_latest_system_run",
+        lambda client, source="paper_daily_runner": {
+            "business_date": "2026-05-06",
+            "run_id": "42",
+            "status": "success",
+            "data_timestamp": "2026-05-06T01:02:03+00:00",
+            "updated_at": "2026-05-06T01:03:03+00:00",
+            "summary_json": {"paper_trade_only": False},
+        },
+    )
+    monkeypatch.setattr(
+        "src.paper_trading.get_paper_risk_review_for_run",
+        lambda _client, run_id: {"total_blocked_buys": 0, "total_warning_buys": 1, "total_executed_buys": 1},
+    )
+    status, _headers, payload = _call("/miniapp/api/review-shell", "POST", _authorized_request(monkeypatch))
+    assert status.startswith("200")
+    risk = payload["sections"]["risk_summary"]
+    assert risk["status"] == "unavailable"
 
 
 def test_miniapp_review_shell_cors_options_allowed_origin(monkeypatch):

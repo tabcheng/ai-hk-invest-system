@@ -34,6 +34,12 @@ class MiniAppReadDataProvider(Protocol):
     def get_signals_summary(self) -> dict[str, Any]:
         """Return bounded signals-summary contract for Mini App signals_summary section."""
 
+    def get_paper_pnl_summary(self) -> dict[str, Any]:
+        """Return bounded paper-PnL summary contract for Mini App paper_pnl_summary section."""
+
+    def get_risk_summary(self) -> dict[str, Any]:
+        """Return bounded risk-summary contract for Mini App risk_summary section."""
+
 
 class RailwayRuntimeEnvMiniAppReadDataProvider:
     """Bounded internal provider backed by Railway runtime environment metadata only."""
@@ -112,6 +118,44 @@ class RailwayRuntimeEnvMiniAppReadDataProvider:
             "boundary": "read-only signals summary; no decision capture, no order creation, no broker/live execution",
         }
 
+    def get_paper_pnl_summary(self) -> dict[str, Any]:
+        return {
+            "status": "unavailable",
+            "source": "paper_pnl_read_model",
+            "paper_trade_only": True,
+            "business_date": None,
+            "data_timestamp_hkt": None,
+            "updated_at_hkt": None,
+            "total_positions": 0,
+            "open_positions": 0,
+            "closed_positions": 0,
+            "realized_pnl": 0.0,
+            "unrealized_pnl": 0.0,
+            "total_pnl": 0.0,
+            "currency": "HKD",
+            "reason": "paper PnL source not available yet",
+            "limitations": ["No production paper PnL read model configured yet."],
+        }
+
+    def get_risk_summary(self) -> dict[str, Any]:
+        return {
+            "status": "unavailable",
+            "source": "risk_read_model",
+            "paper_trade_only": True,
+            "business_date": None,
+            "data_timestamp_hkt": None,
+            "updated_at_hkt": None,
+            "risk_level": "unknown",
+            "total_exposure": None,
+            "cash_usage": None,
+            "exposure_pct": None,
+            "concentration_notes": [],
+            "max_position_pct": None,
+            "warnings": [],
+            "reason": "risk source not available yet",
+            "limitations": ["No production risk summary read model configured yet."],
+        }
+
 
 def _format_hkt_display(value: Any) -> str | None:
     if not value:
@@ -141,6 +185,40 @@ def _safe_int_counter(value: Any) -> int:
         except ValueError:
             return 0
     return 0
+
+
+def _safe_int_metric(value: Any, default: int = 0) -> int:
+    if value is None or isinstance(value, bool):
+        return default
+    if isinstance(value, int):
+        return value
+    if isinstance(value, float):
+        return int(value)
+    if isinstance(value, str):
+        normalized = value.strip()
+        if not normalized:
+            return default
+        try:
+            return int(float(normalized))
+        except ValueError:
+            return default
+    return default
+
+
+def _safe_float_metric(value: Any, default: float = 0.0) -> float:
+    if value is None or isinstance(value, bool):
+        return default
+    if isinstance(value, (int, float)):
+        return float(value)
+    if isinstance(value, str):
+        normalized = value.strip()
+        if not normalized:
+            return default
+        try:
+            return float(normalized)
+        except ValueError:
+            return default
+    return default
 
 
 class SupabaseLatestSystemRunMiniAppReadDataProvider(RailwayRuntimeEnvMiniAppReadDataProvider):
@@ -203,7 +281,22 @@ class SupabaseLatestSystemRunMiniAppReadDataProvider(RailwayRuntimeEnvMiniAppRea
         if summary.get("paper_trade_only") is not True:
             return unavailable
         available_sections = ["latest_system_run"]
-        unavailable_sections = ["signals", "paper_pnl", "risk"]
+        unavailable_sections: list[str] = []
+        signals_summary = self.get_signals_summary()
+        paper_pnl_summary = self.get_paper_pnl_summary()
+        risk_summary = self.get_risk_summary()
+        if signals_summary.get("status") == "ok":
+            available_sections.append("signals")
+        else:
+            unavailable_sections.append("signals")
+        if paper_pnl_summary.get("status") == "ok":
+            available_sections.append("paper_pnl")
+        else:
+            unavailable_sections.append("paper_pnl")
+        if risk_summary.get("status") == "ok":
+            available_sections.append("risk")
+        else:
+            unavailable_sections.append("risk")
         review_readiness = "ready" if len(unavailable_sections) == 0 else "partial"
         return {
             "status": "ok",
@@ -221,6 +314,137 @@ class SupabaseLatestSystemRunMiniAppReadDataProvider(RailwayRuntimeEnvMiniAppRea
             "available_sections": available_sections,
             "unavailable_sections": unavailable_sections,
             "operator_note": "Read-only partial daily review summary from latest system run only; human final decision remains outside system.",
+            "boundary": boundary,
+        }
+
+    def get_paper_pnl_summary(self) -> dict[str, Any]:
+        boundary = "read-only paper summary; no order creation, no broker/live execution"
+        unavailable = {
+            "status": "unavailable",
+            "source": "paper_pnl_read_model",
+            "paper_trade_only": True,
+            "business_date": None,
+            "data_timestamp_hkt": None,
+            "updated_at_hkt": None,
+            "total_positions": 0,
+            "open_positions": 0,
+            "closed_positions": 0,
+            "realized_pnl": 0.0,
+            "unrealized_pnl": 0.0,
+            "total_pnl": 0.0,
+            "currency": "HKD",
+            "reason": "paper PnL source not available yet",
+            "limitations": ["資料未有"],
+            "boundary": boundary,
+        }
+        row = self._get_latest_row()
+        if not isinstance(row, dict) or not row or self._client is None:
+            return unavailable
+        summary = row.get("summary_json") if isinstance(row.get("summary_json"), dict) else {}
+        if summary.get("paper_trade_only") is not True:
+            return unavailable
+        from src.paper_trading import get_paper_position_pnl_review_snapshot
+        try:
+            snap = get_paper_position_pnl_review_snapshot(self._client)
+        except Exception:
+            return unavailable
+        if not isinstance(snap, dict):
+            return unavailable
+        per_symbol_raw = snap.get("per_symbol")
+        per_symbol = per_symbol_raw if isinstance(per_symbol_raw, list) else []
+        realized = _safe_float_metric(snap.get("total_realized_pnl"), default=0.0)
+        unrealized = _safe_float_metric(snap.get("total_unrealized_pnl"), default=0.0)
+        limitations: list[str] = []
+        if not isinstance(per_symbol_raw, list):
+            limitations.append("per_symbol malformed; bounded to empty list")
+        if any(
+            [
+                isinstance(snap.get("open_positions_count"), bool),
+                isinstance(snap.get("closed_positions_count"), bool),
+                isinstance(snap.get("total_realized_pnl"), bool),
+                isinstance(snap.get("total_unrealized_pnl"), bool),
+            ]
+        ):
+            limitations.append("one or more numeric fields were malformed; bounded defaults applied")
+        return {
+            "status": "ok",
+            "source": "paper_pnl_read_model",
+            "paper_trade_only": True,
+            "business_date": str(row.get("business_date") or ""),
+            "data_timestamp_hkt": _format_hkt_display(row.get("data_timestamp")),
+            "updated_at_hkt": _format_hkt_display(row.get("updated_at")),
+            "total_positions": len(per_symbol),
+            "open_positions": _safe_int_metric(snap.get("open_positions_count"), default=0),
+            "closed_positions": _safe_int_metric(snap.get("closed_positions_count"), default=0),
+            "realized_pnl": realized,
+            "unrealized_pnl": unrealized,
+            "total_pnl": realized + unrealized,
+            "currency": "HKD",
+            "limitations": limitations[:_MAX_LIMITATIONS],
+            "boundary": boundary,
+        }
+
+    def get_risk_summary(self) -> dict[str, Any]:
+        boundary = "read-only risk summary; review only, no order creation, no broker/live execution"
+        unavailable = {
+            "status": "unavailable",
+            "source": "risk_read_model",
+            "paper_trade_only": True,
+            "business_date": None,
+            "data_timestamp_hkt": None,
+            "updated_at_hkt": None,
+            "risk_level": "unknown",
+            "total_exposure": None,
+            "cash_usage": None,
+            "exposure_pct": None,
+            "concentration_notes": [],
+            "max_position_pct": None,
+            "warnings": [],
+            "reason": "risk source not available yet",
+            "limitations": ["資料未有"],
+            "boundary": boundary,
+        }
+        row = self._get_latest_row()
+        if not isinstance(row, dict) or not row or self._client is None:
+            return unavailable
+        summary = row.get("summary_json") if isinstance(row.get("summary_json"), dict) else {}
+        if summary.get("paper_trade_only") is not True:
+            return unavailable
+        from src.paper_trading import get_paper_risk_review_for_run
+        try:
+            risk = get_paper_risk_review_for_run(self._client, run_id=int(row.get("run_id")))
+        except Exception:
+            return unavailable
+        if not isinstance(risk, dict):
+            return unavailable
+        blocked = _safe_int_metric(risk.get("total_blocked_buys"), default=0)
+        warned = _safe_int_metric(risk.get("total_warning_buys"), default=0)
+        executed = _safe_int_metric(risk.get("total_executed_buys"), default=0)
+        limitations: list[str] = []
+        if any(
+            [
+                isinstance(risk.get("total_blocked_buys"), bool),
+                isinstance(risk.get("total_warning_buys"), bool),
+                isinstance(risk.get("total_executed_buys"), bool),
+            ]
+        ):
+            limitations.append("one or more risk count fields were malformed; bounded defaults applied")
+        risk_level = "high" if blocked > 0 else ("medium" if warned > 0 else ("low" if executed > 0 else "unknown"))
+        warnings: list[str] = []
+        if blocked > 0:
+            warnings.append(f"{blocked} blocked paper buy risk event(s)")
+        if warned > 0:
+            warnings.append(f"{warned} warning paper buy risk event(s)")
+        return {
+            "status": "ok",
+            "source": "risk_read_model",
+            "paper_trade_only": True,
+            "business_date": str(row.get("business_date") or ""),
+            "data_timestamp_hkt": _format_hkt_display(row.get("data_timestamp")),
+            "updated_at_hkt": _format_hkt_display(row.get("updated_at")),
+            "risk_level": risk_level,
+            "warnings": warnings[:5],
+            "limitations": limitations[:_MAX_LIMITATIONS],
             "boundary": boundary,
         }
 

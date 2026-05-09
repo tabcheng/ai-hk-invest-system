@@ -45,6 +45,8 @@ def _render_with_sample_payload() -> dict[str, object]:
                 "available_sections": ["latest_system_run"],
                 "unavailable_sections": ["signals", "paper_pnl", "risk"],
             },
+            "paper_pnl_summary": {"status": "unavailable"},
+            "risk_summary": {"status": "unavailable"},
         }
     }
 
@@ -69,6 +71,8 @@ const byId = {{
   "latest-card": new Element("section"),
   "daily-card": new Element("section"),
   "signals-card": new Element("section"),
+  "paper-pnl-card": new Element("section"),
+  "risk-card": new Element("section"),
   "build-meta": new Element("p"),
 }};
 
@@ -100,6 +104,8 @@ globalThis.fetch = fetch;
     daily_missing_has_signals: dailyCardText.includes("未有資料") && dailyCardText.includes("未有資料信號摘要"),
     daily_missing_has_pnl: dailyCardText.includes("未有資料") && dailyCardText.includes("模擬盈虧"),
     daily_missing_has_risk: dailyCardText.includes("未有資料") && dailyCardText.includes("風險摘要"),
+    pnl_card_unavailable: byId["paper-pnl-card"].textContent.includes("未有資料"),
+    risk_card_unavailable: byId["risk-card"].textContent.includes("未有資料"),
     build_meta_visible: byId["build-meta"].textContent.includes("UI build:") && byId["build-meta"].textContent.includes("Deployed build:"),
     boundary_visible: byId["overview-card"].textContent.includes("Daily Overview"),
     system_row_has_chip_text: systemRowText.includes("System Run Status") && systemRowText.includes("成功"),
@@ -140,6 +146,8 @@ def test_render_level_daily_summary_availability_consistency() -> None:
     assert rendered["daily_missing_has_signals"] is False
     assert rendered["daily_missing_has_pnl"] is True
     assert rendered["daily_missing_has_risk"] is True
+    assert rendered["pnl_card_unavailable"] is True
+    assert rendered["risk_card_unavailable"] is True
     assert rendered["boundary_visible"] is True
     assert rendered["system_row_has_chip_text"] is True
     assert rendered["coverage_row_has_chip_text"] is True

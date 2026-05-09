@@ -399,6 +399,13 @@ Use this checklist when reviewing Mini App read-only surfaces:
 
 ## Step 114 — Mini App post-deploy freshness smoke (required)
 - Open Telegram Mini App after Railway deploy complete.
+
+## Step 115 — Mini App Paper PnL + Risk smoke additions
+- Verify Daily Overview availability cards: `模擬盈虧` and `風險摘要` become `已載入` only when backend sections return `status=ok`.
+- Verify `每日檢視摘要` 已有資料/未有資料 chips match the rendered PnL/Risk card status.
+- If PnL/Risk unavailable, cards must show `未有資料` (not error/failure wording).
+- If PnL values are shown, they must be clearly paper/simulated context (no real-trade instruction wording).
+- Risk summary is review-only display; no auto-block/order/live execution semantics appear in UI copy.
 - Verify footer build metadata exists: `UI build: ... · Deployed build: ...`.
 - Verify build value matches latest deploy commit/version label (default source is `RAILWAY_GIT_COMMIT_SHA` short; fallback `unknown`).
 - Verify 「每日檢視摘要」**不會**把「信號摘要」同時列在「未有資料」(when signals summary status is ok).

@@ -267,6 +267,8 @@ No broker integration or autonomous real-money execution is authorized by this p
 - Paper-trading/decision-support-only boundary wording must remain explicit on card/page surfaces.
 
 - Step 92E: Mini App 新增「信號摘要」read-only card，信號僅作 AI 模擬／paper-trading 檢視證據，不構成買賣指示；前端開始統一以繁體中文顯示標籤（後端 snake_case 合約保留）；無 schema/migration、無寫入路徑、無決策提交、無下單、無 broker/live execution。
+- Step 115: Mini App backend review-shell extends read-only bounded sections with `paper_pnl_summary` + `risk_summary`, and frontend adds dedicated cards. When data source is unavailable, contract returns `status=unavailable` with operator-friendly reason/limitations; no raw DB rows or internal exception details are exposed.
+- Step 115 keeps boundary unchanged: read-only/paper-only/decision-support-only; no broker/live execution, no order creation, no decision capture, no write-path expansion, no Supabase schema migration.
 
 ## Step 92F-UI boundary note (frontend polish only)
 - Step 92F-UI 屬 Mini App 前端呈現重設：專業、統一、手機友善、繁體中文卡片式 dashboard。

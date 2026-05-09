@@ -169,5 +169,10 @@ Mini App should **not**:
 
 ## Step 114 Mini App freshness visibility policy
 - Mini App review surface includes low-profile non-secret build metadata (`UI build`, `Deployed build`) for deploy freshness validation during Telegram/WebView smoke.
+
+## Step 115 read-only bundle update
+- Daily Overview now extends read-only review coverage to include **Paper PnL / 模擬盈虧** and **Risk Summary / 風險摘要** cards.
+- `未有資料` for PnL/risk means source not available yet (not runtime failure), and must not be interpreted as latest run failure.
+- Risk/PnL display remains review-only paper-trading context; no order placement, no broker integration, no live-money execution semantics.
 - Runtime config injection remains frontend read-only (`/config.js`) and must not include secrets/initData/allowlist identifiers.
 - Static hosting cache posture for `index.html` and `config.js` is revalidation-oriented to reduce stale shell/config risk after deploy.

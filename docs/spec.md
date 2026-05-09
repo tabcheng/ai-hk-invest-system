@@ -506,3 +506,6 @@ Proposed table: `human_decision_journal_entries` with draft columns:
 - Strategy-improvement loop is evidence-driven: review outcomes -> identify gaps -> propose controlled strategy updates -> verify with paper trading again.
 - Strategy-changing features require stricter review and explicit acceptance evidence before rollout.
 - Simulated order creation guardrail requires explicit metadata: `strategy_version`, `data_source`, `data_timestamp`, `risk_check`, and `paper_trade_only=true`.
+
+## Step 117 — Phase 2 bounded journal capture
+- Mini App Phase 2 now includes bounded human paper decision journal capture only; not an order instruction path.

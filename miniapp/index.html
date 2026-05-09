@@ -46,6 +46,9 @@
       .time-label { white-space: nowrap; }
       .time-value { word-break: normal; white-space: nowrap; }
       .time-row { display:flex; flex-wrap:wrap; gap:4px; align-items:baseline; }
+      .journal-form { display:grid; gap:8px; }
+      .journal-form label { font-size:.86rem; color:var(--muted-text); }
+      .journal-form input,.journal-form select,.journal-form textarea { width:100%; padding:8px; border:1px solid var(--border); border-radius:8px; }
     </style>
   </head>
   <body>
@@ -62,6 +65,7 @@
       <section id="signals-card" class="section-card"><h2>信號摘要</h2></section>
       <section id="paper-pnl-card" class="section-card"><h2>模擬盈虧摘要</h2></section>
       <section id="risk-card" class="section-card"><h2>風險摘要</h2></section>
+      <section id="journal-card" class="section-card"><h2>Human Paper Decision Journal / 人手模擬決策日誌</h2></section>
       <section class="footer-guardrail"><h2>安全與邊界說明</h2><ul><li>Telegram initData 只在後端驗證</li><li>前端不使用 initDataUnsafe 作授權</li><li>前端不保存 Supabase secret / service role key</li><li>系統不連接券商、不作真實落盤</li><li>所有信號只供模擬檢視，並非買賣指示</li></ul></section>
           <p id="build-meta" class="helper-text">UI build: unknown · Deployed build: unknown</p>
     </main>
@@ -132,6 +136,21 @@
       function renderSignals(signals){ if (!signals || signals.status !== "ok") return fillUnavailable("signals-card","信號摘要"); const card=document.getElementById("signals-card"); card.textContent=""; const h=document.createElement("h2"); h.textContent="信號摘要"; card.append(h, renderStatusChip(signals.review_readiness || signals.status)); const warn=document.createElement("p"); warn.className="helper-text"; warn.textContent="目前只顯示技術信號方向；信心、風險、模擬盈虧未完整，因此不應視為完整決策。"; card.appendChild(warn); card.appendChild(renderMetricGrid([{label:"覆蓋股票數",value:signals.covered_tickers},{label:"顯示信號數",value:signals.shown_signals},{label:"顯示正面模擬信號",value:signals.shown_positive_signals},{label:"顯示觀望 / 中性信號",value:signals.shown_neutral_signals},{label:"顯示負面模擬信號",value:signals.shown_negative_signals},{label:"顯示未知信號",value:signals.shown_unknown_signals}])); card.appendChild(renderSignalItems(signals.top_items)); }
       function renderPaperPnl(pnl){ if (!pnl || pnl.status !== "ok") return fillUnavailable("paper-pnl-card","模擬盈虧摘要"); const card=document.getElementById("paper-pnl-card"); card.textContent=""; const h=document.createElement("h2"); h.textContent="模擬盈虧摘要"; card.append(h, renderStatusChip(pnl.status)); card.appendChild(renderMetricGrid([{label:"貨幣",value:pnl.currency || "HKD"},{label:"總持倉數",value:pnl.total_positions},{label:"開倉數",value:pnl.open_positions},{label:"平倉數",value:pnl.closed_positions},{label:"已實現盈虧 (Paper/模擬)",value:pnl.realized_pnl},{label:"未實現盈虧 (Paper/模擬)",value:pnl.unrealized_pnl},{label:"總盈虧 (Paper/模擬)",value:pnl.total_pnl}])); const ts = pnl.data_timestamp_hkt || pnl.updated_at_hkt; if (ts) { const t=document.createElement("p"); t.className="row"; t.textContent=`資料時間：${ts}`; card.appendChild(t); } if (Array.isArray(pnl.limitations) && pnl.limitations.length > 0) { const h3=document.createElement("h3"); h3.textContent="限制"; const ul=document.createElement("ul"); pnl.limitations.forEach((x)=>{const li=document.createElement("li"); li.textContent=String(x); ul.appendChild(li);}); card.append(h3,ul); } const helper=document.createElement("p"); helper.className="helper-text"; helper.textContent="以上為模擬 / paper-trading 盈虧，只供檢視，不代表真實戶口表現。"; card.appendChild(helper); }
       function renderRisk(risk){ if (!risk || risk.status !== "ok") return fillUnavailable("risk-card","風險摘要"); const card=document.getElementById("risk-card"); card.textContent=""; const h=document.createElement("h2"); h.textContent="風險摘要"; card.append(h, renderStatusChip(risk.status)); const p=document.createElement("p"); p.className="row"; p.textContent=`Risk level（Paper review）：${String(risk.risk_level||"unknown")}`; card.appendChild(p); const ts=risk.data_timestamp_hkt || risk.updated_at_hkt; if (ts) { const t=document.createElement("p"); t.className="row"; t.textContent=`資料時間：${ts}`; card.appendChild(t); } const w=document.createElement("h3"); w.textContent="風險警示"; card.appendChild(w); if (Array.isArray(risk.warnings) && risk.warnings.length > 0) { const ul=document.createElement("ul"); risk.warnings.forEach((x)=>{const li=document.createElement("li"); li.textContent=String(x); ul.appendChild(li);}); card.appendChild(ul);} else { const none=document.createElement("p"); none.className="helper-text"; none.textContent="暫無風險警示"; card.appendChild(none);} if (Array.isArray(risk.limitations) && risk.limitations.length > 0) { const h3=document.createElement("h3"); h3.textContent="限制"; const ul=document.createElement("ul"); risk.limitations.forEach((x)=>{const li=document.createElement("li"); li.textContent=String(x); ul.appendChild(li);}); card.append(h3,ul);} const helper=document.createElement("p"); helper.className="helper-text"; helper.textContent="風險摘要只供 review，不會自動阻止或建立任何真實交易。"; card.appendChild(helper); }
+      function renderJournal(latest, signals){
+        const card=document.getElementById("journal-card"); card.textContent="";
+        card.innerHTML = `<h2>Human Paper Decision Journal / 人手模擬決策日誌</h2><p class="helper-text">只記錄人手 paper decision；不建立訂單；不連接券商；不作真實落盤；真實交易決定仍由人手在系統外作出。</p><form id="journal-form" class="journal-form"><label>ticker<input id="journal-ticker" maxlength="16" required></label><label>decision_type<select id="journal-decision-type" required><option value="watch">watch</option><option value="paper_buy">paper_buy</option><option value="paper_sell">paper_sell</option><option value="paper_hold">paper_hold</option><option value="skip">skip</option></select></label><label>rationale<textarea id="journal-rationale" maxlength="500" required></textarea><small id="journal-counter">0 / 500</small></label><label>confidence_label<select id="journal-confidence"><option value="">(optional)</option><option value="low">low</option><option value="medium">medium</option><option value="high">high</option><option value="unknown">unknown</option></select></label><label><input id="journal-ack" type="checkbox" required> 我確認這只是人手模擬記錄，不會建立訂單或真實交易。</label><button id="journal-submit" type="submit">記錄模擬決策日誌</button></form><p id="journal-result" class="helper-text"></p>`;
+        const topItems = Array.isArray(signals?.top_items) ? signals.top_items : [];
+        const ticker = document.getElementById("journal-ticker"); if (topItems[0]?.ticker) ticker.value = String(topItems[0].ticker);
+        const rationale = document.getElementById("journal-rationale"); const counter=document.getElementById("journal-counter"); rationale.addEventListener("input", ()=> { counter.textContent = `${rationale.value.length} / 500`; });
+        document.getElementById("journal-form").addEventListener("submit", async (e) => {
+          e.preventDefault();
+          const result=document.getElementById("journal-result");
+          if (!document.getElementById("journal-ack").checked) { result.textContent="請先確認 guardrail。"; return; }
+          const initData=(window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initData) || ""; const apiBaseUrl=resolveApiBaseUrl();
+          const body={ init_data:initData, business_date: String(latest?.business_date || ""), run_id: String(latest?.run_id || ""), ticker: ticker.value.trim(), decision_type:document.getElementById("journal-decision-type").value, rationale_text:rationale.value.trim(), confidence_label:document.getElementById("journal-confidence").value || null, guardrail_ack:true, ui_build_version:resolveBuildVersion("MINIAPP_UI_BUILD_VERSION"), data_timestamp_hkt:String(latest?.data_timestamp_hkt || "") };
+          try { const resp=await fetch(`${apiBaseUrl}/miniapp/api/human-paper-decision`, { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(body)}); const p=await resp.json(); if (resp.ok && p.ok) result.textContent="已記錄 journal；no order created；paper only。"; else if (p.error==="journal_unavailable") result.textContent="journal unavailable，no data written。"; else result.textContent="提交失敗，請檢查輸入欄位。"; } catch (_e) { result.textContent="journal unavailable，no data written。"; }
+        });
+      }
       async function loadReviewShell() {
         const initData = (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initData) || "";
         const apiBaseUrl = resolveApiBaseUrl();
@@ -150,6 +169,7 @@
           renderSignals(signals);
           renderPaperPnl(pnl);
           renderRisk(risk);
+          renderJournal(latest, signals);
         } catch (_error) {
           renderOverview(null, null, null);
           fillUnavailable("latest-card", "最新系統運行");
@@ -157,6 +177,7 @@
           fillUnavailable("signals-card", "信號摘要");
           fillUnavailable("paper-pnl-card", "模擬盈虧摘要");
           fillUnavailable("risk-card", "風險摘要");
+          renderJournal(null, null);
         }
       }
       renderBuildMeta();

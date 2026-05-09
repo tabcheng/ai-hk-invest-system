@@ -287,3 +287,6 @@ No broker integration or autonomous real-money execution is authorized by this p
 - Step 112 is UI presentation/readability refinement only for Daily Overview in Mini App/Web UI.
 - No backend auth contract change (`initData` still server-validated), no frontend secret usage, no Supabase schema migration, and no Railway topology/config mutation.
 - UX wording explicitly reinforces simulated/paper-trading-only interpretation and forbids real trade instruction semantics.
+
+## Step 117 boundary extension
+- Added one bounded journaling-only write endpoint: `POST /miniapp/api/human-paper-decision`; forced paper-only server fields.

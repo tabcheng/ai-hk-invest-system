@@ -420,3 +420,6 @@ Use this checklist when reviewing Mini App read-only surfaces:
 - Verify PnL card 顯示 Paper/模擬 helper text、貨幣（例如 HKD）及資料時間（如有）。
 - Verify Risk card 顯示 review-only helper text；warnings 空時顯示 `暫無風險警示`，有值時為 bounded list。
 - Verify no broker/live execution/real-money/order/submit wording appears.
+
+## Step 117 operator runbook note
+- Mini App journal is human paper-decision logging only; success must state no order created.

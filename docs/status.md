@@ -459,3 +459,7 @@
 - Step 116 completed: Daily Summary no longer renders empty `未有資料` chip area when `unavailable_sections=[]`; ready path shows neutral `暫無缺失區塊`.
 - Step 116 completed: Paper PnL and Risk cards now include richer read-only context (Paper/模擬 helper copy, currency/timestamp/limitations, risk warnings neutral/explicit list).
 - Step 116 boundary preserved: read-only only, paper-trading only, decision-support only; no broker/live execution, no real-money execution, no order creation, no decision capture, no write-path expansion, no Supabase schema migration.
+
+## 2026-05-09 — Step 117 Bounded Human Paper Decision Journal Bundle
+- Step 117 completed: Mini App adds bounded Phase 2 human paper decision journal form and backend `POST /miniapp/api/human-paper-decision` write path for journaling only.
+- Scope boundary preserved: no order creation, no simulated order creation, no broker integration, no live execution, no real-money execution.

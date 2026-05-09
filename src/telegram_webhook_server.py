@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 from typing import Any
 from wsgiref.simple_server import make_server
 
@@ -13,6 +14,7 @@ from src.miniapp_auth import (
 
 from src.miniapp_read_model import build_miniapp_review_shell_response
 from src.miniapp_data_provider import SupabaseLatestSystemRunMiniAppReadDataProvider
+from src.human_decision_journal import ALLOWED_MINIAPP_CONFIDENCE, ALLOWED_MINIAPP_DECISION_TYPES, record_miniapp_human_paper_decision_journal
 
 def _parse_miniapp_allowed_telegram_user_ids(raw_value: str | None) -> list[int]:
     if raw_value is None:
@@ -43,6 +45,9 @@ def _load_miniapp_allowed_telegram_user_ids_from_env() -> list[int]:
 
 
 MINIAPP_REVIEW_SHELL_MAX_BODY_BYTES = 8192
+MINIAPP_HUMAN_DECISION_MAX_BODY_BYTES = 8192
+MINIAPP_DECISION_MAX_RATIONALE = 500
+_MINIAPP_TICKER_PATTERN = re.compile(r"^[0-9A-Z.\-]{1,16}$")
 
 
 def _is_supported_json_content_type(content_type: str) -> bool:
@@ -110,6 +115,86 @@ def _handle_miniapp_review_shell_request(raw_body: bytes) -> tuple[str, dict[str
         supabase_client = None
     provider = SupabaseLatestSystemRunMiniAppReadDataProvider(client=supabase_client, env=os.environ)
     return "200 OK", build_miniapp_review_shell_response(operator=operator, env=os.environ, provider=provider)
+
+
+def _handle_miniapp_human_paper_decision_request(raw_body: bytes) -> tuple[str, dict[str, Any]]:
+    try:
+        payload = json.loads(raw_body.decode("utf-8") or "{}")
+    except Exception:
+        return "400 Bad Request", {"ok": False, "error": "invalid_json"}
+    if not isinstance(payload, dict):
+        return "400 Bad Request", {"ok": False, "error": "invalid_json"}
+    init_data = payload.get("init_data")
+    if not isinstance(init_data, str) or not init_data.strip():
+        return "400 Bad Request", {"ok": False, "error": "missing_init_data"}
+    guardrail_ack = payload.get("guardrail_ack")
+    if guardrail_ack is not True:
+        return "400 Bad Request", {"ok": False, "error": "guardrail_ack_required"}
+    decision_type = str(payload.get("decision_type") or "").strip().lower()
+    if decision_type not in ALLOWED_MINIAPP_DECISION_TYPES:
+        return "400 Bad Request", {"ok": False, "error": "invalid_decision_type"}
+    ticker = str(payload.get("ticker") or "").strip().upper()
+    if not _MINIAPP_TICKER_PATTERN.match(ticker):
+        return "400 Bad Request", {"ok": False, "error": "invalid_ticker"}
+    business_date = str(payload.get("business_date") or "").strip()
+    run_id = str(payload.get("run_id") or "").strip()
+    rationale_text = str(payload.get("rationale_text") or "").strip()
+    if not re.fullmatch(r"\d{4}-\d{2}-\d{2}", business_date):
+        return "400 Bad Request", {"ok": False, "error": "invalid_business_date"}
+    if not run_id or len(run_id) > 80:
+        return "400 Bad Request", {"ok": False, "error": "invalid_request_fields"}
+    if not rationale_text or len(rationale_text) > MINIAPP_DECISION_MAX_RATIONALE:
+        return "400 Bad Request", {"ok": False, "error": "invalid_rationale_text"}
+    confidence_label = payload.get("confidence_label")
+    if confidence_label is not None and str(confidence_label).strip().lower() not in ALLOWED_MINIAPP_CONFIDENCE:
+        return "400 Bad Request", {"ok": False, "error": "invalid_confidence_label"}
+    quantity_intent = payload.get("quantity_intent")
+    if quantity_intent is not None and (not isinstance(quantity_intent, int) or quantity_intent < 0 or quantity_intent > 1_000_000):
+        return "400 Bad Request", {"ok": False, "error": "invalid_quantity_intent"}
+    notional_intent = payload.get("notional_intent")
+    if notional_intent is not None and (
+        not isinstance(notional_intent, (int, float)) or notional_intent < 0 or notional_intent > 1_000_000_000
+    ):
+        return "400 Bad Request", {"ok": False, "error": "invalid_notional_intent"}
+    try:
+        bot_token = _load_miniapp_bot_token_from_env()
+        allowed_user_ids = _load_miniapp_allowed_telegram_user_ids_from_env()
+        validated_context = validate_telegram_init_data(init_data, bot_token=bot_token)
+        operator = authorize_telegram_operator(validated_context, allowed_telegram_user_ids=allowed_user_ids)
+        supabase_client = _load_supabase_client()
+        recorded = record_miniapp_human_paper_decision_journal(
+            supabase_client,
+            business_date=business_date,
+            run_id=run_id,
+            ticker=ticker,
+            decision_type=decision_type,
+            rationale_text=rationale_text,
+            operator_user_id_hash_or_label=f"tg_user:{str(operator.get('user_id') or '')}",
+            confidence_label=(str(confidence_label).strip().lower() if confidence_label is not None else None),
+            quantity_intent=quantity_intent,
+            notional_intent=notional_intent,
+            ui_build_version=str(payload.get("ui_build_version") or "").strip() or None,
+            data_timestamp_hkt=str(payload.get("data_timestamp_hkt") or "").strip() or None,
+        )
+    except MiniAppAuthValidationError as exc:
+        reason = str(exc)
+        if "allowlist" in reason:
+            return "503 Service Unavailable", {"ok": False, "error": "miniapp_operator_allowlist_unavailable"}
+        if "bot_token" in reason:
+            return "503 Service Unavailable", {"ok": False, "error": "miniapp_auth_config_unavailable"}
+        if reason == "unauthorized_user_id":
+            return "403 Forbidden", {"ok": False, "error": "operator_not_authorized"}
+        return "401 Unauthorized", {"ok": False, "error": "invalid_init_data"}
+    except Exception:
+        return "503 Service Unavailable", {"ok": False, "error": "journal_unavailable", "no_data_written": True}
+    return "200 OK", {
+        "ok": True,
+        "status": "ok",
+        "journal_id": recorded.get("id"),
+        "no_order_created": True,
+        "paper_trade_only": True,
+        "operator_note": "human paper decision journal recorded",
+    }
 
 
 def _load_supabase_client() -> Any:
@@ -227,7 +312,7 @@ def create_wsgi_app() -> Any:
         request_origin = str(environ.get("HTTP_ORIGIN", "") or "").strip()
         allow_cors_origin = (
             request_origin
-            if path == "/miniapp/api/review-shell"
+            if path in {"/miniapp/api/review-shell", "/miniapp/api/human-paper-decision"}
             and request_origin
             and allowed_miniapp_origin
             and request_origin == allowed_miniapp_origin
@@ -235,7 +320,7 @@ def create_wsgi_app() -> Any:
         )
         response_headers: list[tuple[str, str]] = []
 
-        if path == "/miniapp/api/review-shell" and method == "OPTIONS":
+        if path in {"/miniapp/api/review-shell", "/miniapp/api/human-paper-decision"} and method == "OPTIONS":
             if allow_cors_origin:
                 response_headers.extend(
                     [
@@ -247,32 +332,36 @@ def create_wsgi_app() -> Any:
                 )
             start_response("204 No Content", response_headers)
             return [b""]
-        elif path not in {"/telegram/webhook", "/miniapp/api/review-shell"}:
+        elif path not in {"/telegram/webhook", "/miniapp/api/review-shell", "/miniapp/api/human-paper-decision"}:
             status = "404 Not Found"
             payload = {"ok": False, "error": "not_found"}
         elif method != "POST":
             status = "405 Method Not Allowed"
             payload = {"ok": False, "error": "method_not_allowed"}
-        elif path == "/miniapp/api/review-shell":
+        elif path in {"/miniapp/api/review-shell", "/miniapp/api/human-paper-decision"}:
             content_type = str(environ.get("CONTENT_TYPE") or "")
             if not _is_supported_json_content_type(content_type):
                 status = "415 Unsupported Media Type"
                 payload = {"ok": False, "error": "unsupported_media_type"}
             else:
                 body_size = _safe_parse_content_length(environ.get("CONTENT_LENGTH"))
-                if body_size is not None and body_size > MINIAPP_REVIEW_SHELL_MAX_BODY_BYTES:
+                max_bytes = MINIAPP_REVIEW_SHELL_MAX_BODY_BYTES if path == "/miniapp/api/review-shell" else MINIAPP_HUMAN_DECISION_MAX_BODY_BYTES
+                if body_size is not None and body_size > max_bytes:
                     status = "413 Payload Too Large"
                     payload = {"ok": False, "error": "payload_too_large"}
                 else:
-                    safe_read_size = MINIAPP_REVIEW_SHELL_MAX_BODY_BYTES + 1
+                    safe_read_size = max_bytes + 1
                     if body_size is not None:
-                        safe_read_size = min(body_size, MINIAPP_REVIEW_SHELL_MAX_BODY_BYTES + 1)
+                        safe_read_size = min(body_size, max_bytes + 1)
                     raw_body = environ["wsgi.input"].read(safe_read_size)
-                    if len(raw_body) > MINIAPP_REVIEW_SHELL_MAX_BODY_BYTES:
+                    if len(raw_body) > max_bytes:
                         status = "413 Payload Too Large"
                         payload = {"ok": False, "error": "payload_too_large"}
                     else:
-                        status, payload = _handle_miniapp_review_shell_request(raw_body)
+                        if path == "/miniapp/api/review-shell":
+                            status, payload = _handle_miniapp_review_shell_request(raw_body)
+                        else:
+                            status, payload = _handle_miniapp_human_paper_decision_request(raw_body)
         elif not _is_webhook_request_authorized(environ):
             status = "401 Unauthorized"
             payload = {"ok": False, "error": "unauthorized"}

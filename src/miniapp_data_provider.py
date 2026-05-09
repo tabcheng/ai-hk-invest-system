@@ -242,6 +242,12 @@ class SupabaseLatestSystemRunMiniAppReadDataProvider(RailwayRuntimeEnvMiniAppRea
         self._client = client
         self._cached_latest_row: dict[str, Any] | None = None
         self._latest_row_loaded = False
+        self._cached_signals_summary: dict[str, Any] | None = None
+        self._signals_summary_loaded = False
+        self._cached_paper_pnl_summary: dict[str, Any] | None = None
+        self._paper_pnl_summary_loaded = False
+        self._cached_risk_summary: dict[str, Any] | None = None
+        self._risk_summary_loaded = False
 
     @staticmethod
     def _unavailable(boundary: str) -> dict[str, Any]:
@@ -333,6 +339,8 @@ class SupabaseLatestSystemRunMiniAppReadDataProvider(RailwayRuntimeEnvMiniAppRea
         }
 
     def get_paper_pnl_summary(self) -> dict[str, Any]:
+        if self._paper_pnl_summary_loaded and self._cached_paper_pnl_summary is not None:
+            return self._cached_paper_pnl_summary
         boundary = "read-only paper summary; no order creation, no broker/live execution"
         unavailable = {
             "status": "unavailable",
@@ -354,16 +362,24 @@ class SupabaseLatestSystemRunMiniAppReadDataProvider(RailwayRuntimeEnvMiniAppRea
         }
         row = self._get_latest_row()
         if not isinstance(row, dict) or not row or self._client is None:
+            self._paper_pnl_summary_loaded = True
+            self._cached_paper_pnl_summary = unavailable
             return unavailable
         summary = row.get("summary_json") if isinstance(row.get("summary_json"), dict) else {}
         if summary.get("paper_trade_only") is not True:
+            self._paper_pnl_summary_loaded = True
+            self._cached_paper_pnl_summary = unavailable
             return unavailable
         from src.paper_trading import get_paper_position_pnl_review_snapshot
         try:
             snap = get_paper_position_pnl_review_snapshot(self._client)
         except Exception:
+            self._paper_pnl_summary_loaded = True
+            self._cached_paper_pnl_summary = unavailable
             return unavailable
         if not isinstance(snap, dict):
+            self._paper_pnl_summary_loaded = True
+            self._cached_paper_pnl_summary = unavailable
             return unavailable
         per_symbol_raw = snap.get("per_symbol")
         per_symbol = per_symbol_raw if isinstance(per_symbol_raw, list) else []
@@ -381,7 +397,7 @@ class SupabaseLatestSystemRunMiniAppReadDataProvider(RailwayRuntimeEnvMiniAppRea
             ]
         ):
             limitations.append("one or more numeric fields were malformed; bounded defaults applied")
-        return {
+        result = {
             "status": "ok",
             "source": "paper_pnl_read_model",
             "paper_trade_only": True,
@@ -398,8 +414,13 @@ class SupabaseLatestSystemRunMiniAppReadDataProvider(RailwayRuntimeEnvMiniAppRea
             "limitations": limitations[:_MAX_LIMITATIONS],
             "boundary": boundary,
         }
+        self._paper_pnl_summary_loaded = True
+        self._cached_paper_pnl_summary = result
+        return result
 
     def get_risk_summary(self) -> dict[str, Any]:
+        if self._risk_summary_loaded and self._cached_risk_summary is not None:
+            return self._cached_risk_summary
         boundary = "read-only risk summary; review only, no order creation, no broker/live execution"
         unavailable = {
             "status": "unavailable",
@@ -421,16 +442,24 @@ class SupabaseLatestSystemRunMiniAppReadDataProvider(RailwayRuntimeEnvMiniAppRea
         }
         row = self._get_latest_row()
         if not isinstance(row, dict) or not row or self._client is None:
+            self._risk_summary_loaded = True
+            self._cached_risk_summary = unavailable
             return unavailable
         summary = row.get("summary_json") if isinstance(row.get("summary_json"), dict) else {}
         if summary.get("paper_trade_only") is not True:
+            self._risk_summary_loaded = True
+            self._cached_risk_summary = unavailable
             return unavailable
         from src.paper_trading import get_paper_risk_review_for_run
         try:
             risk = get_paper_risk_review_for_run(self._client, run_id=int(row.get("run_id")))
         except Exception:
+            self._risk_summary_loaded = True
+            self._cached_risk_summary = unavailable
             return unavailable
         if not isinstance(risk, dict):
+            self._risk_summary_loaded = True
+            self._cached_risk_summary = unavailable
             return unavailable
         blocked = _safe_int_metric(risk.get("total_blocked_buys"), default=0)
         warned = _safe_int_metric(risk.get("total_warning_buys"), default=0)
@@ -450,7 +479,7 @@ class SupabaseLatestSystemRunMiniAppReadDataProvider(RailwayRuntimeEnvMiniAppRea
             warnings.append(f"{blocked} blocked paper buy risk event(s)")
         if warned > 0:
             warnings.append(f"{warned} warning paper buy risk event(s)")
-        return {
+        result = {
             "status": "ok",
             "source": "risk_read_model",
             "paper_trade_only": True,
@@ -462,8 +491,13 @@ class SupabaseLatestSystemRunMiniAppReadDataProvider(RailwayRuntimeEnvMiniAppRea
             "limitations": limitations[:_MAX_LIMITATIONS],
             "boundary": boundary,
         }
+        self._risk_summary_loaded = True
+        self._cached_risk_summary = result
+        return result
 
     def get_signals_summary(self) -> dict[str, Any]:
+        if self._signals_summary_loaded and self._cached_signals_summary is not None:
+            return self._cached_signals_summary
         boundary = "read-only signals summary; no decision capture, no order creation, no broker/live execution"
         unavailable = {
             "status": "unavailable",
@@ -474,14 +508,22 @@ class SupabaseLatestSystemRunMiniAppReadDataProvider(RailwayRuntimeEnvMiniAppRea
         }
         row = self._get_latest_row()
         if not isinstance(row, dict) or not row:
+            self._signals_summary_loaded = True
+            self._cached_signals_summary = unavailable
             return unavailable
         summary = row.get("summary_json") if isinstance(row.get("summary_json"), dict) else {}
         if summary.get("paper_trade_only") is not True:
+            self._signals_summary_loaded = True
+            self._cached_signals_summary = unavailable
             return unavailable
         if self._client is None:
+            self._signals_summary_loaded = True
+            self._cached_signals_summary = unavailable
             return unavailable
         run_id = row.get("run_id")
         if run_id is None:
+            self._signals_summary_loaded = True
+            self._cached_signals_summary = unavailable
             return unavailable
 
         try:
@@ -496,8 +538,12 @@ class SupabaseLatestSystemRunMiniAppReadDataProvider(RailwayRuntimeEnvMiniAppRea
             )
             signal_rows = result.data if isinstance(result.data, list) else []
         except Exception:
+            self._signals_summary_loaded = True
+            self._cached_signals_summary = unavailable
             return unavailable
         if not signal_rows:
+            self._signals_summary_loaded = True
+            self._cached_signals_summary = unavailable
             return unavailable
 
         def _norm_signal(value: Any) -> str:
@@ -523,7 +569,7 @@ class SupabaseLatestSystemRunMiniAppReadDataProvider(RailwayRuntimeEnvMiniAppRea
                     "data_timestamp_hkt": _format_hkt_display(row.get("data_timestamp")),
                 })
 
-        return {
+        result = {
             "status": "ok",
             "source": "signals_read_model",
             "business_date": str(row.get("business_date") or ""),
@@ -543,6 +589,9 @@ class SupabaseLatestSystemRunMiniAppReadDataProvider(RailwayRuntimeEnvMiniAppRea
             "operator_note": "AI 模擬信號只供檢視，不是買賣指示；真實交易決定仍由人類在系統外作出。",
             "boundary": boundary,
         }
+        self._signals_summary_loaded = True
+        self._cached_signals_summary = result
+        return result
 
     def get_decision_context_summary(self) -> dict[str, Any]:
         default_provider = RailwayRuntimeEnvMiniAppReadDataProvider()

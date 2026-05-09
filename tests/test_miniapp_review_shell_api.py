@@ -681,3 +681,46 @@ def test_miniapp_review_shell_signals_summary_requires_matching_run_id(monkeypat
     assert ("date", "2026-05-06") in query.filters
     assert ("run_id", 42) in query.filters
     assert section["status"] == "unavailable"
+
+def test_miniapp_review_shell_decision_context_summary_partial_with_unavailable_market_data(monkeypatch):
+    monkeypatch.setenv("TELEGRAM_BOT_TOKEN", FAKE_BOT_TOKEN)
+    monkeypatch.setenv("MINIAPP_ALLOWED_TELEGRAM_USER_IDS", "42")
+    monkeypatch.setattr("src.miniapp_auth.time.time", lambda: NOW_TS)
+
+    class _Result:
+        def __init__(self, data):
+            self.data = data
+
+    class _Query:
+        def select(self, *_a, **_k): return self
+        def eq(self, *_a, **_k): return self
+        def order(self, *_a, **_k): return self
+        def limit(self, *_a, **_k): return self
+        def execute(self):
+            return _Result([{"stock": "0700.HK", "signal": "BUY", "reason": "momentum"}])
+
+    class _Client:
+        def table(self, name):
+            assert name == "signals"
+            return _Query()
+
+    monkeypatch.setattr("src.telegram_webhook_server._load_supabase_client", lambda: _Client())
+    monkeypatch.setattr(
+        "src.latest_system_runs_repository.get_latest_system_run",
+        lambda client, source="paper_daily_runner": {
+            "business_date": "2026-05-06",
+            "run_id": 42,
+            "status": "success",
+            "data_timestamp": "2026-05-06T01:02:03+00:00",
+            "updated_at": "2026-05-06T01:03:03+00:00",
+            "summary_json": {"paper_trade_only": True},
+        },
+    )
+
+    status, _headers, payload = _call("/miniapp/api/review-shell", "POST", _authorized_request(monkeypatch))
+    assert status.startswith("200")
+    section = payload["sections"]["decision_context_summary"]
+    assert section["status"] == "partial"
+    assert section["context_readiness"] == "partial"
+    assert section["tickers"][0]["market"]["status"] == "unavailable"
+    assert "strategy_version missing" in section["tickers"][0]["missing_context"]

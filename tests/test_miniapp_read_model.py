@@ -67,6 +67,7 @@ def test_default_latest_system_run_is_unavailable_contract():
     daily_review_summary = payload["sections"]["daily_review_summary"]
     assert daily_review_summary["status"] == "unavailable"
     assert daily_review_summary["source"] == "daily_review_read_model"
+    assert payload["sections"]["decision_context_summary"]["status"] == "unavailable"
 
 
 def test_review_shell_response_guardrails_and_mock_sections():
@@ -126,6 +127,8 @@ def test_provider_injection_can_override_runtime_status_and_latest_system_run():
             return {"status": "unavailable", "source": "stub_pnl"}
         def get_risk_summary(self):
             return {"status": "unavailable", "source": "stub_risk"}
+        def get_decision_context_summary(self):
+            return {"status": "partial", "source": "stub_decision_context"}
 
     payload = build_miniapp_review_shell_response(
         operator={"telegram_user_id": 42},
@@ -139,6 +142,7 @@ def test_provider_injection_can_override_runtime_status_and_latest_system_run():
     assert payload["sections"]["signals_summary"]["source"] == "stub_signals"
     assert payload["sections"]["paper_pnl_summary"]["source"] == "stub_pnl"
     assert payload["sections"]["risk_summary"]["source"] == "stub_risk"
+    assert payload["sections"]["decision_context_summary"]["source"] == "stub_decision_context"
 
 
 def test_local_artifact_provider_reads_latest_system_run_summary(tmp_path):

@@ -311,3 +311,5 @@ The platform is designed as an **AI investment firm operating model** with stric
 
 ## Step 117 architecture slice
 - Added `POST /miniapp/api/human-paper-decision` with same initData validation/allowlist auth chain and bounded journal-only persistence path.
+
+- Step 119 architecture update: added read-only Decision Context read-model section (`decision_context_summary`) consuming internal bounded sources only (signals/risk/paper summaries/latest run metadata), with market-data slot returning `unavailable` when no bounded source exists.

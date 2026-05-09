@@ -194,3 +194,5 @@ Mini App should **not**:
 - Journal interaction is Chinese-first with explicit paper-only guardrail copy and no execution wording.
 - Ticker path is monitored signal picker first, not manual free-text-first.
 - Decision Context Pack is bounded and must show explicit missing-context checklist to prevent over-interpretation as full investment recommendation.
+
+- Step 119: selected ticker Decision Context Pack now includes grouped Signal / Market Data / Paper Position-PnL / Risk / Missing Context with explicit completeness wording (not trade readiness).

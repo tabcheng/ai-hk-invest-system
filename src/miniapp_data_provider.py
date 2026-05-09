@@ -40,6 +40,9 @@ class MiniAppReadDataProvider(Protocol):
     def get_risk_summary(self) -> dict[str, Any]:
         """Return bounded risk-summary contract for Mini App risk_summary section."""
 
+    def get_decision_context_summary(self) -> dict[str, Any]:
+        """Return bounded per-ticker decision context summary for review-shell."""
+
 
 class RailwayRuntimeEnvMiniAppReadDataProvider:
     """Bounded internal provider backed by Railway runtime environment metadata only."""
@@ -154,6 +157,18 @@ class RailwayRuntimeEnvMiniAppReadDataProvider:
             "warnings": [],
             "reason": "risk source not available yet",
             "limitations": ["No production risk summary read model configured yet."],
+        }
+
+    def get_decision_context_summary(self) -> dict[str, Any]:
+        return {
+            "status": "unavailable",
+            "paper_trade_only": True,
+            "business_date": None,
+            "data_timestamp_hkt": None,
+            "source": "review_shell_decision_context",
+            "context_readiness": "insufficient",
+            "tickers": [],
+            "global_limitations": ["No production decision context source configured yet."],
         }
 
 
@@ -527,6 +542,110 @@ class SupabaseLatestSystemRunMiniAppReadDataProvider(RailwayRuntimeEnvMiniAppRea
             "top_items": top_items,
             "operator_note": "AI 模擬信號只供檢視，不是買賣指示；真實交易決定仍由人類在系統外作出。",
             "boundary": boundary,
+        }
+
+    def get_decision_context_summary(self) -> dict[str, Any]:
+        default_provider = RailwayRuntimeEnvMiniAppReadDataProvider()
+        row = self._get_latest_row()
+        if not isinstance(row, dict) or not row or self._client is None:
+            return default_provider.get_decision_context_summary()
+        summary = row.get("summary_json") if isinstance(row.get("summary_json"), dict) else {}
+        if summary.get("paper_trade_only") is not True:
+            return default_provider.get_decision_context_summary()
+
+        signals = self.get_signals_summary()
+        risk = self.get_risk_summary()
+        if signals.get("status") != "ok":
+            return {
+                "status": "partial",
+                "paper_trade_only": True,
+                "business_date": str(row.get("business_date") or ""),
+                "data_timestamp_hkt": _format_hkt_display(row.get("data_timestamp")),
+                "source": "review_shell_decision_context",
+                "context_readiness": "insufficient",
+                "tickers": [],
+                "global_limitations": ["Signals unavailable; ticker-level decision context not ready."],
+            }
+
+        tickers: list[dict[str, Any]] = []
+        risk_level = risk.get("risk_level", "unknown") if risk.get("status") == "ok" else "unknown"
+        risk_warnings = risk.get("warnings", []) if risk.get("status") == "ok" else []
+        risk_limitations = (
+            risk.get("limitations", [])
+            if risk.get("status") == "ok"
+            else ["Risk data not available yet."]
+        )
+
+        for item in signals.get("top_items", [])[:5]:
+            missing_context = [
+                "latest price missing",
+                "liquidity missing",
+                "fundamentals missing",
+                "news/catalyst missing",
+                "valuation missing",
+                "per-position exposure missing",
+                "data_source missing",
+            ]
+            if not summary.get("strategy_version"):
+                missing_context.append("strategy_version missing")
+            tickers.append(
+                {
+                    "ticker": str(item.get("ticker") or "").strip(),
+                    "signal": {
+                        "direction": item.get("signal_label"),
+                        "confidence": item.get("confidence_label", "unknown"),
+                        "reason": item.get("reason_short"),
+                        "strategy_version": summary.get("strategy_version"),
+                        "data_timestamp_hkt": item.get("data_timestamp_hkt")
+                        or signals.get("data_timestamp_hkt"),
+                    },
+                    "market": {
+                        "status": "unavailable",
+                        "reference_price": None,
+                        "previous_close": None,
+                        "change": None,
+                        "change_pct": None,
+                        "volume": None,
+                        "turnover": None,
+                        "currency": "HKD",
+                        "market": "HKEX",
+                        "data_source": None,
+                        "data_timestamp_hkt": None,
+                        "freshness_status": "unknown",
+                        "adjustment_policy": None,
+                        "confidence": "unknown",
+                        "limitations": ["未有資料 / not available yet"],
+                    },
+                    "paper_position": {
+                        "status": "unavailable",
+                        "position_qty": None,
+                        "avg_cost": None,
+                        "unrealized_pnl": None,
+                        "exposure_pct": None,
+                        "limitations": ["Selected ticker position/exposure not available yet."],
+                    },
+                    "risk": {
+                        "risk_level": risk_level,
+                        "warnings": risk_warnings,
+                        "limitations": risk_limitations,
+                    },
+                    "missing_context": missing_context,
+                    "limitations": [
+                        "Existing-source-only mode; no external market vendor integration in Step 119."
+                    ],
+                }
+            )
+        return {
+            "status": "partial",
+            "paper_trade_only": True,
+            "business_date": str(row.get("business_date") or ""),
+            "data_timestamp_hkt": signals.get("data_timestamp_hkt"),
+            "source": "review_shell_decision_context",
+            "context_readiness": "partial",
+            "tickers": tickers,
+            "global_limitations": [
+                "Market data fields unavailable from current bounded read sources."
+            ],
         }
 
     def _get_latest_row(self) -> dict[str, Any] | None:

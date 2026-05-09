@@ -250,3 +250,5 @@ Prioritization:
 
 - **Step 117 completed:** Phase 2 bounded human paper decision journal capture implemented for Mini App with backend-only bounded write endpoint (`POST /miniapp/api/human-paper-decision`) and no execution path.
 - **Step 118 completed:** Mini App Human Paper Decision Journal UX localized to Chinese-first, monitored ticker picker added from `signals_summary.top_items`, and bounded Decision Context Pack added with explicit missing-data checklist; no broker/live execution, no order/simulated-order creation, no schema migration, no Telegram auth change.
+
+- Step 119 completed: review-shell `decision_context_summary` + selected ticker context enrichment (existing-source-only, no external vendor integration). Follow-up candidate: wire per-ticker paper position/exposure when bounded backend source becomes available.

@@ -177,3 +177,15 @@ Step 91A recorded result (PR #88):
 
 ## Step 117 post-deploy smoke additions
 - Verify journal section visible, guardrail checkbox required, and valid submit returns bounded success or bounded unavailable.
+
+## Step 118 post-deploy smoke (required)
+- [ ] Confirm `UI build` and `Deployed build` match merge commit.
+- [ ] Confirm journal section title is Chinese-first and field labels are Chinese-first with optional English auxiliary.
+- [ ] Confirm ticker picker uses monitored signal tickers (`signals_summary.top_items`) and shows disabled/no-data state when unavailable.
+- [ ] Confirm selecting ticker updates Decision Context Pack.
+- [ ] Confirm Decision Context Pack includes signal reason + missing-context checklist + insufficient-data warning.
+- [ ] Confirm rationale placeholder is Chinese and does not invite real trade instruction.
+- [ ] Confirm guardrail checkbox remains required.
+- [ ] Confirm submit button text is `記錄人手模擬決策`.
+- [ ] Confirm success/error wording remains paper-only/no-order-created.
+- [ ] Confirm no broker/live execution/real-money/order creation action wording appears.

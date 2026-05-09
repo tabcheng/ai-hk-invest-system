@@ -509,3 +509,10 @@ Proposed table: `human_decision_journal_entries` with draft columns:
 
 ## Step 117 — Phase 2 bounded journal capture
 - Mini App Phase 2 now includes bounded human paper decision journal capture only; not an order instruction path.
+
+## Step 118 — Journal UX Chinese-first + monitored ticker picker + bounded decision context
+- Human Paper Decision Journal UI is Chinese-first with English auxiliary labels; backend enums remain unchanged (`watch|paper_buy|paper_sell|paper_hold|skip`, confidence unchanged).
+- Ticker selection prioritizes monitored/signal ticker picker from `signals_summary.top_items`; when unavailable, UI renders disabled no-data state.
+- Journal pre-submit area includes bounded Decision Context Pack from existing payload only (signal direction/confidence/reason/timestamp; paper PnL/risk when available).
+- Missing data must be explicitly labeled `未有資料 / not available yet`; no invention of price/liquidity/fundamentals/news/valuation/position exposure.
+- Boundary unchanged: paper-trading decision-support only; no broker/live execution/order creation/simulated-order creation.

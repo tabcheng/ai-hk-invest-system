@@ -290,3 +290,8 @@ No broker integration or autonomous real-money execution is authorized by this p
 
 ## Step 117 boundary extension
 - Added one bounded journaling-only write endpoint: `POST /miniapp/api/human-paper-decision`; forced paper-only server fields.
+
+## Step 118 bounded context + journal boundary note
+- Decision Context Pack in Mini App must only consume existing bounded review-shell fields (`latest_system_run`, `signals_summary`, `paper_pnl_summary`, `risk_summary`).
+- For unavailable fields (price/liquidity/fundamentals/news/valuation/exposure/strategy version/data source), UI must render explicit unavailable wording and must not infer/invent values.
+- Journal write contract remains existing `/miniapp/api/human-paper-decision`; no schema migration and no auth boundary change.

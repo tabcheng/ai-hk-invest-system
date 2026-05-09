@@ -463,3 +463,10 @@
 ## 2026-05-09 — Step 117 Bounded Human Paper Decision Journal Bundle
 - Step 117 completed: Mini App adds bounded Phase 2 human paper decision journal form and backend `POST /miniapp/api/human-paper-decision` write path for journaling only.
 - Scope boundary preserved: no order creation, no simulated order creation, no broker integration, no live execution, no real-money execution.
+
+## 2026-05-09 — Step 118 Journal UX 中文化 + Monitored Ticker Picker + Decision Context Pack
+- Step 117 post-deploy screenshot review confirmed journal section existed but labels were too engineering-field-name-heavy (`ticker`, `decision_type`, `rationale`, `confidence_label`).
+- Step 118 completed: Mini App journal is now Chinese-first with English auxiliary labels; submit/error/success copy updated to bounded paper-only wording.
+- Step 118 completed: ticker entry path changed to monitored signal ticker picker (`signals_summary.top_items`) with disabled no-data state.
+- Step 118 completed: added bounded Decision Context Pack before journal form using existing read-only payload only (signal direction/confidence/reason/timestamp + paper PnL/risk if available + explicit missing-context checklist).
+- Step 118 preserved boundaries: no broker/live execution, no order creation, no simulated order creation, no market-data/news/fundamental vendor integration, no Telegram auth change, no Supabase schema migration.

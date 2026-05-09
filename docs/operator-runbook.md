@@ -423,3 +423,9 @@ Use this checklist when reviewing Mini App read-only surfaces:
 
 ## Step 117 operator runbook note
 - Mini App journal is human paper-decision logging only; success must state no order created.
+
+## Step 118 operator smoke focus (journal UX)
+- Confirm journal title is Chinese-first (`人手模擬決策日誌`) with English auxiliary subtitle.
+- Confirm ticker selector shows monitored signal tickers and no-data disabled state when signals unavailable.
+- Confirm Decision Context Pack updates per selected ticker and includes explicit missing-context checklist.
+- Confirm success/error copy remains no-order/paper-only and no broker/live execution wording appears.

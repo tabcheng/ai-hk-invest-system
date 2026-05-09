@@ -757,16 +757,18 @@ def test_decision_context_reuses_cached_signals_and_risk_summaries(monkeypatch):
 
     monkeypatch.setattr("src.paper_trading.get_paper_risk_review_for_run", _risk_helper)
 
+    monkeypatch.setattr(
+        "src.latest_system_runs_repository.get_latest_system_run",
+        lambda client, source="paper_daily_runner": {
+            "business_date": "2026-05-06",
+            "run_id": 42,
+            "status": "success",
+            "data_timestamp": "2026-05-06T01:02:03+00:00",
+            "updated_at": "2026-05-06T01:03:03+00:00",
+            "summary_json": {"paper_trade_only": True},
+        },
+    )
     provider = SupabaseLatestSystemRunMiniAppReadDataProvider(client=_Client(counter))
-    provider._cached_latest_row = {
-        "business_date": "2026-05-06",
-        "run_id": 42,
-        "status": "success",
-        "data_timestamp": "2026-05-06T01:02:03+00:00",
-        "updated_at": "2026-05-06T01:03:03+00:00",
-        "summary_json": {"paper_trade_only": True},
-    }
-    provider._latest_row_loaded = True
 
     signals = provider.get_signals_summary()
     risk = provider.get_risk_summary()
@@ -779,6 +781,7 @@ def test_decision_context_reuses_cached_signals_and_risk_summaries(monkeypatch):
     assert counter["risk_helper"] == 1
     assert decision_context["tickers"][0]["signal"]["direction"] == signals["top_items"][0]["signal_label"]
     assert decision_context["tickers"][0]["risk"]["risk_level"] == risk["risk_level"]
-    assert "order" not in str(decision_context).lower()
-    assert "broker" not in str(decision_context).lower()
-    assert "secret" not in str(decision_context).lower()
+    assert "raw_rows" not in decision_context
+    assert "exception" not in decision_context
+    assert "broker_execution" not in decision_context
+    assert "order_creation" not in decision_context

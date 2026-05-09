@@ -308,3 +308,6 @@ The platform is designed as an **AI investment firm operating model** with stric
 - Runtime write/read paths can fail when backend workloads use low-privilege anon/publishable keys.
 - Backend runtime services must keep elevated Supabase key backend-only; browser/static Mini App surfaces must never receive service-role/secret keys.
 - Step 91A introduces no runtime data-path change and no `latest_system_runs` repository implementation.
+
+## Step 117 architecture slice
+- Added `POST /miniapp/api/human-paper-decision` with same initData validation/allowlist auth chain and bounded journal-only persistence path.

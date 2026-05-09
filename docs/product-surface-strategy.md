@@ -186,3 +186,6 @@ Mini App should **not**:
   - if no missing sections, do not render empty `未有資料` chip area; show neutral `暫無缺失區塊`.
   - if missing sections exist, render bounded chips.
 - PnL/Risk cards remain read-only paper-review evidence surfaces only; wording must not imply real-money execution or trade instruction.
+
+## Step 117 product surface update
+- Mini App adds bounded Human Paper Decision Journal form with non-execution submit wording.

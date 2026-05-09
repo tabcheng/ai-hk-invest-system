@@ -247,3 +247,5 @@ Prioritization:
 - **Step 115 completed:** Mini App review-shell now exposes bounded read-only `paper_pnl_summary` + `risk_summary` sections, Daily Review Summary availability reflects those statuses, and frontend adds dedicated Paper PnL/Risk cards with unavailable-as-`未有資料` behavior; no schema migration, no write-path expansion, no broker/live execution.
 - **Step 116 completed:** Daily Review dashboard ready-state bundle landed: overview copy now matches `ready/partial/unavailable`, Daily Summary avoids empty missing-chip area, and PnL/Risk cards include richer paper-only review context (`currency`, `資料時間`, bounded `warnings/limitations`, review-only helper text); no write path, no Supabase schema migration, no Telegram auth change, no Railway env/config change.
 - Keep `index.html` + `config.js` cache headers on revalidation policy; revisit only if Telegram WebView behavior still shows stale bundle evidence.
+
+- **Step 117 completed:** Phase 2 bounded human paper decision journal capture implemented for Mini App with backend-only bounded write endpoint (`POST /miniapp/api/human-paper-decision`) and no execution path.

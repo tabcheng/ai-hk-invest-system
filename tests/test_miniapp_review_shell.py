@@ -27,6 +27,13 @@ def test_step92f_ui_review_shell_static_contract() -> None:
         "/miniapp/api/review-shell",
         "init_data",
         "Paper trading only",
+        "Human Paper Decision Journal",
+        "journal-form",
+        "journal-ack",
+        "記錄模擬決策日誌",
+        "不建立訂單",
+        "不連接券商",
+        "不作真實落盤",
     ]
 
     forbidden_text = [
@@ -35,8 +42,6 @@ def test_step92f_ui_review_shell_static_contract() -> None:
         "createClient(",
         "SUPABASE_SECRET_KEY",
         "SUPABASE_SERVICE_ROLE_KEY=",
-        "<form",
-        'type="submit"',
         "Read-only partial daily review summary from latest system run only; human final decision remains outside system.",
         "read-only latest-state row; no broker/live execution",
         "read-only review surface; no decision capture, no order creation, no broker/live execution",
@@ -76,9 +81,7 @@ def test_step92f_ui_review_shell_static_contract() -> None:
         assert re.search(pattern, html) is None
 
     forbidden_write_ui_patterns = [
-        r"<form\b",
-        r"<button[^>]*type=['\"]submit['\"]",
-        r"<button[^>]*>\s*(提交決策|建立訂單|立即落盤|place order|submit decision|decision capture)\s*</button>",
+        r"<button[^>]*>\s*(提交決策|建立訂單|立即落盤|place order|submit decision|decision capture|execute trade|broker execution|live execution|真實買入|真實賣出|落盤)\s*</button>",
         r"<input[^>]*type=['\"]submit['\"]",
     ]
     for pattern in forbidden_write_ui_patterns:

@@ -174,3 +174,6 @@ Step 91A recorded result (PR #88):
 - [ ] 確認 Risk 卡有 review-only 語境；warnings 空時顯示中性文案 `暫無風險警示`。
 - [ ] 確認安全邊界說明仍可見。
 - [ ] 確認無 broker/live execution/real-money/order/submit 文案。
+
+## Step 117 post-deploy smoke additions
+- Verify journal section visible, guardrail checkbox required, and valid submit returns bounded success or bounded unavailable.

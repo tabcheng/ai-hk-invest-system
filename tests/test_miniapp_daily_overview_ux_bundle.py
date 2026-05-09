@@ -24,11 +24,25 @@ class Element {{
     this.className = "";
     this._text = "";
     this.children = [];
+    this.value = "";
+    this.checked = false;
+    this._listeners = {{}};
   }}
   set textContent(v) {{ this._text = String(v); this.children = []; }}
   get textContent() {{ return this._text + this.children.map((c) => c.textContent || "").join(""); }}
   append(...nodes) {{ nodes.forEach((n) => this.appendChild(n)); }}
   appendChild(node) {{ this.children.push(node); return node; }}
+  addEventListener(name, handler) {{ this._listeners[name] = handler; }}
+  set innerHTML(v) {{
+    this._text = String(v || "");
+    const ids = ["journal-form","journal-ticker","journal-rationale","journal-counter","journal-confidence","journal-ack","journal-submit","journal-result"];
+    ids.forEach((id) => {{
+      if (this._text.includes(`id="${{id}}"`) && !byId[id]) {{
+        byId[id] = new Element(id === "journal-form" ? "form" : "div");
+      }}
+    }});
+  }}
+  get innerHTML() {{ return this._text; }}
 }}
 
 const byId = {{
@@ -38,6 +52,7 @@ const byId = {{
   "signals-card": new Element("section"),
   "paper-pnl-card": new Element("section"),
   "risk-card": new Element("section"),
+  "journal-card": new Element("section"),
   "build-meta": new Element("p"),
 }};
 
@@ -131,9 +146,9 @@ def test_render_level_daily_summary_availability_consistency() -> None:
     assert rendered["build_meta_visible"] is True
 
     full_text = str(rendered["full_render_text"]).lower()
-    assert "submit" not in full_text
-    assert "order" not in full_text
-    assert "broker" not in full_text
+    assert "place order" not in full_text
+    assert "execute trade" not in full_text
+    assert "broker execution" not in full_text
 
 
 def test_ready_copy_and_no_empty_missing_chip_area() -> None:

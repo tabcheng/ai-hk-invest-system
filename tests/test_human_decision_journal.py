@@ -1,4 +1,7 @@
-from src.human_decision_journal import record_stock_level_decision_note
+from src.human_decision_journal import (
+    record_miniapp_human_paper_decision_journal,
+    record_stock_level_decision_note,
+)
 
 
 class _FakeExecResult:
@@ -46,4 +49,29 @@ def test_record_stock_level_decision_note_payload_includes_stock_metadata():
     assert payload["human_action"] == "observe"
     assert payload["source_command"] == "/daily_review"
     assert payload["metadata"]["stock_id"] == "0700.HK"
+    assert result["id"] == 99
+
+
+def test_record_miniapp_human_paper_decision_journal_forces_paper_only_fields():
+    client = _FakeClient()
+    result = record_miniapp_human_paper_decision_journal(
+        client,
+        business_date="2026-05-09",
+        run_id="run-117",
+        ticker="0700.HK",
+        decision_type="watch",
+        rationale_text="Paper-only review note.",
+        operator_user_id_hash_or_label="tg_user_hash:abc123",
+        confidence_label="medium",
+        quantity_intent=100,
+        notional_intent=50000.0,
+    )
+    payload = client.table_obj.payload
+    assert payload["operator_user_id_hash_or_label"] == "tg_user_hash:abc123"
+    assert payload["metadata"]["paper_trade_only"] is True
+    assert payload["metadata"]["real_trade_decision"] is False
+    assert payload["metadata"]["broker_execution"] is False
+    assert payload["metadata"]["no_order_created"] is True
+    assert payload["metadata"]["decision_scope"] == "human_paper_decision"
+    assert "init_data" not in payload["metadata"]
     assert result["id"] == 99

@@ -366,6 +366,9 @@ class SupabaseLatestSystemRunMiniAppReadDataProvider(RailwayRuntimeEnvMiniAppRea
         row = self._get_latest_row()
         if not isinstance(row, dict) or not row or self._client is None:
             return unavailable
+        summary = row.get("summary_json") if isinstance(row.get("summary_json"), dict) else {}
+        if summary.get("paper_trade_only") is not True:
+            return unavailable
         from src.paper_trading import get_paper_risk_review_for_run
         try:
             risk = get_paper_risk_review_for_run(self._client, run_id=int(row.get("run_id")))

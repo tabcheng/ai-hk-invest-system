@@ -121,7 +121,18 @@ class RailwayRuntimeEnvMiniAppReadDataProvider:
     def get_paper_pnl_summary(self) -> dict[str, Any]:
         return {
             "status": "unavailable",
+            "source": "paper_pnl_read_model",
             "paper_trade_only": True,
+            "business_date": None,
+            "data_timestamp_hkt": None,
+            "updated_at_hkt": None,
+            "total_positions": 0,
+            "open_positions": 0,
+            "closed_positions": 0,
+            "realized_pnl": 0.0,
+            "unrealized_pnl": 0.0,
+            "total_pnl": 0.0,
+            "currency": "HKD",
             "reason": "paper PnL source not available yet",
             "limitations": ["No production paper PnL read model configured yet."],
         }
@@ -129,8 +140,17 @@ class RailwayRuntimeEnvMiniAppReadDataProvider:
     def get_risk_summary(self) -> dict[str, Any]:
         return {
             "status": "unavailable",
+            "source": "risk_read_model",
             "paper_trade_only": True,
+            "business_date": None,
+            "data_timestamp_hkt": None,
+            "updated_at_hkt": None,
             "risk_level": "unknown",
+            "total_exposure": None,
+            "cash_usage": None,
+            "exposure_pct": None,
+            "concentration_notes": [],
+            "max_position_pct": None,
             "warnings": [],
             "reason": "risk source not available yet",
             "limitations": ["No production risk summary read model configured yet."],
@@ -301,7 +321,18 @@ class SupabaseLatestSystemRunMiniAppReadDataProvider(RailwayRuntimeEnvMiniAppRea
         boundary = "read-only paper summary; no order creation, no broker/live execution"
         unavailable = {
             "status": "unavailable",
+            "source": "paper_pnl_read_model",
             "paper_trade_only": True,
+            "business_date": None,
+            "data_timestamp_hkt": None,
+            "updated_at_hkt": None,
+            "total_positions": 0,
+            "open_positions": 0,
+            "closed_positions": 0,
+            "realized_pnl": 0.0,
+            "unrealized_pnl": 0.0,
+            "total_pnl": 0.0,
+            "currency": "HKD",
             "reason": "paper PnL source not available yet",
             "limitations": ["資料未有"],
             "boundary": boundary,
@@ -337,6 +368,7 @@ class SupabaseLatestSystemRunMiniAppReadDataProvider(RailwayRuntimeEnvMiniAppRea
             limitations.append("one or more numeric fields were malformed; bounded defaults applied")
         return {
             "status": "ok",
+            "source": "paper_pnl_read_model",
             "paper_trade_only": True,
             "business_date": str(row.get("business_date") or ""),
             "data_timestamp_hkt": _format_hkt_display(row.get("data_timestamp")),
@@ -356,8 +388,17 @@ class SupabaseLatestSystemRunMiniAppReadDataProvider(RailwayRuntimeEnvMiniAppRea
         boundary = "read-only risk summary; review only, no order creation, no broker/live execution"
         unavailable = {
             "status": "unavailable",
+            "source": "risk_read_model",
             "paper_trade_only": True,
+            "business_date": None,
+            "data_timestamp_hkt": None,
+            "updated_at_hkt": None,
             "risk_level": "unknown",
+            "total_exposure": None,
+            "cash_usage": None,
+            "exposure_pct": None,
+            "concentration_notes": [],
+            "max_position_pct": None,
             "warnings": [],
             "reason": "risk source not available yet",
             "limitations": ["資料未有"],
@@ -396,6 +437,7 @@ class SupabaseLatestSystemRunMiniAppReadDataProvider(RailwayRuntimeEnvMiniAppRea
             warnings.append(f"{warned} warning paper buy risk event(s)")
         return {
             "status": "ok",
+            "source": "risk_read_model",
             "paper_trade_only": True,
             "business_date": str(row.get("business_date") or ""),
             "data_timestamp_hkt": _format_hkt_display(row.get("data_timestamp")),

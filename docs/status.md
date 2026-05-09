@@ -446,3 +446,9 @@
 - Step 114 completed: static contract/render tests now assert build metadata injection/rendering and cache-control contract strings.
 - Step 114 post-deploy smoke required: operator must verify build version visibility, build/deploy version alignment, Daily Summary signals availability consistency, PnL/risk unavailable state, and safety boundary card presence.
 - Step 114 boundary preserved: read-only frontend only, no write path, no Supabase schema change, no Telegram auth flow change, no broker/live execution.
+
+## 2026-05-09 — Step 115 Mini App read-only Paper PnL + Risk Summary bundle
+- Step 115 completed: backend `POST /miniapp/api/review-shell` now includes bounded read-only `sections.paper_pnl_summary` and `sections.risk_summary` with `paper_trade_only=true`, `status=ok|unavailable`, and unavailable fallback reasons without internal error leakage.
+- Step 115 completed: `sections.daily_review_summary` availability now reflects PnL/risk section status (`paper_pnl`, `risk`) while preserving latest-run success semantics and partial readiness behavior.
+- Step 115 completed: Mini App UI adds read-only cards for **模擬盈虧摘要** and **風險摘要**; unavailable states render as `未有資料` (not failure), and shown values are explicitly paper/review context only.
+- Step 115 boundary preserved: no broker/live execution, no order/decision submission path, no write-path expansion, no Supabase schema migration.

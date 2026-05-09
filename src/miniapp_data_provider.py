@@ -34,6 +34,12 @@ class MiniAppReadDataProvider(Protocol):
     def get_signals_summary(self) -> dict[str, Any]:
         """Return bounded signals-summary contract for Mini App signals_summary section."""
 
+    def get_paper_pnl_summary(self) -> dict[str, Any]:
+        """Return bounded paper-PnL summary contract for Mini App paper_pnl_summary section."""
+
+    def get_risk_summary(self) -> dict[str, Any]:
+        """Return bounded risk-summary contract for Mini App risk_summary section."""
+
 
 class RailwayRuntimeEnvMiniAppReadDataProvider:
     """Bounded internal provider backed by Railway runtime environment metadata only."""
@@ -110,6 +116,24 @@ class RailwayRuntimeEnvMiniAppReadDataProvider:
             "reason": "signals summary is not available yet",
             "operator_note": "信號摘要暫時未有資料；可先檢視系統運行狀態及每日檢視摘要。",
             "boundary": "read-only signals summary; no decision capture, no order creation, no broker/live execution",
+        }
+
+    def get_paper_pnl_summary(self) -> dict[str, Any]:
+        return {
+            "status": "unavailable",
+            "paper_trade_only": True,
+            "reason": "paper PnL source not available yet",
+            "limitations": ["No production paper PnL read model configured yet."],
+        }
+
+    def get_risk_summary(self) -> dict[str, Any]:
+        return {
+            "status": "unavailable",
+            "paper_trade_only": True,
+            "risk_level": "unknown",
+            "warnings": [],
+            "reason": "risk source not available yet",
+            "limitations": ["No production risk summary read model configured yet."],
         }
 
 
@@ -203,7 +227,22 @@ class SupabaseLatestSystemRunMiniAppReadDataProvider(RailwayRuntimeEnvMiniAppRea
         if summary.get("paper_trade_only") is not True:
             return unavailable
         available_sections = ["latest_system_run"]
-        unavailable_sections = ["signals", "paper_pnl", "risk"]
+        unavailable_sections: list[str] = []
+        signals_summary = self.get_signals_summary()
+        paper_pnl_summary = self.get_paper_pnl_summary()
+        risk_summary = self.get_risk_summary()
+        if signals_summary.get("status") == "ok":
+            available_sections.append("signals")
+        else:
+            unavailable_sections.append("signals")
+        if paper_pnl_summary.get("status") == "ok":
+            available_sections.append("paper_pnl")
+        else:
+            unavailable_sections.append("paper_pnl")
+        if risk_summary.get("status") == "ok":
+            available_sections.append("risk")
+        else:
+            unavailable_sections.append("risk")
         review_readiness = "ready" if len(unavailable_sections) == 0 else "partial"
         return {
             "status": "ok",
@@ -221,6 +260,85 @@ class SupabaseLatestSystemRunMiniAppReadDataProvider(RailwayRuntimeEnvMiniAppRea
             "available_sections": available_sections,
             "unavailable_sections": unavailable_sections,
             "operator_note": "Read-only partial daily review summary from latest system run only; human final decision remains outside system.",
+            "boundary": boundary,
+        }
+
+    def get_paper_pnl_summary(self) -> dict[str, Any]:
+        boundary = "read-only paper summary; no order creation, no broker/live execution"
+        unavailable = {
+            "status": "unavailable",
+            "paper_trade_only": True,
+            "reason": "paper PnL source not available yet",
+            "limitations": ["資料未有"],
+            "boundary": boundary,
+        }
+        row = self._get_latest_row()
+        if not isinstance(row, dict) or not row or self._client is None:
+            return unavailable
+        summary = row.get("summary_json") if isinstance(row.get("summary_json"), dict) else {}
+        if summary.get("paper_trade_only") is not True:
+            return unavailable
+        from src.paper_trading import get_paper_position_pnl_review_snapshot
+        try:
+            snap = get_paper_position_pnl_review_snapshot(self._client)
+        except Exception:
+            return unavailable
+        realized = float(snap.get("total_realized_pnl", 0.0))
+        unrealized = float(snap.get("total_unrealized_pnl", 0.0))
+        return {
+            "status": "ok",
+            "paper_trade_only": True,
+            "business_date": str(row.get("business_date") or ""),
+            "data_timestamp_hkt": _format_hkt_display(row.get("data_timestamp")),
+            "updated_at_hkt": _format_hkt_display(row.get("updated_at")),
+            "total_positions": len(snap.get("per_symbol", [])),
+            "open_positions": int(snap.get("open_positions_count", 0)),
+            "closed_positions": int(snap.get("closed_positions_count", 0)),
+            "realized_pnl": realized,
+            "unrealized_pnl": unrealized,
+            "total_pnl": realized + unrealized,
+            "currency": "HKD",
+            "limitations": [],
+            "boundary": boundary,
+        }
+
+    def get_risk_summary(self) -> dict[str, Any]:
+        boundary = "read-only risk summary; review only, no order creation, no broker/live execution"
+        unavailable = {
+            "status": "unavailable",
+            "paper_trade_only": True,
+            "risk_level": "unknown",
+            "warnings": [],
+            "reason": "risk source not available yet",
+            "limitations": ["資料未有"],
+            "boundary": boundary,
+        }
+        row = self._get_latest_row()
+        if not isinstance(row, dict) or not row or self._client is None:
+            return unavailable
+        from src.paper_trading import get_paper_risk_review_for_run
+        try:
+            risk = get_paper_risk_review_for_run(self._client, run_id=int(row.get("run_id")))
+        except Exception:
+            return unavailable
+        blocked = int(risk.get("total_blocked_buys", 0))
+        warned = int(risk.get("total_warning_buys", 0))
+        executed = int(risk.get("total_executed_buys", 0))
+        risk_level = "high" if blocked > 0 else ("medium" if warned > 0 else ("low" if executed > 0 else "unknown"))
+        warnings: list[str] = []
+        if blocked > 0:
+            warnings.append(f"{blocked} blocked paper buy risk event(s)")
+        if warned > 0:
+            warnings.append(f"{warned} warning paper buy risk event(s)")
+        return {
+            "status": "ok",
+            "paper_trade_only": True,
+            "business_date": str(row.get("business_date") or ""),
+            "data_timestamp_hkt": _format_hkt_display(row.get("data_timestamp")),
+            "updated_at_hkt": _format_hkt_display(row.get("updated_at")),
+            "risk_level": risk_level,
+            "warnings": warnings[:5],
+            "limitations": [],
             "boundary": boundary,
         }
 

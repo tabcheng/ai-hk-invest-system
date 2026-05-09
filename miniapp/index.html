@@ -60,6 +60,8 @@
       <section id="latest-card" class="section-card"><h2>最新系統運行</h2></section>
       <section id="daily-card" class="section-card"><h2>每日檢視摘要</h2></section>
       <section id="signals-card" class="section-card"><h2>信號摘要</h2></section>
+      <section id="paper-pnl-card" class="section-card"><h2>模擬盈虧摘要</h2></section>
+      <section id="risk-card" class="section-card"><h2>風險摘要</h2></section>
       <section class="footer-guardrail"><h2>安全與邊界說明</h2><ul><li>Telegram initData 只在後端驗證</li><li>前端不使用 initDataUnsafe 作授權</li><li>前端不保存 Supabase secret / service role key</li><li>系統不連接券商、不作真實落盤</li><li>所有信號只供模擬檢視，並非買賣指示</li></ul></section>
           <p id="build-meta" class="helper-text">UI build: unknown · Deployed build: unknown</p>
     </main>
@@ -124,6 +126,8 @@
       const miss=document.createElement("h3"); miss.textContent="未有資料"; const missList=document.createElement("div"); missList.className="chip-list"; [...missing].forEach((x)=>{const c=document.createElement("span");c.className="mini-chip";c.textContent=x;missList.appendChild(c);});
       const helper=document.createElement("p"); helper.className="helper-text"; helper.textContent="「未有資料」代表 data not available yet，並非系統錯誤。"; card.append(has,hasList,miss,missList,helper); }
       function renderSignals(signals){ if (!signals || signals.status !== "ok") return fillUnavailable("signals-card","信號摘要"); const card=document.getElementById("signals-card"); card.textContent=""; const h=document.createElement("h2"); h.textContent="信號摘要"; card.append(h, renderStatusChip(signals.review_readiness || signals.status)); const warn=document.createElement("p"); warn.className="helper-text"; warn.textContent="目前只顯示技術信號方向；信心、風險、模擬盈虧未完整，因此不應視為完整決策。"; card.appendChild(warn); card.appendChild(renderMetricGrid([{label:"覆蓋股票數",value:signals.covered_tickers},{label:"顯示信號數",value:signals.shown_signals},{label:"顯示正面模擬信號",value:signals.shown_positive_signals},{label:"顯示觀望 / 中性信號",value:signals.shown_neutral_signals},{label:"顯示負面模擬信號",value:signals.shown_negative_signals},{label:"顯示未知信號",value:signals.shown_unknown_signals}])); card.appendChild(renderSignalItems(signals.top_items)); }
+      function renderPaperPnl(pnl){ if (!pnl || pnl.status !== "ok") return fillUnavailable("paper-pnl-card","模擬盈虧摘要"); const card=document.getElementById("paper-pnl-card"); card.textContent=""; const h=document.createElement("h2"); h.textContent="模擬盈虧摘要"; card.append(h, renderStatusChip(pnl.status)); card.appendChild(renderMetricGrid([{label:"總持倉數",value:pnl.total_positions},{label:"開倉數",value:pnl.open_positions},{label:"平倉數",value:pnl.closed_positions},{label:"已實現盈虧 (Paper)",value:pnl.realized_pnl},{label:"未實現盈虧 (Paper)",value:pnl.unrealized_pnl},{label:"總盈虧 (Paper)",value:pnl.total_pnl}])); }
+      function renderRisk(risk){ if (!risk || risk.status !== "ok") return fillUnavailable("risk-card","風險摘要"); const card=document.getElementById("risk-card"); card.textContent=""; const h=document.createElement("h2"); h.textContent="風險摘要"; card.append(h, renderStatusChip(risk.status)); const p=document.createElement("p"); p.className="row"; p.textContent=`Risk level（Paper review）：${String(risk.risk_level||"unknown")}`; card.appendChild(p); }
       async function loadReviewShell() {
         const initData = (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initData) || "";
         const apiBaseUrl = resolveApiBaseUrl();
@@ -134,15 +138,21 @@
           const latest = payload?.sections?.latest_system_run;
           const daily = payload?.sections?.daily_review_summary;
           const signals = payload?.sections?.signals_summary;
+          const pnl = payload?.sections?.paper_pnl_summary;
+          const risk = payload?.sections?.risk_summary;
           renderOverview(latest, daily, signals);
           renderLatest(latest);
           renderDaily(daily, signals);
           renderSignals(signals);
+          renderPaperPnl(pnl);
+          renderRisk(risk);
         } catch (_error) {
           renderOverview(null, null, null);
           fillUnavailable("latest-card", "最新系統運行");
           fillUnavailable("daily-card", "每日檢視摘要");
           fillUnavailable("signals-card", "信號摘要");
+          fillUnavailable("paper-pnl-card", "模擬盈虧摘要");
+          fillUnavailable("risk-card", "風險摘要");
         }
       }
       renderBuildMeta();

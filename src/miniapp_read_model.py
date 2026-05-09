@@ -49,6 +49,8 @@ def build_miniapp_review_shell_response(
             "latest_system_run": data_provider.get_latest_system_run_summary(),
             "daily_review_summary": data_provider.get_daily_review_summary(),
             "signals_summary": data_provider.get_signals_summary(),
+            "paper_pnl_summary": data_provider.get_paper_pnl_summary(),
+            "risk_summary": data_provider.get_risk_summary(),
             "daily_review": {"status": "mock"},
             "pnl_snapshot": {"status": "mock"},
             "outcome_review": {"status": "mock"},

@@ -244,4 +244,5 @@ Prioritization:
 
 ## 2026-05-08 — Step 114 Mini App build freshness follow-up
 - Add Telegram Mini App post-deploy smoke evidence requirement: confirm UI footer build version exists and matches latest Railway deploy commit (or explicit deploy build label).
+- **Step 115 completed:** Mini App review-shell now exposes bounded read-only `paper_pnl_summary` + `risk_summary` sections, Daily Review Summary availability reflects those statuses, and frontend adds dedicated Paper PnL/Risk cards with unavailable-as-`未有資料` behavior; no schema migration, no write-path expansion, no broker/live execution.
 - Keep `index.html` + `config.js` cache headers on revalidation policy; revisit only if Telegram WebView behavior still shows stale bundle evidence.

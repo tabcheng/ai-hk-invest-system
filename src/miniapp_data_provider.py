@@ -167,6 +167,40 @@ def _safe_int_counter(value: Any) -> int:
     return 0
 
 
+def _safe_int_metric(value: Any, default: int = 0) -> int:
+    if value is None or isinstance(value, bool):
+        return default
+    if isinstance(value, int):
+        return value
+    if isinstance(value, float):
+        return int(value)
+    if isinstance(value, str):
+        normalized = value.strip()
+        if not normalized:
+            return default
+        try:
+            return int(float(normalized))
+        except ValueError:
+            return default
+    return default
+
+
+def _safe_float_metric(value: Any, default: float = 0.0) -> float:
+    if value is None or isinstance(value, bool):
+        return default
+    if isinstance(value, (int, float)):
+        return float(value)
+    if isinstance(value, str):
+        normalized = value.strip()
+        if not normalized:
+            return default
+        try:
+            return float(normalized)
+        except ValueError:
+            return default
+    return default
+
+
 class SupabaseLatestSystemRunMiniAppReadDataProvider(RailwayRuntimeEnvMiniAppReadDataProvider):
     def __init__(self, *, client: Any | None, env: Mapping[str, str] | None = None, now: datetime | None = None):
         super().__init__(env=env, now=now)
@@ -283,17 +317,20 @@ class SupabaseLatestSystemRunMiniAppReadDataProvider(RailwayRuntimeEnvMiniAppRea
             snap = get_paper_position_pnl_review_snapshot(self._client)
         except Exception:
             return unavailable
-        realized = float(snap.get("total_realized_pnl", 0.0))
-        unrealized = float(snap.get("total_unrealized_pnl", 0.0))
+        if not isinstance(snap, dict):
+            return unavailable
+        per_symbol = snap.get("per_symbol") if isinstance(snap.get("per_symbol"), list) else []
+        realized = _safe_float_metric(snap.get("total_realized_pnl"), default=0.0)
+        unrealized = _safe_float_metric(snap.get("total_unrealized_pnl"), default=0.0)
         return {
             "status": "ok",
             "paper_trade_only": True,
             "business_date": str(row.get("business_date") or ""),
             "data_timestamp_hkt": _format_hkt_display(row.get("data_timestamp")),
             "updated_at_hkt": _format_hkt_display(row.get("updated_at")),
-            "total_positions": len(snap.get("per_symbol", [])),
-            "open_positions": int(snap.get("open_positions_count", 0)),
-            "closed_positions": int(snap.get("closed_positions_count", 0)),
+            "total_positions": len(per_symbol),
+            "open_positions": _safe_int_metric(snap.get("open_positions_count"), default=0),
+            "closed_positions": _safe_int_metric(snap.get("closed_positions_count"), default=0),
             "realized_pnl": realized,
             "unrealized_pnl": unrealized,
             "total_pnl": realized + unrealized,
@@ -321,9 +358,11 @@ class SupabaseLatestSystemRunMiniAppReadDataProvider(RailwayRuntimeEnvMiniAppRea
             risk = get_paper_risk_review_for_run(self._client, run_id=int(row.get("run_id")))
         except Exception:
             return unavailable
-        blocked = int(risk.get("total_blocked_buys", 0))
-        warned = int(risk.get("total_warning_buys", 0))
-        executed = int(risk.get("total_executed_buys", 0))
+        if not isinstance(risk, dict):
+            return unavailable
+        blocked = _safe_int_metric(risk.get("total_blocked_buys"), default=0)
+        warned = _safe_int_metric(risk.get("total_warning_buys"), default=0)
+        executed = _safe_int_metric(risk.get("total_executed_buys"), default=0)
         risk_level = "high" if blocked > 0 else ("medium" if warned > 0 else ("low" if executed > 0 else "unknown"))
         warnings: list[str] = []
         if blocked > 0:

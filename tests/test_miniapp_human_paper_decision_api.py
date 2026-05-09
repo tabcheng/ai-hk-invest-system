@@ -23,11 +23,18 @@ def test_human_paper_decision_rejects_missing_content_type(monkeypatch):
 
 def test_human_paper_decision_validation_and_bounded_success(monkeypatch):
     monkeypatch.setattr("src.telegram_webhook_server._load_supabase_client", lambda: object())
-    monkeypatch.setattr("src.telegram_webhook_server.record_miniapp_human_paper_decision_journal", lambda *args, **kwargs: {"id": "j-1"})
+    captured = {}
+    def _record(*args, **kwargs):
+        captured.update(kwargs)
+        return {"id": "j-1"}
+    monkeypatch.setattr("src.telegram_webhook_server.record_miniapp_human_paper_decision_journal", _record)
     status, _, payload = _call("/miniapp/api/human-paper-decision", "POST", _decision_body(monkeypatch))
     assert status.startswith("200")
     assert payload["no_order_created"] is True
     assert payload["paper_trade_only"] is True
+    assert captured["operator_user_id_hash_or_label"].startswith("tg_user_hash:")
+    assert "42" not in captured["operator_user_id_hash_or_label"]
+    assert "init_data" not in captured
 
 
 def test_human_paper_decision_rejects_invalid_decision_type(monkeypatch):

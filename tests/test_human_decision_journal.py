@@ -61,13 +61,13 @@ def test_record_miniapp_human_paper_decision_journal_forces_paper_only_fields():
         ticker="0700.HK",
         decision_type="watch",
         rationale_text="Paper-only review note.",
-        operator_user_id_hash_or_label="tg_user:42",
+        operator_user_id_hash_or_label="tg_user_hash:abc123",
         confidence_label="medium",
         quantity_intent=100,
         notional_intent=50000.0,
     )
     payload = client.table_obj.payload
-    assert payload["operator_user_id_hash_or_label"] == "tg_user:42"
+    assert payload["operator_user_id_hash_or_label"] == "tg_user_hash:abc123"
     assert payload["metadata"]["paper_trade_only"] is True
     assert payload["metadata"]["real_trade_decision"] is False
     assert payload["metadata"]["broker_execution"] is False

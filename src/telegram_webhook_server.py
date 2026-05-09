@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import os
 import re
+import hashlib
 from typing import Any
 from wsgiref.simple_server import make_server
 
@@ -48,6 +49,12 @@ MINIAPP_REVIEW_SHELL_MAX_BODY_BYTES = 8192
 MINIAPP_HUMAN_DECISION_MAX_BODY_BYTES = 8192
 MINIAPP_DECISION_MAX_RATIONALE = 500
 _MINIAPP_TICKER_PATTERN = re.compile(r"^[0-9A-Z.\-]{1,16}$")
+
+
+def _build_operator_label_from_telegram_user_id(user_id: Any) -> str:
+    raw = str(user_id or "").strip()
+    digest = hashlib.sha256(raw.encode("utf-8")).hexdigest()[:16] if raw else "unknown"
+    return f"tg_user_hash:{digest}"
 
 
 def _is_supported_json_content_type(content_type: str) -> bool:
@@ -169,7 +176,7 @@ def _handle_miniapp_human_paper_decision_request(raw_body: bytes) -> tuple[str, 
             ticker=ticker,
             decision_type=decision_type,
             rationale_text=rationale_text,
-            operator_user_id_hash_or_label=f"tg_user:{str(operator.get('user_id') or '')}",
+            operator_user_id_hash_or_label=_build_operator_label_from_telegram_user_id(operator.get("user_id")),
             confidence_label=(str(confidence_label).strip().lower() if confidence_label is not None else None),
             quantity_intent=quantity_intent,
             notional_intent=notional_intent,

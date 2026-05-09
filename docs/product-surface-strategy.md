@@ -189,3 +189,8 @@ Mini App should **not**:
 
 ## Step 117 product surface update
 - Mini App adds bounded Human Paper Decision Journal form with non-execution submit wording.
+
+## Step 118 Mini App journal UX policy update
+- Journal interaction is Chinese-first with explicit paper-only guardrail copy and no execution wording.
+- Ticker path is monitored signal picker first, not manual free-text-first.
+- Decision Context Pack is bounded and must show explicit missing-context checklist to prevent over-interpretation as full investment recommendation.

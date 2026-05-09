@@ -249,3 +249,4 @@ Prioritization:
 - Keep `index.html` + `config.js` cache headers on revalidation policy; revisit only if Telegram WebView behavior still shows stale bundle evidence.
 
 - **Step 117 completed:** Phase 2 bounded human paper decision journal capture implemented for Mini App with backend-only bounded write endpoint (`POST /miniapp/api/human-paper-decision`) and no execution path.
+- **Step 118 completed:** Mini App Human Paper Decision Journal UX localized to Chinese-first, monitored ticker picker added from `signals_summary.top_items`, and bounded Decision Context Pack added with explicit missing-data checklist; no broker/live execution, no order/simulated-order creation, no schema migration, no Telegram auth change.

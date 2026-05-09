@@ -319,9 +319,22 @@ class SupabaseLatestSystemRunMiniAppReadDataProvider(RailwayRuntimeEnvMiniAppRea
             return unavailable
         if not isinstance(snap, dict):
             return unavailable
-        per_symbol = snap.get("per_symbol") if isinstance(snap.get("per_symbol"), list) else []
+        per_symbol_raw = snap.get("per_symbol")
+        per_symbol = per_symbol_raw if isinstance(per_symbol_raw, list) else []
         realized = _safe_float_metric(snap.get("total_realized_pnl"), default=0.0)
         unrealized = _safe_float_metric(snap.get("total_unrealized_pnl"), default=0.0)
+        limitations: list[str] = []
+        if not isinstance(per_symbol_raw, list):
+            limitations.append("per_symbol malformed; bounded to empty list")
+        if any(
+            [
+                isinstance(snap.get("open_positions_count"), bool),
+                isinstance(snap.get("closed_positions_count"), bool),
+                isinstance(snap.get("total_realized_pnl"), bool),
+                isinstance(snap.get("total_unrealized_pnl"), bool),
+            ]
+        ):
+            limitations.append("one or more numeric fields were malformed; bounded defaults applied")
         return {
             "status": "ok",
             "paper_trade_only": True,
@@ -335,7 +348,7 @@ class SupabaseLatestSystemRunMiniAppReadDataProvider(RailwayRuntimeEnvMiniAppRea
             "unrealized_pnl": unrealized,
             "total_pnl": realized + unrealized,
             "currency": "HKD",
-            "limitations": [],
+            "limitations": limitations[:_MAX_LIMITATIONS],
             "boundary": boundary,
         }
 
@@ -363,6 +376,15 @@ class SupabaseLatestSystemRunMiniAppReadDataProvider(RailwayRuntimeEnvMiniAppRea
         blocked = _safe_int_metric(risk.get("total_blocked_buys"), default=0)
         warned = _safe_int_metric(risk.get("total_warning_buys"), default=0)
         executed = _safe_int_metric(risk.get("total_executed_buys"), default=0)
+        limitations: list[str] = []
+        if any(
+            [
+                isinstance(risk.get("total_blocked_buys"), bool),
+                isinstance(risk.get("total_warning_buys"), bool),
+                isinstance(risk.get("total_executed_buys"), bool),
+            ]
+        ):
+            limitations.append("one or more risk count fields were malformed; bounded defaults applied")
         risk_level = "high" if blocked > 0 else ("medium" if warned > 0 else ("low" if executed > 0 else "unknown"))
         warnings: list[str] = []
         if blocked > 0:
@@ -377,7 +399,7 @@ class SupabaseLatestSystemRunMiniAppReadDataProvider(RailwayRuntimeEnvMiniAppRea
             "updated_at_hkt": _format_hkt_display(row.get("updated_at")),
             "risk_level": risk_level,
             "warnings": warnings[:5],
-            "limitations": [],
+            "limitations": limitations[:_MAX_LIMITATIONS],
             "boundary": boundary,
         }
 

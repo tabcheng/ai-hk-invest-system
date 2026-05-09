@@ -141,7 +141,7 @@
         card.innerHTML = `<h2>人手模擬決策日誌</h2><p class="helper-text">Human Paper Decision Journal</p><p class="helper-text">此區只記錄人手 paper decision，不建立訂單、不連接券商、不作真實落盤。真實交易決定仍由人手在系統外作出。</p><div id="journal-context" class="metric-item"><h3>決策參考資料 / Decision Context</h3><p class="helper-text">目前資料只足夠作 paper review，不足以作完整投資判斷。</p></div><form id="journal-form" class="journal-form"><label>股票 / Ticker<select id="journal-ticker" required></select></label><label>人手模擬決策 / Human paper decision<select id="journal-decision-type" required><option value="watch">觀察</option><option value="paper_buy">模擬買入傾向</option><option value="paper_sell">模擬賣出傾向</option><option value="paper_hold">模擬持有</option><option value="skip">跳過</option></select></label><label>決策原因 / Rationale<textarea id="journal-rationale" maxlength="500" required placeholder="請記錄你的人手模擬決策原因，例如：為何觀察、為何模擬持有、需要補充哪些資料。不要填寫真實交易指令。"></textarea><small id="journal-counter">已輸入 0 / 500 字</small></label><label>信心程度 / Confidence<select id="journal-confidence"><option value="">未選擇</option><option value="low">低</option><option value="medium">中</option><option value="high">高</option><option value="unknown">未知</option></select></label><label><input id="journal-ack" type="checkbox" required> 風險確認 / Guardrail acknowledgement：我確認這只是人手模擬決策日誌，不會建立訂單、不會連接券商、不是真實交易決定。</label><button id="journal-submit" type="submit">記錄人手模擬決策</button></form><p id="journal-result" class="helper-text"></p>`;
         const topItems = Array.isArray(signals?.top_items) ? signals.top_items : [];
         const ticker = document.getElementById("journal-ticker");
-        ticker.innerHTML = "";
+        ticker.textContent = "";
         if (topItems.length > 0) {
           topItems.forEach((item, idx) => {
             const option = document.createElement("option");
@@ -150,6 +150,7 @@
             if (idx === 0) option.selected = true;
             ticker.appendChild(option);
           });
+          ticker.value = String(topItems[0].ticker || "");
         } else {
           ticker.disabled = true;
           const option = document.createElement("option");
@@ -159,10 +160,27 @@
           ticker.appendChild(option);
         }
         const context = document.getElementById("journal-context");
+        const appendRow = (parent, label, value) => { const p = document.createElement("p"); p.className = "row"; p.textContent = `${label}：${String(value)}`; parent.appendChild(p); };
+        const appendList = (parent, title, values) => { const h = document.createElement("h3"); h.textContent = title; parent.appendChild(h); const ul = document.createElement("ul"); values.forEach((entry) => { const li = document.createElement("li"); li.textContent = String(entry); ul.appendChild(li); }); parent.appendChild(ul); };
         const renderContext = () => {
           const selected = topItems.find((x) => String(x.ticker || "") === String(ticker.value || ""));
           const cMap = { low: "低", medium: "中", high: "高", unknown: "未知" };
-          context.innerHTML = `<h3>決策參考資料 / Decision Context</h3><p class="helper-text">目前資料只足夠作 paper review，不足以作完整投資判斷。</p><p class="row">股票 ticker：${String(ticker.value || "未有資料 / not available yet")}</p><p class="row">模擬信號方向：${selected ? (SIGNAL_LABEL[String(selected.signal_label)] || SIGNAL_LABEL.unknown) : "未有資料 / not available yet"}</p><p class="row">信心程度：${selected ? (cMap[String(selected.confidence_label || "unknown")] || "未知") : "未有資料 / not available yet"}</p><p class="row">信號原因：${String(selected?.reason_short || "未有資料 / not available yet")}</p><p class="row">資料時間 HKT：${String(selected?.data_timestamp_hkt || signals?.data_timestamp_hkt || "未有資料 / not available yet")}</p><p class="row">Paper PnL（模擬）總盈虧 / 已實現 / 未實現：${paperPnl?.status === "ok" ? `${String(paperPnl.total_pnl ?? "-")} / ${String(paperPnl.realized_pnl ?? "-")} / ${String(paperPnl.unrealized_pnl ?? "-")}` : "未有資料 / not available yet"}</p><p class="row">Risk level：${risk?.status === "ok" ? String(risk.risk_level || "unknown") : "未有資料 / not available yet"}</p><p class="row">Warnings：${risk?.status === "ok" && Array.isArray(risk.warnings) && risk.warnings.length > 0 ? risk.warnings.join("；") : "未有資料 / not available yet"}</p><h3>缺失資料 / Missing Context</h3><ul><li>最新價 / Reference price：未有資料</li><li>成交額 / Liquidity：未有資料</li><li>基本面 / Fundamentals：未有資料</li><li>新聞 / Catalyst：未有資料</li><li>估值 / Valuation：未有資料</li><li>持倉級別 exposure：未有資料</li><li>Strategy version：未有資料</li><li>資料來源 / Data source：未有資料</li></ul>`;
+          context.textContent = "";
+          const h3 = document.createElement("h3"); h3.textContent = "決策參考資料 / Decision Context"; context.appendChild(h3);
+          const helper = document.createElement("p"); helper.className = "helper-text"; helper.textContent = "目前資料只足夠作 paper review，不足以作完整投資判斷。"; context.appendChild(helper);
+          appendRow(context, "股票 ticker", ticker.value || "未有資料 / not available yet");
+          appendRow(context, "模擬信號方向", selected ? (SIGNAL_LABEL[String(selected.signal_label)] || SIGNAL_LABEL.unknown) : "未有資料 / not available yet");
+          appendRow(context, "信心程度", selected ? (cMap[String(selected.confidence_label || "unknown")] || "未知") : "未有資料 / not available yet");
+          appendRow(context, "信號原因", selected?.reason_short || "未有資料 / not available yet");
+          appendRow(context, "資料時間 HKT", selected?.data_timestamp_hkt || signals?.data_timestamp_hkt || "未有資料 / not available yet");
+          appendRow(context, "Paper PnL（模擬）總盈虧 / 已實現 / 未實現", paperPnl?.status === "ok" ? `${String(paperPnl.total_pnl ?? "-")} / ${String(paperPnl.realized_pnl ?? "-")} / ${String(paperPnl.unrealized_pnl ?? "-")}` : "未有資料 / not available yet");
+          appendRow(context, "Risk level", risk?.status === "ok" ? String(risk.risk_level || "unknown") : "未有資料 / not available yet");
+          if (!risk || risk.status !== "ok") appendRow(context, "Warnings", "未有資料 / not available yet");
+          else if (!Array.isArray(risk.warnings) || risk.warnings.length === 0) appendRow(context, "Warnings", "暫無風險警示");
+          else appendList(context, "Warnings", risk.warnings);
+          if (paperPnl?.status === "ok" && Array.isArray(paperPnl.limitations) && paperPnl.limitations.length > 0) appendList(context, "Paper PnL 限制", paperPnl.limitations);
+          if (risk?.status === "ok" && Array.isArray(risk.limitations) && risk.limitations.length > 0) appendList(context, "Risk 限制", risk.limitations);
+          appendList(context, "缺失資料 / Missing Context", ["最新價 / Reference price：未有資料","成交額 / Liquidity：未有資料","基本面 / Fundamentals：未有資料","新聞 / Catalyst：未有資料","估值 / Valuation：未有資料","持倉級別 exposure：未有資料","Strategy version：未有資料","資料來源 / Data source：未有資料"]);
         };
         renderContext();
         ticker.addEventListener("change", renderContext);

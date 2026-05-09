@@ -90,6 +90,10 @@ globalThis.fetch = fetch;
     boundary_visible: byId["overview-card"].textContent.includes("Daily Overview"),
     system_row_has_chip_text: systemRowText.includes("System Run Status") && systemRowText.includes("成功"),
     coverage_row_has_chip_text: coverageRowText.includes("Daily Review Coverage") && coverageRowText.includes("部分完成"),
+    journal_selected_ticker: byId["journal-ticker"] ? byId["journal-ticker"].value : "",
+    journal_ticker_options: byId["journal-ticker"] ? byId["journal-ticker"].children.map((c) => c.textContent) : [],
+    journal_context_text: byId["journal-context"] ? byId["journal-context"].textContent : "",
+    journal_context_html: byId["journal-context"] ? byId["journal-context"].innerHTML : "",
     full_render_text: Object.values(byId).map((n) => n.textContent).join("\\n"),
   }};
   process.stdout.write(JSON.stringify(summary));
@@ -201,3 +205,39 @@ def test_safety_boundary_copy_present() -> None:
     assert "所有信號只供模擬檢視，並非買賣指示" in INDEX_HTML
     assert "UI build:" in INDEX_HTML
     assert "Deployed build:" in INDEX_HTML
+
+
+def test_journal_ticker_picker_and_context_updates() -> None:
+    sections = _base_sections()
+    sections["signals_summary"]["top_items"] = [
+        {"ticker": "0700.HK", "signal_label": "positive", "confidence_label": "high", "reason_short": "動能改善", "data_timestamp_hkt": "2026-05-08 20:00:00 HKT"},
+        {"ticker": "0388.HK", "signal_label": "neutral", "confidence_label": "medium", "reason_short": "等待突破", "data_timestamp_hkt": "2026-05-08 20:00:00 HKT"},
+    ]
+    sections["paper_pnl_summary"] = {"status": "ok", "total_pnl": 1, "realized_pnl": 2, "unrealized_pnl": -1, "limitations": ["pnl bounded"]}
+    sections["risk_summary"] = {"status": "ok", "risk_level": "low", "warnings": [], "limitations": ["risk bounded"]}
+    rendered = _render_with_sample_payload({"sections": sections})
+    assert rendered["journal_selected_ticker"] == "0700.HK"
+    assert "0700.HK — 正面模擬信號" in rendered["journal_ticker_options"]
+    assert "0388.HK — 觀望 / 中性信號" in rendered["journal_ticker_options"]
+    assert "暫無風險警示" in rendered["journal_context_text"]
+    assert "Paper PnL 限制" in rendered["journal_context_text"]
+    assert "Risk 限制" in rendered["journal_context_text"]
+
+
+def test_journal_context_renders_untrusted_text_safely() -> None:
+    sections = _base_sections()
+    sections["signals_summary"]["top_items"] = [
+        {"ticker": "0700.HK", "signal_label": "positive", "confidence_label": "high", "reason_short": "<img src=x onerror=alert(1)>", "data_timestamp_hkt": "2026-05-08 20:00:00 HKT"},
+    ]
+    sections["risk_summary"] = {"status": "ok", "risk_level": "medium", "warnings": ["<svg onload=alert(1)>"], "limitations": []}
+    rendered = _render_with_sample_payload({"sections": sections})
+    assert "<img src=x onerror=alert(1)>" in rendered["journal_context_text"]
+    assert "<svg onload=alert(1)>" in rendered["journal_context_text"]
+    assert "<img" not in rendered["journal_context_html"]
+    assert "<svg" not in rendered["journal_context_html"]
+
+
+def test_journal_ticker_picker_no_top_items_disables_selector() -> None:
+    rendered = _render_with_sample_payload({"sections": _base_sections()})
+    assert rendered["journal_ticker_options"] == ["未有可選股票；請等待信號摘要載入"]
+    assert "股票 ticker：未有資料 / not available yet" in rendered["journal_context_text"]

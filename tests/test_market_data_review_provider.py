@@ -7,6 +7,7 @@ from src.market_data.review_provider import (
     snapshot_to_dict,
     to_vendor_symbol,
 )
+import src.market_data.review_provider as review_provider
 
 
 def test_null_provider_unavailable():
@@ -107,6 +108,35 @@ def test_eodhd_timeout_passed_to_http_client():
     provider = EodhdMarketDataProvider(token="secret", timeout_seconds=7.5, http_get=fake_get)
     provider.get_ticker_market_snapshot("0700.HK")
     assert captured["timeout_seconds"] == 7.5
+
+
+def test_eodhd_runtime_http_get_uses_symbol_path_and_query(monkeypatch):
+    captured = {}
+
+    class _Resp:
+        def raise_for_status(self):
+            return None
+
+        def json(self):
+            return {"close": 333.3, "previousClose": 330.0, "volume": 999, "timestamp": "2026-05-10T08:00:00Z"}
+
+    def fake_requests_get(url, params, timeout):
+        captured["url"] = url
+        captured["params"] = params
+        captured["timeout"] = timeout
+        return _Resp()
+
+    monkeypatch.setattr(review_provider.requests, "get", fake_requests_get, raising=False)
+    provider = EodhdMarketDataProvider(token="secret", timeout_seconds=4.0)
+    snap = provider.get_ticker_market_snapshot("0700.HK")
+
+    assert captured["url"].endswith("/api/real-time/0700.HK")
+    assert captured["params"]["api_token"] == "secret"
+    assert captured["params"]["fmt"] == "json"
+    assert captured["timeout"] == 4.0
+    assert snap.status == "ok"
+    assert snap.reference_price == 333.3
+    assert snap.previous_close == 330.0
 
 
 def test_builder_default_null():

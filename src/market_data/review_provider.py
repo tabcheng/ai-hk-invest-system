@@ -100,8 +100,8 @@ class EodhdMarketDataProvider:
 
     def _runtime_http_get(self, symbol: str, timeout_seconds: float, api_token: str) -> Any:
         resp = requests.get(
-            "https://eodhd.com/api/real-time/",
-            params={"api_token": api_token, "fmt": "json", "s": symbol},
+            f"https://eodhd.com/api/real-time/{symbol}",
+            params={"api_token": api_token, "fmt": "json"},
             timeout=timeout_seconds,
         )
         resp.raise_for_status()

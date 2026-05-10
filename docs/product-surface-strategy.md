@@ -226,3 +226,8 @@ Mini App should **not**:
 - Telegram `/market_smoke` now formats price/percent/volume/timestamp/freshness for readability with Chinese-first freshness labeling and caution wording.
 - Mini App Context market section now displays formatted values and freshness warnings for `last_available_close`/`stale`/`unknown` using backend payload only.
 - Boundaries unchanged: read-only diagnostics + decision support, paper trading only, no broker/live execution, no real-money execution, no order or simulated-order creation, no frontend vendor key, no token/raw vendor payload exposure, no fake data.
+
+## Step 127 product-surface increment
+- Mini App Context/Daily Review semantics now expose market-data acceptance in Chinese-first wording so operator can quickly judge if ticker market data is acceptable for daily paper review.
+- Telegram `/daily_review` now adds bounded acceptance summary fields without creating a new large command surface.
+- No change to paper-only boundary: no broker/live execution/real-money order semantics.

@@ -82,6 +82,55 @@ def classify_market_data_freshness(
     }
 
 
+
+
+def build_market_data_acceptance_summary(*, freshness_status_display: Any) -> dict[str, Any]:
+    status = str(freshness_status_display or "unknown").strip().lower()
+    mapping = {
+        "fresh": {
+            "market_data_acceptance_status": "acceptable_for_paper_review",
+            "market_data_acceptance_label_zh": "可用於每日檢視",
+            "market_data_acceptance_label_en": "acceptable for paper review",
+            "market_data_acceptance_warning": "資料在可接受延遲範圍內，仍非即時報價。",
+            "accepted_for_daily_review": True,
+            "market_data_acceptance_reason": "fresh within expected delay window; paper review only",
+        },
+        "delayed": {
+            "market_data_acceptance_status": "acceptable_for_paper_review",
+            "market_data_acceptance_label_zh": "可用於每日檢視（延遲）",
+            "market_data_acceptance_label_en": "acceptable for paper review (delayed)",
+            "market_data_acceptance_warning": "資料有延遲，只供 paper review，不可當作即時資料。",
+            "accepted_for_daily_review": True,
+            "market_data_acceptance_reason": "delayed but still within bounded paper-review tolerance",
+        },
+        "last_available_close": {
+            "market_data_acceptance_status": "caution_last_available_close",
+            "market_data_acceptance_label_zh": "可用於每日檢視（上一交易日）",
+            "market_data_acceptance_label_en": "caution: last available close",
+            "market_data_acceptance_warning": "僅為上一交易日收市資料，不是即時報價。",
+            "accepted_for_daily_review": True,
+            "market_data_acceptance_reason": "last available close is acceptable for daily review with caution",
+        },
+        "stale": {
+            "market_data_acceptance_status": "stale_do_not_use_for_intraday",
+            "market_data_acceptance_label_zh": "過舊，不可用於盤中判斷",
+            "market_data_acceptance_label_en": "stale; do not use for intraday",
+            "market_data_acceptance_warning": "資料過舊，請勿用作盤中判斷。",
+            "accepted_for_daily_review": False,
+            "market_data_acceptance_reason": "stale snapshot exceeds daily-review acceptance threshold",
+        },
+        "unknown": {
+            "market_data_acceptance_status": "unknown",
+            "market_data_acceptance_label_zh": "未知，不可驗證",
+            "market_data_acceptance_label_en": "unknown; cannot verify freshness",
+            "market_data_acceptance_warning": "未能驗證 timestamp/freshness，請勿用於判斷。",
+            "accepted_for_daily_review": False,
+            "market_data_acceptance_reason": "timestamp/freshness cannot be verified",
+        },
+    }
+    return dict(mapping.get(status, mapping["unknown"]))
+
+
 def build_market_smoke_summary(ticker: str, env: Mapping[str, str]) -> dict[str, Any]:
     normalized = normalize_smoke_ticker(ticker)
     if not is_supported_smoke_ticker(normalized):

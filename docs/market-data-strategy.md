@@ -75,3 +75,12 @@
 - Telegram `/market_smoke` now formats price/percent/volume/timestamp/freshness for readability with Chinese-first freshness labeling and caution wording.
 - Mini App Context market section now displays formatted values and freshness warnings for `last_available_close`/`stale`/`unknown` using backend payload only.
 - Boundaries unchanged: read-only diagnostics + decision support, paper trading only, no broker/live execution, no real-money execution, no order or simulated-order creation, no frontend vendor key, no token/raw vendor payload exposure, no fake data.
+
+## Step 127 — Market Data Acceptance for Daily Review
+- Added acceptance-layer mapping on top of freshness semantics for review consumption:
+  - `acceptable_for_paper_review` (`fresh`/`delayed`)
+  - `caution_last_available_close` (`last_available_close`)
+  - `stale_do_not_use_for_intraday` (`stale`)
+  - `unknown` (`unknown`/unverifiable)
+- Decision context market payload now carries bilingual acceptance labels, warning text, accepted boolean, and reason/limitation summary.
+- Acceptance semantics are review-only and must not be interpreted as order instruction or live execution authorization.

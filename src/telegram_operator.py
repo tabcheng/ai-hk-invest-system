@@ -829,7 +829,7 @@ def _build_daily_review_command_message(client: Any) -> str:
         "unknown": 2,
         "stale_do_not_use_for_intraday": 3,
     }
-    worst_status = "unknown"
+    worst_status: str | None = None
     acceptance_counts: dict[str, int] = {k: 0 for k in status_rank}
     unknown_count = 0
     try:
@@ -842,14 +842,30 @@ def _build_daily_review_command_message(client: Any) -> str:
             if status not in acceptance_counts:
                 status = "unknown"
             acceptance_counts[status] += 1
-            if status_rank.get(status, 99) > status_rank.get(worst_status, 99):
+            if worst_status is None or status_rank.get(status, 99) > status_rank.get(worst_status, 99):
                 worst_status = status
         unknown_count = acceptance_counts.get("unknown", 0)
     except Exception:
         print("Telegram /daily_review market acceptance helper failed")
         unknown_count = len(monitored_tickers)
+        acceptance_counts = {k: 0 for k in status_rank}
+        acceptance_counts["unknown"] = unknown_count
+        worst_status = "unknown"
 
-    worst_acceptance = build_market_data_acceptance_summary(freshness_status_display=worst_status)
+    if worst_status is None:
+        worst_status = "unknown"
+        acceptance_counts["unknown"] = max(acceptance_counts.get("unknown", 0), len(monitored_tickers))
+        unknown_count = acceptance_counts["unknown"]
+
+    acceptance_status_to_freshness = {
+        "acceptable_for_paper_review": "fresh",
+        "caution_last_available_close": "last_available_close",
+        "stale_do_not_use_for_intraday": "stale",
+        "unknown": "unknown",
+    }
+    worst_acceptance = build_market_data_acceptance_summary(
+        freshness_status_display=acceptance_status_to_freshness.get(worst_status, "unknown")
+    )
     market_acceptance_status = str(worst_acceptance.get("market_data_acceptance_status") or "unknown")
     market_acceptance_label = (
         f"{worst_acceptance.get('market_data_acceptance_label_zh') or '未知'} / "
@@ -858,7 +874,10 @@ def _build_daily_review_command_message(client: Any) -> str:
     market_acceptance_warning = str(
         worst_acceptance.get("market_data_acceptance_warning") or "timestamp/freshness cannot be verified"
     )
-    market_accepted_for_daily_review = worst_acceptance.get("accepted_for_daily_review") is True
+    market_accepted_for_daily_review = (
+        worst_acceptance.get("accepted_for_daily_review") is True
+        or worst_acceptance.get("market_data_accepted_for_daily_review") is True
+    )
     market_acceptance_scope = ", ".join(monitored_tickers)
     market_acceptance_counts = (
         "acceptable_for_paper_review=" + str(acceptance_counts.get("acceptable_for_paper_review", 0))

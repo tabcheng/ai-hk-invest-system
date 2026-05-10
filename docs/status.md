@@ -525,3 +525,10 @@
 - Mini App Context keeps Chinese-first wording and displays acceptance semantics without exposing vendor raw payload/token.
 - `/daily_review` now includes bounded market acceptance overview fields (status/label/warning/accepted boolean) sourced from existing smoke/provider semantics only.
 - Boundaries preserved: paper-trading/decision-support only; no broker integration, no live execution, no real-money execution, no order/simulated-order creation.
+- Step 127 post-deploy smoke found `/daily_review` aggregate mismatch bug: counts showed `caution_last_available_close=3` but aggregate status stayed `unknown` and accepted boolean was `False`.
+
+## 2026-05-10 — Step 127A /daily_review market_data_acceptance aggregate fix (in progress)
+- Fix scope: adjust `/daily_review` aggregate selection so `unknown` is not used as initial worst status; first observed ticker status seeds aggregate, then ranking is applied.
+- Fallback contract: if ticker loop/helper fails, aggregate falls back to `unknown`, accepted boolean is `False`, and unknown count equals monitored ticker count.
+- Added focused test matrix for aggregate cases: all caution, all acceptable, one unknown among acceptable, one stale among mixed statuses, and helper exception fallback.
+- Boundaries preserved: read-only/paper-trading decision support only; no broker/live/real-money execution, no order/simulated-order creation, no Supabase schema migration.

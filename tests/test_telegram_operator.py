@@ -1219,3 +1219,74 @@ def test_daily_review_includes_market_acceptance_fields(monkeypatch):
     assert "market_data_acceptance_scope" in response
     assert "0700.HK, 0388.HK, 1299.HK" in response
     assert "market_data_acceptance_counts" in response
+
+
+def _extract_operator_field(response: str, field_name: str) -> str:
+    prefix = f"- {field_name}: "
+    for line in response.splitlines():
+        if line.startswith(prefix):
+            return line[len(prefix):]
+    raise AssertionError(f"field not found in response: {field_name}")
+
+
+def test_daily_review_market_acceptance_all_caution(monkeypatch):
+    monkeypatch.setattr("src.telegram_operator.get_operator_auth_decision", lambda update: {"authorized": True, "reason": "ok", "chat_id": "chat-1", "user_id": "u"})
+    monkeypatch.setattr("src.telegram_operator.get_latest_run_execution_summary", lambda client: {"id": 1, "status": "completed", "created_at": "2026-05-10T10:00:00+00:00"})
+    monkeypatch.setattr("src.telegram_operator._get_paper_position_pnl_review_snapshot", lambda client: {"per_symbol": [], "total_realized_pnl": 0.0, "total_unrealized_pnl": 0.0})
+    monkeypatch.setattr("src.telegram_operator._get_paper_trade_outcome_summary", lambda client: {"closed_trade_count": 0})
+    monkeypatch.setattr("src.telegram_operator.build_market_smoke_summary", lambda ticker, env: {"freshness_status_display": "last_available_close"})
+    response = handle_telegram_operator_command(object(), _build_update("/daily_review"))
+    assert "market_data_acceptance_status" in response
+    assert "caution_last_available_close" in response
+    assert _extract_operator_field(response, "market_data_accepted_for_daily_review") == "True"
+
+
+def test_daily_review_market_acceptance_all_acceptable(monkeypatch):
+    monkeypatch.setattr("src.telegram_operator.get_operator_auth_decision", lambda update: {"authorized": True, "reason": "ok", "chat_id": "chat-1", "user_id": "u"})
+    monkeypatch.setattr("src.telegram_operator.get_latest_run_execution_summary", lambda client: {"id": 1, "status": "completed", "created_at": "2026-05-10T10:00:00+00:00"})
+    monkeypatch.setattr("src.telegram_operator._get_paper_position_pnl_review_snapshot", lambda client: {"per_symbol": [], "total_realized_pnl": 0.0, "total_unrealized_pnl": 0.0})
+    monkeypatch.setattr("src.telegram_operator._get_paper_trade_outcome_summary", lambda client: {"closed_trade_count": 0})
+    monkeypatch.setattr("src.telegram_operator.build_market_smoke_summary", lambda ticker, env: {"freshness_status_display": "fresh"})
+    response = handle_telegram_operator_command(object(), _build_update("/daily_review"))
+    assert "market_data_acceptance_status" in response
+    assert "acceptable_for_paper_review" in response
+    assert _extract_operator_field(response, "market_data_accepted_for_daily_review") == "True"
+
+
+def test_daily_review_market_acceptance_unknown_over_acceptable(monkeypatch):
+    monkeypatch.setattr("src.telegram_operator.get_operator_auth_decision", lambda update: {"authorized": True, "reason": "ok", "chat_id": "chat-1", "user_id": "u"})
+    monkeypatch.setattr("src.telegram_operator.get_latest_run_execution_summary", lambda client: {"id": 1, "status": "completed", "created_at": "2026-05-10T10:00:00+00:00"})
+    monkeypatch.setattr("src.telegram_operator._get_paper_position_pnl_review_snapshot", lambda client: {"per_symbol": [], "total_realized_pnl": 0.0, "total_unrealized_pnl": 0.0})
+    monkeypatch.setattr("src.telegram_operator._get_paper_trade_outcome_summary", lambda client: {"closed_trade_count": 0})
+    seq = iter(["fresh", "unknown", "delayed"])
+    monkeypatch.setattr("src.telegram_operator.build_market_smoke_summary", lambda ticker, env: {"freshness_status_display": next(seq)})
+    response = handle_telegram_operator_command(object(), _build_update("/daily_review"))
+    assert "market_data_acceptance_status" in response
+    assert "unknown" in response
+    assert "market_data_accepted_for_daily_review: False" in response
+
+
+def test_daily_review_market_acceptance_stale_wins(monkeypatch):
+    monkeypatch.setattr("src.telegram_operator.get_operator_auth_decision", lambda update: {"authorized": True, "reason": "ok", "chat_id": "chat-1", "user_id": "u"})
+    monkeypatch.setattr("src.telegram_operator.get_latest_run_execution_summary", lambda client: {"id": 1, "status": "completed", "created_at": "2026-05-10T10:00:00+00:00"})
+    monkeypatch.setattr("src.telegram_operator._get_paper_position_pnl_review_snapshot", lambda client: {"per_symbol": [], "total_realized_pnl": 0.0, "total_unrealized_pnl": 0.0})
+    monkeypatch.setattr("src.telegram_operator._get_paper_trade_outcome_summary", lambda client: {"closed_trade_count": 0})
+    seq = iter(["fresh", "stale", "last_available_close"])
+    monkeypatch.setattr("src.telegram_operator.build_market_smoke_summary", lambda ticker, env: {"freshness_status_display": next(seq)})
+    response = handle_telegram_operator_command(object(), _build_update("/daily_review"))
+    assert "market_data_acceptance_status" in response
+    assert "stale_do_not_use_for_intraday" in response
+    assert "market_data_accepted_for_daily_review: False" in response
+
+
+def test_daily_review_market_acceptance_helper_exception(monkeypatch):
+    monkeypatch.setattr("src.telegram_operator.get_operator_auth_decision", lambda update: {"authorized": True, "reason": "ok", "chat_id": "chat-1", "user_id": "u"})
+    monkeypatch.setattr("src.telegram_operator.get_latest_run_execution_summary", lambda client: {"id": 1, "status": "completed", "created_at": "2026-05-10T10:00:00+00:00"})
+    monkeypatch.setattr("src.telegram_operator._get_paper_position_pnl_review_snapshot", lambda client: {"per_symbol": [], "total_realized_pnl": 0.0, "total_unrealized_pnl": 0.0})
+    monkeypatch.setattr("src.telegram_operator._get_paper_trade_outcome_summary", lambda client: {"closed_trade_count": 0})
+    monkeypatch.setattr("src.telegram_operator.build_market_smoke_summary", lambda ticker, env: (_ for _ in ()).throw(RuntimeError("boom")))
+    response = handle_telegram_operator_command(object(), _build_update("/daily_review"))
+    assert "market_data_acceptance_status" in response
+    assert "unknown" in response
+    assert "market_data_accepted_for_daily_review: False" in response
+    assert "market_data_acceptance_counts: acceptable_for_paper_review=0, caution_last_available_close=0, stale_do_not_use_for_intraday=0, unknown=3" in response

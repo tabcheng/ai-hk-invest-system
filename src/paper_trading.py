@@ -704,6 +704,74 @@ def get_paper_position_pnl_review_snapshot(client: Client) -> dict:
     }
 
 
+def build_ticker_level_paper_portfolio_review(
+    snapshot: dict | None,
+    *,
+    market_acceptance_by_ticker: dict[str, dict] | None = None,
+) -> list[dict]:
+    """Build bounded ticker-level paper portfolio review rows from snapshot only."""
+    rows = snapshot.get("per_symbol") if isinstance(snapshot, dict) else []
+    if not isinstance(rows, list):
+        rows = []
+    acceptance_map = market_acceptance_by_ticker if isinstance(market_acceptance_by_ticker, dict) else {}
+
+    def _safe_float(value: object, default: float = 0.0) -> float:
+        try:
+            if value is None:
+                return default
+            return float(value)
+        except (TypeError, ValueError):
+            return default
+
+    def _safe_int(value: object, default: int = 0) -> int:
+        try:
+            if value is None:
+                return default
+            return int(value)
+        except (TypeError, ValueError):
+            return default
+
+    output: list[dict] = []
+    for raw in rows:
+        if not isinstance(raw, dict):
+            continue
+        ticker = str(raw.get("stock") or "").strip().upper()
+        if not ticker:
+            continue
+        quantity = _safe_int(raw.get("quantity"))
+        avg_cost = round(_safe_float(raw.get("avg_cost")), 4)
+        reference_price = round(_safe_float(raw.get("last_price"), default=avg_cost), 4)
+        market_value = round(quantity * reference_price, 2)
+        realized_pnl = round(_safe_float(raw.get("realized_pnl")), 2)
+        unrealized_pnl = round(_safe_float(raw.get("unrealized_pnl")), 2)
+        total_pnl = round(realized_pnl + unrealized_pnl, 2)
+
+        acceptance = acceptance_map.get(ticker) if isinstance(acceptance_map.get(ticker), dict) else {}
+        output.append(
+            {
+                "ticker": ticker,
+                "stock_name": raw.get("stock_name"),
+                "has_position": quantity > 0,
+                "quantity": quantity,
+                "avg_cost": avg_cost,
+                "reference_price": reference_price,
+                "market_value": market_value,
+                "exposure_value": market_value,
+                "realized_pnl": realized_pnl,
+                "unrealized_pnl": unrealized_pnl,
+                "total_pnl": total_pnl,
+                "currency": "HKD",
+                "market_data_acceptance_status": str(acceptance.get("market_data_acceptance_status") or "unknown"),
+                "market_data_acceptance_warning": str(
+                    acceptance.get("market_data_acceptance_warning") or "timestamp/freshness cannot be verified"
+                ),
+                "limitations": ["Paper-trading review only; not trade instruction."],
+                "paper_trade_only": True,
+            }
+        )
+    return output
+
+
 def _compute_median(values: list[int]) -> float | None:
     if not values:
         return None

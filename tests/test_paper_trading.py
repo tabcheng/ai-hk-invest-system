@@ -12,6 +12,7 @@ from src.paper_trading import (
     get_paper_daily_review_summary_for_run,
     get_paper_trade_outcome_summary,
     get_paper_position_pnl_review_snapshot,
+    build_ticker_level_paper_portfolio_review,
     get_paper_risk_review_for_run,
     get_paper_portfolio_summary,
     simulate_day,
@@ -1265,3 +1266,30 @@ def test_get_paper_trade_outcome_summary_window_keeps_cross_boundary_pairing():
     assert summary["win_count"] == 1
     assert summary["loss_count"] == 0
     assert summary["top_realized_winners"] == [{"stock": "0005.HK", "realized_pnl": 90.0}]
+
+
+def test_build_ticker_level_paper_portfolio_review_open_flat_and_stock_name_preserved():
+    rows = build_ticker_level_paper_portfolio_review(
+        {
+            "per_symbol": [
+                {"stock": "0700.HK", "stock_name": "Tencent", "quantity": 100, "avg_cost": 300.1, "last_price": 310.2, "realized_pnl": 10.0, "unrealized_pnl": 1010.0},
+                {"stock": "0388.HK", "stock_name": "HKEX", "quantity": 0, "avg_cost": 450.0, "last_price": 449.0, "realized_pnl": -5.0, "unrealized_pnl": 0.0},
+            ]
+        }
+    )
+    assert rows[0]["ticker"] == "0700.HK"
+    assert rows[0]["stock_name"] == "Tencent"
+    assert rows[0]["has_position"] is True
+    assert rows[1]["has_position"] is False
+    assert rows[1]["stock_name"] == "HKEX"
+
+
+def test_build_ticker_level_paper_portfolio_review_malformed_snapshot_bounded_fallback():
+    rows = build_ticker_level_paper_portfolio_review(
+        {"per_symbol": [{"stock": "0700.HK", "quantity": "x", "avg_cost": "bad", "last_price": None, "realized_pnl": "oops", "unrealized_pnl": {}}]}
+    )
+    assert len(rows) == 1
+    assert rows[0]["quantity"] == 0
+    assert rows[0]["avg_cost"] == 0.0
+    assert rows[0]["reference_price"] == 0.0
+    assert rows[0]["total_pnl"] == 0.0

@@ -231,3 +231,5 @@ Mini App should **not**:
 - Mini App Context/Daily Review semantics now expose market-data acceptance in Chinese-first wording so operator can quickly judge if ticker market data is acceptable for daily paper review.
 - Telegram `/daily_review` now adds bounded acceptance summary fields without creating a new large command surface.
 - No change to paper-only boundary: no broker/live execution/real-money order semantics.
+
+- Step 129 update (in progress): operator surfaces are expanding with ticker-level paper portfolio review (read-only) to support per-stock exposure/PnL scan without adding any order or broker action.

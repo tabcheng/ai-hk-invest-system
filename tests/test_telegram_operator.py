@@ -1290,3 +1290,27 @@ def test_daily_review_market_acceptance_helper_exception(monkeypatch):
     assert "unknown" in response
     assert "market_data_accepted_for_daily_review: False" in response
     assert "market_data_acceptance_counts: acceptable_for_paper_review=0, caution_last_available_close=0, stale_do_not_use_for_intraday=0, unknown=3" in response
+
+
+def test_daily_review_market_acceptance_all_delayed_keeps_delayed_warning(monkeypatch):
+    monkeypatch.setattr("src.telegram_operator.get_operator_auth_decision", lambda update: {"authorized": True, "reason": "ok", "chat_id": "chat-1", "user_id": "u"})
+    monkeypatch.setattr("src.telegram_operator.get_latest_run_execution_summary", lambda client: {"id": 1, "status": "completed", "created_at": "2026-05-10T10:00:00+00:00"})
+    monkeypatch.setattr("src.telegram_operator._get_paper_position_pnl_review_snapshot", lambda client: {"per_symbol": [], "total_realized_pnl": 0.0, "total_unrealized_pnl": 0.0})
+    monkeypatch.setattr("src.telegram_operator._get_paper_trade_outcome_summary", lambda client: {"closed_trade_count": 0})
+    monkeypatch.setattr("src.telegram_operator.build_market_smoke_summary", lambda ticker, env: {"freshness_status_display": "delayed"})
+    response = handle_telegram_operator_command(object(), _build_update("/daily_review"))
+    assert "market_data_accepted_for_daily_review: True" in response
+    assert "delayed_observed_count=3" in response
+    assert "all monitored tickers currently delayed" in response
+
+
+def test_daily_review_market_acceptance_mixed_fresh_delayed_keeps_delayed_warning(monkeypatch):
+    monkeypatch.setattr("src.telegram_operator.get_operator_auth_decision", lambda update: {"authorized": True, "reason": "ok", "chat_id": "chat-1", "user_id": "u"})
+    monkeypatch.setattr("src.telegram_operator.get_latest_run_execution_summary", lambda client: {"id": 1, "status": "completed", "created_at": "2026-05-10T10:00:00+00:00"})
+    monkeypatch.setattr("src.telegram_operator._get_paper_position_pnl_review_snapshot", lambda client: {"per_symbol": [], "total_realized_pnl": 0.0, "total_unrealized_pnl": 0.0})
+    monkeypatch.setattr("src.telegram_operator._get_paper_trade_outcome_summary", lambda client: {"closed_trade_count": 0})
+    seq = iter(["fresh", "delayed", "fresh"])
+    monkeypatch.setattr("src.telegram_operator.build_market_smoke_summary", lambda ticker, env: {"freshness_status_display": next(seq)})
+    response = handle_telegram_operator_command(object(), _build_update("/daily_review"))
+    assert "market_data_accepted_for_daily_review: True" in response
+    assert "delayed_observed_count=1" in response

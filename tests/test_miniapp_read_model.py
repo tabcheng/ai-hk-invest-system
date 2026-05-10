@@ -129,6 +129,8 @@ def test_provider_injection_can_override_runtime_status_and_latest_system_run():
             return {"status": "unavailable", "source": "stub_risk"}
         def get_decision_context_summary(self):
             return {"status": "partial", "source": "stub_decision_context"}
+        def get_ticker_level_paper_portfolio_review(self):
+            return {"status": "ok", "source": "stub_ticker_portfolio", "paper_trade_only": True, "rows": []}
 
     payload = build_miniapp_review_shell_response(
         operator={"telegram_user_id": 42},
@@ -143,6 +145,8 @@ def test_provider_injection_can_override_runtime_status_and_latest_system_run():
     assert payload["sections"]["paper_pnl_summary"]["source"] == "stub_pnl"
     assert payload["sections"]["risk_summary"]["source"] == "stub_risk"
     assert payload["sections"]["decision_context_summary"]["source"] == "stub_decision_context"
+    assert payload["sections"]["ticker_level_paper_portfolio_review"]["source"] == "stub_ticker_portfolio"
+    assert payload["sections"]["ticker_level_paper_portfolio_review"]["paper_trade_only"] is True
 
 
 def test_local_artifact_provider_reads_latest_system_run_summary(tmp_path):
@@ -291,3 +295,16 @@ def test_local_artifact_provider_bounds_long_fields_and_ignores_extra_fields(tmp
     assert "SUPABASE_SERVICE_ROLE_KEY" not in serialized
     assert "TELEGRAM_BOT_TOKEN" not in serialized
     assert "broker_api_key" not in serialized
+
+
+def test_review_shell_includes_ticker_level_portfolio_section_and_read_only_guardrails():
+    payload = build_miniapp_review_shell_response(operator={"telegram_user_id": 42})
+    section = payload["sections"]["ticker_level_paper_portfolio_review"]
+    assert section["status"] in {"ok", "unavailable"}
+    assert "rows" in section
+    assert payload["guardrails"]["read_only"] is True
+    assert payload["guardrails"]["paper_trade_only"] is True
+    assert payload["guardrails"]["no_real_money_execution"] is True
+    serialized = str(payload)
+    assert "EODHD_API_TOKEN" not in serialized
+    assert "raw_payload" not in serialized.lower()

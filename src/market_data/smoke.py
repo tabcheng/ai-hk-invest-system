@@ -1,10 +1,12 @@
 from __future__ import annotations
 
+from datetime import datetime, timedelta, timezone
 from typing import Any, Mapping
 
 from src.market_data.review_provider import build_review_shell_market_data_provider, snapshot_to_dict
 
 _ALLOWED_TICKERS = {"0700.HK", "0388.HK", "1299.HK"}
+_HKT = timezone(timedelta(hours=8))
 
 
 def normalize_smoke_ticker(raw: str) -> str:
@@ -13,6 +15,71 @@ def normalize_smoke_ticker(raw: str) -> str:
 
 def is_supported_smoke_ticker(raw: str) -> bool:
     return normalize_smoke_ticker(raw) in _ALLOWED_TICKERS
+
+
+def _parse_hkt_timestamp(raw: Any) -> datetime | None:
+    if not raw:
+        return None
+    try:
+        parsed = datetime.fromisoformat(str(raw).replace("Z", "+00:00"))
+        if parsed.tzinfo is None:
+            parsed = parsed.replace(tzinfo=_HKT)
+        return parsed.astimezone(_HKT)
+    except ValueError:
+        return None
+
+
+def classify_market_data_freshness(
+    *,
+    data_timestamp_hkt: Any,
+    now_hkt: datetime | None = None,
+    provider_freshness_status: str | None = None,
+    delay_minutes: int | None = None,
+) -> dict[str, Any]:
+    now = (now_hkt or datetime.now(_HKT)).astimezone(_HKT)
+    parsed = _parse_hkt_timestamp(data_timestamp_hkt)
+    provider_status = str(provider_freshness_status or "unknown").strip().lower()
+    if parsed is None:
+        return {
+            "freshness_status_display": "unknown",
+            "freshness_label_zh": "未知",
+            "freshness_label_en": "unknown",
+            "freshness_warning": "資料時間未能解析或未提供，請勿視為即時資料。",
+            "data_age_minutes": None,
+            "data_age_hours": None,
+            "is_stale": False,
+        }
+    age_minutes = max(0, int((now - parsed).total_seconds() // 60))
+    age_hours = round(age_minutes / 60.0, 1)
+    threshold = (delay_minutes if isinstance(delay_minutes, int) and delay_minutes >= 0 else 15) + 20
+    if age_minutes > 72 * 60:
+        status = "stale"
+    elif parsed.date() < now.date():
+        status = "last_available_close"
+    elif age_minutes <= threshold and provider_status == "fresh":
+        status = "fresh"
+    elif age_minutes <= threshold + 120:
+        status = "delayed"
+    else:
+        status = "stale"
+    labels = {
+        "fresh": ("即日可用 / fresh", "Data within expected delay window."),
+        "delayed": ("延遲資料 / delayed", "資料可能延遲，請勿視為即時交易資料。"),
+        "last_available_close": ("上一交易日 / last available close", "此資料可能不是即日即時資料，只供 paper review。"),
+        "stale": ("過舊資料 / stale", "資料已過舊，只可作參考，請勿用作即時判斷。"),
+        "unknown": ("未知 / unknown", "資料時間未能解析或未提供，請勿視為即時資料。"),
+    }
+    zh_en, warning = labels.get(status, labels["unknown"])
+    zh, en = [x.strip() for x in zh_en.split("/", 1)]
+    return {
+        "freshness_status_display": status,
+        "freshness_label_zh": zh,
+        "freshness_label_en": en,
+        "freshness_warning": warning,
+        "data_age_minutes": age_minutes,
+        "data_age_hours": age_hours,
+        "is_stale": status == "stale",
+    }
 
 
 def build_market_smoke_summary(ticker: str, env: Mapping[str, str]) -> dict[str, Any]:
@@ -34,15 +101,24 @@ def build_market_smoke_summary(ticker: str, env: Mapping[str, str]) -> dict[str,
             "freshness_status": "unknown",
             "delay_minutes": None,
             "limitations": ["Ticker not in monitored smoke list."],
+            **classify_market_data_freshness(data_timestamp_hkt=None, provider_freshness_status="unknown", delay_minutes=None),
         }
     try:
         provider = build_review_shell_market_data_provider(env=dict(env or {}))
         snap = provider.get_ticker_market_snapshot(normalized)
         payload = snapshot_to_dict(snap)
-        return {k: payload.get(k) for k in (
+        result = {k: payload.get(k) for k in (
             "ticker","status","reference_price","previous_close","change","change_pct","volume","turnover",
             "currency","market","data_source","data_timestamp_hkt","freshness_status","delay_minutes","limitations",
         )}
+        result.update(
+            classify_market_data_freshness(
+                data_timestamp_hkt=result.get("data_timestamp_hkt"),
+                provider_freshness_status=result.get("freshness_status"),
+                delay_minutes=result.get("delay_minutes"),
+            )
+        )
+        return result
     except Exception:
         return {
             "ticker": normalized,
@@ -60,4 +136,5 @@ def build_market_smoke_summary(ticker: str, env: Mapping[str, str]) -> dict[str,
             "freshness_status": "unknown",
             "delay_minutes": None,
             "limitations": ["Market smoke summary unavailable."],
+            **classify_market_data_freshness(data_timestamp_hkt=None, provider_freshness_status="unknown", delay_minutes=None),
         }

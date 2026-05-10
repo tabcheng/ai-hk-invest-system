@@ -7,6 +7,7 @@ import re
 from typing import Any, Mapping, Protocol
 
 from src.market_data.review_provider import build_review_shell_market_data_provider
+from src.market_data.smoke import classify_market_data_freshness
 
 _HKT = timezone(timedelta(hours=8))
 _RUNTIME_SOURCE = "railway_runtime_env"
@@ -630,6 +631,11 @@ class SupabaseLatestSystemRunMiniAppReadDataProvider(RailwayRuntimeEnvMiniAppRea
         for item in signals.get("top_items", [])[:5]:
             ticker = str(item.get("ticker") or "").strip()
             market_snapshot = market_provider.get_ticker_market_snapshot(ticker, str(row.get("business_date") or ""))
+            freshness_meta = classify_market_data_freshness(
+                data_timestamp_hkt=market_snapshot.data_timestamp_hkt,
+                provider_freshness_status=market_snapshot.freshness_status,
+                delay_minutes=market_snapshot.delay_minutes,
+            )
             missing_context = [
                 {"key": "latest_price_missing", "label_zh": "最新價 / Reference price：未有資料", "label_en": "Reference price unavailable", "status": "missing"},
                 {"key": "liquidity_missing", "label_zh": "流動性 / 成交額：未有資料", "label_en": "Liquidity/turnover unavailable", "status": "missing"},
@@ -671,6 +677,13 @@ class SupabaseLatestSystemRunMiniAppReadDataProvider(RailwayRuntimeEnvMiniAppRea
                         "data_source": market_snapshot.data_source,
                         "data_timestamp_hkt": market_snapshot.data_timestamp_hkt,
                         "freshness_status": market_snapshot.freshness_status,
+                        "freshness_status_display": freshness_meta.get("freshness_status_display"),
+                        "freshness_label_zh": freshness_meta.get("freshness_label_zh"),
+                        "freshness_label_en": freshness_meta.get("freshness_label_en"),
+                        "freshness_warning": freshness_meta.get("freshness_warning"),
+                        "data_age_minutes": freshness_meta.get("data_age_minutes"),
+                        "data_age_hours": freshness_meta.get("data_age_hours"),
+                        "is_stale": freshness_meta.get("is_stale"),
                         "delay_minutes": market_snapshot.delay_minutes,
                         "adjustment_policy": market_snapshot.adjustment_policy,
                         "confidence": market_snapshot.confidence,

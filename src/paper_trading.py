@@ -750,6 +750,7 @@ def build_ticker_level_paper_portfolio_review(
         output.append(
             {
                 "ticker": ticker,
+                "stock_name": raw.get("stock_name"),
                 "has_position": quantity > 0,
                 "quantity": quantity,
                 "avg_cost": avg_cost,

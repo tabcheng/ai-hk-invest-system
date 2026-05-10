@@ -599,7 +599,7 @@ def _build_pnl_review_command_message(snapshot: dict[str, Any]) -> str:
 
     ticker_rows = build_ticker_level_paper_portfolio_review(snapshot, market_acceptance_by_ticker=acceptance_by_ticker)
     for idx, row in enumerate(ticker_rows[:10], start=1):
-        stock_display = _format_stock_display(stock_id=row.get("ticker"), stock_name=None)
+        stock_display = _format_stock_display(stock_id=row.get("ticker"), stock_name=row.get("stock_name"))
         fields.append(
             (
                 f"symbol_{idx}",
@@ -848,11 +848,15 @@ def _build_daily_review_command_message(client: Any) -> str:
     worst_status: str | None = None
     acceptance_counts: dict[str, int] = {k: 0 for k in status_rank}
     unknown_count = 0
+    delayed_count = 0
     try:
         for ticker in monitored_tickers:
             market_summary = build_market_smoke_summary(ticker, dict(os.environ))
+            freshness_status_display = str(market_summary.get("freshness_status_display") or "").strip().lower()
+            if freshness_status_display == "delayed":
+                delayed_count += 1
             acceptance = build_market_data_acceptance_summary(
-                freshness_status_display=market_summary.get("freshness_status_display")
+                freshness_status_display=freshness_status_display
             )
             status = str(acceptance.get("market_data_acceptance_status") or "unknown")
             if status not in acceptance_counts:
@@ -890,10 +894,10 @@ def _build_daily_review_command_message(client: Any) -> str:
     market_acceptance_warning = str(
         worst_acceptance.get("market_data_acceptance_warning") or "timestamp/freshness cannot be verified"
     )
-    delayed_exists = acceptance_counts.get("caution_last_available_close", 0) > 0
-    all_delayed = delayed_exists and acceptance_counts.get("caution_last_available_close", 0) == len(monitored_tickers)
-    if delayed_exists and "delay" not in market_acceptance_warning.lower() and "延遲" not in market_acceptance_warning:
-        market_acceptance_warning = f"{market_acceptance_warning}; delayed feed exists / 存在延遲資料"
+    delayed_exists = delayed_count > 0
+    all_delayed = delayed_count == len(monitored_tickers)
+    if delayed_exists:
+        market_acceptance_warning = f"{market_acceptance_warning}; delayed_observed_count={delayed_count}"
     if all_delayed and market_acceptance_status == "acceptable_for_paper_review":
         market_acceptance_warning = (
             f"{market_acceptance_warning}; all monitored tickers currently delayed / 全部監控股票目前為延遲資料"

@@ -1300,7 +1300,8 @@ def test_daily_review_market_acceptance_all_delayed_keeps_delayed_warning(monkey
     monkeypatch.setattr("src.telegram_operator.build_market_smoke_summary", lambda ticker, env: {"freshness_status_display": "delayed"})
     response = handle_telegram_operator_command(object(), _build_update("/daily_review"))
     assert "market_data_accepted_for_daily_review: True" in response
-    assert "delayed" in response.lower() or "延遲" in response
+    assert "delayed_observed_count=3" in response
+    assert "all monitored tickers currently delayed" in response
 
 
 def test_daily_review_market_acceptance_mixed_fresh_delayed_keeps_delayed_warning(monkeypatch):
@@ -1312,4 +1313,4 @@ def test_daily_review_market_acceptance_mixed_fresh_delayed_keeps_delayed_warnin
     monkeypatch.setattr("src.telegram_operator.build_market_smoke_summary", lambda ticker, env: {"freshness_status_display": next(seq)})
     response = handle_telegram_operator_command(object(), _build_update("/daily_review"))
     assert "market_data_accepted_for_daily_review: True" in response
-    assert "delayed" in response.lower() or "延遲" in response
+    assert "delayed_observed_count=1" in response

@@ -501,3 +501,11 @@
 - Mini App decision-context market slot now consumes bounded adapter output (`ok/partial/unavailable`) and keeps missing-context semantics unchanged for unavailable path.
 - Added smoke CLI options (`--pretty`, `--business-date`, `--timeout`) with sanitized snapshot-only output (no token, no raw vendor payload).
 - Boundaries preserved: read-only paper review only; no broker/live execution, no real-money execution, no order/simulated-order creation, no frontend vendor key.
+
+## 2026-05-10 — Step 125 Mobile Operator Market Data Smoke
+- Step 124 merged; Android operator cannot run CLI smoke locally.
+- Added /market_smoke (0700.HK/0388.HK/1299.HK) as allowlist-protected, read-only diagnostics command with sanitized bounded snapshot output only.
+- Mini App Context tab now shows market smoke diagnostics status/source/timestamp/freshness/delay/limitations from backend review-shell payload only.
+- Security/domain boundary preserved: no frontend vendor key, no raw EODHD token/payload exposure, no broker/live/real-money execution, no order/simulated-order creation.
+- EODHD remains first vendor candidate, not final production vendor commitment.
+

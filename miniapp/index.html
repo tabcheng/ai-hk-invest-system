@@ -179,8 +179,10 @@
         });
         _appendDetailsGroup(shell, "C. 市場資料 / Market Data", false, (node) => {
           const market = ctx?.market || {};
+          const marketStatus = String(market.status || "unavailable");
+          _appendContextRow(node, "Market smoke status", marketStatus);
           const allMissing = [market.reference_price, market.previous_close, market.change, market.change_pct, market.volume, market.turnover, market.data_source].every((x) => x == null || x === "");
-          if (allMissing) _appendContextRow(node, "說明", "市場資料暫未接入；以下欄位未有資料。");
+          if (marketStatus === "unavailable" || allMissing) _appendContextRow(node, "說明", "市場資料暫未能取得；請查看 limitations。");
           _appendContextRow(node, "最新價 / Reference price", market.reference_price ?? "未有資料");
           _appendContextRow(node, "前收 / Previous close", market.previous_close ?? "未有資料");
           _appendContextRow(node, "升跌 / Change", market.change ?? "未有資料");

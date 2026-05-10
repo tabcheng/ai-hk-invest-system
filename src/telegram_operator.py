@@ -15,12 +15,14 @@ from src.human_decision_journal import (
     record_stock_level_decision_note,
 )
 from src.latest_system_runs_repository import get_latest_system_run
+from src.market_data.smoke import build_market_smoke_summary, is_supported_smoke_ticker, normalize_smoke_ticker
 from src.runs import get_latest_run_execution_summary, get_run_by_id, list_recent_runs
 
 _RUNS_COMMAND_PATTERN = re.compile(r"^/runs(?:\s+(\d+)d)?\s*$", re.IGNORECASE)
 _RISK_REVIEW_COMMAND_PATTERN = re.compile(r"^/risk_review(?:\s+(\S+))?\s*$", re.IGNORECASE)
 _RUNNER_STATUS_COMMAND_PATTERN = re.compile(r"^/runner_status\s*$", re.IGNORECASE)
 _LATEST_SYSTEM_RUN_COMMAND_PATTERN = re.compile(r"^/latest_system_run\s*$", re.IGNORECASE)
+_MARKET_SMOKE_COMMAND_PATTERN = re.compile(r"^/market_smoke(?:\s+(\S+))?\s*$", re.IGNORECASE)
 _PNL_REVIEW_COMMAND_PATTERN = re.compile(r"^/pnl_review\s*$", re.IGNORECASE)
 _OUTCOME_REVIEW_COMMAND_PATTERN = re.compile(r"^/outcome_review(?:\s+(\S+))?\s*$", re.IGNORECASE)
 _DAILY_REVIEW_COMMAND_PATTERN = re.compile(r"^/daily_review\s*$", re.IGNORECASE)
@@ -459,6 +461,7 @@ def build_help_command_message() -> str:
             "- /runs [days]d : Query a custom window, e.g. /runs 7d (自訂查詢日數).",
             "- /runner_status : Show latest daily runner execution summary (最新 runner 狀態摘要).",
             "- /latest_system_run : Show latest bounded paper_daily_runner row summary (最新 bounded 系統 run 摘要).",
+            "- /market_smoke [ticker] : Mobile market-data smoke diagnostics (例如 /market_smoke 0700.HK).",
             "- /risk_review [run_id] : Run paper-trading risk review for one run (查看單次 run 風險回顧).",
             "- /pnl_review : Show paper position/PnL review snapshot (查看持倉與盈虧摘要).",
             "- /outcome_review [days] : Show closed-trade outcome summary (查看平倉結果摘要，可選天數視窗).",
@@ -701,6 +704,52 @@ def _format_latest_system_run_message(row: dict[str, Any]) -> str:
         ],
     )
 
+
+
+def _parse_market_smoke_command(command_text: str) -> str:
+    match = _MARKET_SMOKE_COMMAND_PATTERN.match(command_text or "")
+    if not match:
+        raise ValueError("Usage: /market_smoke [ticker] (e.g. /market_smoke 0700.HK).")
+    ticker = normalize_smoke_ticker((match.group(1) or "0700.HK"))
+    if not is_supported_smoke_ticker(ticker):
+        raise ValueError("Invalid input: ticker must be one of 0700.HK / 0388.HK / 1299.HK.")
+    return ticker
+
+
+def _build_market_smoke_command_message(summary: dict[str, Any]) -> str:
+    status = str(summary.get("status") or "unavailable")
+    limitations = summary.get("limitations") or []
+    limitation_text = "；".join(str(x) for x in limitations) if limitations else "無"
+    fields: list[tuple[str, Any]] = [
+        ("ticker", summary.get("ticker")),
+        ("status", status),
+        ("reference_price", summary.get("reference_price")),
+        ("previous_close", summary.get("previous_close")),
+        ("change", summary.get("change")),
+        ("change_pct", summary.get("change_pct")),
+        ("volume", summary.get("volume")),
+        ("turnover", summary.get("turnover")),
+        ("currency", summary.get("currency")),
+        ("market", summary.get("market")),
+        ("data_source", summary.get("data_source")),
+        ("data_timestamp_hkt", summary.get("data_timestamp_hkt")),
+        ("freshness_status", summary.get("freshness_status")),
+        ("delay_minutes", summary.get("delay_minutes")),
+        ("limitations", limitation_text),
+    ]
+    if status == "unavailable":
+        fields.append(("note", "市場資料暫未能取得；請查看 limitations。"))
+    details = _build_operator_message(
+        command_label="/market_smoke",
+        status="completed",
+        result="market-data smoke summary generated",
+        fields=fields,
+    )
+    return "\n".join([
+        "市場資料 Smoke（只限模擬檢視）",
+        "此輸出只供 backend market-data smoke，不是買賣建議，不建立訂單，不連接券商。",
+        details,
+    ])
 def _build_daily_review_command_message(client: Any) -> str:
     """Build short daily operator review packet (MVP, read-only aggregation)."""
     runner_status_result = "no data"
@@ -804,6 +853,7 @@ def handle_telegram_operator_command(client: Any, update: dict[str, Any]) -> str
     is_pnl_review_command = text.lower().startswith("/pnl_review")
     is_outcome_review_command = text.lower().startswith("/outcome_review")
     is_daily_review_command = text.lower().startswith("/daily_review")
+    is_market_smoke_command = text.lower().startswith("/market_smoke")
     is_decision_note_command = text.lower().startswith("/decision_note")
     if not (
         is_help_command
@@ -815,6 +865,7 @@ def handle_telegram_operator_command(client: Any, update: dict[str, Any]) -> str
         or is_outcome_review_command
         or is_daily_review_command
         or is_decision_note_command
+        or is_market_smoke_command
     ):
         return None
 
@@ -958,6 +1009,14 @@ def handle_telegram_operator_command(client: Any, update: dict[str, Any]) -> str
             except ValueError as exc:
                 return _build_usage_error_message(command_label="/daily_review", error_text=str(exc))
             return _build_daily_review_command_message(client)
+
+        if is_market_smoke_command:
+            try:
+                ticker = _parse_market_smoke_command(text)
+            except ValueError as exc:
+                return _build_usage_error_message(command_label="/market_smoke", error_text=str(exc))
+            summary = build_market_smoke_summary(ticker=ticker, env=dict(os.environ))
+            return _build_market_smoke_command_message(summary)
 
         if is_decision_note_command:
             try:

@@ -1093,3 +1093,115 @@ def test_decision_note_malformed_usage(monkeypatch):
 def test_help_includes_decision_note():
     message = build_help_command_message()
     assert "/decision_note" in message
+
+def test_market_smoke_valid_returns_sanitized(monkeypatch):
+    monkeypatch.setenv("TELEGRAM_CHAT_ID", "chat-1")
+    monkeypatch.setattr("src.telegram_operator.build_market_smoke_summary", lambda ticker, env: {
+        "ticker": ticker, "status": "ok", "reference_price": 100, "previous_close": 99, "change": 1, "change_pct": 1.0,
+        "volume": 10, "turnover": 1000, "currency": "HKD", "market": "HKEX", "data_source": "eodhd",
+        "data_timestamp_hkt": "2026-05-10T10:00:00+08:00", "freshness_status": "delayed", "delay_minutes": 15,
+        "limitations": ["bounded"],
+    })
+    resp = handle_telegram_operator_command(object(), _build_update("/market_smoke 0700.HK"))
+    assert "市場資料 Smoke（只限模擬檢視）" in resp
+    assert "EODHD_API_TOKEN" not in resp
+    assert "api_token=" not in resp
+
+
+def test_market_smoke_invalid_ticker_rejected(monkeypatch):
+    monkeypatch.setenv("TELEGRAM_CHAT_ID", "chat-1")
+    resp = handle_telegram_operator_command(object(), _build_update("/market_smoke AAPL"))
+    assert "Command: /market_smoke" in resp
+    assert "Invalid input" in resp
+
+
+def test_market_smoke_allowlist_protected(monkeypatch):
+    monkeypatch.setenv("TELEGRAM_CHAT_ID", "chat-allowed")
+    resp = handle_telegram_operator_command(object(), _build_update("/market_smoke 0700.HK", chat_id="chat-other"))
+    assert "Status: unauthorized." in resp
+
+def test_market_smoke_unavailable_message_copy(monkeypatch):
+    monkeypatch.setenv("TELEGRAM_CHAT_ID", "chat-1")
+    monkeypatch.setattr(
+        "src.telegram_operator.build_market_smoke_summary",
+        lambda ticker, env: {
+            "ticker": ticker,
+            "status": "unavailable",
+            "reference_price": None,
+            "previous_close": None,
+            "change": None,
+            "change_pct": None,
+            "volume": None,
+            "turnover": None,
+            "currency": "HKD",
+            "market": "HKEX",
+            "data_source": None,
+            "data_timestamp_hkt": None,
+            "freshness_status": "unknown",
+            "delay_minutes": None,
+            "limitations": ["Vendor request failed."],
+        },
+    )
+    resp = handle_telegram_operator_command(object(), _build_update("/market_smoke 0700.HK"))
+    assert "市場資料暫未能取得；請查看 limitations。" in resp
+    assert "traceback" not in resp.lower()
+
+
+def test_market_smoke_sanitized_no_vendor_payload(monkeypatch):
+    monkeypatch.setenv("TELEGRAM_CHAT_ID", "chat-1")
+    monkeypatch.setattr(
+        "src.telegram_operator.build_market_smoke_summary",
+        lambda ticker, env: {
+            "ticker": ticker,
+            "status": "ok",
+            "reference_price": 1,
+            "previous_close": 1,
+            "change": 0,
+            "change_pct": 0,
+            "volume": 1,
+            "turnover": 1,
+            "currency": "HKD",
+            "market": "HKEX",
+            "data_source": "eodhd",
+            "data_timestamp_hkt": "2026-05-10T10:00:00+08:00",
+            "freshness_status": "delayed",
+            "delay_minutes": 15,
+            "limitations": ["bounded"],
+        },
+    )
+    resp = handle_telegram_operator_command(object(), _build_update("/market_smoke 0700.HK"))
+    assert "raw" not in resp.lower()
+    assert "api/real-time" not in resp.lower()
+
+
+def test_market_smoke_escapes_html_dynamic_fields(monkeypatch):
+    monkeypatch.setenv("TELEGRAM_CHAT_ID", "chat-1")
+    monkeypatch.setattr(
+        "src.telegram_operator.build_market_smoke_summary",
+        lambda ticker, env: {
+            "ticker": ticker,
+            "status": "ok",
+            "reference_price": 1,
+            "previous_close": 1,
+            "change": 0,
+            "change_pct": 0,
+            "volume": 1,
+            "turnover": 1,
+            "currency": "HKD",
+            "market": "HKEX",
+            "data_source": '<a href="x">eodhd</a>',
+            "data_timestamp_hkt": "2026-05-10T10:00:00+08:00",
+            "freshness_status": "delayed",
+            "delay_minutes": 15,
+            "limitations": ['<b>vendor</b>&<script>'],
+        },
+    )
+    resp = handle_telegram_operator_command(object(), _build_update("/market_smoke 0700.HK"))
+    assert '<b>' not in resp
+    assert '<a href=' not in resp
+    assert '&lt;b&gt;vendor&lt;/b&gt;&amp;&lt;script&gt;' in resp
+    assert '&lt;a href="x"&gt;eodhd&lt;/a&gt;' in resp
+    assert 'EODHD_API_TOKEN' not in resp
+    assert 'api_token' not in resp.lower()
+    assert 'raw vendor payload' not in resp.lower()
+

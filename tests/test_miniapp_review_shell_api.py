@@ -908,3 +908,38 @@ def test_decision_context_data_source_missing_removed_when_market_ok(monkeypatch
     section = provider.get_decision_context_summary()
     missing_keys = {x["key"] for x in section["tickers"][0]["missing_context"]}
     assert "data_source_missing" not in missing_keys
+
+
+def test_decision_context_market_contains_acceptance_fields_when_market_ok(monkeypatch):
+    from src.market_data.review_provider import MarketTickerSnapshot
+    from src.miniapp_data_provider import RailwayRuntimeEnvMiniAppReadDataProvider
+
+    class _FakeProvider:
+        def get_ticker_market_snapshot(self, ticker, business_date=None):
+            return MarketTickerSnapshot(
+                ticker=ticker,
+                status="ok",
+                reference_price=400.0,
+                previous_close=398.0,
+                change=2.0,
+                change_pct=0.5,
+                volume=123,
+                turnover=456.0,
+                currency="HKD",
+                market="HKEX",
+                data_source="eodhd",
+                data_timestamp_hkt="2026-05-10T16:10:00+08:00",
+                freshness_status="last_available_close",
+                delay_minutes=15,
+                adjustment_policy="split_adjusted",
+                confidence="medium",
+                limitations=[],
+            )
+
+    monkeypatch.setattr("src.miniapp_data_provider.build_review_shell_market_data_provider", lambda env=None: _FakeProvider())
+    provider = RailwayRuntimeEnvMiniAppReadDataProvider(env={})
+    section = provider.get_decision_context_summary()
+    market = section["tickers"][0]["market"]
+    assert "market_data_acceptance_status" in market
+    assert market["market_data_acceptance_status"] == "caution_last_available_close"
+    assert market["accepted_for_daily_review"] is True

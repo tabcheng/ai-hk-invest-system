@@ -306,3 +306,7 @@ No broker integration or autonomous real-money execution is authorized by this p
 - Current system still lacks canonical market data source; market data may remain unavailable/unknown.
 - No vendor integration, no broker/live/real-money execution, no order/simulated-order creation, no Supabase schema migration, no Telegram auth change.
 
+
+## Step 127 boundary note
+- Decision context market card may display acceptance metadata (status/labels/warning/accepted boolean/reason) derived from bounded backend freshness classification.
+- Frontend must remain read-only and must not expose vendor token, raw vendor payload, or secret material.

@@ -7,7 +7,7 @@ import re
 from typing import Any, Mapping, Protocol
 
 from src.market_data.review_provider import build_review_shell_market_data_provider
-from src.market_data.smoke import classify_market_data_freshness
+from src.market_data.smoke import classify_market_data_freshness, build_market_data_acceptance_summary
 
 _HKT = timezone(timedelta(hours=8))
 _RUNTIME_SOURCE = "railway_runtime_env"
@@ -684,6 +684,9 @@ class SupabaseLatestSystemRunMiniAppReadDataProvider(RailwayRuntimeEnvMiniAppRea
                         "data_age_minutes": freshness_meta.get("data_age_minutes"),
                         "data_age_hours": freshness_meta.get("data_age_hours"),
                         "is_stale": freshness_meta.get("is_stale"),
+                        **build_market_data_acceptance_summary(
+                            freshness_status_display=freshness_meta.get("freshness_status_display")
+                        ),
                         "delay_minutes": market_snapshot.delay_minutes,
                         "adjustment_policy": market_snapshot.adjustment_policy,
                         "confidence": market_snapshot.confidence,

@@ -1205,3 +1205,16 @@ def test_market_smoke_escapes_html_dynamic_fields(monkeypatch):
     assert 'api_token' not in resp.lower()
     assert 'raw vendor payload' not in resp.lower()
 
+
+
+def test_daily_review_includes_market_acceptance_fields(monkeypatch):
+    monkeypatch.setattr("src.telegram_operator.get_operator_auth_decision", lambda update: {"authorized": True, "reason": "ok", "chat_id": "chat-1", "user_id": "u"})
+    monkeypatch.setattr("src.telegram_operator.get_latest_run_execution_summary", lambda client: {"id": 1, "status": "completed", "created_at": "2026-05-10T10:00:00+00:00"})
+    monkeypatch.setattr("src.telegram_operator._get_paper_position_pnl_review_snapshot", lambda client: {"per_symbol": [], "total_realized_pnl": 0.0, "total_unrealized_pnl": 0.0})
+    monkeypatch.setattr("src.telegram_operator._get_paper_trade_outcome_summary", lambda client: {"closed_trade_count": 0})
+    monkeypatch.setattr("src.telegram_operator.build_market_smoke_summary", lambda ticker, env: {"freshness_status_display": "last_available_close"})
+
+    response = handle_telegram_operator_command(object(), _build_update("/daily_review"))
+    assert "market_data_acceptance_status" in response
+    assert "caution_last_available_close" in response
+    assert "market_data_accepted_for_daily_review: True" in response

@@ -6,6 +6,7 @@ from pathlib import Path
 import re
 from typing import Any, Mapping, Protocol
 
+from src.market_data.review_provider import build_review_shell_market_data_provider
 
 _HKT = timezone(timedelta(hours=8))
 _RUNTIME_SOURCE = "railway_runtime_env"
@@ -625,7 +626,10 @@ class SupabaseLatestSystemRunMiniAppReadDataProvider(RailwayRuntimeEnvMiniAppRea
             else ["Risk data not available yet."]
         )
 
+        market_provider = build_review_shell_market_data_provider(env=dict(self._env))
         for item in signals.get("top_items", [])[:5]:
+            ticker = str(item.get("ticker") or "").strip()
+            market_snapshot = market_provider.get_ticker_market_snapshot(ticker, str(row.get("business_date") or ""))
             missing_context = [
                 {"key": "latest_price_missing", "label_zh": "最新價 / Reference price：未有資料", "label_en": "Reference price unavailable", "status": "missing"},
                 {"key": "liquidity_missing", "label_zh": "流動性 / 成交額：未有資料", "label_en": "Liquidity/turnover unavailable", "status": "missing"},
@@ -637,9 +641,15 @@ class SupabaseLatestSystemRunMiniAppReadDataProvider(RailwayRuntimeEnvMiniAppRea
             ]
             if not summary.get("strategy_version"):
                 missing_context.append({"key": "strategy_version_missing", "label_zh": "策略版本 / Strategy version：未有資料", "label_en": "Strategy version unavailable", "status": "missing"})
+            if market_snapshot.reference_price is not None:
+                missing_context = [x for x in missing_context if x.get("key") != "latest_price_missing"]
+            if market_snapshot.turnover is not None or market_snapshot.volume is not None:
+                missing_context = [x for x in missing_context if x.get("key") != "liquidity_missing"]
+            if market_snapshot.data_source:
+                missing_context = [x for x in missing_context if x.get("key") != "data_source_missing"]
             tickers.append(
                 {
-                    "ticker": str(item.get("ticker") or "").strip(),
+                    "ticker": ticker,
                     "signal": {
                         "direction": item.get("signal_label"),
                         "confidence": item.get("confidence_label", "unknown"),
@@ -649,21 +659,22 @@ class SupabaseLatestSystemRunMiniAppReadDataProvider(RailwayRuntimeEnvMiniAppRea
                         or signals.get("data_timestamp_hkt"),
                     },
                     "market": {
-                        "status": "unavailable",
-                        "reference_price": None,
-                        "previous_close": None,
-                        "change": None,
-                        "change_pct": None,
-                        "volume": None,
-                        "turnover": None,
-                        "currency": "HKD",
-                        "market": "HKEX",
-                        "data_source": None,
-                        "data_timestamp_hkt": None,
-                        "freshness_status": "unknown",
-                        "adjustment_policy": None,
-                        "confidence": "unknown",
-                        "limitations": ["未有資料 / not available yet"],
+                        "status": market_snapshot.status,
+                        "reference_price": market_snapshot.reference_price,
+                        "previous_close": market_snapshot.previous_close,
+                        "change": market_snapshot.change,
+                        "change_pct": market_snapshot.change_pct,
+                        "volume": market_snapshot.volume,
+                        "turnover": market_snapshot.turnover,
+                        "currency": market_snapshot.currency,
+                        "market": market_snapshot.market,
+                        "data_source": market_snapshot.data_source,
+                        "data_timestamp_hkt": market_snapshot.data_timestamp_hkt,
+                        "freshness_status": market_snapshot.freshness_status,
+                        "delay_minutes": market_snapshot.delay_minutes,
+                        "adjustment_policy": market_snapshot.adjustment_policy,
+                        "confidence": market_snapshot.confidence,
+                        "limitations": market_snapshot.limitations,
                     },
                     "paper_position": {
                         "status": "unavailable",
@@ -680,7 +691,7 @@ class SupabaseLatestSystemRunMiniAppReadDataProvider(RailwayRuntimeEnvMiniAppRea
                     },
                     "missing_context": missing_context,
                     "limitations": [
-                        "Existing-source-only mode; no external market vendor integration in Step 119."
+                        "Provider boundary is bounded to review-shell market snapshot fields only."
                     ],
                 }
             )

@@ -242,3 +242,8 @@ Operator deploy + smoke evidence flow (manual):
   - 僅輸出 `curl_account_probe_status` 與 `curl_account_probe_http_status`，不輸出 response body。
 - `RAILWAY_CONNECTIVITY_PROBE`
   - `account` 時可同時比較 urllib vs curl probe，有助定位 request-shape 與 runner-edge 差異。
+
+- MARKET_DATA_PROVIDER: null|existing|eodhd (backend only; Mini App/frontend must not use vendor key)
+- EODHD_API_TOKEN: backend-only secret for eodhd provider skeleton
+- MARKET_DATA_TIMEOUT_SECONDS: backend HTTP timeout seconds (default 3)
+- MARKET_DATA_DELAY_POLICY: optional delay-policy hint (unknown/delayed/eod)

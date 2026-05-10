@@ -261,3 +261,5 @@ Prioritization:
 - Current system still lacks canonical market data source; market data may remain unavailable/unknown.
 - No vendor integration, no broker/live/real-money execution, no order/simulated-order creation, no Supabase schema migration, no Telegram auth change.
 
+
+- Step 123 follow-up: compare EODHD/Twelve Data/Finnhub, evaluate HKEX licensing route, and promote provider from skeleton to production candidate only after contract + smoke evidence.

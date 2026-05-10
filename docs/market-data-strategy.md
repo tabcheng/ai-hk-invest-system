@@ -45,3 +45,10 @@
 - Current system still lacks canonical market data source; market data may remain unavailable/unknown.
 - No vendor integration, no broker/live/real-money execution, no order/simulated-order creation, no Supabase schema migration, no Telegram auth change.
 
+
+
+### Step 123 vendor-ready boundary update (2026-05-10)
+- Introduced backend-only market provider boundary for Mini App decision context.
+- Runtime env: `MARKET_DATA_PROVIDER=null|existing|eodhd`, `EODHD_API_TOKEN` (backend-only), `MARKET_DATA_TIMEOUT_SECONDS` (default 3), optional `MARKET_DATA_DELAY_POLICY`.
+- Default behavior remains unavailable-safe when provider/key absent; no frontend vendor key exposure.
+- EODHD is first adapter skeleton candidate only; Twelve Data/Finnhub remain comparison candidates; HKEX official/vendor licensing path remains production-grade consideration.

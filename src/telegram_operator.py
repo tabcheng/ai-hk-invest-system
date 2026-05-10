@@ -717,25 +717,54 @@ def _parse_market_smoke_command(command_text: str) -> str:
 
 
 def _build_market_smoke_command_message(summary: dict[str, Any]) -> str:
+    def _fmt_price(v: Any) -> str:
+        try:
+            return f"{float(v):.2f}"
+        except (TypeError, ValueError):
+            return "未有資料"
+    def _fmt_pct(v: Any) -> str:
+        try:
+            return f"{float(v):.2f}%"
+        except (TypeError, ValueError):
+            return "未有資料"
+    def _fmt_volume(v: Any) -> str:
+        try:
+            return f"{int(float(v)):,}"
+        except (TypeError, ValueError):
+            return "未有資料"
+    def _fmt_ts(v: Any) -> str:
+        if not v:
+            return "未有資料"
+        try:
+            dt = datetime.fromisoformat(str(v).replace("Z", "+00:00")).astimezone(_HKT_TZ)
+            return dt.strftime("%Y-%m-%d %H:%M HKT")
+        except ValueError:
+            return "未有資料"
+
     status = str(summary.get("status") or "unavailable")
     limitations = summary.get("limitations") or []
     limitation_text = "；".join(str(x) for x in limitations) if limitations else "無"
+    freshness_label = f"{summary.get('freshness_label_zh') or '未知'} / {summary.get('freshness_label_en') or 'unknown'}"
     fields: list[tuple[str, Any]] = [
-        ("ticker", summary.get("ticker")),
-        ("status", status),
-        ("reference_price", summary.get("reference_price")),
-        ("previous_close", summary.get("previous_close")),
-        ("change", summary.get("change")),
-        ("change_pct", summary.get("change_pct")),
-        ("volume", summary.get("volume")),
-        ("turnover", summary.get("turnover")),
-        ("currency", summary.get("currency")),
-        ("market", summary.get("market")),
-        ("data_source", summary.get("data_source")),
-        ("data_timestamp_hkt", summary.get("data_timestamp_hkt")),
-        ("freshness_status", summary.get("freshness_status")),
-        ("delay_minutes", summary.get("delay_minutes")),
-        ("limitations", limitation_text),
+        ("股票 / Ticker", summary.get("ticker")),
+        ("狀態 / Status", status),
+        (
+            "最新價 / Reference price",
+            f"{_fmt_price(summary.get('reference_price'))} HKD" if summary.get("reference_price") is not None else "未有資料",
+        ),
+        (
+            "前收 / Previous close",
+            f"{_fmt_price(summary.get('previous_close'))} HKD" if summary.get("previous_close") is not None else "未有資料",
+        ),
+        ("升跌 / Change", _fmt_price(summary.get("change"))),
+        ("升跌幅 / Change %", _fmt_pct(summary.get("change_pct"))),
+        ("成交量 / Volume", _fmt_volume(summary.get("volume"))),
+        ("成交額 / Turnover", "未有資料" if summary.get("turnover") is None else _fmt_price(summary.get("turnover"))),
+        ("資料來源 / Data source", summary.get("data_source")),
+        ("資料時間 / Timestamp", _fmt_ts(summary.get("data_timestamp_hkt"))),
+        ("新鮮度 / Freshness", freshness_label),
+        ("提示 / Warning", summary.get("freshness_warning") or "無"),
+        ("診斷 / Limitations", limitation_text),
     ]
     if status == "unavailable":
         fields.append(("note", "市場資料暫未能取得；請查看 limitations。"))

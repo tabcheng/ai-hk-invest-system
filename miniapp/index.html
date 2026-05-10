@@ -140,6 +140,10 @@
         p.textContent = `${label}：${String(value ?? "未有資料")}`;
         parent.appendChild(p);
       }
+      function _fmt2(v){ const n=Number(v); return Number.isFinite(n)? n.toFixed(2):"未有資料"; }
+      function _fmtPct(v){ const n=Number(v); return Number.isFinite(n)? `${n.toFixed(2)}%`:"未有資料"; }
+      function _fmtVol(v){ const n=Number(v); return Number.isFinite(n)? Math.trunc(n).toLocaleString("en-US"):"未有資料"; }
+      function _fmtTsHkt(v){ if(!v) return "未有資料"; const d=new Date(v); if(Number.isNaN(d.getTime())) return "未有資料"; return new Intl.DateTimeFormat("zh-HK",{timeZone:"Asia/Hong_Kong",year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit",hour12:false}).format(d).replace(/\//g,"-")+" HKT"; }
       function _appendDetailsGroup(parent, title, open, renderBody) {
         const d = document.createElement("details");
         if (open) d.open = true;
@@ -183,15 +187,16 @@
           _appendContextRow(node, "Market smoke status", marketStatus);
           const allMissing = [market.reference_price, market.previous_close, market.change, market.change_pct, market.volume, market.turnover, market.data_source].every((x) => x == null || x === "");
           if (marketStatus === "unavailable" || allMissing) _appendContextRow(node, "說明", "市場資料暫未能取得；請查看 limitations。");
-          _appendContextRow(node, "最新價 / Reference price", market.reference_price ?? "未有資料");
-          _appendContextRow(node, "前收 / Previous close", market.previous_close ?? "未有資料");
-          _appendContextRow(node, "升跌 / Change", market.change ?? "未有資料");
-          _appendContextRow(node, "升跌幅 / Change %", market.change_pct ?? "未有資料");
-          _appendContextRow(node, "成交量 / Volume", market.volume ?? "未有資料");
-          _appendContextRow(node, "成交額 / Turnover", market.turnover ?? "未有資料");
+          _appendContextRow(node, "最新價 / Reference price", _fmt2(market.reference_price));
+          _appendContextRow(node, "前收 / Previous close", _fmt2(market.previous_close));
+          _appendContextRow(node, "升跌 / Change", _fmt2(market.change));
+          _appendContextRow(node, "升跌幅 / Change %", _fmtPct(market.change_pct));
+          _appendContextRow(node, "成交量 / Volume", _fmtVol(market.volume));
+          _appendContextRow(node, "成交額 / Turnover", market.turnover == null ? "未有資料" : _fmt2(market.turnover));
           _appendContextRow(node, "資料來源 / Data source", market.data_source ?? "未有資料");
-          _appendContextRow(node, "資料時間 / Timestamp", market.data_timestamp_hkt ?? "未有資料");
-          _appendContextRow(node, "資料新鮮度 / Freshness", market.freshness_status ?? "未有資料");
+          _appendContextRow(node, "資料時間 / Timestamp", _fmtTsHkt(market.data_timestamp_hkt));
+          _appendContextRow(node, "資料新鮮度 / Freshness", `${market.freshness_label_zh || "未知"} / ${market.freshness_label_en || "unknown"}`);
+          if (["last_available_close","stale","unknown"].includes(String(market.freshness_status_display || market.freshness_status || ""))) _appendContextRow(node, "提示 / Warning", market.freshness_warning || "此資料可能不是即日即時資料，只供 paper review。");
           _appendContextRow(node, "延遲分鐘 / Delay", market.delay_minutes ?? "未有資料");
           const limits = Array.isArray(market.limitations) && market.limitations.length ? market.limitations.join("；") : "未有資料";
           _appendContextRow(node, "限制 / Limitations", limits);

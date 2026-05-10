@@ -431,3 +431,12 @@ Use this checklist when reviewing Mini App read-only surfaces:
 - Confirm success/error copy remains no-order/paper-only and no broker/live execution wording appears.
 
 - Step 119 smoke checks: verify selected ticker Decision Context shows grouped sections, explicit unavailable text when market fields missing, and source/timestamp/freshness when present; confirm paper-only/no-order wording remains visible.
+
+## 2026-05-10 — Step 120 Mini App IA redesign
+- Step 119 post-deploy smoke passed with build 7f5c5d6 (baseline).
+- Mini App shifted from single long scroll to segmented tabs: 今日/信號/Context/Journal.
+- Decision Context readiness semantics tightened to conservative labels (insufficient/basic/partial; unknown=>不足) and current no-market-data state is 不足.
+- Missing Context now Chinese-first labels; no raw internal English-only keys in UI-facing payload.
+- Current system still lacks canonical market data source; market data may remain unavailable/unknown.
+- No vendor integration, no broker/live/real-money execution, no order/simulated-order creation, no Supabase schema migration, no Telegram auth change.
+

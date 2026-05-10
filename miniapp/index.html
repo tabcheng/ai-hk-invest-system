@@ -48,7 +48,7 @@
       .time-row { display:flex; flex-wrap:wrap; gap:4px; align-items:baseline; }
       .journal-form { display:grid; gap:8px; }
       .journal-form label { font-size:.86rem; color:var(--muted-text); }
-      .journal-form input,.journal-form select,.journal-form textarea { width:100%; padding:8px; border:1px solid var(--border); border-radius:8px; }
+      .journal-form input,.journal-form select,.journal-form textarea { width:100%; padding:8px; border:1px solid var(--border); border-radius:8px; } .tab-bar{display:flex;gap:6px;margin-bottom:12px} .tab-bar button[aria-selected="true"]{font-weight:700;border:2px solid #152238;} .tab-bar button{padding:8px 10px;border-radius:10px;border:1px solid var(--border);background:#fff;}
     </style>
   </head>
   <body>
@@ -59,13 +59,13 @@
         <p>Paper trading only · No broker/live execution</p>
       </header>
       <section class="boundary-banner">只限模擬交易 · 決策支援 · 不連接券商 · 不作真實落盤</section>
-      <section id="overview-card" class="overview-card"><h2>今日檢視 / Daily Overview</h2><p class="helper-text">載入中...</p></section>
-      <section id="latest-card" class="section-card"><h2>最新系統運行</h2></section>
-      <section id="daily-card" class="section-card"><h2>每日檢視摘要</h2></section>
-      <section id="signals-card" class="section-card"><h2>信號摘要</h2></section>
-      <section id="paper-pnl-card" class="section-card"><h2>模擬盈虧摘要</h2></section>
-      <section id="risk-card" class="section-card"><h2>風險摘要</h2></section>
-      <section id="journal-card" class="section-card"><h2>Human Paper Decision Journal / 人手模擬決策日誌</h2></section>
+      <nav class="tab-bar" role="tablist" aria-label="Mini App sections"><button id="tab-today" role="tab" aria-selected="true" data-tab="today" aria-controls="overview-card">今日（預設）</button><button id="tab-signals" role="tab" aria-selected="false" data-tab="signals" aria-controls="signals-card">信號</button><button id="tab-context" role="tab" aria-selected="false" data-tab="context" aria-controls="context-card">Context</button><button id="tab-journal" role="tab" aria-selected="false" data-tab="journal" aria-controls="journal-card">Journal</button></nav><section id="overview-card" class="overview-card" data-tab-panel="today" role="tabpanel" aria-labelledby="tab-today"><h2>今日檢視 / Daily Overview</h2><p class="helper-text">載入中...</p></section>
+      <section id="latest-card" class="section-card" data-tab-panel="today" role="tabpanel" aria-labelledby="tab-today"><h2>最新系統運行</h2></section>
+      <section id="daily-card" class="section-card" data-tab-panel="today" role="tabpanel" aria-labelledby="tab-today"><h2>每日檢視摘要</h2></section>
+      <section id="signals-card" class="section-card" data-tab-panel="signals" role="tabpanel" aria-labelledby="tab-signals"><h2>信號摘要</h2></section><section id="context-card" class="section-card" data-tab-panel="context" role="tabpanel" aria-labelledby="tab-context"><h2>Decision Context</h2><div id="context-shell" class="helper-text">載入中...</div></section>
+      <section id="paper-pnl-card" class="section-card" data-tab-panel="today" role="tabpanel" aria-labelledby="tab-today"><h2>模擬盈虧摘要</h2></section>
+      <section id="risk-card" class="section-card" data-tab-panel="today" role="tabpanel" aria-labelledby="tab-today"><h2>風險摘要</h2></section>
+      <section id="journal-card" class="section-card" data-tab-panel="journal" role="tabpanel" aria-labelledby="tab-journal"><h2>Human Paper Decision Journal / 人手模擬決策日誌</h2></section>
       <section class="footer-guardrail"><h2>安全與邊界說明</h2><ul><li>Telegram initData 只在後端驗證</li><li>前端不使用 initDataUnsafe 作授權</li><li>前端不保存 Supabase secret / service role key</li><li>系統不連接券商、不作真實落盤</li><li>所有信號只供模擬檢視，並非買賣指示</li></ul></section>
           <p id="build-meta" class="helper-text">UI build: unknown · Deployed build: unknown</p>
     </main>
@@ -82,7 +82,7 @@
       function renderAvailabilityChip(isAvailable) { const chip = document.createElement("span"); chip.className = `availability-chip ${isAvailable ? "status-success" : "status-unavailable"}`; chip.textContent = isAvailable ? AVAILABILITY_TEXT.available : AVAILABILITY_TEXT.unavailable; return chip; }
       function renderMetricGrid(items) { const grid = document.createElement("div"); grid.className = "metric-grid"; items.forEach((item) => { const node = document.createElement("div"); node.className = "metric-item"; const l = document.createElement("div"); l.className = "label"; l.textContent = item.label; const v = document.createElement("div"); v.className = "value"; v.textContent = String(item.value ?? "-"); node.append(l,v); grid.appendChild(node); }); return grid; }
       function asSectionNames(values) { return Array.isArray(values) ? values.map((v) => SECTION_NAME_MAP[String(v)] || String(v)) : []; }
-      function renderSignalItems(items) { const list = document.createElement("ul"); list.className = "signal-list"; (Array.isArray(items) ? items : []).forEach((item) => { const li = document.createElement("li"); li.className = "signal-item"; const ticker = document.createElement("div"); ticker.textContent = `股票：${String(item.ticker || "-")}`; const sig = document.createElement("div"); sig.textContent = `模擬信號方向：${SIGNAL_LABEL[String(item.signal_label)] || SIGNAL_LABEL.unknown}`; const confidenceLabel = String(item.confidence_label || "unknown").toLowerCase() === "unknown" ? "未提供 / Unknown" : String(item.confidence_label || "-"); const c = document.createElement("div"); c.textContent = `信心：${confidenceLabel}`; const r = document.createElement("div"); r.textContent = `原因：${String(item.reason_short || "未提供")}`; li.append(ticker,sig,c,r); list.appendChild(li); }); return list; }
+      function renderSignalItems(items, onViewContext) { const list = document.createElement("ul"); list.className = "signal-list"; (Array.isArray(items) ? items : []).forEach((item) => { const li = document.createElement("li"); li.className = "signal-item"; const ticker = document.createElement("div"); ticker.textContent = `股票：${String(item.ticker || "-")}`; const sig = document.createElement("div"); sig.textContent = `模擬信號方向：${SIGNAL_LABEL[String(item.signal_label)] || SIGNAL_LABEL.unknown}`; const confidenceLabel = String(item.confidence_label || "unknown").toLowerCase() === "unknown" ? "未提供 / Unknown" : String(item.confidence_label || "-"); const c = document.createElement("div"); c.textContent = `信心：${confidenceLabel}`; const r = document.createElement("div"); r.textContent = `原因：${String(item.reason_short || "未提供")}`; const btn = document.createElement("button"); btn.type = "button"; btn.textContent = "查看 Context"; btn.addEventListener("click", () => onViewContext(String(item.ticker || ""))); li.append(ticker,sig,c,r,btn); list.appendChild(li); }); return list; }
       function fillUnavailable(cardId, title){ const card=document.getElementById(cardId); card.textContent=""; const h=document.createElement("h2"); h.textContent=title; const chip=renderStatusChip("unavailable"); const p=document.createElement("p"); p.className="helper-text"; p.textContent=`${title}未有資料（Data not available yet）`; card.append(h,chip,p); }
       function renderOverview(latest,daily,signals){
         const card=document.getElementById("overview-card");
@@ -133,7 +133,75 @@
       if (missing.size > 0) { const miss=document.createElement("h3"); miss.textContent="未有資料"; const missList=document.createElement("div"); missList.className="chip-list"; [...missing].forEach((x)=>{const c=document.createElement("span");c.className="mini-chip";c.textContent=x;missList.appendChild(c);}); card.append(miss,missList); }
       else { const none=document.createElement("p"); none.className="helper-text"; none.textContent="暫無缺失區塊"; card.appendChild(none); }
       card.appendChild(helper); }
-      function renderSignals(signals){ if (!signals || signals.status !== "ok") return fillUnavailable("signals-card","信號摘要"); const card=document.getElementById("signals-card"); card.textContent=""; const h=document.createElement("h2"); h.textContent="信號摘要"; card.append(h, renderStatusChip(signals.review_readiness || signals.status)); const warn=document.createElement("p"); warn.className="helper-text"; warn.textContent="目前只顯示技術信號方向；信心、風險、模擬盈虧未完整，因此不應視為完整決策。"; card.appendChild(warn); card.appendChild(renderMetricGrid([{label:"覆蓋股票數",value:signals.covered_tickers},{label:"顯示信號數",value:signals.shown_signals},{label:"顯示正面模擬信號",value:signals.shown_positive_signals},{label:"顯示觀望 / 中性信號",value:signals.shown_neutral_signals},{label:"顯示負面模擬信號",value:signals.shown_negative_signals},{label:"顯示未知信號",value:signals.shown_unknown_signals}])); card.appendChild(renderSignalItems(signals.top_items)); }
+      function renderSignals(signals, onViewContext){ if (!signals || signals.status !== "ok") return fillUnavailable("signals-card","信號摘要"); const card=document.getElementById("signals-card"); card.textContent=""; const h=document.createElement("h2"); h.textContent="信號摘要"; card.append(h, renderStatusChip(signals.review_readiness || signals.status)); const warn=document.createElement("p"); warn.className="helper-text"; warn.textContent="目前只顯示技術信號方向；信心、風險、模擬盈虧未完整，因此不應視為完整決策。"; card.appendChild(warn); card.appendChild(renderMetricGrid([{label:"覆蓋股票數",value:signals.covered_tickers},{label:"顯示信號數",value:signals.shown_signals},{label:"顯示正面模擬信號",value:signals.shown_positive_signals},{label:"顯示觀望 / 中性信號",value:signals.shown_neutral_signals},{label:"顯示負面模擬信號",value:signals.shown_negative_signals},{label:"顯示未知信號",value:signals.shown_unknown_signals}])); card.appendChild(renderSignalItems(signals.top_items, onViewContext)); }
+      function _appendContextRow(parent, label, value) {
+        const p = document.createElement("p");
+        p.className = "row";
+        p.textContent = `${label}：${String(value ?? "未有資料")}`;
+        parent.appendChild(p);
+      }
+      function _appendDetailsGroup(parent, title, open, renderBody) {
+        const d = document.createElement("details");
+        if (open) d.open = true;
+        const s = document.createElement("summary");
+        s.textContent = title;
+        d.appendChild(s);
+        renderBody(d);
+        parent.appendChild(d);
+      }
+      function renderContextTab(signals, decisionContext, selectedTicker) {
+        const shell = document.getElementById("context-shell");
+        if (!shell) return;
+        shell.textContent = "";
+        const pickerLabel = document.createElement("label");
+        pickerLabel.textContent = "選擇股票";
+        const picker = document.createElement("select");
+        picker.id = "context-ticker-picker";
+        const items = Array.isArray(signals?.top_items) ? signals.top_items : [];
+        items.forEach((item) => {
+          const opt = document.createElement("option");
+          opt.value = String(item.ticker || "");
+          opt.textContent = String(item.ticker || "-");
+          picker.appendChild(opt);
+        });
+        if (selectedTicker) picker.value = selectedTicker;
+        pickerLabel.appendChild(picker);
+        shell.appendChild(pickerLabel);
+        picker.addEventListener("change", () => renderContextTab(signals, decisionContext, picker.value));
+        const ctx = Array.isArray(decisionContext?.tickers) ? decisionContext.tickers.find((x) => String(x.ticker || "") === String(picker.value || "")) : null;
+        const readinessValue = decisionContext?.context_readiness === "partial" ? "部分" : decisionContext?.context_readiness === "basic" ? "基本" : "不足";
+        _appendDetailsGroup(shell, "A. 參考資料完整度", true, (node) => _appendContextRow(node, "完整度", readinessValue));
+        _appendDetailsGroup(shell, "B. 現有信號 / Signal", true, (node) => {
+          _appendContextRow(node, "股票", picker.value || "未有資料");
+          _appendContextRow(node, "方向", ctx?.signal?.direction || "未有資料");
+          _appendContextRow(node, "原因", ctx?.signal?.reason || "未有資料");
+          _appendContextRow(node, "策略版本", ctx?.signal?.strategy_version || "未有資料");
+        });
+        _appendDetailsGroup(shell, "C. 市場資料 / Market Data", false, (node) => {
+          const market = ctx?.market || {};
+          const allMissing = [market.reference_price, market.previous_close, market.change, market.change_pct, market.volume, market.turnover, market.data_source].every((x) => x == null || x === "");
+          if (allMissing) _appendContextRow(node, "說明", "市場資料暫未接入；以下欄位未有資料。");
+          _appendContextRow(node, "最新價 / Reference price", market.reference_price ?? "未有資料");
+          _appendContextRow(node, "前收 / Previous close", market.previous_close ?? "未有資料");
+          _appendContextRow(node, "升跌 / Change", market.change ?? "未有資料");
+          _appendContextRow(node, "升跌幅 / Change %", market.change_pct ?? "未有資料");
+          _appendContextRow(node, "成交量 / Volume", market.volume ?? "未有資料");
+          _appendContextRow(node, "成交額 / Turnover", market.turnover ?? "未有資料");
+          _appendContextRow(node, "資料來源 / Data source", market.data_source ?? "未有資料");
+        });
+        _appendDetailsGroup(shell, "D. Paper position / PnL", false, (node) => _appendContextRow(node, "說明", "目前只顯示組合層級 Paper PnL，未有單一股票持倉級別 PnL。"));
+        _appendDetailsGroup(shell, "E. 風險 / Risk", false, (node) => {
+          _appendContextRow(node, "Risk level", ctx?.risk?.risk_level || "未有資料");
+          const warnings = Array.isArray(ctx?.risk?.warnings) && ctx.risk.warnings.length > 0 ? ctx.risk.warnings.join("；") : "暫無風險警示";
+          _appendContextRow(node, "Warnings", warnings);
+        });
+        _appendDetailsGroup(shell, "F. 缺失資料 / Missing Context", true, (node) => {
+          const ul = document.createElement("ul");
+          (ctx?.missing_context || []).forEach((entry) => { const li = document.createElement("li"); li.textContent = String(entry?.label_zh || entry?.label_en || "未有資料"); ul.appendChild(li); });
+          if (!ul.children.length) { const li = document.createElement("li"); li.textContent = "未有資料"; ul.appendChild(li); }
+          node.appendChild(ul);
+        });
+      }
       function renderPaperPnl(pnl){ if (!pnl || pnl.status !== "ok") return fillUnavailable("paper-pnl-card","模擬盈虧摘要"); const card=document.getElementById("paper-pnl-card"); card.textContent=""; const h=document.createElement("h2"); h.textContent="模擬盈虧摘要"; card.append(h, renderStatusChip(pnl.status)); card.appendChild(renderMetricGrid([{label:"貨幣",value:pnl.currency || "HKD"},{label:"總持倉數",value:pnl.total_positions},{label:"開倉數",value:pnl.open_positions},{label:"平倉數",value:pnl.closed_positions},{label:"已實現盈虧 (Paper/模擬)",value:pnl.realized_pnl},{label:"未實現盈虧 (Paper/模擬)",value:pnl.unrealized_pnl},{label:"總盈虧 (Paper/模擬)",value:pnl.total_pnl}])); const ts = pnl.data_timestamp_hkt || pnl.updated_at_hkt; if (ts) { const t=document.createElement("p"); t.className="row"; t.textContent=`資料時間：${ts}`; card.appendChild(t); } if (Array.isArray(pnl.limitations) && pnl.limitations.length > 0) { const h3=document.createElement("h3"); h3.textContent="限制"; const ul=document.createElement("ul"); pnl.limitations.forEach((x)=>{const li=document.createElement("li"); li.textContent=String(x); ul.appendChild(li);}); card.append(h3,ul); } const helper=document.createElement("p"); helper.className="helper-text"; helper.textContent="以上為模擬 / paper-trading 盈虧，只供檢視，不代表真實戶口表現。"; card.appendChild(helper); }
       function renderRisk(risk){ if (!risk || risk.status !== "ok") return fillUnavailable("risk-card","風險摘要"); const card=document.getElementById("risk-card"); card.textContent=""; const h=document.createElement("h2"); h.textContent="風險摘要"; card.append(h, renderStatusChip(risk.status)); const p=document.createElement("p"); p.className="row"; p.textContent=`Risk level（Paper review）：${String(risk.risk_level||"unknown")}`; card.appendChild(p); const ts=risk.data_timestamp_hkt || risk.updated_at_hkt; if (ts) { const t=document.createElement("p"); t.className="row"; t.textContent=`資料時間：${ts}`; card.appendChild(t); } const w=document.createElement("h3"); w.textContent="風險警示"; card.appendChild(w); if (Array.isArray(risk.warnings) && risk.warnings.length > 0) { const ul=document.createElement("ul"); risk.warnings.forEach((x)=>{const li=document.createElement("li"); li.textContent=String(x); ul.appendChild(li);}); card.appendChild(ul);} else { const none=document.createElement("p"); none.className="helper-text"; none.textContent="暫無風險警示"; card.appendChild(none);} if (Array.isArray(risk.limitations) && risk.limitations.length > 0) { const h3=document.createElement("h3"); h3.textContent="限制"; const ul=document.createElement("ul"); risk.limitations.forEach((x)=>{const li=document.createElement("li"); li.textContent=String(x); ul.appendChild(li);}); card.append(h3,ul);} const helper=document.createElement("p"); helper.className="helper-text"; helper.textContent="風險摘要只供 review，不會自動阻止或建立任何真實交易。"; card.appendChild(helper); }
       function renderJournal(latest, signals, paperPnl, risk, decisionContext){
@@ -161,37 +229,22 @@
         }
         const context = document.getElementById("journal-context");
         const appendRow = (parent, label, value) => { const p = document.createElement("p"); p.className = "row"; p.textContent = `${label}：${String(value)}`; parent.appendChild(p); };
-        const appendList = (parent, title, values) => { const h = document.createElement("h3"); h.textContent = title; parent.appendChild(h); const ul = document.createElement("ul"); values.forEach((entry) => { const li = document.createElement("li"); li.textContent = String(entry); ul.appendChild(li); }); parent.appendChild(ul); };
+        const appendList = (parent, title, values) => { const h = document.createElement("h3"); h.textContent = title; parent.appendChild(h); const ul = document.createElement("ul"); values.forEach((entry) => { const li = document.createElement("li"); li.textContent = (entry && typeof entry === "object") ? String(entry.label_zh || entry.label_en || "未有資料") : String(entry); ul.appendChild(li); }); parent.appendChild(ul); };
         const renderContext = () => {
           const selected = topItems.find((x) => String(x.ticker || "") === String(ticker.value || ""));
           const dcTicker = Array.isArray(decisionContext?.tickers) ? decisionContext.tickers.find((x) => String(x?.ticker || "") === String(ticker.value || "")) : null;
           const cMap = { low: "低", medium: "中", high: "高", unknown: "未知" };
           context.textContent = "";
           const h3 = document.createElement("h3"); h3.textContent = "決策參考資料 / Decision Context"; context.appendChild(h3);
-          const helper = document.createElement("p"); helper.className = "helper-text"; helper.textContent = "目前資料只足夠作 paper review，不足以作完整投資判斷。"; context.appendChild(helper);
+          const helper = document.createElement("p"); helper.className = "helper-text"; helper.textContent = `目前選擇：${ticker.value || "未有資料"} · ${selected ? (SIGNAL_LABEL[String(selected.signal_label)] || SIGNAL_LABEL.unknown) : "未有資料"} · 參考資料完整度：${decisionContext?.context_readiness === "basic" ? "基本" : (decisionContext?.context_readiness === "partial" ? "部分" : "不足")}`; context.appendChild(helper);
           appendRow(context, "股票 ticker", ticker.value || "未有資料 / not available yet");
-          appendRow(context, "模擬信號方向", selected ? (SIGNAL_LABEL[String(selected.signal_label)] || SIGNAL_LABEL.unknown) : "未有資料 / not available yet");
-          appendRow(context, "信心程度", selected ? (cMap[String(selected.confidence_label || "unknown")] || "未知") : "未有資料 / not available yet");
           appendRow(context, "信號原因", selected?.reason_short || "未有資料 / not available yet");
-          appendRow(context, "資料時間 HKT", dcTicker?.signal?.data_timestamp_hkt || selected?.data_timestamp_hkt || signals?.data_timestamp_hkt || "未有資料 / not available yet");
-          appendRow(context, "Strategy version", dcTicker?.signal?.strategy_version || "未有資料 / not available yet");
-          appendRow(context, "最新價 / Reference price", dcTicker?.market?.reference_price ?? "未有資料 / not available yet");
-          appendRow(context, "前收 / Previous close", dcTicker?.market?.previous_close ?? "未有資料 / not available yet");
-          appendRow(context, "升跌 / Change", dcTicker?.market?.change ?? "未有資料 / not available yet");
-          appendRow(context, "升跌幅 / Change %", dcTicker?.market?.change_pct ?? "未有資料 / not available yet");
-          appendRow(context, "成交量 / Volume", dcTicker?.market?.volume ?? "未有資料 / not available yet");
-          appendRow(context, "成交額 / Turnover", dcTicker?.market?.turnover ?? "未有資料 / not available yet");
-          appendRow(context, "資料來源 / Data source", dcTicker?.market?.data_source || "未有資料 / not available yet");
-          appendRow(context, "資料新鮮度 / Freshness", dcTicker?.market?.freshness_status || "unknown");
-          appendRow(context, "Paper PnL（模擬）總盈虧 / 已實現 / 未實現", paperPnl?.status === "ok" ? `${String(paperPnl.total_pnl ?? "-")} / ${String(paperPnl.realized_pnl ?? "-")} / ${String(paperPnl.unrealized_pnl ?? "-")}` : "未有資料 / not available yet");
-          appendRow(context, "參考資料完整度", decisionContext?.context_readiness === "basic" ? "基本" : (decisionContext?.context_readiness === "partial" ? "部分" : "不足"));
-          appendRow(context, "Risk level", risk?.status === "ok" ? String(risk.risk_level || "unknown") : "未有資料 / not available yet");
           if (!risk || risk.status !== "ok") appendRow(context, "Warnings", "未有資料 / not available yet");
           else if (!Array.isArray(risk.warnings) || risk.warnings.length === 0) appendRow(context, "Warnings", "暫無風險警示");
           else appendList(context, "Warnings", risk.warnings);
           if (paperPnl?.status === "ok" && Array.isArray(paperPnl.limitations) && paperPnl.limitations.length > 0) appendList(context, "Paper PnL 限制", paperPnl.limitations);
           if (risk?.status === "ok" && Array.isArray(risk.limitations) && risk.limitations.length > 0) appendList(context, "Risk 限制", risk.limitations);
-          appendList(context, "缺失資料 / Missing Context", Array.isArray(dcTicker?.missing_context) && dcTicker.missing_context.length > 0 ? dcTicker.missing_context : ["未有資料 / not available yet"]);
+          const viewContextBtn = document.createElement("button"); viewContextBtn.type = "button"; viewContextBtn.textContent = "查看完整 Context"; viewContextBtn.addEventListener("click", () => setActiveTab("context")); context.appendChild(viewContextBtn);
         };
         renderContext();
         ticker.addEventListener("change", renderContext);
@@ -205,6 +258,8 @@
           try { const resp=await fetch(`${apiBaseUrl}/miniapp/api/human-paper-decision`, { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(body)}); const p=await resp.json(); if (resp.ok && p.ok) { result.textContent="已記錄人手模擬決策日誌；未建立訂單；只限 paper trading。"; document.getElementById("journal-form").reset(); counter.textContent = "已輸入 0 / 500 字"; if (topItems[0]?.ticker) ticker.value = String(topItems[0].ticker); renderContext(); } else if (p.error==="journal_unavailable") result.textContent="日誌暫時未能寫入；未有資料被儲存。"; else result.textContent="提交失敗，請檢查輸入欄位。"; } catch (_e) { result.textContent="日誌暫時未能寫入；未有資料被儲存。"; }
         });
       }
+      function setActiveTab(tab){ const panelMap={today:["overview-card","latest-card","daily-card","paper-pnl-card","risk-card"],signals:["signals-card"],context:["context-card"],journal:["journal-card"]}; Object.keys(panelMap).forEach((k)=>panelMap[k].forEach((id)=>{const el=document.getElementById(id); if(el) el.style = (k===tab)?"":"display:none;";})); const tabs=["today","signals","context","journal"]; tabs.forEach((name)=>{const btn=document.getElementById(`tab-${name}`); if(btn){ const on=name===tab; btn.setAttribute("aria-selected", on?"true":"false"); }}); }
+      function bindTabs(){ const tabs=["today","signals","context","journal"]; tabs.forEach((name)=>{ const b=document.getElementById(`tab-${name}`); if(b) b.addEventListener("click", ()=> setActiveTab(name)); }); setActiveTab("today"); }
       async function loadReviewShell() {
         const initData = (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initData) || "";
         const apiBaseUrl = resolveApiBaseUrl();
@@ -220,10 +275,13 @@
           renderOverview(latest, daily, signals);
           renderLatest(latest);
           renderDaily(daily, signals);
-          renderSignals(signals);
+          let selectedTicker = Array.isArray(signals?.top_items) && signals.top_items.length > 0 ? String(signals.top_items[0].ticker || "") : "";
+          const handleViewContext = (ticker) => { selectedTicker = ticker; renderContextTab(signals, payload?.sections?.decision_context_summary, selectedTicker); setActiveTab("context"); };
+          renderSignals(signals, handleViewContext);
           renderPaperPnl(pnl);
           renderRisk(risk);
           const decisionContext = payload?.sections?.decision_context_summary;
+          renderContextTab(signals, decisionContext, selectedTicker);
           renderJournal(latest, signals, pnl, risk, decisionContext);
         } catch (_error) {
           renderOverview(null, null, null);
@@ -236,6 +294,7 @@
         }
       }
       renderBuildMeta();
+      bindTabs();
       loadReviewShell();
     </script>
   </body>

@@ -477,3 +477,12 @@
 - Decision Context Pack now surfaces per-selected-ticker grouped Signal/Market Data/Paper Position-Risk/Missing Context with explicit readiness chip (`不足/部分/基本`) and paper-only wording.
 - Market fields include source/timestamp/freshness/adjustment/confidence slots; when unavailable, UI/API return explicit unavailable (no invented values).
 - Boundaries preserved: no broker/live execution, no real-money path, no order/simulated-order creation, no Supabase schema migration, no frontend secrets/vendor keys.
+
+## 2026-05-10 — Step 120 Mini App IA redesign
+- Step 119 post-deploy smoke passed with build 7f5c5d6 (baseline).
+- Mini App shifted from single long scroll to segmented tabs: 今日/信號/Context/Journal.
+- Decision Context readiness semantics tightened to conservative labels (insufficient/basic/partial; unknown=>不足) and current no-market-data state is 不足.
+- Missing Context now Chinese-first labels; no raw internal English-only keys in UI-facing payload.
+- Current system still lacks canonical market data source; market data may remain unavailable/unknown.
+- No vendor integration, no broker/live/real-money execution, no order/simulated-order creation, no Supabase schema migration, no Telegram auth change.
+

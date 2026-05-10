@@ -252,3 +252,12 @@ Prioritization:
 - **Step 118 completed:** Mini App Human Paper Decision Journal UX localized to Chinese-first, monitored ticker picker added from `signals_summary.top_items`, and bounded Decision Context Pack added with explicit missing-data checklist; no broker/live execution, no order/simulated-order creation, no schema migration, no Telegram auth change.
 
 - Step 119 completed: review-shell `decision_context_summary` + selected ticker context enrichment (existing-source-only, no external vendor integration). Follow-up candidate: wire per-ticker paper position/exposure when bounded backend source becomes available.
+
+## 2026-05-10 — Step 120 Mini App IA redesign
+- Step 119 post-deploy smoke passed with build 7f5c5d6 (baseline).
+- Mini App shifted from single long scroll to segmented tabs: 今日/信號/Context/Journal.
+- Decision Context readiness semantics tightened to conservative labels (insufficient/basic/partial; unknown=>不足) and current no-market-data state is 不足.
+- Missing Context now Chinese-first labels; no raw internal English-only keys in UI-facing payload.
+- Current system still lacks canonical market data source; market data may remain unavailable/unknown.
+- No vendor integration, no broker/live/real-money execution, no order/simulated-order creation, no Supabase schema migration, no Telegram auth change.
+

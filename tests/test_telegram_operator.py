@@ -1172,3 +1172,36 @@ def test_market_smoke_sanitized_no_vendor_payload(monkeypatch):
     resp = handle_telegram_operator_command(object(), _build_update("/market_smoke 0700.HK"))
     assert "raw" not in resp.lower()
     assert "api/real-time" not in resp.lower()
+
+
+def test_market_smoke_escapes_html_dynamic_fields(monkeypatch):
+    monkeypatch.setenv("TELEGRAM_CHAT_ID", "chat-1")
+    monkeypatch.setattr(
+        "src.telegram_operator.build_market_smoke_summary",
+        lambda ticker, env: {
+            "ticker": ticker,
+            "status": "ok",
+            "reference_price": 1,
+            "previous_close": 1,
+            "change": 0,
+            "change_pct": 0,
+            "volume": 1,
+            "turnover": 1,
+            "currency": "HKD",
+            "market": "HKEX",
+            "data_source": '<a href="x">eodhd</a>',
+            "data_timestamp_hkt": "2026-05-10T10:00:00+08:00",
+            "freshness_status": "delayed",
+            "delay_minutes": 15,
+            "limitations": ['<b>vendor</b>&<script>'],
+        },
+    )
+    resp = handle_telegram_operator_command(object(), _build_update("/market_smoke 0700.HK"))
+    assert '<b>' not in resp
+    assert '<a href=' not in resp
+    assert '&lt;b&gt;vendor&lt;/b&gt;&amp;&lt;script&gt;' in resp
+    assert '&lt;a href="x"&gt;eodhd&lt;/a&gt;' in resp
+    assert 'EODHD_API_TOKEN' not in resp
+    assert 'api_token' not in resp.lower()
+    assert 'raw vendor payload' not in resp.lower()
+

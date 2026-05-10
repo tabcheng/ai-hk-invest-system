@@ -719,27 +719,34 @@ def _parse_market_smoke_command(command_text: str) -> str:
 def _build_market_smoke_command_message(summary: dict[str, Any]) -> str:
     status = str(summary.get("status") or "unavailable")
     limitations = summary.get("limitations") or []
-    extra = "市場資料暫未能取得；請查看 limitations。" if status == "unavailable" else ""
-    return "\n".join([
-        "市場資料 Smoke（只限模擬檢視）",
-        "此輸出只供 backend market-data smoke，不是買賣建議，不建立訂單，不連接券商。",
-        f"ticker: {summary.get('ticker')}",
-        f"status: {status}",
-        f"reference_price: {summary.get('reference_price')}",
-        f"previous_close: {summary.get('previous_close')}",
-        f"change: {summary.get('change')}",
-        f"change_pct: {summary.get('change_pct')}",
-        f"volume: {summary.get('volume')}",
-        f"turnover: {summary.get('turnover')}",
-        f"currency: {summary.get('currency')}",
-        f"market: {summary.get('market')}",
-        f"data_source: {summary.get('data_source')}",
-        f"data_timestamp_hkt: {summary.get('data_timestamp_hkt')}",
-        f"freshness_status: {summary.get('freshness_status')}",
-        f"delay_minutes: {summary.get('delay_minutes')}",
-        f"limitations: {'；'.join(str(x) for x in limitations) if limitations else '無'}",
-        extra,
-    ]).strip()
+    limitation_text = "；".join(str(x) for x in limitations) if limitations else "無"
+    fields: list[tuple[str, Any]] = [
+        ("title", "市場資料 Smoke（只限模擬檢視）"),
+        ("boundary", "此輸出只供 backend market-data smoke，不是買賣建議，不建立訂單，不連接券商。"),
+        ("ticker", summary.get("ticker")),
+        ("status", status),
+        ("reference_price", summary.get("reference_price")),
+        ("previous_close", summary.get("previous_close")),
+        ("change", summary.get("change")),
+        ("change_pct", summary.get("change_pct")),
+        ("volume", summary.get("volume")),
+        ("turnover", summary.get("turnover")),
+        ("currency", summary.get("currency")),
+        ("market", summary.get("market")),
+        ("data_source", summary.get("data_source")),
+        ("data_timestamp_hkt", summary.get("data_timestamp_hkt")),
+        ("freshness_status", summary.get("freshness_status")),
+        ("delay_minutes", summary.get("delay_minutes")),
+        ("limitations", limitation_text),
+    ]
+    if status == "unavailable":
+        fields.append(("note", "市場資料暫未能取得；請查看 limitations。"))
+    return _build_operator_message(
+        command_label="/market_smoke",
+        status="completed",
+        result="market-data smoke summary generated",
+        fields=fields,
+    )
 def _build_daily_review_command_message(client: Any) -> str:
     """Build short daily operator review packet (MVP, read-only aggregation)."""
     runner_status_result = "no data"

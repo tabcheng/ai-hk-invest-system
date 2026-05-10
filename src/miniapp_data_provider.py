@@ -645,7 +645,7 @@ class SupabaseLatestSystemRunMiniAppReadDataProvider(RailwayRuntimeEnvMiniAppRea
                 missing_context = [x for x in missing_context if x.get("key") != "latest_price_missing"]
             if market_snapshot.turnover is not None or market_snapshot.volume is not None:
                 missing_context = [x for x in missing_context if x.get("key") != "liquidity_missing"]
-            if market_snapshot.data_source:
+            if market_snapshot.status in {"ok", "partial"} and market_snapshot.data_source:
                 missing_context = [x for x in missing_context if x.get("key") != "data_source_missing"]
             tickers.append(
                 {

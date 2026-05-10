@@ -50,6 +50,7 @@ const byId = {{
   "latest-card": new Element("section"),
   "daily-card": new Element("section"),
   "signals-card": new Element("section"),
+  "context-shell": new Element("section"),
   "paper-pnl-card": new Element("section"),
   "risk-card": new Element("section"),
   "journal-card": new Element("section"),
@@ -80,6 +81,7 @@ globalThis.fetch = fetch;
   const systemRowText = overviewChildren[2]?.textContent || "";
   const coverageRowText = overviewChildren[3]?.textContent || "";
   const summary = {{
+    context_text_before_change: byId["context-shell"] ? byId["context-shell"].textContent : "",
     daily_has_signals: dailyCardText.includes("已有資料") && dailyCardText.includes("信號摘要"),
     daily_missing_has_signals: dailyCardText.includes("未有資料") && dailyCardText.includes("未有資料信號摘要"),
     daily_missing_has_pnl: dailyCardText.includes("未有資料") && dailyCardText.includes("模擬盈虧"),
@@ -96,6 +98,14 @@ globalThis.fetch = fetch;
     journal_context_html: byId["journal-context"] ? byId["journal-context"].innerHTML : "",
     full_render_text: Object.values(byId).map((n) => n.textContent).join("\\n"),
   }};
+  if (byId["context-shell"] && byId["context-shell"].children[0] && byId["context-shell"].children[0].children[0]) {{
+    const picker = byId["context-shell"].children[0].children[0];
+    picker.value = "0388.HK";
+    if (picker._listeners && picker._listeners["change"]) picker._listeners["change"]();
+    summary.context_text_after_change = byId["context-shell"].textContent;
+  }} else {{
+    summary.context_text_after_change = "";
+  }}
   process.stdout.write(JSON.stringify(summary));
 }})().catch((err) => {{
   process.stderr.write(String(err && err.stack ? err.stack : err));
@@ -222,6 +232,25 @@ def test_journal_ticker_picker_and_context_updates() -> None:
     assert "暫無風險警示" in rendered["journal_context_text"]
     assert "Paper PnL 限制" in rendered["journal_context_text"]
     assert "Risk 限制" in rendered["journal_context_text"]
+
+
+def test_context_picker_change_rerenders_context_body() -> None:
+    sections = _base_sections()
+    sections["signals_summary"]["top_items"] = [
+        {"ticker": "0700.HK", "signal_label": "positive", "confidence_label": "high", "reason_short": "動能改善", "data_timestamp_hkt": "2026-05-08 20:00:00 HKT"},
+        {"ticker": "0388.HK", "signal_label": "neutral", "confidence_label": "medium", "reason_short": "等待突破", "data_timestamp_hkt": "2026-05-08 20:00:00 HKT"},
+    ]
+    sections["decision_context_summary"] = {
+        "status": "partial",
+        "context_readiness": "insufficient",
+        "tickers": [
+            {"ticker": "0700.HK", "signal": {"direction": "positive", "reason": "A"}, "market": {}, "risk": {"risk_level": "low", "warnings": []}, "missing_context": [{"label_zh": "A缺失"}]},
+            {"ticker": "0388.HK", "signal": {"direction": "neutral", "reason": "B"}, "market": {}, "risk": {"risk_level": "medium", "warnings": ["R2"]}, "missing_context": [{"label_zh": "B缺失"}]},
+        ],
+    }
+    rendered = _render_with_sample_payload({"sections": sections})
+    assert "A缺失" in str(rendered["context_text_before_change"])
+    assert "B缺失" in str(rendered["context_text_after_change"])
 
 
 def test_journal_context_renders_untrusted_text_safely() -> None:

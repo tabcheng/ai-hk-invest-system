@@ -167,6 +167,7 @@
         if (selectedTicker) picker.value = selectedTicker;
         pickerLabel.appendChild(picker);
         shell.appendChild(pickerLabel);
+        picker.addEventListener("change", () => renderContextTab(signals, decisionContext, picker.value));
         const ctx = Array.isArray(decisionContext?.tickers) ? decisionContext.tickers.find((x) => String(x.ticker || "") === String(picker.value || "")) : null;
         const readinessValue = decisionContext?.context_readiness === "partial" ? "部分" : decisionContext?.context_readiness === "basic" ? "基本" : "不足";
         _appendDetailsGroup(shell, "A. 參考資料完整度", true, (node) => _appendContextRow(node, "完整度", readinessValue));

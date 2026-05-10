@@ -462,3 +462,5 @@ Use this checklist when reviewing Mini App read-only surfaces:
 - Telegram `/market_smoke` now formats price/percent/volume/timestamp/freshness for readability with Chinese-first freshness labeling and caution wording.
 - Mini App Context market section now displays formatted values and freshness warnings for `last_available_close`/`stale`/`unknown` using backend payload only.
 - Boundaries unchanged: read-only diagnostics + decision support, paper trading only, no broker/live execution, no real-money execution, no order or simulated-order creation, no frontend vendor key, no token/raw vendor payload exposure, no fake data.
+
+- Step 129 note: `/pnl_review` output now includes compact per-ticker paper position/exposure/PnL lines with explicit paper-only boundary wording.

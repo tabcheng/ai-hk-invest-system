@@ -45,6 +45,9 @@ class MiniAppReadDataProvider(Protocol):
     def get_decision_context_summary(self) -> dict[str, Any]:
         """Return bounded per-ticker decision context summary for review-shell."""
 
+    def get_ticker_level_paper_portfolio_review(self) -> dict[str, Any]:
+        """Return bounded ticker-level paper portfolio review section."""
+
 
 class RailwayRuntimeEnvMiniAppReadDataProvider:
     """Bounded internal provider backed by Railway runtime environment metadata only."""
@@ -171,6 +174,15 @@ class RailwayRuntimeEnvMiniAppReadDataProvider:
             "context_readiness": "insufficient",
             "tickers": [],
             "global_limitations": ["No production decision context source configured yet."],
+        }
+
+    def get_ticker_level_paper_portfolio_review(self) -> dict[str, Any]:
+        return {
+            "status": "unavailable",
+            "source": "paper_pnl_read_model",
+            "paper_trade_only": True,
+            "rows": [],
+            "limitations": ["No production ticker-level paper portfolio read model configured yet."],
         }
 
 
@@ -419,6 +431,38 @@ class SupabaseLatestSystemRunMiniAppReadDataProvider(RailwayRuntimeEnvMiniAppRea
         self._paper_pnl_summary_loaded = True
         self._cached_paper_pnl_summary = result
         return result
+
+    def get_ticker_level_paper_portfolio_review(self) -> dict[str, Any]:
+        if self._client is None:
+            return {
+                "status": "unavailable",
+                "source": "paper_pnl_read_model",
+                "paper_trade_only": True,
+                "rows": [],
+                "limitations": ["Supabase client unavailable."],
+            }
+        from src.paper_trading import (
+            build_ticker_level_paper_portfolio_review,
+            get_paper_position_pnl_review_snapshot,
+        )
+        try:
+            snap = get_paper_position_pnl_review_snapshot(self._client)
+        except Exception:
+            return {
+                "status": "unavailable",
+                "source": "paper_pnl_read_model",
+                "paper_trade_only": True,
+                "rows": [],
+                "limitations": ["Ticker-level paper portfolio snapshot unavailable."],
+            }
+        rows = build_ticker_level_paper_portfolio_review(snap)
+        return {
+            "status": "ok",
+            "source": "paper_pnl_read_model",
+            "paper_trade_only": True,
+            "rows": rows,
+            "limitations": ["Read-only paper-trading review only; no order creation."],
+        }
 
     def get_risk_summary(self) -> dict[str, Any]:
         if self._risk_summary_loaded and self._cached_risk_summary is not None:

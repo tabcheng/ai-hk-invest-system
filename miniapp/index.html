@@ -153,7 +153,7 @@
         renderBody(d);
         parent.appendChild(d);
       }
-      function renderContextTab(signals, decisionContext, selectedTicker) {
+      function renderContextTab(signals, decisionContext, selectedTicker, tickerPortfolio) {
         const shell = document.getElementById("context-shell");
         if (!shell) return;
         shell.textContent = "";
@@ -171,8 +171,9 @@
         if (selectedTicker) picker.value = selectedTicker;
         pickerLabel.appendChild(picker);
         shell.appendChild(pickerLabel);
-        picker.addEventListener("change", () => renderContextTab(signals, decisionContext, picker.value));
+        picker.addEventListener("change", () => renderContextTab(signals, decisionContext, picker.value, tickerPortfolio));
         const ctx = Array.isArray(decisionContext?.tickers) ? decisionContext.tickers.find((x) => String(x.ticker || "") === String(picker.value || "")) : null;
+        const pRow = Array.isArray(tickerPortfolio?.rows) ? tickerPortfolio.rows.find((x)=>String(x.ticker||"")===String(picker.value||"")) : null;
         const readinessValue = decisionContext?.context_readiness === "partial" ? "部分" : decisionContext?.context_readiness === "basic" ? "基本" : "不足";
         _appendDetailsGroup(shell, "A. 參考資料完整度", true, (node) => _appendContextRow(node, "完整度", readinessValue));
         _appendDetailsGroup(shell, "B. 現有信號 / Signal", true, (node) => {
@@ -201,7 +202,21 @@
           const limits = Array.isArray(market.limitations) && market.limitations.length ? market.limitations.join("；") : "未有資料";
           _appendContextRow(node, "限制 / Limitations", limits);
         });
-        _appendDetailsGroup(shell, "D. Paper position / PnL", false, (node) => _appendContextRow(node, "說明", "目前只顯示組合層級 Paper PnL，未有單一股票持倉級別 PnL。"));
+        _appendDetailsGroup(shell, "D. Paper position / PnL", false, (node) => {
+          if (!pRow) {
+            _appendContextRow(node, "狀態", "未有 paper position / no paper position yet");
+            return;
+          }
+          _appendContextRow(node, "持倉狀態", pRow.has_position ? "有持倉 / Open" : "未有持倉 / Flat");
+          _appendContextRow(node, "數量", pRow.quantity ?? 0);
+          _appendContextRow(node, "平均成本", _fmt2(pRow.avg_cost));
+          _appendContextRow(node, "參考價格", _fmt2(pRow.reference_price));
+          _appendContextRow(node, "市值/Exposure", _fmt2(pRow.exposure_value));
+          _appendContextRow(node, "未實現盈虧", _fmt2(pRow.unrealized_pnl));
+          _appendContextRow(node, "總盈虧", _fmt2(pRow.total_pnl));
+          _appendContextRow(node, "市場接受度", pRow.market_data_acceptance_status || "unknown");
+          _appendContextRow(node, "提示", pRow.market_data_acceptance_warning || "未有資料");
+        });
         _appendDetailsGroup(shell, "E. 風險 / Risk", false, (node) => {
           _appendContextRow(node, "Risk level", ctx?.risk?.risk_level || "未有資料");
           const warnings = Array.isArray(ctx?.risk?.warnings) && ctx.risk.warnings.length > 0 ? ctx.risk.warnings.join("；") : "暫無風險警示";
@@ -288,12 +303,13 @@
           renderLatest(latest);
           renderDaily(daily, signals);
           let selectedTicker = Array.isArray(signals?.top_items) && signals.top_items.length > 0 ? String(signals.top_items[0].ticker || "") : "";
-          const handleViewContext = (ticker) => { selectedTicker = ticker; renderContextTab(signals, payload?.sections?.decision_context_summary, selectedTicker); setActiveTab("context"); };
+          const tickerPortfolio = payload?.sections?.ticker_level_paper_portfolio_review;
+          const handleViewContext = (ticker) => { selectedTicker = ticker; renderContextTab(signals, payload?.sections?.decision_context_summary, selectedTicker, tickerPortfolio); setActiveTab("context"); };
           renderSignals(signals, handleViewContext);
           renderPaperPnl(pnl);
           renderRisk(risk);
           const decisionContext = payload?.sections?.decision_context_summary;
-          renderContextTab(signals, decisionContext, selectedTicker);
+          renderContextTab(signals, decisionContext, selectedTicker, tickerPortfolio);
           renderJournal(latest, signals, pnl, risk, decisionContext);
         } catch (_error) {
           renderOverview(null, null, null);

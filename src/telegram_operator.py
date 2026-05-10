@@ -580,18 +580,34 @@ def _build_pnl_review_command_message(snapshot: dict[str, Any]) -> str:
         ("per_symbol_count", len(per_symbol)),
         ("review_scope", "paper-trading decision support only; no real-money execution"),
     ]
-    for idx, row in enumerate(per_symbol[:10], start=1):
-        stock_display = _format_stock_display(stock_id=row.get("stock"), stock_name=row.get("stock_name"))
+    from src.paper_trading import build_ticker_level_paper_portfolio_review
+
+    acceptance_by_ticker: dict[str, dict[str, Any]] = {}
+    for ticker in ["0700.HK", "0388.HK", "1299.HK"]:
+        try:
+            smoke = build_market_smoke_summary(ticker, dict(os.environ))
+            freshness_meta = classify_market_data_freshness(
+                data_timestamp_hkt=smoke.get("data_timestamp_hkt"),
+                provider_freshness_status=smoke.get("freshness_status"),
+                delay_minutes=smoke.get("delay_minutes"),
+            )
+            acceptance_by_ticker[ticker] = build_market_data_acceptance_summary(
+                freshness_status_display=freshness_meta.get("freshness_status_display")
+            )
+        except Exception:
+            acceptance_by_ticker[ticker] = build_market_data_acceptance_summary(freshness_status_display="unknown")
+
+    ticker_rows = build_ticker_level_paper_portfolio_review(snapshot, market_acceptance_by_ticker=acceptance_by_ticker)
+    for idx, row in enumerate(ticker_rows[:10], start=1):
+        stock_display = _format_stock_display(stock_id=row.get("ticker"), stock_name=None)
         fields.append(
             (
                 f"symbol_{idx}",
                 (
-                    f"{stock_display} "
-                    f"| status={row.get('position_status')} | qty={row.get('quantity')} "
-                    f"| avg_cost={float(row.get('avg_cost') or 0.0):.4f} "
-                    f"| last_price={float(row.get('last_price') or 0.0):.4f} "
-                    f"| realized={float(row.get('realized_pnl') or 0.0):.2f} "
-                    f"| unrealized={float(row.get('unrealized_pnl') or 0.0):.2f}"
+                    f"{stock_display or row.get('ticker')} | has_position={row.get('has_position')} | qty={row.get('quantity')} "
+                    f"| avg_cost={float(row.get('avg_cost') or 0.0):.4f} | ref_price={float(row.get('reference_price') or 0.0):.4f} "
+                    f"| exposure={float(row.get('exposure_value') or 0.0):.2f} | uPnL={float(row.get('unrealized_pnl') or 0.0):.2f} "
+                    f"| tPnL={float(row.get('total_pnl') or 0.0):.2f} | mkt={row.get('market_data_acceptance_status')}"
                 ),
             )
         )
@@ -874,6 +890,14 @@ def _build_daily_review_command_message(client: Any) -> str:
     market_acceptance_warning = str(
         worst_acceptance.get("market_data_acceptance_warning") or "timestamp/freshness cannot be verified"
     )
+    delayed_exists = acceptance_counts.get("caution_last_available_close", 0) > 0
+    all_delayed = delayed_exists and acceptance_counts.get("caution_last_available_close", 0) == len(monitored_tickers)
+    if delayed_exists and "delay" not in market_acceptance_warning.lower() and "延遲" not in market_acceptance_warning:
+        market_acceptance_warning = f"{market_acceptance_warning}; delayed feed exists / 存在延遲資料"
+    if all_delayed and market_acceptance_status == "acceptable_for_paper_review":
+        market_acceptance_warning = (
+            f"{market_acceptance_warning}; all monitored tickers currently delayed / 全部監控股票目前為延遲資料"
+        )
     market_accepted_for_daily_review = (
         worst_acceptance.get("accepted_for_daily_review") is True
         or worst_acceptance.get("market_data_accepted_for_daily_review") is True

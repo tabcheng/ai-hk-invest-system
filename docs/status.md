@@ -532,3 +532,5 @@
 - Fallback contract: if ticker loop/helper fails, aggregate falls back to `unknown`, accepted boolean is `False`, and unknown count equals monitored ticker count.
 - Added focused test matrix for aggregate cases: all caution, all acceptable, one unknown among acceptable, one stale among mixed statuses, and helper exception fallback.
 - Boundaries preserved: read-only/paper-trading decision support only; no broker/live/real-money execution, no order/simulated-order creation, no Supabase schema migration.
+
+- Step 129 in progress: ticker-level paper position/exposure/PnL review surface scaffolded for Telegram `/pnl_review` and Mini App Context payload, with delayed-market-acceptance aggregate warning preservation in `/daily_review` and focused regression tests added.

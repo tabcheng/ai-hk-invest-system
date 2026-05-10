@@ -310,3 +310,5 @@ No broker integration or autonomous real-money execution is authorized by this p
 ## Step 127 boundary note
 - Decision context market card may display acceptance metadata (status/labels/warning/accepted boolean/reason) derived from bounded backend freshness classification.
 - Frontend must remain read-only and must not expose vendor token, raw vendor payload, or secret material.
+
+- Step 129 (in progress): Mini App ticker-level paper portfolio review section remains read-only and derived from bounded backend snapshot; no write action, no order button, no broker/live execution path.

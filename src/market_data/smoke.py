@@ -131,6 +131,32 @@ def build_market_data_acceptance_summary(*, freshness_status_display: Any) -> di
     return dict(mapping.get(status, mapping["unknown"]))
 
 
+def build_market_acceptance_by_ticker(
+    tickers: list[str] | tuple[str, ...],
+    *,
+    env: Mapping[str, str],
+) -> dict[str, dict[str, Any]]:
+    """Build bounded market acceptance metadata per ticker with per-ticker fallback."""
+    acceptance_by_ticker: dict[str, dict[str, Any]] = {}
+    for raw_ticker in tickers:
+        ticker = normalize_smoke_ticker(str(raw_ticker or ""))
+        if not ticker:
+            continue
+        try:
+            smoke = build_market_smoke_summary(ticker, env)
+            freshness_meta = classify_market_data_freshness(
+                data_timestamp_hkt=smoke.get("data_timestamp_hkt"),
+                provider_freshness_status=smoke.get("freshness_status"),
+                delay_minutes=smoke.get("delay_minutes"),
+            )
+            acceptance_by_ticker[ticker] = build_market_data_acceptance_summary(
+                freshness_status_display=freshness_meta.get("freshness_status_display")
+            )
+        except Exception:
+            acceptance_by_ticker[ticker] = build_market_data_acceptance_summary(freshness_status_display="unknown")
+    return acceptance_by_ticker
+
+
 def build_market_smoke_summary(ticker: str, env: Mapping[str, str]) -> dict[str, Any]:
     normalized = normalize_smoke_ticker(ticker)
     if not is_supported_smoke_ticker(normalized):

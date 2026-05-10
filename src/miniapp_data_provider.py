@@ -7,7 +7,11 @@ import re
 from typing import Any, Mapping, Protocol
 
 from src.market_data.review_provider import build_review_shell_market_data_provider
-from src.market_data.smoke import classify_market_data_freshness, build_market_data_acceptance_summary
+from src.market_data.smoke import (
+    build_market_acceptance_by_ticker,
+    build_market_data_acceptance_summary,
+    classify_market_data_freshness,
+)
 
 _HKT = timezone(timedelta(hours=8))
 _RUNTIME_SOURCE = "railway_runtime_env"
@@ -455,7 +459,24 @@ class SupabaseLatestSystemRunMiniAppReadDataProvider(RailwayRuntimeEnvMiniAppRea
                 "rows": [],
                 "limitations": ["Ticker-level paper portfolio snapshot unavailable."],
             }
-        rows = build_ticker_level_paper_portfolio_review(snap)
+        if not isinstance(snap, dict):
+            return {
+                "status": "unavailable",
+                "source": "paper_pnl_read_model",
+                "paper_trade_only": True,
+                "rows": [],
+                "limitations": ["Ticker-level paper portfolio snapshot unavailable."],
+            }
+        ticker_scope = [
+            str(row.get("stock") or "").strip().upper()
+            for row in (snap.get("per_symbol") or [])
+            if isinstance(row, dict) and str(row.get("stock") or "").strip()
+        ] or ["0700.HK", "0388.HK", "1299.HK"]
+        market_acceptance_by_ticker = build_market_acceptance_by_ticker(ticker_scope, env=dict(self._env))
+        rows = build_ticker_level_paper_portfolio_review(
+            snap,
+            market_acceptance_by_ticker=market_acceptance_by_ticker,
+        )
         return {
             "status": "ok",
             "source": "paper_pnl_read_model",

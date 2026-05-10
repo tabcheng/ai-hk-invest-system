@@ -967,3 +967,21 @@ def test_decision_context_market_contains_acceptance_fields_when_market_ok(monke
     assert "market_data_acceptance_status" in market
     assert market["market_data_acceptance_status"] in {"caution_last_available_close", "stale_do_not_use_for_intraday", "acceptable_for_paper_review", "unknown"}
     assert isinstance(market["accepted_for_daily_review"], bool)
+
+def test_ticker_level_paper_portfolio_review_attaches_market_acceptance_by_per_symbol_tickers(monkeypatch):
+    class _Client:
+        pass
+
+    provider = SupabaseLatestSystemRunMiniAppReadDataProvider(client=_Client())
+    monkeypatch.setattr(
+        "src.paper_trading.get_paper_position_pnl_review_snapshot",
+        lambda _client: {"per_symbol": [{"stock": "0700.HK", "quantity": 1, "avg_cost": 100.0, "last_price": 110.0, "realized_pnl": 0.0, "unrealized_pnl": 10.0}]},
+    )
+    monkeypatch.setattr(
+        "src.miniapp_data_provider.build_market_acceptance_by_ticker",
+        lambda tickers, env: {"0700.HK": {"market_data_acceptance_status": "caution_last_available_close", "market_data_acceptance_warning": "last available close / paper review caution"}},
+    )
+
+    section = provider.get_ticker_level_paper_portfolio_review()
+    assert section["rows"][0]["market_data_acceptance_status"] == "caution_last_available_close"
+    assert "paper review caution" in section["rows"][0]["market_data_acceptance_warning"]

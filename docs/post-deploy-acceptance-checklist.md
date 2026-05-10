@@ -200,3 +200,9 @@ Step 91A recorded result (PR #88):
 - Current system still lacks canonical market data source; market data may remain unavailable/unknown.
 - No vendor integration, no broker/live/real-money execution, no order/simulated-order creation, no Supabase schema migration, no Telegram auth change.
 
+
+### Step 124 post-deploy smoke addendum
+- Verify deploy build matches merge commit and Step 123 reference build context `d1df5e8`.
+- In `telegram-webhook` service with `MARKET_DATA_PROVIDER=eodhd` and backend-only `EODHD_API_TOKEN`, run smoke for `0700.HK`, `0388.HK`, `1299.HK`.
+- Confirm output is sanitized (no token/raw payload) and market status is explicit (`ok/partial/unavailable`).
+- Confirm Mini App Context tab updates bounded market fields when available and keeps clear unavailable state when vendor fails.

@@ -494,3 +494,10 @@
 - Decision Context market section now hydrates bounded provider snapshot fields when available and keeps unavailable-safe behavior when env/token/provider is absent.
 - Added backend smoke script `python -m scripts.market_data_smoke --ticker 0700.HK --provider eodhd` with sanitized snapshot output only (no token/raw payload).
 - Boundaries preserved: paper-trading only, decision-support only, no broker/live/real-money execution, no order/simulated-order creation, no frontend vendor key, no fake market data.
+
+## 2026-05-10 — Step 124 EODHD runtime HTTP adapter + smoke acceptance
+- Step 123 post-deploy smoke remains passed with UI/Deployed build `d1df5e8`.
+- Added backend-only EODHD runtime HTTP adapter (`requests.get`, timeout-bounded, unavailable-safe fallback, bounded field mapping only).
+- Mini App decision-context market slot now consumes bounded adapter output (`ok/partial/unavailable`) and keeps missing-context semantics unchanged for unavailable path.
+- Added smoke CLI options (`--pretty`, `--business-date`, `--timeout`) with sanitized snapshot-only output (no token, no raw vendor payload).
+- Boundaries preserved: read-only paper review only; no broker/live execution, no real-money execution, no order/simulated-order creation, no frontend vendor key.

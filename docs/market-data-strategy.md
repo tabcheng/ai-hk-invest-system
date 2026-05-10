@@ -59,3 +59,11 @@
 - Vendor projection remains bounded and sanitized (`reference_price`, `previous_close`, `change`, `change_pct`, `volume`, `turnover`, source/time/freshness/limitations).
 - EODHD is first vendor candidate only, not final production-grade vendor commitment; future production may require HKEX licensed/stronger vendor service.
 - Missing token/provider unavailable path must stay unavailable-safe and must not fabricate market values.
+
+## 2026-05-10 — Step 125 Mobile Operator Market Data Smoke
+- Step 124 merged; Android operator cannot run CLI smoke locally.
+- Added /market_smoke (0700.HK/0388.HK/1299.HK) as allowlist-protected, read-only diagnostics command with sanitized bounded snapshot output only.
+- Mini App Context tab now shows market smoke diagnostics status/source/timestamp/freshness/delay/limitations from backend review-shell payload only.
+- Security/domain boundary preserved: no frontend vendor key, no raw EODHD token/payload exposure, no broker/live/real-money execution, no order/simulated-order creation.
+- EODHD remains first vendor candidate, not final production vendor commitment.
+

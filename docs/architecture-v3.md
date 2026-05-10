@@ -318,3 +318,11 @@ The platform is designed as an **AI investment firm operating model** with stric
 - Added backend runtime HTTP adapter under review-shell provider boundary only; strategy logic remains decoupled from vendor calls.
 - `to_vendor_symbol` isolates HK symbol mapping (`0700.HK`, `0388.HK`, `1299.HK`) to avoid vendor assumptions leaking across app layers.
 - Security boundary unchanged: vendor token remains backend-only env; no token/raw payload exposure to frontend or logs.
+
+## 2026-05-10 — Step 125 Mobile Operator Market Data Smoke
+- Step 124 merged; Android operator cannot run CLI smoke locally.
+- Added /market_smoke (0700.HK/0388.HK/1299.HK) as allowlist-protected, read-only diagnostics command with sanitized bounded snapshot output only.
+- Mini App Context tab now shows market smoke diagnostics status/source/timestamp/freshness/delay/limitations from backend review-shell payload only.
+- Security/domain boundary preserved: no frontend vendor key, no raw EODHD token/payload exposure, no broker/live/real-money execution, no order/simulated-order creation.
+- EODHD remains first vendor candidate, not final production vendor commitment.
+

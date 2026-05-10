@@ -206,3 +206,11 @@ Step 91A recorded result (PR #88):
 - In `telegram-webhook` service with `MARKET_DATA_PROVIDER=eodhd` and backend-only `EODHD_API_TOKEN`, run smoke for `0700.HK`, `0388.HK`, `1299.HK`.
 - Confirm output is sanitized (no token/raw payload) and market status is explicit (`ok/partial/unavailable`).
 - Confirm Mini App Context tab updates bounded market fields when available and keeps clear unavailable state when vendor fails.
+
+## 2026-05-10 — Step 125 Mobile Operator Market Data Smoke
+- Step 124 merged; Android operator cannot run CLI smoke locally.
+- Added /market_smoke (0700.HK/0388.HK/1299.HK) as allowlist-protected, read-only diagnostics command with sanitized bounded snapshot output only.
+- Mini App Context tab now shows market smoke diagnostics status/source/timestamp/freshness/delay/limitations from backend review-shell payload only.
+- Security/domain boundary preserved: no frontend vendor key, no raw EODHD token/payload exposure, no broker/live/real-money execution, no order/simulated-order creation.
+- EODHD remains first vendor candidate, not final production vendor commitment.
+

@@ -721,8 +721,6 @@ def _build_market_smoke_command_message(summary: dict[str, Any]) -> str:
     limitations = summary.get("limitations") or []
     limitation_text = "；".join(str(x) for x in limitations) if limitations else "無"
     fields: list[tuple[str, Any]] = [
-        ("title", "市場資料 Smoke（只限模擬檢視）"),
-        ("boundary", "此輸出只供 backend market-data smoke，不是買賣建議，不建立訂單，不連接券商。"),
         ("ticker", summary.get("ticker")),
         ("status", status),
         ("reference_price", summary.get("reference_price")),
@@ -741,12 +739,17 @@ def _build_market_smoke_command_message(summary: dict[str, Any]) -> str:
     ]
     if status == "unavailable":
         fields.append(("note", "市場資料暫未能取得；請查看 limitations。"))
-    return _build_operator_message(
+    details = _build_operator_message(
         command_label="/market_smoke",
         status="completed",
         result="market-data smoke summary generated",
         fields=fields,
     )
+    return "\n".join([
+        "市場資料 Smoke（只限模擬檢視）",
+        "此輸出只供 backend market-data smoke，不是買賣建議，不建立訂單，不連接券商。",
+        details,
+    ])
 def _build_daily_review_command_message(client: Any) -> str:
     """Build short daily operator review packet (MVP, read-only aggregation)."""
     runner_status_result = "no data"

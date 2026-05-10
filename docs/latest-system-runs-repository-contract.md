@@ -91,4 +91,12 @@ Write integration is best-effort from paper daily runner completion and does not
 - Step 92D: Mini App backend read model can derive read-only `daily_review_summary` from the same bounded latest-state row (`source=paper_daily_runner`) plus safe defaults/unavailable fallback; this remains latest-state projection only and not an audit ledger.
 
 - Step 119 compatibility note: `decision_context_summary` may consume `summary_json.strategy_version` when present; absence must remain explicit (`strategy_version missing`) and must not block response.
-\n## 2026-05-10 — Step 120 Mini App IA redesign\n- Step 119 post-deploy smoke passed with build 7f5c5d6 (baseline).\n- Mini App shifted from single long scroll to segmented tabs: 今日/信號/Context/Journal.\n- Decision Context readiness semantics tightened to conservative labels (insufficient/basic/partial; unknown=>不足) and current no-market-data state is 不足.\n- Missing Context now Chinese-first labels; no raw internal English-only keys in UI-facing payload.\n- Current system still lacks canonical market data source; market data may remain unavailable/unknown.\n- No vendor integration, no broker/live/real-money execution, no order/simulated-order creation, no Supabase schema migration, no Telegram auth change.\n
+
+## 2026-05-10 — Step 120 Mini App IA redesign
+- Step 119 post-deploy smoke passed with build 7f5c5d6 (baseline).
+- Mini App shifted from single long scroll to segmented tabs: 今日/信號/Context/Journal.
+- Decision Context readiness semantics tightened to conservative labels (insufficient/basic/partial; unknown=>不足) and current no-market-data state is 不足.
+- Missing Context now Chinese-first labels; no raw internal English-only keys in UI-facing payload.
+- Current system still lacks canonical market data source; market data may remain unavailable/unknown.
+- No vendor integration, no broker/live/real-money execution, no order/simulated-order creation, no Supabase schema migration, no Telegram auth change.
+

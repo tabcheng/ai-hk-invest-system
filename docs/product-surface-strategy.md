@@ -196,4 +196,12 @@ Mini App should **not**:
 - Decision Context Pack is bounded and must show explicit missing-context checklist to prevent over-interpretation as full investment recommendation.
 
 - Step 119: selected ticker Decision Context Pack now includes grouped Signal / Market Data / Paper Position-PnL / Risk / Missing Context with explicit completeness wording (not trade readiness).
-\n## 2026-05-10 — Step 120 Mini App IA redesign\n- Step 119 post-deploy smoke passed with build 7f5c5d6 (baseline).\n- Mini App shifted from single long scroll to segmented tabs: 今日/信號/Context/Journal.\n- Decision Context readiness semantics tightened to conservative labels (insufficient/basic/partial; unknown=>不足) and current no-market-data state is 不足.\n- Missing Context now Chinese-first labels; no raw internal English-only keys in UI-facing payload.\n- Current system still lacks canonical market data source; market data may remain unavailable/unknown.\n- No vendor integration, no broker/live/real-money execution, no order/simulated-order creation, no Supabase schema migration, no Telegram auth change.\n
+
+## 2026-05-10 — Step 120 Mini App IA redesign
+- Step 119 post-deploy smoke passed with build 7f5c5d6 (baseline).
+- Mini App shifted from single long scroll to segmented tabs: 今日/信號/Context/Journal.
+- Decision Context readiness semantics tightened to conservative labels (insufficient/basic/partial; unknown=>不足) and current no-market-data state is 不足.
+- Missing Context now Chinese-first labels; no raw internal English-only keys in UI-facing payload.
+- Current system still lacks canonical market data source; market data may remain unavailable/unknown.
+- No vendor integration, no broker/live/real-money execution, no order/simulated-order creation, no Supabase schema migration, no Telegram auth change.
+

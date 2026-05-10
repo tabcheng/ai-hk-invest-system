@@ -822,24 +822,50 @@ def _build_daily_review_command_message(client: Any) -> str:
         print("Telegram /daily_review outcome summary helper failed")
         outcome_summary = "internal error"
 
-    market_acceptance_status = "unknown"
-    market_acceptance_label = "未知 / unknown"
-    market_acceptance_warning = "timestamp/freshness cannot be verified"
-    market_accepted_for_daily_review = False
+    monitored_tickers = ["0700.HK", "0388.HK", "1299.HK"]
+    status_rank = {
+        "acceptable_for_paper_review": 0,
+        "caution_last_available_close": 1,
+        "unknown": 2,
+        "stale_do_not_use_for_intraday": 3,
+    }
+    worst_status = "unknown"
+    acceptance_counts: dict[str, int] = {k: 0 for k in status_rank}
+    unknown_count = 0
     try:
-        market_summary = build_market_smoke_summary("0700.HK", dict(os.environ))
-        acceptance = build_market_data_acceptance_summary(
-            freshness_status_display=market_summary.get("freshness_status_display")
-        )
-        market_acceptance_status = str(acceptance.get("market_data_acceptance_status") or "unknown")
-        market_acceptance_label = (
-            f"{acceptance.get('market_data_acceptance_label_zh') or '未知'} / "
-            f"{acceptance.get('market_data_acceptance_label_en') or 'unknown'}"
-        )
-        market_acceptance_warning = str(acceptance.get("market_data_acceptance_warning") or market_acceptance_warning)
-        market_accepted_for_daily_review = acceptance.get("accepted_for_daily_review") is True
+        for ticker in monitored_tickers:
+            market_summary = build_market_smoke_summary(ticker, dict(os.environ))
+            acceptance = build_market_data_acceptance_summary(
+                freshness_status_display=market_summary.get("freshness_status_display")
+            )
+            status = str(acceptance.get("market_data_acceptance_status") or "unknown")
+            if status not in acceptance_counts:
+                status = "unknown"
+            acceptance_counts[status] += 1
+            if status_rank.get(status, 99) > status_rank.get(worst_status, 99):
+                worst_status = status
+        unknown_count = acceptance_counts.get("unknown", 0)
     except Exception:
         print("Telegram /daily_review market acceptance helper failed")
+        unknown_count = len(monitored_tickers)
+
+    worst_acceptance = build_market_data_acceptance_summary(freshness_status_display=worst_status)
+    market_acceptance_status = str(worst_acceptance.get("market_data_acceptance_status") or "unknown")
+    market_acceptance_label = (
+        f"{worst_acceptance.get('market_data_acceptance_label_zh') or '未知'} / "
+        f"{worst_acceptance.get('market_data_acceptance_label_en') or 'unknown'}"
+    )
+    market_acceptance_warning = str(
+        worst_acceptance.get("market_data_acceptance_warning") or "timestamp/freshness cannot be verified"
+    )
+    market_accepted_for_daily_review = worst_acceptance.get("accepted_for_daily_review") is True
+    market_acceptance_scope = ", ".join(monitored_tickers)
+    market_acceptance_counts = (
+        "acceptable_for_paper_review=" + str(acceptance_counts.get("acceptable_for_paper_review", 0))
+        + ", caution_last_available_close=" + str(acceptance_counts.get("caution_last_available_close", 0))
+        + ", stale_do_not_use_for_intraday=" + str(acceptance_counts.get("stale_do_not_use_for_intraday", 0))
+        + ", unknown=" + str(unknown_count)
+    )
 
     section_values = [runner_status_result, pnl_snapshot, outcome_summary]
     has_internal_error = any(value == "internal error" for value in section_values)
@@ -877,6 +903,8 @@ def _build_daily_review_command_message(client: Any) -> str:
             ("market_data_acceptance_label", market_acceptance_label),
             ("market_data_acceptance_warning", market_acceptance_warning),
             ("market_data_accepted_for_daily_review", market_accepted_for_daily_review),
+            ("market_data_acceptance_scope", market_acceptance_scope),
+            ("market_data_acceptance_counts", market_acceptance_counts),
             ("daily_review_health", daily_review_health),
             ("next_action_hint", next_action_hint),
             ("detail_commands", ", ".join(detail_commands)),

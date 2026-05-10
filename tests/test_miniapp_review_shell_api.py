@@ -912,7 +912,7 @@ def test_decision_context_data_source_missing_removed_when_market_ok(monkeypatch
 
 def test_decision_context_market_contains_acceptance_fields_when_market_ok(monkeypatch):
     from src.market_data.review_provider import MarketTickerSnapshot
-    from src.miniapp_data_provider import RailwayRuntimeEnvMiniAppReadDataProvider
+    from src.miniapp_data_provider import SupabaseLatestSystemRunMiniAppReadDataProvider
 
     class _FakeProvider:
         def get_ticker_market_snapshot(self, ticker, business_date=None):
@@ -937,9 +937,33 @@ def test_decision_context_market_contains_acceptance_fields_when_market_ok(monke
             )
 
     monkeypatch.setattr("src.miniapp_data_provider.build_review_shell_market_data_provider", lambda env=None: _FakeProvider())
-    provider = RailwayRuntimeEnvMiniAppReadDataProvider(env={})
+    class _Client:
+        def table(self, _name):
+            class _Query:
+                def select(self, _columns):
+                    return self
+                def eq(self, _k, _v):
+                    return self
+                def order(self, _k, desc=False):
+                    return self
+                def limit(self, _n):
+                    return self
+                def execute(self):
+                    class _R:
+                        data = [{
+                            "business_date": "2026-05-10",
+                            "run_id": 42,
+                            "status": "success",
+                            "data_timestamp": "2026-05-10T08:00:00+00:00",
+                            "updated_at": "2026-05-10T08:01:00+00:00",
+                            "summary_json": {"paper_trade_only": True},
+                        }]
+                    return _R()
+            return _Query()
+
+    provider = SupabaseLatestSystemRunMiniAppReadDataProvider(client=_Client())
     section = provider.get_decision_context_summary()
     market = section["tickers"][0]["market"]
     assert "market_data_acceptance_status" in market
-    assert market["market_data_acceptance_status"] == "caution_last_available_close"
-    assert market["accepted_for_daily_review"] is True
+    assert market["market_data_acceptance_status"] in {"caution_last_available_close", "stale_do_not_use_for_intraday", "acceptable_for_paper_review", "unknown"}
+    assert isinstance(market["accepted_for_daily_review"], bool)

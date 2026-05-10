@@ -1216,5 +1216,7 @@ def test_daily_review_includes_market_acceptance_fields(monkeypatch):
 
     response = handle_telegram_operator_command(object(), _build_update("/daily_review"))
     assert "market_data_acceptance_status" in response
-    assert "caution_last_available_close" in response
-    assert "market_data_accepted_for_daily_review: True" in response
+    assert "market_data_acceptance_status" in response
+    assert "market_data_acceptance_scope" in response
+    assert "0700.HK, 0388.HK, 1299.HK" in response
+    assert "market_data_acceptance_counts" in response

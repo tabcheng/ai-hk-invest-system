@@ -282,4 +282,4 @@ Prioritization:
 - Mini App Context market section now displays formatted values and freshness warnings for `last_available_close`/`stale`/`unknown` using backend payload only.
 - Boundaries unchanged: read-only diagnostics + decision support, paper trading only, no broker/live execution, no real-money execution, no order or simulated-order creation, no frontend vendor key, no token/raw vendor payload exposure, no fake data.
 
-- **Step 127 completed:** integrated market-data acceptance semantics into decision context + `/daily_review` review surface with bilingual acceptance status/labels/warnings and explicit daily-review acceptance boolean; preserved `/market_smoke` behavior and paper-only boundary.
+- **Step 127 (in progress / PR open):** market-data acceptance semantics are under active review; CI fixes and `/daily_review` aggregate acceptance correction must pass before marking completed.

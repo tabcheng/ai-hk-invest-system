@@ -66,11 +66,11 @@ def test_market_data_acceptance_mapping_rules_and_boundaries():
 
     stale = build_market_data_acceptance_summary(freshness_status_display="stale")
     assert stale["accepted_for_daily_review"] is False
-    assert "intraday" in stale["market_data_acceptance_warning"].lower()
+    assert "盤中" in stale["market_data_acceptance_warning"] or "intraday" in stale["market_data_acceptance_warning"].lower()
 
     unknown = build_market_data_acceptance_summary(freshness_status_display="unknown")
     assert unknown["accepted_for_daily_review"] is False
-    assert "cannot be verified" in unknown["market_data_acceptance_warning"].lower()
+    assert "未能驗證" in unknown["market_data_acceptance_warning"] or "cannot be verified" in unknown["market_data_acceptance_warning"].lower()
 
     text = " ".join(str(v) for v in {**fresh, **stale, **unknown}.values())
     assert "token" not in text.lower()

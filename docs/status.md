@@ -518,7 +518,7 @@
 - Mini App Context market section now displays formatted values and freshness warnings for `last_available_close`/`stale`/`unknown` using backend payload only.
 - Boundaries unchanged: read-only diagnostics + decision support, paper trading only, no broker/live execution, no real-money execution, no order or simulated-order creation, no frontend vendor key, no token/raw vendor payload exposure, no fake data.
 
-## 2026-05-10 — Step 127 Market Data Acceptance into Decision Context / Daily Review
+## 2026-05-10 — Step 127 Market Data Acceptance into Decision Context / Daily Review (PR open, CI fix in progress)
 - Step 126 baseline preserved (`/market_smoke` formatting + freshness semantics unchanged).
 - Added bounded market data acceptance model into Decision Context market payload: `market_data_acceptance_status`, bilingual acceptance labels, acceptance warning, `accepted_for_daily_review`, and reason summary.
 - Acceptance mapping now explicitly separates `acceptable_for_paper_review`, `caution_last_available_close`, `stale_do_not_use_for_intraday`, and `unknown`.

@@ -188,6 +188,11 @@
           _appendContextRow(node, "成交量 / Volume", market.volume ?? "未有資料");
           _appendContextRow(node, "成交額 / Turnover", market.turnover ?? "未有資料");
           _appendContextRow(node, "資料來源 / Data source", market.data_source ?? "未有資料");
+          _appendContextRow(node, "資料時間 / Timestamp", market.data_timestamp_hkt ?? "未有資料");
+          _appendContextRow(node, "資料新鮮度 / Freshness", market.freshness_status ?? "未有資料");
+          _appendContextRow(node, "延遲分鐘 / Delay", market.delay_minutes ?? "未有資料");
+          const limits = Array.isArray(market.limitations) && market.limitations.length ? market.limitations.join("；") : "未有資料";
+          _appendContextRow(node, "限制 / Limitations", limits);
         });
         _appendDetailsGroup(shell, "D. Paper position / PnL", false, (node) => _appendContextRow(node, "說明", "目前只顯示組合層級 Paper PnL，未有單一股票持倉級別 PnL。"));
         _appendDetailsGroup(shell, "E. 風險 / Risk", false, (node) => {

@@ -4,6 +4,7 @@ import io
 import json
 from urllib.parse import urlencode
 
+from src.market_data.review_provider import MarketTickerSnapshot
 from src.miniapp_data_provider import SupabaseLatestSystemRunMiniAppReadDataProvider
 from src.telegram_webhook_server import MINIAPP_REVIEW_SHELL_MAX_BODY_BYTES, create_wsgi_app
 
@@ -785,3 +786,125 @@ def test_decision_context_reuses_cached_signals_and_risk_summaries(monkeypatch):
     assert "exception" not in decision_context
     assert "broker_execution" not in decision_context
     assert "order_creation" not in decision_context
+
+
+def test_decision_context_data_source_missing_kept_when_market_unavailable(monkeypatch):
+    class _Result:
+        def __init__(self, data):
+            self.data = data
+
+    class _Query:
+        def select(self, *_a, **_k): return self
+        def eq(self, *_a, **_k): return self
+        def order(self, *_a, **_k): return self
+        def limit(self, *_a, **_k): return self
+        def execute(self):
+            return _Result([{"stock": "0700.HK", "signal": "BUY", "reason": "ok"}])
+
+    class _Client:
+        def table(self, name):
+            assert name == "signals"
+            return _Query()
+
+    monkeypatch.setattr(
+        "src.latest_system_runs_repository.get_latest_system_run",
+        lambda client, source="paper_daily_runner": {
+            "business_date": "2026-05-06",
+            "run_id": 42,
+            "status": "success",
+            "data_timestamp": "2026-05-06T01:02:03+00:00",
+            "updated_at": "2026-05-06T01:03:03+00:00",
+            "summary_json": {"paper_trade_only": True},
+        },
+    )
+    provider = SupabaseLatestSystemRunMiniAppReadDataProvider(client=_Client(), env={"MARKET_DATA_PROVIDER": "null"})
+    section = provider.get_decision_context_summary()
+    missing_keys = {x["key"] for x in section["tickers"][0]["missing_context"]}
+    assert "data_source_missing" in missing_keys
+
+
+def test_decision_context_data_source_missing_kept_for_existing_and_eodhd_unavailable(monkeypatch):
+    class _Result:
+        def __init__(self, data):
+            self.data = data
+    class _Query:
+        def select(self, *_a, **_k): return self
+        def eq(self, *_a, **_k): return self
+        def order(self, *_a, **_k): return self
+        def limit(self, *_a, **_k): return self
+        def execute(self): return _Result([{"stock": "0700.HK", "signal": "BUY", "reason": "ok"}])
+    class _Client:
+        def table(self, name):
+            assert name == "signals"
+            return _Query()
+    monkeypatch.setattr(
+        "src.latest_system_runs_repository.get_latest_system_run",
+        lambda client, source="paper_daily_runner": {
+            "business_date": "2026-05-06", "run_id": 42, "status": "success",
+            "data_timestamp": "2026-05-06T01:02:03+00:00", "updated_at": "2026-05-06T01:03:03+00:00",
+            "summary_json": {"paper_trade_only": True},
+        },
+    )
+    for env in ({"MARKET_DATA_PROVIDER": "existing"}, {"MARKET_DATA_PROVIDER": "eodhd", "EODHD_API_TOKEN": ""}):
+        provider = SupabaseLatestSystemRunMiniAppReadDataProvider(client=_Client(), env=env)
+        section = provider.get_decision_context_summary()
+        missing_keys = {x["key"] for x in section["tickers"][0]["missing_context"]}
+        assert "data_source_missing" in missing_keys
+
+
+def test_decision_context_data_source_missing_removed_when_market_ok(monkeypatch):
+    class _Result:
+        def __init__(self, data):
+            self.data = data
+
+    class _Query:
+        def select(self, *_a, **_k): return self
+        def eq(self, *_a, **_k): return self
+        def order(self, *_a, **_k): return self
+        def limit(self, *_a, **_k): return self
+        def execute(self):
+            return _Result([{"stock": "0700.HK", "signal": "BUY", "reason": "ok"}])
+
+    class _Client:
+        def table(self, name):
+            assert name == "signals"
+            return _Query()
+
+    class _FakeProvider:
+        def get_ticker_market_snapshot(self, ticker, business_date=None):
+            return MarketTickerSnapshot(
+                ticker=ticker,
+                status="ok",
+                reference_price=100.0,
+                previous_close=99.0,
+                change=1.0,
+                change_pct=1.01,
+                volume=1000.0,
+                turnover=100000.0,
+                currency="HKD",
+                market="HKEX",
+                data_source="eodhd",
+                data_timestamp_hkt="2026-05-06T10:00:00+08:00",
+                freshness_status="fresh",
+                delay_minutes=0,
+                adjustment_policy="vendor_default",
+                confidence="medium",
+                limitations=[],
+            )
+
+    monkeypatch.setattr("src.miniapp_data_provider.build_review_shell_market_data_provider", lambda env=None: _FakeProvider())
+    monkeypatch.setattr(
+        "src.latest_system_runs_repository.get_latest_system_run",
+        lambda client, source="paper_daily_runner": {
+            "business_date": "2026-05-06",
+            "run_id": 42,
+            "status": "success",
+            "data_timestamp": "2026-05-06T01:02:03+00:00",
+            "updated_at": "2026-05-06T01:03:03+00:00",
+            "summary_json": {"paper_trade_only": True},
+        },
+    )
+    provider = SupabaseLatestSystemRunMiniAppReadDataProvider(client=_Client())
+    section = provider.get_decision_context_summary()
+    missing_keys = {x["key"] for x in section["tickers"][0]["missing_context"]}
+    assert "data_source_missing" not in missing_keys

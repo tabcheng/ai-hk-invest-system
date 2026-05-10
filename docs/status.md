@@ -486,3 +486,11 @@
 - Current system still lacks canonical market data source; market data may remain unavailable/unknown.
 - No vendor integration, no broker/live/real-money execution, no order/simulated-order creation, no Supabase schema migration, no Telegram auth change.
 
+
+## 2026-05-10 — Step 123 Market Data Vendor-Ready Provider Bundle
+- Step 120 post-deploy smoke passed with build `1ab6b93` (baseline for this step).
+- Added vendor-ready review-shell market provider boundary with `NullMarketDataProvider` default and env-gated `EodhdMarketDataProvider` skeleton (backend-only token, read-only, timeout-bounded, unavailable-safe fallback).
+- Added HK ticker normalization helper (`0700.HK`/`0388.HK`/`1299.HK`) inside adapter boundary; invalid ticker returns unavailable (no exception).
+- Decision Context market section now hydrates bounded provider snapshot fields when available and keeps unavailable-safe behavior when env/token/provider is absent.
+- Added backend smoke script `python -m scripts.market_data_smoke --ticker 0700.HK --provider eodhd` with sanitized snapshot output only (no token/raw payload).
+- Boundaries preserved: paper-trading only, decision-support only, no broker/live/real-money execution, no order/simulated-order creation, no frontend vendor key, no fake market data.

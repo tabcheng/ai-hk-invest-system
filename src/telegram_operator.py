@@ -16,6 +16,7 @@ from src.human_decision_journal import (
 )
 from src.latest_system_runs_repository import get_latest_system_run
 from src.market_data.smoke import (
+    build_market_acceptance_by_ticker,
     build_market_data_acceptance_summary,
     build_market_smoke_summary,
     is_supported_smoke_ticker,
@@ -582,20 +583,12 @@ def _build_pnl_review_command_message(snapshot: dict[str, Any]) -> str:
     ]
     from src.paper_trading import build_ticker_level_paper_portfolio_review
 
-    acceptance_by_ticker: dict[str, dict[str, Any]] = {}
-    for ticker in ["0700.HK", "0388.HK", "1299.HK"]:
-        try:
-            smoke = build_market_smoke_summary(ticker, dict(os.environ))
-            freshness_meta = classify_market_data_freshness(
-                data_timestamp_hkt=smoke.get("data_timestamp_hkt"),
-                provider_freshness_status=smoke.get("freshness_status"),
-                delay_minutes=smoke.get("delay_minutes"),
-            )
-            acceptance_by_ticker[ticker] = build_market_data_acceptance_summary(
-                freshness_status_display=freshness_meta.get("freshness_status_display")
-            )
-        except Exception:
-            acceptance_by_ticker[ticker] = build_market_data_acceptance_summary(freshness_status_display="unknown")
+    ticker_scope = [
+        str(row.get("stock") or "").strip().upper()
+        for row in per_symbol
+        if isinstance(row, dict) and str(row.get("stock") or "").strip()
+    ] or ["0700.HK", "0388.HK", "1299.HK"]
+    acceptance_by_ticker = build_market_acceptance_by_ticker(ticker_scope, env=dict(os.environ))
 
     ticker_rows = build_ticker_level_paper_portfolio_review(snapshot, market_acceptance_by_ticker=acceptance_by_ticker)
     for idx, row in enumerate(ticker_rows[:10], start=1):

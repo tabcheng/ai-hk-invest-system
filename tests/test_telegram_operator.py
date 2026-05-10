@@ -1314,3 +1314,24 @@ def test_daily_review_market_acceptance_mixed_fresh_delayed_keeps_delayed_warnin
     response = handle_telegram_operator_command(object(), _build_update("/daily_review"))
     assert "market_data_accepted_for_daily_review: True" in response
     assert "delayed_observed_count=1" in response
+
+def test_pnl_review_rows_show_caution_last_available_close_when_helper_returns_last_close(monkeypatch):
+    monkeypatch.setenv("TELEGRAM_CHAT_ID", "chat-1")
+    monkeypatch.setattr(
+        "src.telegram_operator._get_paper_position_pnl_review_snapshot",
+        lambda _client: {
+            "open_positions_count": 1,
+            "closed_positions_count": 0,
+            "total_realized_pnl": 0.0,
+            "total_unrealized_pnl": 10.0,
+            "valuation_timestamp": "2026-03-22",
+            "per_symbol": [{"stock": "0700.HK", "stock_name": "Tencent", "quantity": 1, "avg_cost": 100.0, "last_price": 110.0, "realized_pnl": 0.0, "unrealized_pnl": 10.0}],
+        },
+    )
+    monkeypatch.setattr(
+        "src.telegram_operator.build_market_acceptance_by_ticker",
+        lambda tickers, env: {str(tickers[0]).upper(): {"market_data_acceptance_status": "caution_last_available_close", "market_data_acceptance_warning": "last available close / paper review caution"}},
+    )
+
+    response = handle_telegram_operator_command(object(), _build_update("/pnl_review"))
+    assert "mkt=caution_last_available_close" in response

@@ -77,3 +77,25 @@ def test_market_data_acceptance_mapping_rules_and_boundaries():
     assert "payload" not in text.lower()
     assert "broker" not in text.lower()
     assert "real-money" not in text.lower()
+
+def test_build_market_acceptance_by_ticker_partial_failure_only_falls_back_failed_ticker(monkeypatch):
+    from src.market_data.smoke import build_market_acceptance_by_ticker
+
+    def _smoke(ticker, env):
+        if ticker == "0388.HK":
+            raise RuntimeError("single ticker failed")
+        return {
+            "data_timestamp_hkt": "2026-05-10T16:10:00+08:00",
+            "freshness_status": "last_available_close",
+            "delay_minutes": 15,
+        }
+
+    monkeypatch.setattr("src.market_data.smoke.build_market_smoke_summary", _smoke)
+    monkeypatch.setattr(
+        "src.market_data.smoke.classify_market_data_freshness",
+        lambda **kwargs: {"freshness_status_display": "last_available_close"},
+    )
+    acceptance = build_market_acceptance_by_ticker(["0700.HK", "0388.HK", "1299.HK"], env={})
+    assert acceptance["0700.HK"]["market_data_acceptance_status"] == "caution_last_available_close"
+    assert acceptance["1299.HK"]["market_data_acceptance_status"] == "caution_last_available_close"
+    assert acceptance["0388.HK"]["market_data_acceptance_status"] == "unknown"

@@ -52,3 +52,10 @@
 - Runtime env: `MARKET_DATA_PROVIDER=null|existing|eodhd`, `EODHD_API_TOKEN` (backend-only), `MARKET_DATA_TIMEOUT_SECONDS` (default 3), optional `MARKET_DATA_DELAY_POLICY`.
 - Default behavior remains unavailable-safe when provider/key absent; no frontend vendor key exposure.
 - EODHD is first adapter skeleton candidate only; Twelve Data/Finnhub remain comparison candidates; HKEX official/vendor licensing path remains production-grade consideration.
+
+### Step 124 runtime adapter update (2026-05-10)
+- Step 123 baseline confirmed with post-deploy smoke pass and build `d1df5e8`.
+- EODHD adapter now performs backend-only runtime HTTP fetch with `EODHD_API_TOKEN` in Railway backend service only.
+- Vendor projection remains bounded and sanitized (`reference_price`, `previous_close`, `change`, `change_pct`, `volume`, `turnover`, source/time/freshness/limitations).
+- EODHD is first vendor candidate only, not final production-grade vendor commitment; future production may require HKEX licensed/stronger vendor service.
+- Missing token/provider unavailable path must stay unavailable-safe and must not fabricate market values.

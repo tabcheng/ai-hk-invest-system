@@ -205,3 +205,8 @@ Mini App should **not**:
 - Current system still lacks canonical market data source; market data may remain unavailable/unknown.
 - No vendor integration, no broker/live/real-money execution, no order/simulated-order creation, no Supabase schema migration, no Telegram auth change.
 
+
+### Step 124 product-surface impact
+- Mini App Decision Context remains read-only and paper-review-only; market section now may show bounded vendor-backed fields when provider is enabled.
+- Unavailable-safe behavior remains default when provider/token is absent or vendor call fails.
+- No broker integration, no live/real-money execution, no order/simulated-order creation, no autonomous execution.

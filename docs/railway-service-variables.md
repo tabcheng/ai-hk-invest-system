@@ -247,3 +247,8 @@ Operator deploy + smoke evidence flow (manual):
 - EODHD_API_TOKEN: backend-only secret for eodhd provider skeleton
 - MARKET_DATA_TIMEOUT_SECONDS: backend HTTP timeout seconds (default 3)
 - MARKET_DATA_DELAY_POLICY: optional delay-policy hint (unknown/delayed/eod)
+
+### Step 124 env contract refinement
+- `telegram-webhook`: set `MARKET_DATA_PROVIDER=eodhd`, `EODHD_API_TOKEN=<backend-only secret>`, `MARKET_DATA_TIMEOUT_SECONDS=3`, optional `MARKET_DATA_DELAY_POLICY=delayed|unknown`.
+- `miniapp-static-preview`: MUST NOT set `EODHD_API_TOKEN` or any vendor key.
+- `paper-daily-runner`: keep `EODHD_API_TOKEN` unset unless a future approved writer step explicitly requires it.

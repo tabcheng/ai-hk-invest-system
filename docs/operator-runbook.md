@@ -440,3 +440,9 @@ Use this checklist when reviewing Mini App read-only surfaces:
 - Current system still lacks canonical market data source; market data may remain unavailable/unknown.
 - No vendor integration, no broker/live/real-money execution, no order/simulated-order creation, no Supabase schema migration, no Telegram auth change.
 
+
+### Step 124 operator smoke (market data)
+- Run: `python -m scripts.market_data_smoke --ticker 0700.HK --provider eodhd --pretty` (repeat for `0388.HK`, `1299.HK`).
+- Optional flags: `--business-date YYYY-MM-DD`, `--timeout 3`.
+- Expected output: sanitized bounded snapshot only; clear `status` (`ok/partial/unavailable`), `data_source`, timestamp/freshness, limitations; no token/raw vendor payload.
+- If token missing, script still exits 0 with unavailable snapshot.

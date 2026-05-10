@@ -313,3 +313,8 @@ The platform is designed as an **AI investment firm operating model** with stric
 - Added `POST /miniapp/api/human-paper-decision` with same initData validation/allowlist auth chain and bounded journal-only persistence path.
 
 - Step 119 architecture update: added read-only Decision Context read-model section (`decision_context_summary`) consuming internal bounded sources only (signals/risk/paper summaries/latest run metadata), with market-data slot returning `unavailable` when no bounded source exists.
+
+### Step 124 architecture note — review-shell EODHD runtime adapter
+- Added backend runtime HTTP adapter under review-shell provider boundary only; strategy logic remains decoupled from vendor calls.
+- `to_vendor_symbol` isolates HK symbol mapping (`0700.HK`, `0388.HK`, `1299.HK`) to avoid vendor assumptions leaking across app layers.
+- Security boundary unchanged: vendor token remains backend-only env; no token/raw payload exposure to frontend or logs.

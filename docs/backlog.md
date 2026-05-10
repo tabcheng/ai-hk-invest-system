@@ -263,3 +263,5 @@ Prioritization:
 
 
 - Step 123 follow-up: compare EODHD/Twelve Data/Finnhub, evaluate HKEX licensing route, and promote provider from skeleton to production candidate only after contract + smoke evidence.
+
+- Step 124 follow-up: evaluate production-grade HK vendor/licensing posture (EODHD remains first candidate only) and define freshness/SLA acceptance bar before any wider rollout.

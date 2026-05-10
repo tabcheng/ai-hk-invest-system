@@ -4,6 +4,7 @@ from dataclasses import asdict, dataclass
 from datetime import datetime, timedelta, timezone
 from typing import Any, Protocol
 import re
+import requests
 
 _HKT = timezone(timedelta(hours=8))
 
@@ -73,42 +74,82 @@ class ExistingSourceMarketDataProvider:
 
 
 class EodhdMarketDataProvider:
-    def __init__(self, token: str | None, timeout_seconds: float = 3.0, http_get: Any | None = None):
+    def __init__(self, token: str | None, timeout_seconds: float = 3.0, http_get: Any | None = None, delay_policy: str = "unknown"):
         self._token = (token or "").strip()
         self._timeout = timeout_seconds
         self._http_get = http_get
+        self._delay_policy = str(delay_policy or "unknown").strip().lower()
+
+    @staticmethod
+    def _to_float(value: Any) -> float | None:
+        try:
+            return float(value) if value is not None else None
+        except (TypeError, ValueError):
+            return None
+
+    @staticmethod
+    def _to_hkt_iso(ts: Any) -> str | None:
+        if isinstance(ts, (int, float)):
+            return datetime.fromtimestamp(float(ts), tz=timezone.utc).astimezone(_HKT).isoformat()
+        if isinstance(ts, str) and ts.strip():
+            try:
+                return datetime.fromisoformat(ts.replace("Z", "+00:00")).astimezone(_HKT).isoformat()
+            except ValueError:
+                return None
+        return None
+
+    def _runtime_http_get(self, symbol: str, timeout_seconds: float, api_token: str) -> Any:
+        resp = requests.get(
+            f"https://eodhd.com/api/real-time/{symbol}",
+            params={"api_token": api_token, "fmt": "json"},
+            timeout=timeout_seconds,
+        )
+        resp.raise_for_status()
+        return resp.json()
+
+    def _parse_vendor_payload(self, payload: dict[str, Any], ticker: str) -> MarketTickerSnapshot:
+        close = payload.get("close")
+        prev = payload.get("previousClose")
+        volume = payload.get("volume")
+        turnover = payload.get("turnover")
+        dt_hkt = self._to_hkt_iso(payload.get("timestamp"))
+        close_f = self._to_float(close)
+        prev_f = self._to_float(prev)
+        volume_f = self._to_float(volume)
+        turnover_f = self._to_float(turnover)
+        ch = (close_f - prev_f) if close_f is not None and prev_f is not None else None
+        ch_pct = ((ch / prev_f) * 100.0) if ch is not None and prev_f not in (None, 0) else None
+        usable = [close_f, prev_f, volume_f, turnover_f]
+        status = "ok" if close_f is not None else ("partial" if any(x is not None for x in usable) else "unavailable")
+        limitations = []
+        if status == "partial":
+            limitations.append("Bounded vendor fields partially available.")
+        if status == "unavailable":
+            return unavailable_snapshot(ticker, "No usable market fields in vendor response.", "eodhd")
+        return MarketTickerSnapshot(
+            ticker=str(ticker).upper(), status=status,
+            reference_price=close_f, previous_close=prev_f, change=ch, change_pct=ch_pct,
+            volume=volume_f, turnover=turnover_f,
+            currency=str(payload.get("currency") or "HKD").upper(),
+            market="HKEX", data_source="eodhd", data_timestamp_hkt=dt_hkt,
+            freshness_status="delayed" if self._delay_policy == "delayed" else "unknown",
+            delay_minutes=15 if self._delay_policy == "delayed" else None,
+            adjustment_policy="vendor_default",
+            confidence="unknown", limitations=limitations,
+        )
 
     def get_ticker_market_snapshot(self, ticker: str, business_date: str | None = None) -> MarketTickerSnapshot:
         symbol = to_vendor_symbol(ticker)
         if not symbol:
             return unavailable_snapshot(ticker, "Invalid HK ticker format.", "eodhd")
         if not self._token:
-            return unavailable_snapshot(ticker, "EODHD API token not configured.", "eodhd")
-        if self._http_get is None:
-            return unavailable_snapshot(ticker, "EODHD runtime HTTP disabled in this environment.", "eodhd")
+            return unavailable_snapshot(ticker, "EODHD API credential not configured.", "eodhd")
+        http_get = self._http_get or self._runtime_http_get
         try:
-            payload = self._http_get(symbol=symbol, timeout_seconds=self._timeout, api_token=self._token)
+            payload = http_get(symbol=symbol, timeout_seconds=self._timeout, api_token=self._token)
             if not isinstance(payload, dict):
                 return unavailable_snapshot(ticker, "Malformed vendor response.", "eodhd")
-            close = payload.get("close")
-            prev = payload.get("previousClose")
-            volume = payload.get("volume")
-            ts = payload.get("timestamp")
-            dt_hkt = None
-            if isinstance(ts, str):
-                dt_hkt = datetime.fromisoformat(ts.replace("Z", "+00:00")).astimezone(_HKT).isoformat()
-            close_f = float(close) if close is not None else None
-            prev_f = float(prev) if prev is not None else None
-            ch = (close_f - prev_f) if close_f is not None and prev_f is not None else None
-            ch_pct = ((ch / prev_f) * 100.0) if ch is not None and prev_f not in (None, 0) else None
-            return MarketTickerSnapshot(
-                ticker=str(ticker).upper(), status="ok" if close_f is not None else "partial",
-                reference_price=close_f, previous_close=prev_f, change=ch, change_pct=ch_pct,
-                volume=float(volume) if volume is not None else None, turnover=None,
-                currency="HKD", market="HKEX", data_source="eodhd", data_timestamp_hkt=dt_hkt,
-                freshness_status="unknown", delay_minutes=None, adjustment_policy="vendor_default",
-                confidence="unknown", limitations=[],
-            )
+            return self._parse_vendor_payload(payload, ticker)
         except Exception:
             return unavailable_snapshot(ticker, "Vendor request failed.", "eodhd")
 
@@ -123,7 +164,12 @@ def build_review_shell_market_data_provider(env: dict[str, str] | None = None, h
             timeout = float(str(env.get("MARKET_DATA_TIMEOUT_SECONDS", "3") or "3"))
         except ValueError:
             timeout = 3.0
-        return EodhdMarketDataProvider(token=env.get("EODHD_API_TOKEN"), timeout_seconds=timeout, http_get=http_get)
+        return EodhdMarketDataProvider(
+            token=env.get("EODHD_API_TOKEN"),
+            timeout_seconds=timeout,
+            http_get=http_get,
+            delay_policy=str(env.get("MARKET_DATA_DELAY_POLICY", "unknown") or "unknown"),
+        )
     return NullMarketDataProvider()
 
 

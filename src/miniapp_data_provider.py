@@ -627,16 +627,16 @@ class SupabaseLatestSystemRunMiniAppReadDataProvider(RailwayRuntimeEnvMiniAppRea
 
         for item in signals.get("top_items", [])[:5]:
             missing_context = [
-                "latest price missing",
-                "liquidity missing",
-                "fundamentals missing",
-                "news/catalyst missing",
-                "valuation missing",
-                "per-position exposure missing",
-                "data_source missing",
+                {"key": "latest_price_missing", "label_zh": "最新價 / Reference price：未有資料", "label_en": "Reference price unavailable", "status": "missing"},
+                {"key": "liquidity_missing", "label_zh": "流動性 / 成交額：未有資料", "label_en": "Liquidity/turnover unavailable", "status": "missing"},
+                {"key": "fundamentals_missing", "label_zh": "基本面 / Fundamentals：未有資料", "label_en": "Fundamentals unavailable", "status": "missing"},
+                {"key": "news_catalyst_missing", "label_zh": "新聞 / Catalyst：未有資料", "label_en": "News/catalyst unavailable", "status": "missing"},
+                {"key": "valuation_missing", "label_zh": "估值 / Valuation：未有資料", "label_en": "Valuation unavailable", "status": "missing"},
+                {"key": "per_position_exposure_missing", "label_zh": "持倉級別 exposure：未有資料", "label_en": "Per-position exposure unavailable", "status": "missing"},
+                {"key": "data_source_missing", "label_zh": "資料來源 / Data source：未有資料", "label_en": "Data source unavailable", "status": "missing"},
             ]
             if not summary.get("strategy_version"):
-                missing_context.append("strategy_version missing")
+                missing_context.append({"key": "strategy_version_missing", "label_zh": "策略版本 / Strategy version：未有資料", "label_en": "Strategy version unavailable", "status": "missing"})
             tickers.append(
                 {
                     "ticker": str(item.get("ticker") or "").strip(),
@@ -690,7 +690,7 @@ class SupabaseLatestSystemRunMiniAppReadDataProvider(RailwayRuntimeEnvMiniAppRea
             "business_date": str(row.get("business_date") or ""),
             "data_timestamp_hkt": signals.get("data_timestamp_hkt"),
             "source": "review_shell_decision_context",
-            "context_readiness": "partial",
+            "context_readiness": "insufficient",
             "tickers": tickers,
             "global_limitations": [
                 "Market data fields unavailable from current bounded read sources."

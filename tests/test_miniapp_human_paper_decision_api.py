@@ -136,3 +136,22 @@ def test_human_paper_decision_builder_failure_after_journal_write_is_partial_suc
     assert status.startswith("200")
     assert payload["journal_saved"] is True
     assert payload["snapshot_saved"] is False
+
+
+def test_miniapp_journal_snapshots_api_bounded_and_auth(monkeypatch):
+    body = json.loads(_authorized_request(monkeypatch).decode())
+    body["limit"] = 30
+    monkeypatch.setattr("src.telegram_webhook_server._load_supabase_client", lambda: object())
+    monkeypatch.setattr("src.telegram_webhook_server.build_recent_decision_context_snapshots_review", lambda *_a, **_k: {"items":[{"snapshot_id":"s1","ticker":"0700.HK"}], "limit":20})
+    status, _, payload = _call("/miniapp/api/journal-snapshots", "POST", json.dumps(body).encode())
+    assert status.startswith("200")
+    assert payload["ok"] is True
+    assert payload["limit"] == 20
+    assert "snapshot_json" not in json.dumps(payload)
+    assert "init_data" not in json.dumps(payload)
+
+
+def test_miniapp_journal_snapshots_api_rejects_invalid_init_data():
+    status, _, payload = _call("/miniapp/api/journal-snapshots", "POST", json.dumps({"init_data": "bad"}).encode())
+    assert status.startswith("401")
+    assert payload["ok"] is False

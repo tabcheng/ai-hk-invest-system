@@ -316,3 +316,5 @@ No broker integration or autonomous real-money execution is authorized by this p
 - Step 131 update: context snapshot persistence stores normalized bounded market fields only; frontend remains without secret keys and receives bounded save-status booleans only.
 - Step 131A boundary note: submit response may include `journal_id`, `snapshot_id`, `snapshot_saved`, `saved_at_hkt`, `ticker`, `decision_type`, `confidence_label` for operator clarity; still no raw Telegram initData/token/raw vendor payload exposure.
 - Step 131B boundary note: submit-adjacent inline result card is the source-of-truth feedback surface; optional toast must stay summary-only and must not expose raw API errors/initData/tokens/vendor payloads.
+
+- Added /miniapp/api/journal-snapshots read-only bounded contract; no raw initData/raw snapshot_json/vendor payload/secrets in response.

@@ -326,3 +326,5 @@ The platform is designed as an **AI investment firm operating model** with stric
 - Security/domain boundary preserved: no frontend vendor key, no raw EODHD token/payload exposure, no broker/live/real-money execution, no order/simulated-order creation.
 - EODHD remains first vendor candidate, not final production vendor commitment.
 
+
+- Read model contract updated: decision_context_snapshots summary list endpoint and Telegram bounded review command.

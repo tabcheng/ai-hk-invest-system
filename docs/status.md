@@ -548,3 +548,6 @@
 - Step 131B completed: form edits after save now render amber stale-state card with previous saved ticker/decision/journal/snapshot summary; save flow keeps selected ticker and no longer resets form in a way that can imply another ticker was saved.
 
 - Step 131A migration path correction: duplicated `20260511_step131a_decision_context_snapshots_rationale_operator.sql` into `db/migrations/` (repo runtime migration convention) while retaining supabase copy for schema-doc continuity; apply DB migration before runtime smoke.
+
+- Step 132 in progress: added bounded journal snapshot review read surfaces for Mini App API/UI and Telegram /journal_review foundation for outcome-link keys.
+- Step 132 PR#134 fixup: resolved Mini App journal snapshot XSS risk via textContent rendering; Journal tab now loads recent snapshots on view render; added focused tests for bounded read model/API/UI/Telegram.

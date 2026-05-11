@@ -144,6 +144,75 @@ def persist_decision_context_snapshot(client: Any, *, snapshot: dict[str, Any]) 
     return {"id": row.get("id"), "status": "saved"}
 
 
+def build_recent_decision_context_snapshots_review(
+    client: Any,
+    *,
+    ticker: str | None = None,
+    business_date_hkt: str | None = None,
+    decision_type: str | None = None,
+    limit: int = 5,
+) -> dict[str, Any]:
+    bounded_limit = max(1, min(int(limit or 5), 20))
+    query = (
+        client.table("decision_context_snapshots")
+        .select("*")
+        .order("created_at_hkt", desc=True)
+        .limit(bounded_limit)
+    )
+    if ticker:
+        query = query.eq("ticker", str(ticker).strip().upper())
+    if business_date_hkt:
+        query = query.eq("business_date_hkt", str(business_date_hkt).strip())
+    if decision_type:
+        query = query.eq("decision_type", str(decision_type).strip().lower())
+    rows = query.execute().data or []
+    items: list[dict[str, Any]] = []
+    for row in rows:
+        snapshot_json = row.get("snapshot_json") if isinstance(row, dict) else {}
+        paper_position = (snapshot_json or {}).get("paper_position_snapshot") if isinstance(snapshot_json, dict) else {}
+        signal = (snapshot_json or {}).get("signal_snapshot") if isinstance(snapshot_json, dict) else {}
+        missing_context = (snapshot_json or {}).get("missing_context") if isinstance(snapshot_json, dict) else []
+        items.append({
+            "snapshot_id": row.get("id"),
+            "human_decision_journal_entry_id": row.get("human_decision_journal_entry_id"),
+            "ticker": row.get("ticker"),
+            "business_date_hkt": row.get("business_date_hkt"),
+            "latest_run_id": row.get("latest_run_id"),
+            "decision_type": row.get("decision_type"),
+            "confidence_label": row.get("confidence_label"),
+            "rationale_text": row.get("rationale_text"),
+            "operator_user_id_hash_or_label": row.get("operator_user_id_hash_or_label"),
+            "created_at_hkt": row.get("created_at_hkt"),
+            "reference_price": row.get("reference_price"),
+            "data_source": row.get("data_source"),
+            "data_timestamp_hkt": row.get("data_timestamp_hkt"),
+            "freshness_status": row.get("freshness_status"),
+            "market_data_acceptance_status": row.get("market_data_acceptance_status"),
+            "market_data_acceptance_warning": row.get("market_data_acceptance_warning"),
+            "paper_position": {
+                "has_position": bool(paper_position.get("quantity")),
+                "quantity": paper_position.get("quantity"),
+                "avg_cost": paper_position.get("avg_cost"),
+                "reference_price": paper_position.get("reference_price"),
+                "exposure_value": paper_position.get("exposure_value"),
+                "unrealized_pnl": paper_position.get("unrealized_pnl"),
+                "total_pnl": paper_position.get("total_pnl"),
+            } if isinstance(paper_position, dict) else {},
+            "signal_summary": {
+                "direction": signal.get("direction"),
+                "reason": signal.get("reason"),
+                "strategy_version": signal.get("strategy_version"),
+            } if isinstance(signal, dict) else {},
+            "risk_level": (snapshot_json or {}).get("risk_snapshot", {}).get("risk_level") if isinstance(snapshot_json, dict) else None,
+            "missing_context_count": len(missing_context) if isinstance(missing_context, list) else 0,
+            "paper_trade_only": bool(row.get("paper_trade_only")),
+            "decision_support_only": bool(row.get("decision_support_only")),
+            "no_broker_execution": bool(row.get("no_broker_execution")),
+            "no_real_money_execution": bool(row.get("no_real_money_execution")),
+        })
+    return {"items": items, "limit": bounded_limit}
+
+
 def record_run_level_decision_note(
     client: Any,
     *,

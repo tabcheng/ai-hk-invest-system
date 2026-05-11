@@ -38,6 +38,9 @@ def test_human_journal_submit_result_card_copy_contract_present():
     assert "上一個已保存：" in html
     assert "保存中..." in html
     assert "showToast(`✅ 已保存" in html
+    assert "loadJournalSnapshots();" in html
+    assert "appendLine(String(row?.rationale_text || \"N/A\").slice(0, 80));" in html
+    assert "rows.map((row) =>" not in html
 
 
 def _simulate_journal_submit_flow(fetch_responses: list[dict], *, edit_after_retry: bool) -> dict:

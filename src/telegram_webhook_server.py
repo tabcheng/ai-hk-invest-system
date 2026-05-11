@@ -439,7 +439,7 @@ def create_wsgi_app() -> Any:
                 )
             start_response("204 No Content", response_headers)
             return [b""]
-        elif path not in {"/telegram/webhook", "/miniapp/api/review-shell", "/miniapp/api/human-paper-decision", "/miniapp/api/journal-snapshots"}:
+        elif path not in {"/telegram/webhook", "/miniapp/api/review-shell", "/miniapp/api/human-paper-decision", "/miniapp/api/journal-snapshots", "/miniapp/api/journal-outcomes"}:
             status = "404 Not Found"
             payload = {"ok": False, "error": "not_found"}
         elif method != "POST":

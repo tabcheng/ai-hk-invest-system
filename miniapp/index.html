@@ -387,7 +387,7 @@
             add(`結果狀態：${isStale ? "資料過舊" : toSimpleStatus(row)}`);
             add("盈虧變化是：保存決策時的模擬盈虧，和目前模擬盈虧的差距。");
             if (isStale) add("⚠️ 注意：資料可能過舊，請勿用作即時判斷。");
-            if (row?.outcome_delta?.pnl_delta_since_snapshot == null) add("因為缺少當時或現在的價格，所以未能計算。");
+            if (row?.outcome_delta?.pnl_delta_since_snapshot == null) add("因為缺少可比較的價格或盈虧資料，所以未能計算。");
             add("這只是模擬檢視，不會建立訂單。");
             add("只供模擬檢視｜不建立訂單｜不連接券商｜不是真實買賣建議");
             const details = document.createElement("details");

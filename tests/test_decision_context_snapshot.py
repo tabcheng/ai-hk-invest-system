@@ -7,14 +7,14 @@ def test_snapshot_builder_includes_required_fields():
         latest_run_id="run-1",
         ticker="0700.HK",
         human_decision_journal_entry_id=123,
-        human_paper_decision={"decision_type": "watch"},
+        human_paper_decision={"decision_type": "watch", "init_data": "raw"},
         decision_context_summary={
             "tickers": [
                 {
                     "ticker": "0700.HK",
-                    "signal": {"direction": "neutral"},
+                    "signal": {"direction": "neutral", "SUPABASE_SERVICE_ROLE_KEY": "x"},
                     "market_data": {"reference_price": 420.5, "market_data_acceptance_status": "caution_last_available_close", "raw_payload": {"x": 1}, "EODHD_API_TOKEN": "s"},
-                    "risk": {"risk_level": "medium"},
+                    "risk": {"risk_level": "medium", "TELEGRAM_BOT_TOKEN": "x"},
                     "missing_context": ["valuation"],
                 }
             ]
@@ -28,6 +28,9 @@ def test_snapshot_builder_includes_required_fields():
     assert snapshot["market_data_snapshot"]["reference_price"] == 420.5
     assert "raw_payload" not in snapshot["market_data_snapshot"]
     assert "EODHD_API_TOKEN" not in snapshot["market_data_snapshot"]
+    assert "SUPABASE_SERVICE_ROLE_KEY" not in snapshot["signal_snapshot"]
+    assert "TELEGRAM_BOT_TOKEN" not in snapshot["risk_snapshot"]
+    assert "init_data" not in snapshot["human_paper_decision"]
     assert snapshot["paper_position_snapshot"]["ticker"] == "0700.HK"
     assert snapshot["risk_snapshot"]["risk_level"] == "medium"
     assert snapshot["paper_trade_only"] is True

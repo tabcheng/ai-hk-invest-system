@@ -7,6 +7,27 @@ ALLOWED_HUMAN_ACTIONS = {"observe", "watchlist", "reject_signal", "accept_for_pa
 ALLOWED_SOURCE_COMMANDS = {"/daily_review", "/runner_status", "/runs", "/risk_review", "/pnl_review", "/outcome_review"}
 ALLOWED_MINIAPP_DECISION_TYPES = {"watch", "paper_buy", "paper_sell", "paper_hold", "skip"}
 ALLOWED_MINIAPP_CONFIDENCE = {"low", "medium", "high", "unknown"}
+_SENSITIVE_KEYS = {
+    "raw_payload",
+    "eodhd_api_token",
+    "supabase_service_role_key",
+    "telegram_bot_token",
+    "init_data",
+    "raw_init_data",
+}
+
+
+def _sanitize_snapshot_value(value: Any) -> Any:
+    if isinstance(value, dict):
+        safe: dict[str, Any] = {}
+        for k, v in value.items():
+            if str(k).strip().lower() in _SENSITIVE_KEYS:
+                continue
+            safe[k] = _sanitize_snapshot_value(v)
+        return safe
+    if isinstance(value, list):
+        return [_sanitize_snapshot_value(item) for item in value]
+    return value
 
 
 def build_human_decision_context_snapshot(
@@ -56,18 +77,18 @@ def build_human_decision_context_snapshot(
         "business_date_hkt": business_date_hkt,
         "latest_run_id": latest_run_id,
         "ticker": ticker,
-        "human_paper_decision": human_paper_decision,
-        "signal_snapshot": signal if isinstance(signal, dict) else {},
+        "human_paper_decision": _sanitize_snapshot_value(human_paper_decision),
+        "signal_snapshot": _sanitize_snapshot_value(signal if isinstance(signal, dict) else {}),
         "market_data_snapshot": market_data_snapshot,
         "market_data_acceptance_status": market_data_snapshot.get("market_data_acceptance_status", "unknown"),
         "market_data_acceptance_warning": market_data_snapshot.get("market_data_acceptance_warning"),
-        "paper_position_snapshot": portfolio,
+        "paper_position_snapshot": _sanitize_snapshot_value(portfolio),
         "paper_pnl_snapshot": {
             "realized_pnl": portfolio.get("realized_pnl"),
             "unrealized_pnl": portfolio.get("unrealized_pnl"),
             "total_pnl": portfolio.get("total_pnl"),
         } if isinstance(portfolio, dict) else {},
-        "risk_snapshot": risk if isinstance(risk, dict) else {},
+        "risk_snapshot": _sanitize_snapshot_value(risk if isinstance(risk, dict) else {}),
         "missing_context": missing_context if isinstance(missing_context, list) else [],
         "data_sources": {"decision_context": "review_shell_decision_context", "portfolio": "paper_pnl_read_model"},
         "data_timestamps": {"created_at_hkt": now_hkt.isoformat(), "created_at_utc": now_utc.isoformat(), "market_data_timestamp_hkt": market_data_snapshot.get("data_timestamp_hkt")},

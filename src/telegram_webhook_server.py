@@ -15,7 +15,13 @@ from src.miniapp_auth import (
 
 from src.miniapp_read_model import build_miniapp_review_shell_response
 from src.miniapp_data_provider import SupabaseLatestSystemRunMiniAppReadDataProvider
-from src.human_decision_journal import ALLOWED_MINIAPP_CONFIDENCE, ALLOWED_MINIAPP_DECISION_TYPES, record_miniapp_human_paper_decision_journal
+from src.human_decision_journal import (
+    ALLOWED_MINIAPP_CONFIDENCE,
+    ALLOWED_MINIAPP_DECISION_TYPES,
+    build_human_decision_context_snapshot,
+    persist_decision_context_snapshot,
+    record_miniapp_human_paper_decision_journal,
+)
 
 def _parse_miniapp_allowed_telegram_user_ids(raw_value: str | None) -> list[int]:
     if raw_value is None:
@@ -190,6 +196,25 @@ def _handle_miniapp_human_paper_decision_request(raw_body: bytes) -> tuple[str, 
             ui_build_version=str(payload.get("ui_build_version") or "").strip() or None,
             data_timestamp_hkt=str(payload.get("data_timestamp_hkt") or "").strip() or None,
         )
+        snapshot_status = {"status": "failed", "id": None}
+        try:
+            provider = SupabaseLatestSystemRunMiniAppReadDataProvider(client=supabase_client, env=os.environ)
+            context_snapshot = build_human_decision_context_snapshot(
+                business_date_hkt=business_date,
+                latest_run_id=run_id,
+                ticker=ticker,
+                human_decision_journal_entry_id=recorded.get("id"),
+                human_paper_decision={
+                    "decision_type": decision_type,
+                    "rationale_text": rationale_text,
+                    "confidence_label": (str(confidence_label).strip().lower() if confidence_label is not None else "unknown"),
+                },
+                decision_context_summary=provider.get_decision_context_summary(),
+                ticker_level_paper_portfolio_review=provider.get_ticker_level_paper_portfolio_review(),
+            )
+            snapshot_status = persist_decision_context_snapshot(supabase_client, snapshot=context_snapshot)
+        except Exception:
+            snapshot_status = {"status": "failed", "id": None}
     except MiniAppAuthValidationError as exc:
         reason = str(exc)
         if "allowlist" in reason:
@@ -205,6 +230,9 @@ def _handle_miniapp_human_paper_decision_request(raw_body: bytes) -> tuple[str, 
         "ok": True,
         "status": "ok",
         "journal_id": recorded.get("id"),
+        "journal_saved": True,
+        "snapshot_saved": snapshot_status.get("status") == "saved",
+        "snapshot_id": snapshot_status.get("id"),
         "no_order_created": True,
         "paper_trade_only": True,
         "operator_note": "human paper decision journal recorded",

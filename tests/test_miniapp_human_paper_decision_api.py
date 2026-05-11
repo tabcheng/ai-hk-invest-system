@@ -28,11 +28,17 @@ def test_human_paper_decision_validation_and_bounded_success(monkeypatch):
         captured.update(kwargs)
         return {"id": "j-1"}
     monkeypatch.setattr("src.telegram_webhook_server.record_miniapp_human_paper_decision_journal", _record)
+    monkeypatch.setattr("src.telegram_webhook_server.persist_decision_context_snapshot", lambda *args, **kwargs: {"id": "s-1", "status": "saved"})
+    monkeypatch.setattr("src.telegram_webhook_server.build_human_decision_context_snapshot", lambda **kwargs: {"ticker": "0700.HK"})
+    monkeypatch.setattr("src.miniapp_data_provider.SupabaseLatestSystemRunMiniAppReadDataProvider.get_decision_context_summary", lambda self: {"tickers": []})
+    monkeypatch.setattr("src.miniapp_data_provider.SupabaseLatestSystemRunMiniAppReadDataProvider.get_ticker_level_paper_portfolio_review", lambda self: {"rows": []})
     status, _, payload = _call("/miniapp/api/human-paper-decision", "POST", _decision_body(monkeypatch))
     assert status.startswith("200")
     assert payload["no_order_created"] is True
     assert payload["paper_trade_only"] is True
     assert captured["operator_user_id_hash_or_label"].startswith("tg_user_hash:")
+    assert payload["journal_saved"] is True
+    assert payload["snapshot_saved"] is True
     assert "42" not in captured["operator_user_id_hash_or_label"]
     assert captured["operator_user_id_hash_or_label"] != "tg_user_hash:unknown"
     assert "init_data" not in captured
@@ -98,3 +104,28 @@ def test_human_paper_decision_unavailable_masks_exception(monkeypatch):
     assert status.startswith("503")
     assert payload["error"] == "journal_unavailable"
     assert "secret" not in json.dumps(payload)
+
+
+def test_human_paper_decision_snapshot_failure_still_returns_journal_saved(monkeypatch):
+    monkeypatch.setattr("src.telegram_webhook_server._load_supabase_client", lambda: object())
+    monkeypatch.setattr("src.telegram_webhook_server.record_miniapp_human_paper_decision_journal", lambda *args, **kwargs: {"id": "j-1"})
+    monkeypatch.setattr("src.telegram_webhook_server.build_human_decision_context_snapshot", lambda **kwargs: {"ticker": "0700.HK"})
+    monkeypatch.setattr("src.telegram_webhook_server.persist_decision_context_snapshot", lambda *args, **kwargs: (_ for _ in ()).throw(RuntimeError("secret token")))
+    monkeypatch.setattr("src.miniapp_data_provider.SupabaseLatestSystemRunMiniAppReadDataProvider.get_decision_context_summary", lambda self: {"tickers": []})
+    monkeypatch.setattr("src.miniapp_data_provider.SupabaseLatestSystemRunMiniAppReadDataProvider.get_ticker_level_paper_portfolio_review", lambda self: {"rows": []})
+    status, _, payload = _call("/miniapp/api/human-paper-decision", "POST", _decision_body(monkeypatch))
+    assert status.startswith("200")
+    assert payload["journal_saved"] is True
+    assert payload["snapshot_saved"] is False
+
+
+def test_human_paper_decision_builder_failure_after_journal_write_is_partial_success(monkeypatch):
+    monkeypatch.setattr("src.telegram_webhook_server._load_supabase_client", lambda: object())
+    monkeypatch.setattr("src.telegram_webhook_server.record_miniapp_human_paper_decision_journal", lambda *args, **kwargs: {"id": "j-1"})
+    monkeypatch.setattr("src.telegram_webhook_server.build_human_decision_context_snapshot", lambda **kwargs: (_ for _ in ()).throw(RuntimeError("provider secret")))
+    monkeypatch.setattr("src.miniapp_data_provider.SupabaseLatestSystemRunMiniAppReadDataProvider.get_decision_context_summary", lambda self: {"tickers": []})
+    monkeypatch.setattr("src.miniapp_data_provider.SupabaseLatestSystemRunMiniAppReadDataProvider.get_ticker_level_paper_portfolio_review", lambda self: {"rows": []})
+    status, _, payload = _call("/miniapp/api/human-paper-decision", "POST", _decision_body(monkeypatch))
+    assert status.startswith("200")
+    assert payload["journal_saved"] is True
+    assert payload["snapshot_saved"] is False

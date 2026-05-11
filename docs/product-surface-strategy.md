@@ -233,3 +233,5 @@ Mini App should **not**:
 - No change to paper-only boundary: no broker/live execution/real-money order semantics.
 
 - Step 129 update (in progress): operator surfaces are expanding with ticker-level paper portfolio review (read-only) to support per-stock exposure/PnL scan without adding any order or broker action.
+
+- Step 131: Journal submit now persists bounded decision context snapshot (including market freshness/acceptance + paper position/PnL/risk context) and reports journal/snapshot save status separately.

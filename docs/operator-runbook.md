@@ -464,3 +464,5 @@ Use this checklist when reviewing Mini App read-only surfaces:
 - Boundaries unchanged: read-only diagnostics + decision support, paper trading only, no broker/live execution, no real-money execution, no order or simulated-order creation, no frontend vendor key, no token/raw vendor payload exposure, no fake data.
 
 - Step 129 note: `/pnl_review` output now includes compact per-ticker paper position/exposure/PnL lines with explicit paper-only boundary wording.
+
+- Step 131 operator note: Mini App journal submit success now includes separate journal/context-snapshot save status; if snapshot save fails, treat as partial success and re-check context data freshness before next review.

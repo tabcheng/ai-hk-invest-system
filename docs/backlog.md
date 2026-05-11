@@ -286,3 +286,5 @@ Prioritization:
 - **Step 127A (in progress):** fix `/daily_review` market-data aggregate selection mismatch where all `caution_last_available_close` tickers could still report aggregate `unknown`; require focused regression tests before closure.
 
 - Step 129 (in progress): add ticker-level paper portfolio review rows (position/exposure/PnL + market acceptance) to Telegram `/pnl_review` and Mini App review payload; preserve delayed acceptance warning semantics in `/daily_review` aggregate wording.
+
+- Step 131 follow-up: verify production migration apply/order for `decision_context_snapshots` and add post-deploy smoke evidence for journal_saved/snapshot_saved split.

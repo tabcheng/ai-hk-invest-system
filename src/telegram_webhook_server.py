@@ -196,21 +196,22 @@ def _handle_miniapp_human_paper_decision_request(raw_body: bytes) -> tuple[str, 
             ui_build_version=str(payload.get("ui_build_version") or "").strip() or None,
             data_timestamp_hkt=str(payload.get("data_timestamp_hkt") or "").strip() or None,
         )
-        provider = SupabaseLatestSystemRunMiniAppReadDataProvider(client=supabase_client, env=os.environ)
-        context_snapshot = build_human_decision_context_snapshot(
-            business_date_hkt=business_date,
-            latest_run_id=run_id,
-            ticker=ticker,
-            human_paper_decision={
-                "decision_type": decision_type,
-                "rationale_text": rationale_text,
-                "confidence_label": (str(confidence_label).strip().lower() if confidence_label is not None else "unknown"),
-            },
-            decision_context_summary=provider.get_decision_context_summary(),
-            ticker_level_paper_portfolio_review=provider.get_ticker_level_paper_portfolio_review(),
-        )
         snapshot_status = {"status": "failed", "id": None}
         try:
+            provider = SupabaseLatestSystemRunMiniAppReadDataProvider(client=supabase_client, env=os.environ)
+            context_snapshot = build_human_decision_context_snapshot(
+                business_date_hkt=business_date,
+                latest_run_id=run_id,
+                ticker=ticker,
+                human_decision_journal_entry_id=recorded.get("id"),
+                human_paper_decision={
+                    "decision_type": decision_type,
+                    "rationale_text": rationale_text,
+                    "confidence_label": (str(confidence_label).strip().lower() if confidence_label is not None else "unknown"),
+                },
+                decision_context_summary=provider.get_decision_context_summary(),
+                ticker_level_paper_portfolio_review=provider.get_ticker_level_paper_portfolio_review(),
+            )
             snapshot_status = persist_decision_context_snapshot(supabase_client, snapshot=context_snapshot)
         except Exception:
             snapshot_status = {"status": "failed", "id": None}

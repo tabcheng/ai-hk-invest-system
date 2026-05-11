@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Any
 
 ALLOWED_HUMAN_ACTIONS = {"observe", "watchlist", "reject_signal", "accept_for_paper", "defer"}
@@ -14,30 +14,53 @@ def build_human_decision_context_snapshot(
     business_date_hkt: str,
     latest_run_id: str,
     ticker: str,
+    human_decision_journal_entry_id: str | int,
     human_paper_decision: dict[str, Any],
     decision_context_summary: dict[str, Any] | None,
     ticker_level_paper_portfolio_review: dict[str, Any] | None,
 ) -> dict[str, Any]:
     tickers = (decision_context_summary or {}).get("tickers") or []
     matched = next((row for row in tickers if str(row.get("ticker") or "").upper() == ticker.upper()), {})
-    market = matched.get("market_data") if isinstance(matched, dict) else {}
+    market_raw = matched.get("market_data") if isinstance(matched, dict) else {}
     signal = matched.get("signal") if isinstance(matched, dict) else {}
     risk = matched.get("risk") if isinstance(matched, dict) else {}
     missing_context = matched.get("missing_context") if isinstance(matched, dict) else []
     portfolio_rows = (ticker_level_paper_portfolio_review or {}).get("rows") or []
     portfolio = next((row for row in portfolio_rows if str(row.get("ticker") or "").upper() == ticker.upper()), {})
-    created_at_hkt = datetime.now(timezone.utc).astimezone(timezone.utc).isoformat()
+    now_utc = datetime.now(timezone.utc)
+    now_hkt = now_utc.astimezone(timezone(timedelta(hours=8)))
+    market_data_snapshot = {
+        "ticker": ticker,
+        "reference_price": (market_raw or {}).get("reference_price") or (market_raw or {}).get("price"),
+        "previous_close": (market_raw or {}).get("previous_close"),
+        "change": (market_raw or {}).get("change"),
+        "change_pct": (market_raw or {}).get("change_pct"),
+        "volume": (market_raw or {}).get("volume"),
+        "turnover": (market_raw or {}).get("turnover"),
+        "currency": (market_raw or {}).get("currency"),
+        "market": (market_raw or {}).get("market"),
+        "data_source": (market_raw or {}).get("data_source") or (market_raw or {}).get("source"),
+        "data_timestamp_hkt": (market_raw or {}).get("data_timestamp_hkt") or (market_raw or {}).get("timestamp_hkt"),
+        "freshness_status": (market_raw or {}).get("freshness_status") or (market_raw or {}).get("freshness_status_display"),
+        "freshness_label": (market_raw or {}).get("freshness_label"),
+        "market_data_acceptance_status": (market_raw or {}).get("market_data_acceptance_status", "unknown"),
+        "market_data_acceptance_warning": (market_raw or {}).get("market_data_acceptance_warning"),
+        "delay_minutes": (market_raw or {}).get("delay_minutes"),
+        "limitations": (market_raw or {}).get("limitations") if isinstance((market_raw or {}).get("limitations"), list) else [],
+    }
     return {
         "snapshot_schema_version": 1,
-        "created_at_hkt": created_at_hkt,
+        "created_at_utc": now_utc.isoformat(),
+        "created_at_hkt": now_hkt.isoformat(),
+        "human_decision_journal_entry_id": human_decision_journal_entry_id,
         "business_date_hkt": business_date_hkt,
         "latest_run_id": latest_run_id,
         "ticker": ticker,
         "human_paper_decision": human_paper_decision,
         "signal_snapshot": signal if isinstance(signal, dict) else {},
-        "market_data_snapshot": market if isinstance(market, dict) else {},
-        "market_data_acceptance_status": (market or {}).get("market_data_acceptance_status", "unknown"),
-        "market_data_acceptance_warning": (market or {}).get("market_data_acceptance_warning"),
+        "market_data_snapshot": market_data_snapshot,
+        "market_data_acceptance_status": market_data_snapshot.get("market_data_acceptance_status", "unknown"),
+        "market_data_acceptance_warning": market_data_snapshot.get("market_data_acceptance_warning"),
         "paper_position_snapshot": portfolio,
         "paper_pnl_snapshot": {
             "realized_pnl": portfolio.get("realized_pnl"),
@@ -47,7 +70,7 @@ def build_human_decision_context_snapshot(
         "risk_snapshot": risk if isinstance(risk, dict) else {},
         "missing_context": missing_context if isinstance(missing_context, list) else [],
         "data_sources": {"decision_context": "review_shell_decision_context", "portfolio": "paper_pnl_read_model"},
-        "data_timestamps": {"created_at_hkt": created_at_hkt, "market_data_timestamp_hkt": (market or {}).get("timestamp_hkt")},
+        "data_timestamps": {"created_at_hkt": now_hkt.isoformat(), "created_at_utc": now_utc.isoformat(), "market_data_timestamp_hkt": market_data_snapshot.get("data_timestamp_hkt")},
         "paper_trade_only": True,
         "decision_support_only": True,
         "no_broker_execution": True,
@@ -58,11 +81,17 @@ def build_human_decision_context_snapshot(
 def persist_decision_context_snapshot(client: Any, *, snapshot: dict[str, Any]) -> dict[str, Any]:
     market = snapshot.get("market_data_snapshot") or {}
     payload = {
+        "human_decision_journal_entry_id": snapshot.get("human_decision_journal_entry_id"),
         "ticker": snapshot.get("ticker"),
         "latest_run_id": snapshot.get("latest_run_id"),
         "business_date_hkt": snapshot.get("business_date_hkt"),
+        "decision_type": (snapshot.get("human_paper_decision") or {}).get("decision_type"),
+        "confidence_label": (snapshot.get("human_paper_decision") or {}).get("confidence_label"),
+        "snapshot_schema_version": snapshot.get("snapshot_schema_version"),
+        "created_at_hkt": snapshot.get("created_at_hkt"),
+        "delay_minutes": market.get("delay_minutes"),
         "snapshot_json": snapshot,
-        "reference_price": market.get("price"),
+        "reference_price": market.get("reference_price") or market.get("price"),
         "previous_close": market.get("previous_close"),
         "change": market.get("change"),
         "change_pct": market.get("change_pct"),
@@ -70,9 +99,9 @@ def persist_decision_context_snapshot(client: Any, *, snapshot: dict[str, Any]) 
         "turnover": market.get("turnover"),
         "currency": market.get("currency"),
         "market": market.get("market"),
-        "data_source": market.get("source"),
-        "data_timestamp_hkt": market.get("timestamp_hkt"),
-        "freshness_status": market.get("freshness_status"),
+        "data_source": market.get("data_source") or market.get("source"),
+        "data_timestamp_hkt": market.get("data_timestamp_hkt") or market.get("timestamp_hkt"),
+        "freshness_status": market.get("freshness_status") or market.get("freshness_status_display"),
         "freshness_label": market.get("freshness_label"),
         "market_data_acceptance_status": snapshot.get("market_data_acceptance_status", "unknown"),
         "market_data_acceptance_warning": snapshot.get("market_data_acceptance_warning"),

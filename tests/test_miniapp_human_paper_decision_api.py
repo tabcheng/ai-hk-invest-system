@@ -117,3 +117,15 @@ def test_human_paper_decision_snapshot_failure_still_returns_journal_saved(monke
     assert status.startswith("200")
     assert payload["journal_saved"] is True
     assert payload["snapshot_saved"] is False
+
+
+def test_human_paper_decision_builder_failure_after_journal_write_is_partial_success(monkeypatch):
+    monkeypatch.setattr("src.telegram_webhook_server._load_supabase_client", lambda: object())
+    monkeypatch.setattr("src.telegram_webhook_server.record_miniapp_human_paper_decision_journal", lambda *args, **kwargs: {"id": "j-1"})
+    monkeypatch.setattr("src.telegram_webhook_server.build_human_decision_context_snapshot", lambda **kwargs: (_ for _ in ()).throw(RuntimeError("provider secret")))
+    monkeypatch.setattr("src.miniapp_data_provider.SupabaseLatestSystemRunMiniAppReadDataProvider.get_decision_context_summary", lambda self: {"tickers": []})
+    monkeypatch.setattr("src.miniapp_data_provider.SupabaseLatestSystemRunMiniAppReadDataProvider.get_ticker_level_paper_portfolio_review", lambda self: {"rows": []})
+    status, _, payload = _call("/miniapp/api/human-paper-decision", "POST", _decision_body(monkeypatch))
+    assert status.startswith("200")
+    assert payload["journal_saved"] is True
+    assert payload["snapshot_saved"] is False

@@ -236,3 +236,4 @@ Mini App should **not**:
 
 - Step 131: Journal submit now persists bounded decision context snapshot (including market freshness/acceptance + paper position/PnL/risk context) and reports journal/snapshot save status separately.
 - Step 131A: Journal surface wording now explicitly marks `paper_buy`/`paper_sell` as journal labels only (no simulated order, no position mutation, no broker connection).
+- Step 131B: Journal save result UX now prioritizes submit-adjacent persistent inline result card (with saved identifiers + paper-only guardrail wording), while optional toast is secondary feedback only.

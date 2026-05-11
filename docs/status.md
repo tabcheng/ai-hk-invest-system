@@ -543,5 +543,8 @@
 - Step 131A completed: Mini App journal submit now shows top success/warning banner with ticker/decision/confidence/journal_id/snapshot_id/snapshot_saved/saved_at_hkt and explicit `paper-trading only` + `no order created` wording.
 - Step 131A completed: changing ticker/decision/confidence/rationale now clears stale save state with `表單已修改，尚未保存目前變更。` to prevent cross-ticker misread.
 - Step 131A completed: added normalized `rationale_text` + `operator_user_id_hash_or_label` columns in `decision_context_snapshots` persistence path for list/search-ready review surfaces.
+- Step 131B completed: journal save primary feedback moved to submit-adjacent persistent inline result card (`journal-submit-result-card`) with explicit fields (`ticker`, `decision_type`, `confidence_label`, `journal_id`, `snapshot_id`, `snapshot_saved`, `saved_at_hkt`) and clear paper-only/no-order/no-position-mutation wording.
+- Step 131B completed: submit button now uses bounded loading state (`保存中...`, disabled during submit) and restores after completion; optional bottom toast added as auxiliary only.
+- Step 131B completed: form edits after save now render amber stale-state card with previous saved ticker/decision/journal/snapshot summary; save flow keeps selected ticker and no longer resets form in a way that can imply another ticker was saved.
 
 - Step 131A migration path correction: duplicated `20260511_step131a_decision_context_snapshots_rationale_operator.sql` into `db/migrations/` (repo runtime migration convention) while retaining supabase copy for schema-doc continuity; apply DB migration before runtime smoke.

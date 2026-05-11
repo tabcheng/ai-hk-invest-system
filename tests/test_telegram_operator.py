@@ -1040,6 +1040,17 @@ def test_journal_review_command_bounded_and_boundary(monkeypatch):
     assert "<img" not in response
 
 
+def test_journal_outcome_command_bounded_and_boundary(monkeypatch):
+    monkeypatch.setenv("TELEGRAM_CHAT_ID", "chat-1")
+    monkeypatch.setattr(
+        "src.telegram_operator.build_journal_snapshot_outcome_review",
+        lambda *_a, **_k: {"items": [{"snapshot_id": "s1", "human_decision_journal_entry_id": "j1", "ticker": "0700.HK", "decision_type": "watch", "confidence_label": "medium", "original_market_data_acceptance_status": "caution", "latest_pnl": {"total_pnl": 12}, "outcome_delta": {"pnl_delta_since_snapshot": 2, "status": "available"}, "created_at_hkt": "2026-05-11T12:00:00+00:00"}]},
+    )
+    response = handle_telegram_operator_command(object(), _build_update("/journal_outcome"))
+    assert "Command: /journal_outcome" in response
+    assert "paper-trading decision support only; no real-money execution" in response
+
+
 def test_decision_note_invalid_human_action(monkeypatch):
     monkeypatch.setenv("TELEGRAM_CHAT_ID", "chat-1")
     response = handle_telegram_operator_command(object(), _build_update("/decision_note scope=run run_id=1 source_command=/daily_review human_action=buy note=ok"))

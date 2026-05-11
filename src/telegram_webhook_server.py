@@ -20,6 +20,7 @@ from src.human_decision_journal import (
     ALLOWED_MINIAPP_DECISION_TYPES,
     build_human_decision_context_snapshot,
     build_recent_decision_context_snapshots_review,
+    build_journal_snapshot_outcome_review,
     persist_decision_context_snapshot,
     record_miniapp_human_paper_decision_journal,
 )
@@ -275,6 +276,34 @@ def _handle_miniapp_journal_snapshots_request(raw_body: bytes) -> tuple[str, dic
         return "503 Service Unavailable", {"ok": False, "error": "journal_snapshot_unavailable"}
 
 
+
+def _handle_miniapp_journal_outcomes_request(raw_body: bytes) -> tuple[str, dict[str, Any]]:
+    try:
+        payload = json.loads(raw_body.decode("utf-8") or "{}")
+    except Exception:
+        return "400 Bad Request", {"ok": False, "error": "invalid_json"}
+    init_data = payload.get("init_data")
+    if not isinstance(init_data, str) or not init_data.strip():
+        return "400 Bad Request", {"ok": False, "error": "missing_init_data"}
+    try:
+        bot_token = _load_miniapp_bot_token_from_env()
+        allowed_user_ids = _load_miniapp_allowed_telegram_user_ids_from_env()
+        validated_context = validate_telegram_init_data(init_data, bot_token=bot_token)
+        authorize_telegram_operator(validated_context, allowed_telegram_user_ids=allowed_user_ids)
+        supabase_client = _load_supabase_client()
+        data = build_journal_snapshot_outcome_review(
+            supabase_client,
+            snapshot_id=str(payload.get("snapshot_id") or "").strip() or None,
+            ticker=str(payload.get("ticker") or "").strip().upper() or None,
+            business_date_hkt=str(payload.get("business_date_hkt") or "").strip() or None,
+            limit=int(payload.get("limit") or 5),
+        )
+        return "200 OK", {"ok": True, "status": "ok", **data}
+    except MiniAppAuthValidationError:
+        return "401 Unauthorized", {"ok": False, "error": "invalid_or_unauthorized_init_data"}
+    except Exception:
+        return "503 Service Unavailable", {"ok": False, "error": "journal_outcome_unavailable"}
+
 def _load_supabase_client() -> Any:
     from src.config import get_supabase_client
 
@@ -390,7 +419,7 @@ def create_wsgi_app() -> Any:
         request_origin = str(environ.get("HTTP_ORIGIN", "") or "").strip()
         allow_cors_origin = (
             request_origin
-            if path in {"/miniapp/api/review-shell", "/miniapp/api/human-paper-decision", "/miniapp/api/journal-snapshots"}
+            if path in {"/miniapp/api/review-shell", "/miniapp/api/human-paper-decision", "/miniapp/api/journal-snapshots", "/miniapp/api/journal-outcomes"}
             and request_origin
             and allowed_miniapp_origin
             and request_origin == allowed_miniapp_origin
@@ -398,7 +427,7 @@ def create_wsgi_app() -> Any:
         )
         response_headers: list[tuple[str, str]] = []
 
-        if path in {"/miniapp/api/review-shell", "/miniapp/api/human-paper-decision", "/miniapp/api/journal-snapshots"} and method == "OPTIONS":
+        if path in {"/miniapp/api/review-shell", "/miniapp/api/human-paper-decision", "/miniapp/api/journal-snapshots", "/miniapp/api/journal-outcomes"} and method == "OPTIONS":
             if allow_cors_origin:
                 response_headers.extend(
                     [
@@ -416,7 +445,7 @@ def create_wsgi_app() -> Any:
         elif method != "POST":
             status = "405 Method Not Allowed"
             payload = {"ok": False, "error": "method_not_allowed"}
-        elif path in {"/miniapp/api/review-shell", "/miniapp/api/human-paper-decision", "/miniapp/api/journal-snapshots"}:
+        elif path in {"/miniapp/api/review-shell", "/miniapp/api/human-paper-decision", "/miniapp/api/journal-snapshots", "/miniapp/api/journal-outcomes"}:
             content_type = str(environ.get("CONTENT_TYPE") or "")
             if not _is_supported_json_content_type(content_type):
                 status = "415 Unsupported Media Type"
@@ -440,6 +469,8 @@ def create_wsgi_app() -> Any:
                             status, payload = _handle_miniapp_review_shell_request(raw_body)
                         elif path == "/miniapp/api/human-paper-decision":
                             status, payload = _handle_miniapp_human_paper_decision_request(raw_body)
+                        elif path == "/miniapp/api/journal-outcomes":
+                            status, payload = _handle_miniapp_journal_outcomes_request(raw_body)
                         else:
                             status, payload = _handle_miniapp_journal_snapshots_request(raw_body)
         elif not _is_webhook_request_authorized(environ):

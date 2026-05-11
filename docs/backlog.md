@@ -294,3 +294,5 @@ Prioritization:
 - Step 131B follow-up: add deeper UI interaction tests (submit success/partial/stale card state transitions and submit-button loading) with richer DOM event simulation coverage.
 
 - Step 133 candidate: outcome review linkage based on journal snapshot keys (snapshot_id + journal_entry_id + ticker + business_date_hkt + latest_run_id).
+
+- Step 133 follow-up: validate outcome-link deltas against production paper position timing (`valuation_timestamp_hkt`) and keep stale market acceptance preserved in UI/Telegram displays.

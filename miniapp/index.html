@@ -317,6 +317,7 @@
           try { const resp=await fetch(`${apiBaseUrl}/miniapp/api/human-paper-decision`, { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(body)}); const p=await resp.json(); if (resp.ok && p.ok) { hasSavedSubmission = true; lastSavedSummary = `${p.ticker} · ${p.decision_type} · Journal #${p.journal_id} · Snapshot #${p.snapshot_id || "failed"}`; if (p.snapshot_saved) { renderResultCardLines("success", "status", [`✅ 已保存人手模擬決策`, `${p.ticker} · ${p.decision_type} · Confidence: ${p.confidence_label || "unknown"}`, `Journal #${p.journal_id} · Snapshot #${p.snapshot_id}`, `snapshot_saved=${p.snapshot_saved} · saved_at_hkt=${p.saved_at_hkt}`, "未建立訂單 · 未改變 paper position · 不連接券商 · 只限 paper trading"]); showToast(`✅ 已保存 ${p.ticker} ${p.decision_type} · Snapshot #${p.snapshot_id}`); } else { renderResultCardLines("warning", "alert", ["⚠️ Journal 已保存，但 Context snapshot 未保存", `Journal #${p.journal_id} · Snapshot: failed`, "請檢查 migration/backend logs", `ticker=${p.ticker} · decision_type=${p.decision_type} · confidence=${p.confidence_label || "unknown"}`, "未建立訂單 · 未改變 paper position · 不連接券商 · 只限 paper trading"]); } result.textContent=""; ticker.value = String(p.ticker || body.ticker || ""); renderContext(); loadJournalSnapshots(); } else if (p.error==="journal_unavailable") { result.textContent="日誌暫時未能寫入；未有資料被儲存。"; if (hasSavedSubmission && lastSavedSummary) { renderResultCardLines("warning", "alert", ["⚠️ 今次提交失敗；上一個已保存紀錄仍然有效", `上一個已保存：${lastSavedSummary}`]); } else { resultCard.style.display = "none"; } } else { result.textContent="提交失敗，請檢查輸入欄位。"; if (hasSavedSubmission && lastSavedSummary) { renderResultCardLines("warning", "alert", ["⚠️ 今次提交失敗；上一個已保存紀錄仍然有效", `上一個已保存：${lastSavedSummary}`]); } else { resultCard.style.display = "none"; } } } catch (_e) { result.textContent="日誌暫時未能寫入；未有資料被儲存。"; if (hasSavedSubmission && lastSavedSummary) { renderResultCardLines("warning", "alert", ["⚠️ 今次提交失敗；上一個已保存紀錄仍然有效", `上一個已保存：${lastSavedSummary}`]); } else { resultCard.style.display = "none"; } } finally { submitBtn.disabled = false; submitBtn.textContent = "記錄人手模擬決策"; }
         });
         loadJournalSnapshots();
+        loadJournalOutcomes();
       }
       async function loadJournalSnapshots() {
         const box = document.getElementById("journal-snapshot-review");
@@ -329,6 +330,7 @@
           const rows = Array.isArray(payload?.items) ? payload.items.slice(0, 5) : [];
           if (!(response.ok && payload?.ok) || rows.length === 0) {
             box.innerHTML = `<h3>最近保存紀錄 / Recent Journal Snapshots</h3><p class="helper-text">未有已保存 journal snapshot</p>`;
+          const out=document.getElementById("journal-outcome-review"); if(out) out.innerHTML = `<h3>後續結果 / Outcome Link</h3><p class="helper-text">未有可顯示後續結果</p>`;
             return;
           }
           box.textContent = "";
@@ -351,8 +353,32 @@
           });
         } catch (_error) {
           box.innerHTML = `<h3>最近保存紀錄 / Recent Journal Snapshots</h3><p class="helper-text">未有已保存 journal snapshot</p>`;
+          const out=document.getElementById("journal-outcome-review"); if(out) out.innerHTML = `<h3>後續結果 / Outcome Link</h3><p class="helper-text">未有可顯示後續結果</p>`;
         }
       }
+
+      async function loadJournalOutcomes() {
+        const box = document.getElementById("journal-outcome-review"); if (!box) return;
+        const initData = (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initData) || "";
+        const apiBaseUrl = resolveApiBaseUrl();
+        try {
+          const response = await fetch(`${apiBaseUrl}/miniapp/api/journal-outcomes`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ init_data: initData, limit: 5 }) });
+          const payload = await response.json(); const rows = Array.isArray(payload?.items) ? payload.items.slice(0, 5) : [];
+          if (!(response.ok && payload?.ok) || rows.length === 0) { box.innerHTML = `<h3>後續結果 / Outcome Link</h3><p class="helper-text">未有可顯示後續結果</p>`; return; }
+          box.textContent = ""; const h = document.createElement("h3"); h.textContent = "後續結果 / Outcome Link"; box.appendChild(h);
+          rows.forEach((row) => { const card = document.createElement("div"); card.className = "metric-item"; const add=(t)=>{const p=document.createElement("p"); p.className="row"; p.textContent=t; card.appendChild(p);};
+            add(`${row?.ticker || "N/A"} · ${row?.decision_type || "N/A"} · ${row?.confidence_label || "unknown"}`);
+            add(`Journal #${row?.human_decision_journal_entry_id || "N/A"} / Snapshot #${row?.snapshot_id || "N/A"}`);
+            add(`original market: ${row?.original_market_data_acceptance_status || "unknown"}`);
+            add(`original price: ${row?.original_reference_price || "N/A"}`);
+            add(`current/latest total pnl: ${row?.latest_pnl?.total_pnl ?? "N/A"}`);
+            add(`delta/status: ${row?.outcome_delta?.pnl_delta_since_snapshot ?? "N/A"} / ${row?.outcome_delta?.status || "unknown"}`);
+            add(`saved_at_hkt: ${row?.created_at_hkt || "N/A"}`);
+            add("paper trading only · no broker/live/real-money execution");
+            box.appendChild(card); });
+        } catch (_error) { box.innerHTML = `<h3>後續結果 / Outcome Link</h3><p class="helper-text">未有可顯示後續結果</p>`; }
+      }
+
       function setActiveTab(tab){ const panelMap={today:["overview-card","latest-card","daily-card","paper-pnl-card","risk-card"],signals:["signals-card"],context:["context-card"],journal:["journal-card"]}; Object.keys(panelMap).forEach((k)=>panelMap[k].forEach((id)=>{const el=document.getElementById(id); if(el) el.style = (k===tab)?"":"display:none;";})); const tabs=["today","signals","context","journal"]; tabs.forEach((name)=>{const btn=document.getElementById(`tab-${name}`); if(btn){ const on=name===tab; btn.setAttribute("aria-selected", on?"true":"false"); }}); }
       function bindTabs(){ const tabs=["today","signals","context","journal"]; tabs.forEach((name)=>{ const b=document.getElementById(`tab-${name}`); if(b) b.addEventListener("click", ()=> setActiveTab(name)); }); setActiveTab("today"); }
       async function loadReviewShell() {

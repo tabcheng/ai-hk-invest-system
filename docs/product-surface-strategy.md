@@ -239,3 +239,5 @@ Mini App should **not**:
 - Step 131B: Journal save result UX now prioritizes submit-adjacent persistent inline result card (with saved identifiers + paper-only guardrail wording), while optional toast is secondary feedback only.
 
 - Added product slice: Recent Journal Snapshots review surface in Journal tab (read-only list, no edit/delete/order).
+
+- Added Journal Outcome Link surface: Mini App Journal tab now includes read-only "後續結果 / Outcome Link" cards sourced from backend `/miniapp/api/journal-outcomes`; Telegram adds `/journal_outcome` bounded summary command.

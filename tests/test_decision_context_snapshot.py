@@ -1,4 +1,4 @@
-from src.human_decision_journal import build_human_decision_context_snapshot, persist_decision_context_snapshot, build_recent_decision_context_snapshots_review
+from src.human_decision_journal import build_human_decision_context_snapshot, persist_decision_context_snapshot, build_recent_decision_context_snapshots_review, build_journal_snapshot_outcome_review
 
 
 def test_snapshot_builder_includes_required_fields():
@@ -110,3 +110,48 @@ def test_recent_snapshot_review_default_limit_is_5():
         def table(self, _name): return _T()
     out = build_recent_decision_context_snapshots_review(_C())
     assert out["limit"] == 5
+
+
+def test_journal_snapshot_outcome_review_links_and_caps_limit():
+    class _T:
+        def __init__(self, name): self.name=name
+        def select(self, _): return self
+        def order(self, *_a, **_k): return self
+        def limit(self, n): self.n=n; return self
+        def eq(self, *_a): return self
+        def execute(self):
+            if self.name == "decision_context_snapshots":
+                return type("R", (), {"data":[{"id":"s1","human_decision_journal_entry_id":"j1","ticker":"0700.HK","decision_type":"watch","confidence_label":"medium","rationale_text":"r","created_at_hkt":"2026","business_date_hkt":"2026-05-11","latest_run_id":"r1","reference_price":100,"market_data_acceptance_status":"stale","data_timestamp_hkt":"2026","snapshot_json":{"paper_position_snapshot":{"total_pnl":10},"missing_context":["x"]}}]})()
+            if self.name == "paper_trades":
+                return type("R", (), {"data":[{"stock":"0700.HK","action":"BUY","quantity":1,"price":90,"realized_pnl":5,"trade_date":"2026-05-01","id":1}]})()
+            if self.name == "paper_positions":
+                return type("R", (), {"data":[{"ticker":"0700.HK","quantity":1,"avg_cost":90,"last_price":110,"unrealized_pnl":7,"realized_pnl":5,"updated_at":"2026-05-11 16:00:00 HKT"}]})()
+            if self.name == "paper_daily_snapshots":
+                return type("R", (), {"data":[{"snapshot_date":"2026-05-11"}]})()
+            return type("R", (), {"data": []})()
+    class _C:
+        def table(self, name): return _T(name)
+    out = build_journal_snapshot_outcome_review(_C(), limit=30)
+    assert out["limit"] == 20
+    assert out["items"][0]["outcome_delta"]["pnl_delta_since_snapshot"] == 2.0
+    assert out["items"][0]["outcome_delta"]["status"] == "available"
+
+
+def test_journal_snapshot_outcome_review_no_current_position_sets_no_position_status():
+    class _T:
+        def __init__(self, name): self.name = name
+        def select(self, _): return self
+        def order(self, *_a, **_k): return self
+        def limit(self, _n): return self
+        def eq(self, *_a): return self
+        def execute(self):
+            if self.name == "decision_context_snapshots":
+                return type("R", (), {"data": [{"id": "s2", "ticker": "0388.HK", "reference_price": 300, "snapshot_json": {"paper_position_snapshot": {"total_pnl": 1}}}]})()
+            if self.name == "paper_daily_snapshots":
+                return type("R", (), {"data": [{"snapshot_date": "2026-05-11"}]})()
+            return type("R", (), {"data": []})()
+    class _C:
+        def table(self, name): return _T(name)
+    out = build_journal_snapshot_outcome_review(_C(), limit=5)
+    assert out["items"][0]["current_paper_position"] is None
+    assert out["items"][0]["outcome_delta"]["status"] == "no_position"

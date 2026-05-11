@@ -529,3 +529,5 @@ Proposed table: `human_decision_journal_entries` with draft columns:
 
 
 - Added Step 132 bounded read model + miniapp API endpoint + telegram command for decision_context_snapshots summary list.
+
+- Step 133 contract: decision_context_snapshots can be joined to latest paper position/PnL read model via bounded helper `build_journal_snapshot_outcome_review` and exposed through read-only Mini App API/Telegram review surfaces only.

@@ -318,3 +318,5 @@ No broker integration or autonomous real-money execution is authorized by this p
 - Step 131B boundary note: submit-adjacent inline result card is the source-of-truth feedback surface; optional toast must stay summary-only and must not expose raw API errors/initData/tokens/vendor payloads.
 
 - Added /miniapp/api/journal-snapshots read-only bounded contract; no raw initData/raw snapshot_json/vendor payload/secrets in response.
+
+- Added read-only Mini App endpoint `/miniapp/api/journal-outcomes`: server-side initData validation required, bounded outcome-link rows only, no raw snapshot_json/initData/token/vendor payload.

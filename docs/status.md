@@ -551,3 +551,5 @@
 
 - Step 132 in progress: added bounded journal snapshot review read surfaces for Mini App API/UI and Telegram /journal_review foundation for outcome-link keys.
 - Step 132 PR#134 fixup: resolved Mini App journal snapshot XSS risk via textContent rendering; Journal tab now loads recent snapshots on view render; added focused tests for bounded read model/API/UI/Telegram.
+
+- Step 133 in progress: added bounded journal snapshot outcome link read model (`build_journal_snapshot_outcome_review`), Mini App read-only `/miniapp/api/journal-outcomes` + Journal tab outcome panel, and Telegram `/journal_outcome` command. Preserves paper-trading decision-support boundary (no broker/live/real-money execution, no order creation, no position mutation).

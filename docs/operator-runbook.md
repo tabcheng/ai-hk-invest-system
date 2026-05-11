@@ -470,3 +470,5 @@ Use this checklist when reviewing Mini App read-only surfaces:
 - Step 131B operator UX note: primary submit feedback is now the submit-adjacent persistent result card; confirm saved ticker/decision/confidence/journal id/snapshot id/saved_at_hkt there first, then treat bottom toast as auxiliary only.
 
 - Journal review: use /journal_review to read recent 5 bounded snapshots (paper-trading decision support only; no real-money execution).
+
+- Journal outcome review: use `/journal_outcome` to inspect latest 5 snapshot-linked bounded outcomes (paper-trading decision support only; no real-money execution).

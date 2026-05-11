@@ -13,6 +13,7 @@ from src.human_decision_journal import (
     ALLOWED_SOURCE_COMMANDS,
     record_run_level_decision_note,
     record_stock_level_decision_note,
+    build_recent_decision_context_snapshots_review,
 )
 from src.latest_system_runs_repository import get_latest_system_run
 from src.market_data.smoke import (
@@ -32,6 +33,7 @@ _MARKET_SMOKE_COMMAND_PATTERN = re.compile(r"^/market_smoke(?:\s+(\S+))?\s*$", r
 _PNL_REVIEW_COMMAND_PATTERN = re.compile(r"^/pnl_review\s*$", re.IGNORECASE)
 _OUTCOME_REVIEW_COMMAND_PATTERN = re.compile(r"^/outcome_review(?:\s+(\S+))?\s*$", re.IGNORECASE)
 _DAILY_REVIEW_COMMAND_PATTERN = re.compile(r"^/daily_review\s*$", re.IGNORECASE)
+_JOURNAL_REVIEW_COMMAND_PATTERN = re.compile(r"^/journal_review\s*$", re.IGNORECASE)
 _DECISION_NOTE_COMMAND_PATTERN = re.compile(r"^/decision_note(?:\s+(.*))?$", re.IGNORECASE)
 _HELP_COMMAND_PATTERN = re.compile(r"^/(?:help|h)\s*$", re.IGNORECASE)
 _DEFAULT_DAYS = 5
@@ -472,6 +474,7 @@ def build_help_command_message() -> str:
             "- /pnl_review : Show paper position/PnL review snapshot (查看持倉與盈虧摘要).",
             "- /outcome_review [days] : Show closed-trade outcome summary (查看平倉結果摘要，可選天數視窗).",
             "- /daily_review : Show daily operator review packet MVP (每日操作員快速檢視封包).",
+            "- /journal_review : Show recent saved journal snapshots (最近已保存日誌快照).",
             "- /decision_note scope=run run_id=123 source_command=/daily_review human_action=observe note=Daily review checked. : "
             "Record run-level human decision journal entry (journaling only; no execution).",
             "- /decision_note scope=stock run_id=123 stock_id=0700.HK source_command=/daily_review human_action=observe note=Reviewed signal; no action. : "
@@ -978,6 +981,7 @@ def handle_telegram_operator_command(client: Any, update: dict[str, Any]) -> str
     is_pnl_review_command = text.lower().startswith("/pnl_review")
     is_outcome_review_command = text.lower().startswith("/outcome_review")
     is_daily_review_command = text.lower().startswith("/daily_review")
+    is_journal_review_command = text.lower().startswith("/journal_review")
     is_market_smoke_command = text.lower().startswith("/market_smoke")
     is_decision_note_command = text.lower().startswith("/decision_note")
     if not (
@@ -989,6 +993,7 @@ def handle_telegram_operator_command(client: Any, update: dict[str, Any]) -> str
         or is_pnl_review_command
         or is_outcome_review_command
         or is_daily_review_command
+        or is_journal_review_command
         or is_decision_note_command
         or is_market_smoke_command
     ):
@@ -1134,6 +1139,20 @@ def handle_telegram_operator_command(client: Any, update: dict[str, Any]) -> str
             except ValueError as exc:
                 return _build_usage_error_message(command_label="/daily_review", error_text=str(exc))
             return _build_daily_review_command_message(client)
+        if is_journal_review_command:
+            rows = build_recent_decision_context_snapshots_review(client, limit=5).get("items", [])
+            if not rows:
+                return _build_operator_message(command_label="/journal_review", status="ok", result="未有已保存 journal snapshot")
+            fields: list[tuple[str, Any]] = []
+            for idx, row in enumerate(rows[:5], 1):
+                short_rationale = str(row.get("rationale_text") or "").strip().replace("\n", " ")[:50]
+                fields.append((f"{idx}. snapshot", f"#{row.get('snapshot_id')} | journal #{row.get('human_decision_journal_entry_id')}"))
+                fields.append((f"{idx}. item", f"{row.get('ticker')} · {row.get('decision_type')} · {row.get('confidence_label')}"))
+                fields.append((f"{idx}. market", f"{row.get('market_data_acceptance_status')}"))
+                fields.append((f"{idx}. saved_at_hkt", _format_display_timestamp_hkt(row.get("created_at_hkt"), field_name="created_at_hkt")))
+                fields.append((f"{idx}. rationale", short_rationale or "N/A"))
+            fields.append(("boundary", "paper-trading decision support only; no real-money execution"))
+            return _build_operator_message(command_label="/journal_review", status="ok", result="recent saved snapshots", fields=fields)
 
         if is_market_smoke_command:
             try:

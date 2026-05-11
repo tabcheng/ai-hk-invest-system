@@ -468,3 +468,5 @@ Use this checklist when reviewing Mini App read-only surfaces:
 - Step 131 operator note: Mini App journal submit success now includes separate journal/context-snapshot save status; if snapshot save fails, treat as partial success and re-check context data freshness before next review.
 - Step 131A operator UX note: Journal banner now appears at card top; if banner shows `snapshot_saved=false` (amber warning), treat as partial success (`journal_saved=true`) and check backend/migration logs before relying on snapshot review evidence.
 - Step 131B operator UX note: primary submit feedback is now the submit-adjacent persistent result card; confirm saved ticker/decision/confidence/journal id/snapshot id/saved_at_hkt there first, then treat bottom toast as auxiliary only.
+
+- Journal review: use /journal_review to read recent 5 bounded snapshots (paper-trading decision support only; no real-money execution).

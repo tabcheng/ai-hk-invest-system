@@ -527,3 +527,5 @@ Proposed table: `human_decision_journal_entries` with draft columns:
 - Current system still lacks canonical market data source; market data may remain unavailable/unknown.
 - No vendor integration, no broker/live/real-money execution, no order/simulated-order creation, no Supabase schema migration, no Telegram auth change.
 
+
+- Added Step 132 bounded read model + miniapp API endpoint + telegram command for decision_context_snapshots summary list.

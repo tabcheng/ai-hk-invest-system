@@ -13,7 +13,20 @@ def test_snapshot_builder_includes_required_fields():
                 {
                     "ticker": "0700.HK",
                     "signal": {"direction": "neutral", "SUPABASE_SERVICE_ROLE_KEY": "x"},
-                    "market_data": {"reference_price": 420.5, "market_data_acceptance_status": "caution_last_available_close", "raw_payload": {"x": 1}, "EODHD_API_TOKEN": "s"},
+                    "market": {
+                        "reference_price": 420.5,
+                        "previous_close": 418.0,
+                        "change": 2.5,
+                        "change_pct": 0.6,
+                        "volume": 123456,
+                        "data_source": "eodhd",
+                        "data_timestamp_hkt": "2026-05-11 16:08 HKT",
+                        "freshness_status": "last_available_close",
+                        "market_data_acceptance_status": "caution_last_available_close",
+                        "market_data_acceptance_warning": "last available close / paper review caution",
+                        "raw_payload": {"x": 1},
+                        "EODHD_API_TOKEN": "s",
+                    },
                     "risk": {"risk_level": "medium", "TELEGRAM_BOT_TOKEN": "x"},
                     "missing_context": ["valuation"],
                 }
@@ -56,8 +69,10 @@ def test_persist_snapshot_uses_alias_safe_mapping_and_linkage():
         "snapshot_schema_version": 1,
         "created_at_hkt": "2026-05-11T20:00:00+08:00",
         "human_paper_decision": {"decision_type": "watch", "confidence_label": "medium"},
+        "market_data_acceptance_status": "caution_last_available_close",
         "market_data_snapshot": {"reference_price": 500.0, "data_source": "eodhd", "data_timestamp_hkt": "2026-05-11 16:00:00 HKT", "freshness_status": "last_available_close"},
     })
     assert captured["human_decision_journal_entry_id"] == 88
     assert captured["reference_price"] == 500.0
     assert captured["data_source"] == "eodhd"
+    assert captured["market_data_acceptance_status"] == "caution_last_available_close"

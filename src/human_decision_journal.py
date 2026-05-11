@@ -42,7 +42,11 @@ def build_human_decision_context_snapshot(
 ) -> dict[str, Any]:
     tickers = (decision_context_summary or {}).get("tickers") or []
     matched = next((row for row in tickers if str(row.get("ticker") or "").upper() == ticker.upper()), {})
-    market_raw = matched.get("market_data") if isinstance(matched, dict) else {}
+    market_raw = (
+        (matched.get("market") or matched.get("market_data") or {})
+        if isinstance(matched, dict)
+        else {}
+    )
     signal = matched.get("signal") if isinstance(matched, dict) else {}
     risk = matched.get("risk") if isinstance(matched, dict) else {}
     missing_context = matched.get("missing_context") if isinstance(matched, dict) else []

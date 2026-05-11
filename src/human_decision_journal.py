@@ -9,6 +9,84 @@ ALLOWED_MINIAPP_DECISION_TYPES = {"watch", "paper_buy", "paper_sell", "paper_hol
 ALLOWED_MINIAPP_CONFIDENCE = {"low", "medium", "high", "unknown"}
 
 
+def build_human_decision_context_snapshot(
+    *,
+    business_date_hkt: str,
+    latest_run_id: str,
+    ticker: str,
+    human_paper_decision: dict[str, Any],
+    decision_context_summary: dict[str, Any] | None,
+    ticker_level_paper_portfolio_review: dict[str, Any] | None,
+) -> dict[str, Any]:
+    tickers = (decision_context_summary or {}).get("tickers") or []
+    matched = next((row for row in tickers if str(row.get("ticker") or "").upper() == ticker.upper()), {})
+    market = matched.get("market_data") if isinstance(matched, dict) else {}
+    signal = matched.get("signal") if isinstance(matched, dict) else {}
+    risk = matched.get("risk") if isinstance(matched, dict) else {}
+    missing_context = matched.get("missing_context") if isinstance(matched, dict) else []
+    portfolio_rows = (ticker_level_paper_portfolio_review or {}).get("rows") or []
+    portfolio = next((row for row in portfolio_rows if str(row.get("ticker") or "").upper() == ticker.upper()), {})
+    created_at_hkt = datetime.now(timezone.utc).astimezone(timezone.utc).isoformat()
+    return {
+        "snapshot_schema_version": 1,
+        "created_at_hkt": created_at_hkt,
+        "business_date_hkt": business_date_hkt,
+        "latest_run_id": latest_run_id,
+        "ticker": ticker,
+        "human_paper_decision": human_paper_decision,
+        "signal_snapshot": signal if isinstance(signal, dict) else {},
+        "market_data_snapshot": market if isinstance(market, dict) else {},
+        "market_data_acceptance_status": (market or {}).get("market_data_acceptance_status", "unknown"),
+        "market_data_acceptance_warning": (market or {}).get("market_data_acceptance_warning"),
+        "paper_position_snapshot": portfolio,
+        "paper_pnl_snapshot": {
+            "realized_pnl": portfolio.get("realized_pnl"),
+            "unrealized_pnl": portfolio.get("unrealized_pnl"),
+            "total_pnl": portfolio.get("total_pnl"),
+        } if isinstance(portfolio, dict) else {},
+        "risk_snapshot": risk if isinstance(risk, dict) else {},
+        "missing_context": missing_context if isinstance(missing_context, list) else [],
+        "data_sources": {"decision_context": "review_shell_decision_context", "portfolio": "paper_pnl_read_model"},
+        "data_timestamps": {"created_at_hkt": created_at_hkt, "market_data_timestamp_hkt": (market or {}).get("timestamp_hkt")},
+        "paper_trade_only": True,
+        "decision_support_only": True,
+        "no_broker_execution": True,
+        "no_real_money_execution": True,
+    }
+
+
+def persist_decision_context_snapshot(client: Any, *, snapshot: dict[str, Any]) -> dict[str, Any]:
+    market = snapshot.get("market_data_snapshot") or {}
+    payload = {
+        "ticker": snapshot.get("ticker"),
+        "latest_run_id": snapshot.get("latest_run_id"),
+        "business_date_hkt": snapshot.get("business_date_hkt"),
+        "snapshot_json": snapshot,
+        "reference_price": market.get("price"),
+        "previous_close": market.get("previous_close"),
+        "change": market.get("change"),
+        "change_pct": market.get("change_pct"),
+        "volume": market.get("volume"),
+        "turnover": market.get("turnover"),
+        "currency": market.get("currency"),
+        "market": market.get("market"),
+        "data_source": market.get("source"),
+        "data_timestamp_hkt": market.get("timestamp_hkt"),
+        "freshness_status": market.get("freshness_status"),
+        "freshness_label": market.get("freshness_label"),
+        "market_data_acceptance_status": snapshot.get("market_data_acceptance_status", "unknown"),
+        "market_data_acceptance_warning": snapshot.get("market_data_acceptance_warning"),
+        "limitations": market.get("limitations") if isinstance(market.get("limitations"), list) else [],
+        "paper_trade_only": True,
+        "decision_support_only": True,
+        "no_broker_execution": True,
+        "no_real_money_execution": True,
+    }
+    result = client.table("decision_context_snapshots").insert(payload).execute()
+    row = (result.data or [{}])[0]
+    return {"id": row.get("id"), "status": "saved"}
+
+
 def record_run_level_decision_note(
     client: Any,
     *,

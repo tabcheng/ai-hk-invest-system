@@ -84,3 +84,6 @@
   - `unknown` (`unknown`/unverifiable)
 - Decision context market payload now carries bilingual acceptance labels, warning text, accepted boolean, and reason/limitation summary.
 - Acceptance semantics are review-only and must not be interpreted as order instruction or live execution authorization.
+
+- Step 131 note: decision-context snapshot persistence stores only normalized bounded fields (`reference_price`, `previous_close`, `change`, `change_pct`, `volume`, `turnover`, freshness/acceptance) and never raw vendor payload/token.
+- Real-time HK data enablement still requires separate vendor/license review before any production escalation.

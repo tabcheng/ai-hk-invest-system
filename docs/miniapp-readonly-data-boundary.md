@@ -312,3 +312,5 @@ No broker integration or autonomous real-money execution is authorized by this p
 - Frontend must remain read-only and must not expose vendor token, raw vendor payload, or secret material.
 
 - Step 129 (in progress): Mini App ticker-level paper portfolio review section remains read-only and derived from bounded backend snapshot; no write action, no order button, no broker/live execution path.
+
+- Step 131 update: context snapshot persistence stores normalized bounded market fields only; frontend remains without secret keys and receives bounded save-status booleans only.

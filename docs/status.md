@@ -534,3 +534,9 @@
 - Boundaries preserved: read-only/paper-trading decision support only; no broker/live/real-money execution, no order/simulated-order creation, no Supabase schema migration.
 
 - Step 129 in progress: ticker-level paper position/exposure/PnL review surface scaffolded for Telegram `/pnl_review` and Mini App Context payload, with delayed-market-acceptance aggregate warning preservation in `/daily_review` and focused regression tests added.
+
+## 2026-05-11 — Step 131 Decision Journal Context Snapshot + Market Snapshot Storage (in progress)
+- Added bounded decision context snapshot builder/persistence path on Mini App journal submit.
+- Submit response now distinguishes `journal_saved` vs `snapshot_saved`; snapshot failure is bounded and non-secret.
+- Added `decision_context_snapshots` migration for normalized bounded market fields + snapshot json; no raw vendor payload/token storage.
+- Boundaries preserved: paper-trading decision-support only; no broker/live/real-money execution.

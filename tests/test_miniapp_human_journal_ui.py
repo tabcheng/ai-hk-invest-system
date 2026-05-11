@@ -123,6 +123,8 @@ def test_success_then_journal_unavailable_preserves_previous_saved_summary() -> 
     ], edit_after_retry=False)
     assert "今次提交失敗；上一個已保存紀錄仍然有效" in out["result_card_text"]
     assert "上一個已保存：0700.HK · watch · Journal #11 · Snapshot #22" in out["result_card_text"]
+    assert out["result_card_display"] == "block"
+    assert out["result_role"] == "alert"
 
 
 def test_success_then_generic_error_preserves_previous_saved_summary() -> None:
@@ -132,6 +134,8 @@ def test_success_then_generic_error_preserves_previous_saved_summary() -> None:
     ], edit_after_retry=False)
     assert "今次提交失敗；上一個已保存紀錄仍然有效" in out["result_card_text"]
     assert "上一個已保存：0700.HK · watch · Journal #11 · Snapshot #22" in out["result_card_text"]
+    assert out["result_card_display"] == "block"
+    assert out["result_role"] == "alert"
 
 
 def test_no_prior_save_failure_does_not_show_fake_saved_summary() -> None:
@@ -141,6 +145,7 @@ def test_no_prior_save_failure_does_not_show_fake_saved_summary() -> None:
     ], edit_after_retry=False)
     assert "上一個已保存：" not in out["result_card_text"]
     assert "今次提交失敗；上一個已保存紀錄仍然有效" not in out["result_card_text"]
+    assert out["result_card_display"] != "block"
 
 
 def test_form_edit_after_failed_retry_still_shows_previous_saved_summary() -> None:

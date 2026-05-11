@@ -22,6 +22,7 @@ from src.human_decision_journal import (
     persist_decision_context_snapshot,
     record_miniapp_human_paper_decision_journal,
 )
+from datetime import datetime, timedelta, timezone
 
 def _parse_miniapp_allowed_telegram_user_ids(raw_value: str | None) -> list[int]:
     if raw_value is None:
@@ -197,6 +198,7 @@ def _handle_miniapp_human_paper_decision_request(raw_body: bytes) -> tuple[str, 
             data_timestamp_hkt=str(payload.get("data_timestamp_hkt") or "").strip() or None,
         )
         snapshot_status = {"status": "failed", "id": None}
+        saved_at_hkt = datetime.now(timezone.utc).astimezone(timezone(timedelta(hours=8))).strftime("%Y-%m-%d %H:%M:%S HKT")
         try:
             provider = SupabaseLatestSystemRunMiniAppReadDataProvider(client=supabase_client, env=os.environ)
             context_snapshot = build_human_decision_context_snapshot(
@@ -207,6 +209,7 @@ def _handle_miniapp_human_paper_decision_request(raw_body: bytes) -> tuple[str, 
                 human_paper_decision={
                     "decision_type": decision_type,
                     "rationale_text": rationale_text,
+                    "operator_user_id_hash_or_label": _build_operator_label_from_telegram_user_id(operator.get("telegram_user_id")),
                     "confidence_label": (str(confidence_label).strip().lower() if confidence_label is not None else "unknown"),
                 },
                 decision_context_summary=provider.get_decision_context_summary(),
@@ -233,6 +236,10 @@ def _handle_miniapp_human_paper_decision_request(raw_body: bytes) -> tuple[str, 
         "journal_saved": True,
         "snapshot_saved": snapshot_status.get("status") == "saved",
         "snapshot_id": snapshot_status.get("id"),
+        "ticker": ticker,
+        "decision_type": decision_type,
+        "confidence_label": (str(confidence_label).strip().lower() if confidence_label is not None else "unknown"),
+        "saved_at_hkt": saved_at_hkt,
         "no_order_created": True,
         "paper_trade_only": True,
         "operator_note": "human paper decision journal recorded",

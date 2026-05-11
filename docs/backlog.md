@@ -288,3 +288,4 @@ Prioritization:
 - Step 129 (in progress): add ticker-level paper portfolio review rows (position/exposure/PnL + market acceptance) to Telegram `/pnl_review` and Mini App review payload; preserve delayed acceptance warning semantics in `/daily_review` aggregate wording.
 
 - Step 131 follow-up: verify production migration apply/order for `decision_context_snapshots` and add post-deploy smoke evidence for journal_saved/snapshot_saved split.
+- Step 132 candidate: add Mini App journal/snapshot review list view that uses normalized `rationale_text` + `operator_user_id_hash_or_label` and exposes filtered query by ticker/date/decision_type.

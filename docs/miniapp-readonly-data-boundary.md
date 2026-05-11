@@ -314,3 +314,4 @@ No broker integration or autonomous real-money execution is authorized by this p
 - Step 129 (in progress): Mini App ticker-level paper portfolio review section remains read-only and derived from bounded backend snapshot; no write action, no order button, no broker/live execution path.
 
 - Step 131 update: context snapshot persistence stores normalized bounded market fields only; frontend remains without secret keys and receives bounded save-status booleans only.
+- Step 131A boundary note: submit response may include `journal_id`, `snapshot_id`, `snapshot_saved`, `saved_at_hkt`, `ticker`, `decision_type`, `confidence_label` for operator clarity; still no raw Telegram initData/token/raw vendor payload exposure.

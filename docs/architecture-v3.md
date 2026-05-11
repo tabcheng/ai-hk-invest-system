@@ -328,3 +328,5 @@ The platform is designed as an **AI investment firm operating model** with stric
 
 
 - Read model contract updated: decision_context_snapshots summary list endpoint and Telegram bounded review command.
+
+- Added Step 133 read-model/API contract note: Journal snapshot outcome-link aggregation joins saved snapshot fields to latest paper position/PnL read model without write-path or execution-surface expansion.

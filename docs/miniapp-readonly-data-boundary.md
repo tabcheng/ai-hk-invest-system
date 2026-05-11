@@ -318,3 +318,16 @@ No broker integration or autonomous real-money execution is authorized by this p
 - Step 131B boundary note: submit-adjacent inline result card is the source-of-truth feedback surface; optional toast must stay summary-only and must not expose raw API errors/initData/tokens/vendor payloads.
 
 - Added /miniapp/api/journal-snapshots read-only bounded contract; no raw initData/raw snapshot_json/vendor payload/secrets in response.
+
+- Added read-only Mini App endpoint `/miniapp/api/journal-outcomes`: server-side initData validation required, bounded outcome-link rows only, no raw snapshot_json/initData/token/vendor payload.
+
+## Step 133+ Outcome Review boundary + wording policy
+- `/miniapp/api/journal-outcomes` remains read-only and bounded.
+- Must not expose raw `snapshot_json`, raw Telegram `initData`, token/secret/vendor raw payload.
+- Must not introduce broker/live/real-money/order/simulated-order wording.
+- Must not mutate paper position.
+- UI rendering policy:
+  - Traditional Chinese primary; English helper-only.
+  - Technical labels hidden under `查看技術資料`.
+  - Primary copy uses simple user labels (`當時資料` / `現在結果` / `盈虧變化` / `資料不足` / `資料可能過舊`).
+  - Required state copy: loading/empty/success/partial/error/stale messages per Step 133 contract.

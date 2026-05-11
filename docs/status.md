@@ -543,3 +543,5 @@
 - Step 131A completed: Mini App journal submit now shows top success/warning banner with ticker/decision/confidence/journal_id/snapshot_id/snapshot_saved/saved_at_hkt and explicit `paper-trading only` + `no order created` wording.
 - Step 131A completed: changing ticker/decision/confidence/rationale now clears stale save state with `表單已修改，尚未保存目前變更。` to prevent cross-ticker misread.
 - Step 131A completed: added normalized `rationale_text` + `operator_user_id_hash_or_label` columns in `decision_context_snapshots` persistence path for list/search-ready review surfaces.
+
+- Step 131A migration path correction: duplicated `20260511_step131a_decision_context_snapshots_rationale_operator.sql` into `db/migrations/` (repo runtime migration convention) while retaining supabase copy for schema-doc continuity; apply DB migration before runtime smoke.

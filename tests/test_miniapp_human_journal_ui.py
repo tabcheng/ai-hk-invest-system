@@ -23,3 +23,4 @@ def test_human_journal_requires_guardrail_checkbox_in_ui():
     assert "表單已修改，尚未保存目前變更。" in html
     assert "Journal 已保存" in html
     assert "snapshot_saved=true" in html
+    assert 'ticker.value = String(p.ticker || body.ticker || "")' in html

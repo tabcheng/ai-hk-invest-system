@@ -289,3 +289,5 @@ Prioritization:
 
 - Step 131 follow-up: verify production migration apply/order for `decision_context_snapshots` and add post-deploy smoke evidence for journal_saved/snapshot_saved split.
 - Step 132 candidate: add Mini App journal/snapshot review list view that uses normalized `rationale_text` + `operator_user_id_hash_or_label` and exposes filtered query by ticker/date/decision_type.
+
+- Step 131A deployment guardrail: apply `db/migrations/20260511_step131a_decision_context_snapshots_rationale_operator.sql` before Mini App journal smoke to avoid snapshot insert missing-column failure.

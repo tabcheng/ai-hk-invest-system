@@ -330,7 +330,6 @@
           const rows = Array.isArray(payload?.items) ? payload.items.slice(0, 5) : [];
           if (!(response.ok && payload?.ok) || rows.length === 0) {
             box.innerHTML = `<h3>最近保存紀錄 / Recent Journal Snapshots</h3><p class="helper-text">未有已保存 journal snapshot</p>`;
-            const out=document.getElementById("journal-outcome-review"); if(out) out.innerHTML = `<h3>後續結果 / Outcome Review</h3><p class="helper-text">暫時未有已保存的決策紀錄。</p>`;
             return;
           }
           box.textContent = "";
@@ -353,7 +352,6 @@
           });
         } catch (_error) {
           box.innerHTML = `<h3>最近保存紀錄 / Recent Journal Snapshots</h3><p class="helper-text">未有已保存 journal snapshot</p>`;
-          const out=document.getElementById("journal-outcome-review"); if(out) out.innerHTML = `<h3>後續結果 / Outcome Review</h3><p class="helper-text">暫時未有已保存的決策紀錄。</p>`;
         }
       }
 
@@ -372,7 +370,8 @@
           box.innerHTML = `<h3>後續結果 / Outcome Review</h3><p class="helper-text">正在載入後續結果...</p>`;
           const response = await fetch(`${apiBaseUrl}/miniapp/api/journal-outcomes`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ init_data: initData, limit: 5 }) });
           const payload = await response.json(); const rows = Array.isArray(payload?.items) ? payload.items.slice(0, 5) : [];
-          if (!(response.ok && payload?.ok) || rows.length === 0) { box.innerHTML = `<h3>後續結果 / Outcome Review</h3><p class="helper-text">暫時未有已保存的決策紀錄。</p>`; return; }
+          if (!(response.ok && payload?.ok)) { box.innerHTML = `<h3>後續結果 / Outcome Review</h3><p class="helper-text">暫時未能載入，請稍後再試。</p>`; return; }
+          if (rows.length === 0) { box.innerHTML = `<h3>後續結果 / Outcome Review</h3><p class="helper-text">暫時未有已保存的決策紀錄。</p>`; return; }
           box.textContent = ""; const h = document.createElement("h3"); h.textContent = "後續結果 / Outcome Review"; box.appendChild(h);
           const success = document.createElement("p"); success.className = "helper-text"; success.textContent = "已載入最近 5 條決策結果。"; box.appendChild(success);
           rows.forEach((row) => { const card = document.createElement("div"); card.className = "metric-item"; const add=(t)=>{const p=document.createElement("p"); p.className="row"; p.textContent=t; card.appendChild(p);};

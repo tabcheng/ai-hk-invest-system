@@ -64,6 +64,21 @@ def test_journal_outcome_review_uses_simple_chinese_and_state_copy():
     assert "只供模擬檢視｜不建立訂單｜不連接券商｜不是真實買賣建議" in html
 
 
+def test_journal_outcome_review_separates_error_vs_empty_state():
+    html = Path("miniapp/index.html").read_text(encoding="utf-8")
+    assert 'if (!(response.ok && payload?.ok)) { box.innerHTML = `<h3>後續結果 / Outcome Review</h3><p class="helper-text">暫時未能載入，請稍後再試。</p>`; return; }' in html
+    assert 'if (rows.length === 0) { box.innerHTML = `<h3>後續結果 / Outcome Review</h3><p class="helper-text">暫時未有已保存的決策紀錄。</p>`; return; }' in html
+    assert "已載入最近 5 條決策結果。" in html
+
+
+def test_load_journal_snapshots_does_not_write_outcome_panel():
+    html = Path("miniapp/index.html").read_text(encoding="utf-8")
+    start = html.index("async function loadJournalSnapshots()")
+    end = html.index("async function loadJournalOutcomes()", start)
+    section = html[start:end]
+    assert "journal-outcome-review" not in section
+
+
 def _simulate_journal_submit_flow(fetch_responses: list[dict], *, edit_after_retry: bool) -> dict:
     html = Path("miniapp/index.html").read_text(encoding="utf-8")
     script_source = html[html.index("<script>") + len("<script>"): html.rindex("</script>")]

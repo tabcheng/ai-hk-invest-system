@@ -43,6 +43,42 @@ def test_human_journal_submit_result_card_copy_contract_present():
     assert "rows.map((row) =>" not in html
 
 
+def test_journal_outcome_review_uses_simple_chinese_and_state_copy():
+    html = Path("miniapp/index.html").read_text(encoding="utf-8")
+    assert "後續結果 / Outcome Review" in html
+    assert "正在載入後續結果..." in html
+    assert "暫時未有已保存的決策紀錄。" in html
+    assert "已載入最近 5 條決策結果。" in html
+    assert "已有決策紀錄，但資料不足，暫時未能計算結果。" in html
+    assert "暫時未能載入，請稍後再試。" in html
+    assert "⚠️ 注意：資料可能過舊，請勿用作即時判斷。" in html
+    assert "股票：" in html
+    assert "當時決策：" in html
+    assert "當時原因：" in html
+    assert "當時價格：" in html
+    assert "現在參考價：" in html
+    assert "盈虧變化：" in html
+    assert "結果狀態：" in html
+    assert "查看技術資料" in html
+    assert "這只是模擬檢視，不會建立訂單。" in html
+    assert "只供模擬檢視｜不建立訂單｜不連接券商｜不是真實買賣建議" in html
+
+
+def test_journal_outcome_review_separates_error_vs_empty_state():
+    html = Path("miniapp/index.html").read_text(encoding="utf-8")
+    assert 'if (!(response.ok && payload?.ok)) { box.innerHTML = `<h3>後續結果 / Outcome Review</h3><p class="helper-text">暫時未能載入，請稍後再試。</p>`; return; }' in html
+    assert 'if (rows.length === 0) { box.innerHTML = `<h3>後續結果 / Outcome Review</h3><p class="helper-text">暫時未有已保存的決策紀錄。</p>`; return; }' in html
+    assert "已載入最近 5 條決策結果。" in html
+
+
+def test_load_journal_snapshots_does_not_write_outcome_panel():
+    html = Path("miniapp/index.html").read_text(encoding="utf-8")
+    start = html.index("async function loadJournalSnapshots()")
+    end = html.index("async function loadJournalOutcomes()", start)
+    section = html[start:end]
+    assert "journal-outcome-review" not in section
+
+
 def _simulate_journal_submit_flow(fetch_responses: list[dict], *, edit_after_retry: bool) -> dict:
     html = Path("miniapp/index.html").read_text(encoding="utf-8")
     script_source = html[html.index("<script>") + len("<script>"): html.rindex("</script>")]

@@ -92,3 +92,33 @@ Keep these aligned:
 - `docs/railway-service-variables.md`
 - `docs/operator-runbook.md`
 - `docs/post-deploy-acceptance-checklist.md`
+
+## Mini App UI long-term wording standards (Step 133+)
+- Mini App UI must use **Traditional Chinese** as primary language.
+- English may be shown only as secondary/helper text.
+- Main user-facing copy must be simple enough for approximately Primary 5 readers.
+- Technical terms must be hidden behind collapsible `查看技術資料` or explained in simple Chinese.
+- Prefer main labels: `當時資料` `現在結果` `盈虧變化` `資料不足` `資料可能過舊` `只供模擬檢視`.
+- Do not use raw internal labels as main UX text (for example: `outcome_delta`, `snapshot_json`, `latest_run_id`, `stale_do_not_use_for_intraday`, `normalized payload`).
+- If technical IDs/status are needed, place them in collapsed technical details only.
+
+### Required Outcome Review UI states
+- Loading: `正在載入後續結果...`
+- Empty: `暫時未有已保存的決策紀錄。`
+- Success: `已載入最近 5 條決策結果。`
+- Partial/insufficient: `已有決策紀錄，但資料不足，暫時未能計算結果。`
+- Error: `暫時未能載入，請稍後再試。`
+- Stale warning: `資料可能過舊，請勿用作即時判斷。`
+
+### Hard safety wording
+- `只供模擬檢視`
+- `不建立訂單`
+- `不連接券商`
+- `不是真實買賣建議`
+
+### Prohibited execution-implying UI labels
+- Buy now
+- Sell now
+- Execute
+- Order
+- Trade action

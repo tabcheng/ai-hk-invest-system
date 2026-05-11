@@ -213,6 +213,82 @@ def build_recent_decision_context_snapshots_review(
     return {"items": items, "limit": bounded_limit}
 
 
+
+def build_journal_snapshot_outcome_review(
+    client: Any,
+    *,
+    snapshot_id: str | None = None,
+    ticker: str | None = None,
+    business_date_hkt: str | None = None,
+    limit: int = 5,
+) -> dict[str, Any]:
+    from src.paper_trading import build_ticker_level_paper_portfolio_review, get_paper_position_pnl_review_snapshot
+
+    bounded_limit = max(1, min(int(limit or 5), 20))
+    query = client.table("decision_context_snapshots").select("*").order("created_at_hkt", desc=True).limit(bounded_limit)
+    if snapshot_id:
+        query = query.eq("id", str(snapshot_id).strip())
+    if ticker:
+        query = query.eq("ticker", str(ticker).strip().upper())
+    if business_date_hkt:
+        query = query.eq("business_date_hkt", str(business_date_hkt).strip())
+    rows = query.execute().data or []
+    current_rows = build_ticker_level_paper_portfolio_review(get_paper_position_pnl_review_snapshot(client))
+    current_by_ticker = {str(r.get("ticker") or "").upper(): r for r in current_rows if isinstance(r, dict)}
+
+    def _num(v: Any) -> float | None:
+        try:
+            if v is None:
+                return None
+            return float(v)
+        except (TypeError, ValueError):
+            return None
+
+    items = []
+    for row in rows:
+        snapshot_json = row.get("snapshot_json") if isinstance(row, dict) else {}
+        original = (snapshot_json or {}).get("paper_position_snapshot") if isinstance(snapshot_json, dict) else {}
+        if not isinstance(original, dict):
+            original = {}
+        current = current_by_ticker.get(str(row.get("ticker") or "").upper())
+        orig_price = _num(row.get("reference_price"))
+        cur_price = _num((current or {}).get("reference_price"))
+        orig_total = _num(original.get("total_pnl"))
+        cur_total = _num((current or {}).get("total_pnl"))
+        price_delta = (cur_price - orig_price) if (orig_price is not None and cur_price is not None) else None
+        pnl_delta = (cur_total - orig_total) if (orig_total is not None and cur_total is not None) else None
+        status = "available" if (price_delta is not None or pnl_delta is not None) else ("no_position" if current is None else "insufficient_data")
+        items.append({
+            "snapshot_id": row.get("id"),
+            "human_decision_journal_entry_id": row.get("human_decision_journal_entry_id"),
+            "ticker": row.get("ticker"),
+            "decision_type": row.get("decision_type"),
+            "confidence_label": row.get("confidence_label"),
+            "rationale_text": row.get("rationale_text"),
+            "created_at_hkt": row.get("created_at_hkt"),
+            "business_date_hkt": row.get("business_date_hkt"),
+            "latest_run_id": row.get("latest_run_id"),
+            "original_reference_price": row.get("reference_price"),
+            "original_market_data_acceptance_status": row.get("market_data_acceptance_status"),
+            "original_data_timestamp_hkt": row.get("data_timestamp_hkt"),
+            "original_paper_position": {k: original.get(k) for k in ["quantity", "avg_cost", "reference_price", "exposure_value", "unrealized_pnl", "total_pnl"]},
+            "current_paper_position": ({k: current.get(k) for k in ["quantity", "avg_cost", "reference_price", "exposure_value", "unrealized_pnl", "total_pnl"]} if current else None),
+            "latest_pnl": ({"total_pnl": current.get("total_pnl"), "valuation_timestamp_hkt": current.get("valuation_timestamp")} if current else None),
+            "outcome_delta": {
+                "price_delta_since_snapshot": price_delta,
+                "pnl_delta_since_snapshot": pnl_delta,
+                "status": status,
+            },
+            "review_flags": {
+                "market_data_was_stale": str(row.get("market_data_acceptance_status") or "") in {"stale_do_not_use_for_intraday", "stale"},
+                "missing_context_count": len((snapshot_json or {}).get("missing_context") or []) if isinstance(snapshot_json, dict) else 0,
+                "paper_trade_only": True,
+                "no_broker_execution": True,
+                "no_real_money_execution": True,
+            },
+        })
+    return {"items": items, "limit": bounded_limit}
+
 def record_run_level_decision_note(
     client: Any,
     *,

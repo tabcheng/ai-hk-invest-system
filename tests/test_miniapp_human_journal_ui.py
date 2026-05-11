@@ -21,6 +21,18 @@ def test_human_journal_requires_guardrail_checkbox_in_ui():
     assert 'id="journal-ack" type="checkbox" required' in html
     assert "日誌暫時未能寫入；未有資料被儲存。" in html
     assert "表單已修改，尚未保存目前變更。" in html
+    assert 'id="journal-submit-result-card"' in html
     assert "Journal 已保存" in html
-    assert "snapshot_saved=true" in html
-    assert 'ticker.value = String(p.ticker || body.ticker || "")' in html
+    assert "saved_at_hkt=" in html
+    assert "Snapshot: failed" in html
+
+
+def test_human_journal_submit_result_card_copy_contract_present():
+    html = Path("miniapp/index.html").read_text(encoding="utf-8")
+    assert "✅ 已保存人手模擬決策" in html
+    assert "journal-submit-result-card" in html
+    assert "未改變 paper position" in html
+    assert "不連接券商 · 只限 paper trading" in html
+    assert "上一個已保存：" in html
+    assert "保存中..." in html
+    assert "showToast(`✅ 已保存" in html

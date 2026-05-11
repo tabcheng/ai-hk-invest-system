@@ -291,3 +291,4 @@ Prioritization:
 - Step 132 candidate: add Mini App journal/snapshot review list view that uses normalized `rationale_text` + `operator_user_id_hash_or_label` and exposes filtered query by ticker/date/decision_type.
 
 - Step 131A deployment guardrail: apply `db/migrations/20260511_step131a_decision_context_snapshots_rationale_operator.sql` before Mini App journal smoke to avoid snapshot insert missing-column failure.
+- Step 131B follow-up: add deeper UI interaction tests (submit success/partial/stale card state transitions and submit-button loading) with richer DOM event simulation coverage.

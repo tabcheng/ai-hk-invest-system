@@ -472,3 +472,18 @@ Use this checklist when reviewing Mini App read-only surfaces:
 - Journal review: use /journal_review to read recent 5 bounded snapshots (paper-trading decision support only; no real-money execution).
 
 - Journal outcome review: use `/journal_outcome` to inspect latest 5 snapshot-linked bounded outcomes (paper-trading decision support only; no real-money execution).
+
+## Step 133 Outcome Review operator wording checks
+When validating Mini App Journal Outcome Review and Telegram `/journal_outcome`, confirm:
+1. Read-only boundary only (no order/mutation path).
+2. No raw `snapshot_json`, raw `initData`, token/secret/vendor payload.
+3. Mini App primary language remains Traditional Chinese and non-technical-friendly.
+4. Outcome UI states are visible and exact:
+   - `正在載入後續結果...`
+   - `暫時未有已保存的決策紀錄。`
+   - `已載入最近 5 條決策結果。`
+   - `已有決策紀錄，但資料不足，暫時未能計算結果。`
+   - `暫時未能載入，請稍後再試。`
+   - `資料可能過舊，請勿用作即時判斷。`
+5. Safety wording appears: `只供模擬檢視` / `不建立訂單` / `不連接券商` / `不是真實買賣建議`.
+6. Technical fields appear only under collapsed `查看技術資料`.

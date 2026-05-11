@@ -296,3 +296,5 @@ Prioritization:
 - Step 133 candidate: outcome review linkage based on journal snapshot keys (snapshot_id + journal_entry_id + ticker + business_date_hkt + latest_run_id).
 
 - Step 133 follow-up: validate outcome-link deltas against production paper position timing (`valuation_timestamp_hkt`) and keep stale market acceptance preserved in UI/Telegram displays.
+
+- Step 133 follow-up guardrail: keep UI wording contract tests aligned with docs-of-record (Traditional Chinese primary, simple-label-first, technical details collapsed, required state-copy set, no execution-implying labels).

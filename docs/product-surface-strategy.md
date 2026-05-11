@@ -241,3 +241,20 @@ Mini App should **not**:
 - Added product slice: Recent Journal Snapshots review surface in Journal tab (read-only list, no edit/delete/order).
 
 - Added Journal Outcome Link surface: Mini App Journal tab now includes read-only "後續結果 / Outcome Link" cards sourced from backend `/miniapp/api/journal-outcomes`; Telegram adds `/journal_outcome` bounded summary command.
+
+## Step 133+ Mini App Outcome Review wording contract (long-term)
+- Traditional Chinese is the primary UX language; English is helper-only.
+- Main card copy must stay simple/readable for non-technical users (Primary-5-level target).
+- Outcome Review primary labels should prefer: `當時資料`, `現在結果`, `盈虧變化`, `資料不足`, `資料可能過舊`, `只供模擬檢視`.
+- Raw internal labels must not be first-layer UX text.
+- Technical identifiers/statuses may appear only in collapsed `查看技術資料`.
+- Maintain explicit UI states:
+  - `正在載入後續結果...`
+  - `暫時未有已保存的決策紀錄。`
+  - `已載入最近 5 條決策結果。`
+  - `已有決策紀錄，但資料不足，暫時未能計算結果。`
+  - `暫時未能載入，請稍後再試。`
+  - `資料可能過舊，請勿用作即時判斷。`
+- Safety wording must remain visible in the outcome surface:
+  - `只供模擬檢視` / `不建立訂單` / `不連接券商` / `不是真實買賣建議`.
+- Do not use execution-implying words (`Buy now`, `Sell now`, `Execute`, `Order`, `Trade action`).

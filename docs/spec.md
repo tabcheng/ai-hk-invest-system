@@ -531,3 +531,14 @@ Proposed table: `human_decision_journal_entries` with draft columns:
 - Added Step 132 bounded read model + miniapp API endpoint + telegram command for decision_context_snapshots summary list.
 
 - Step 133 contract: decision_context_snapshots can be joined to latest paper position/PnL read model via bounded helper `build_journal_snapshot_outcome_review` and exposed through read-only Mini App API/Telegram review surfaces only.
+
+## Step 133 long-term product contract (UI + boundaries)
+- `/miniapp/api/journal-outcomes` and Telegram `/journal_outcome` are read-only bounded review surfaces.
+- No raw `snapshot_json`, raw Telegram `initData`, or token/secret/vendor raw payload exposure.
+- No broker/live/real-money/order/simulated-order wording, and no paper-position mutation.
+- Mini App Outcome Review UX contract:
+  - Traditional Chinese primary; English helper-only.
+  - Main copy should be simple/readable for Primary-5-level users.
+  - Prefer labels: `當時資料`, `現在結果`, `盈虧變化`, `資料不足`, `資料可能過舊`, `只供模擬檢視`.
+  - Raw technical labels are not first-layer UX; IDs/statuses only under `查看技術資料`.
+  - Required state messages: loading/empty/success/partial/error/stale per Step 133 wording contract.

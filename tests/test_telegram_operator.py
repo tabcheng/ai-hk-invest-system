@@ -1028,6 +1028,18 @@ def test_decision_note_invalid_run_id(monkeypatch):
     assert "Command: /decision_note" in response and "run_id must be a positive integer" in response
 
 
+def test_journal_review_command_bounded_and_boundary(monkeypatch):
+    monkeypatch.setenv("TELEGRAM_CHAT_ID", "chat-1")
+    monkeypatch.setattr(
+        "src.telegram_operator.build_recent_decision_context_snapshots_review",
+        lambda *_a, **_k: {"items": [{"snapshot_id": "s1", "human_decision_journal_entry_id": "j1", "ticker": "0700.HK", "decision_type": "watch", "confidence_label": "medium", "market_data_acceptance_status": "caution", "created_at_hkt": "2026-05-11T12:00:00+00:00", "rationale_text": "<img src=x onerror=alert(1)>"}]},
+    )
+    response = handle_telegram_operator_command(object(), _build_update("/journal_review"))
+    assert "Command: /journal_review" in response
+    assert "paper-trading decision support only; no real-money execution" in response
+    assert "<img" not in response
+
+
 def test_decision_note_invalid_human_action(monkeypatch):
     monkeypatch.setenv("TELEGRAM_CHAT_ID", "chat-1")
     response = handle_telegram_operator_command(object(), _build_update("/decision_note scope=run run_id=1 source_command=/daily_review human_action=buy note=ok"))

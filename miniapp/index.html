@@ -316,6 +316,7 @@
           const body={ init_data:initData, business_date: String(latest?.business_date || ""), run_id: String(latest?.run_id || ""), ticker: ticker.value.trim(), decision_type:document.getElementById("journal-decision-type").value, rationale_text:rationale.value.trim(), confidence_label:document.getElementById("journal-confidence").value || null, guardrail_ack:true, ui_build_version:resolveBuildVersion("MINIAPP_UI_BUILD_VERSION"), data_timestamp_hkt:String(latest?.data_timestamp_hkt || "") };
           try { const resp=await fetch(`${apiBaseUrl}/miniapp/api/human-paper-decision`, { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(body)}); const p=await resp.json(); if (resp.ok && p.ok) { hasSavedSubmission = true; lastSavedSummary = `${p.ticker} · ${p.decision_type} · Journal #${p.journal_id} · Snapshot #${p.snapshot_id || "failed"}`; if (p.snapshot_saved) { renderResultCardLines("success", "status", [`✅ 已保存人手模擬決策`, `${p.ticker} · ${p.decision_type} · Confidence: ${p.confidence_label || "unknown"}`, `Journal #${p.journal_id} · Snapshot #${p.snapshot_id}`, `snapshot_saved=${p.snapshot_saved} · saved_at_hkt=${p.saved_at_hkt}`, "未建立訂單 · 未改變 paper position · 不連接券商 · 只限 paper trading"]); showToast(`✅ 已保存 ${p.ticker} ${p.decision_type} · Snapshot #${p.snapshot_id}`); } else { renderResultCardLines("warning", "alert", ["⚠️ Journal 已保存，但 Context snapshot 未保存", `Journal #${p.journal_id} · Snapshot: failed`, "請檢查 migration/backend logs", `ticker=${p.ticker} · decision_type=${p.decision_type} · confidence=${p.confidence_label || "unknown"}`, "未建立訂單 · 未改變 paper position · 不連接券商 · 只限 paper trading"]); } result.textContent=""; ticker.value = String(p.ticker || body.ticker || ""); renderContext(); loadJournalSnapshots(); } else if (p.error==="journal_unavailable") { result.textContent="日誌暫時未能寫入；未有資料被儲存。"; if (hasSavedSubmission && lastSavedSummary) { renderResultCardLines("warning", "alert", ["⚠️ 今次提交失敗；上一個已保存紀錄仍然有效", `上一個已保存：${lastSavedSummary}`]); } else { resultCard.style.display = "none"; } } else { result.textContent="提交失敗，請檢查輸入欄位。"; if (hasSavedSubmission && lastSavedSummary) { renderResultCardLines("warning", "alert", ["⚠️ 今次提交失敗；上一個已保存紀錄仍然有效", `上一個已保存：${lastSavedSummary}`]); } else { resultCard.style.display = "none"; } } } catch (_e) { result.textContent="日誌暫時未能寫入；未有資料被儲存。"; if (hasSavedSubmission && lastSavedSummary) { renderResultCardLines("warning", "alert", ["⚠️ 今次提交失敗；上一個已保存紀錄仍然有效", `上一個已保存：${lastSavedSummary}`]); } else { resultCard.style.display = "none"; } } finally { submitBtn.disabled = false; submitBtn.textContent = "記錄人手模擬決策"; }
         });
+        loadJournalSnapshots();
       }
       async function loadJournalSnapshots() {
         const box = document.getElementById("journal-snapshot-review");
@@ -330,8 +331,24 @@
             box.innerHTML = `<h3>最近保存紀錄 / Recent Journal Snapshots</h3><p class="helper-text">未有已保存 journal snapshot</p>`;
             return;
           }
-          const cards = rows.map((row) => `<div class="metric-item"><strong>${String(row?.ticker || "N/A")} · ${String(row?.decision_type || "N/A")} · ${String(row?.confidence_label || "unknown")}</strong><br/>Journal #${String(row?.human_decision_journal_entry_id || "N/A")} / Snapshot #${String(row?.snapshot_id || "N/A")}<br/>saved_at_hkt: ${String(row?.created_at_hkt || "N/A")}<br/>${String(row?.rationale_text || "N/A").slice(0, 80)}<br/>market: ${String(row?.market_data_acceptance_status || "unknown")}<br/>price: ${String(row?.reference_price || "N/A")} @ ${String(row?.data_timestamp_hkt || "N/A")}<br/>position qty=${String(row?.paper_position?.quantity || 0)} pnl=${String(row?.paper_position?.total_pnl || 0)}<br/><em>paper trading only · no order created</em></div>`).join("");
-          box.innerHTML = `<h3>最近保存紀錄 / Recent Journal Snapshots</h3>${cards}`;
+          box.textContent = "";
+          const h = document.createElement("h3");
+          h.textContent = "最近保存紀錄 / Recent Journal Snapshots";
+          box.appendChild(h);
+          rows.forEach((row) => {
+            const card = document.createElement("div");
+            card.className = "metric-item";
+            const appendLine = (text) => { const p = document.createElement("p"); p.className = "row"; p.textContent = text; card.appendChild(p); };
+            appendLine(`${String(row?.ticker || "N/A")} · ${String(row?.decision_type || "N/A")} · ${String(row?.confidence_label || "unknown")}`);
+            appendLine(`Journal #${String(row?.human_decision_journal_entry_id || "N/A")} / Snapshot #${String(row?.snapshot_id || "N/A")}`);
+            appendLine(`saved_at_hkt: ${String(row?.created_at_hkt || "N/A")}`);
+            appendLine(String(row?.rationale_text || "N/A").slice(0, 80));
+            appendLine(`market: ${String(row?.market_data_acceptance_status || "unknown")}`);
+            appendLine(`price: ${String(row?.reference_price || "N/A")} @ ${String(row?.data_timestamp_hkt || "N/A")}`);
+            appendLine(`position qty=${String(row?.paper_position?.quantity || 0)} pnl=${String(row?.paper_position?.total_pnl || 0)}`);
+            appendLine("paper trading only · no order created");
+            box.appendChild(card);
+          });
         } catch (_error) {
           box.innerHTML = `<h3>最近保存紀錄 / Recent Journal Snapshots</h3><p class="helper-text">未有已保存 journal snapshot</p>`;
         }

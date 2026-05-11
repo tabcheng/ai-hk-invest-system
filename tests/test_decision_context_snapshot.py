@@ -68,7 +68,7 @@ def test_persist_snapshot_uses_alias_safe_mapping_and_linkage():
         "business_date_hkt": "2026-05-11",
         "snapshot_schema_version": 1,
         "created_at_hkt": "2026-05-11T20:00:00+08:00",
-        "human_paper_decision": {"decision_type": "watch", "confidence_label": "medium"},
+        "human_paper_decision": {"decision_type": "watch", "confidence_label": "medium", "rationale_text": "paper note", "operator_user_id_hash_or_label": "tg_user_hash:aaa"},
         "market_data_acceptance_status": "caution_last_available_close",
         "market_data_snapshot": {"reference_price": 500.0, "data_source": "eodhd", "data_timestamp_hkt": "2026-05-11 16:00:00 HKT", "freshness_status": "last_available_close"},
     })
@@ -76,3 +76,5 @@ def test_persist_snapshot_uses_alias_safe_mapping_and_linkage():
     assert captured["reference_price"] == 500.0
     assert captured["data_source"] == "eodhd"
     assert captured["market_data_acceptance_status"] == "caution_last_available_close"
+    assert captured["rationale_text"] == "paper note"
+    assert captured["operator_user_id_hash_or_label"] == "tg_user_hash:aaa"

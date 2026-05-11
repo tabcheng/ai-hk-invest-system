@@ -39,6 +39,12 @@ def test_human_paper_decision_validation_and_bounded_success(monkeypatch):
     assert captured["operator_user_id_hash_or_label"].startswith("tg_user_hash:")
     assert payload["journal_saved"] is True
     assert payload["snapshot_saved"] is True
+    assert payload["journal_id"] == "j-1"
+    assert payload["snapshot_id"] == "s-1"
+    assert payload["ticker"] == "0700.HK"
+    assert payload["decision_type"] == "watch"
+    assert payload["confidence_label"] == "unknown"
+    assert "HKT" in payload["saved_at_hkt"]
     assert "42" not in captured["operator_user_id_hash_or_label"]
     assert captured["operator_user_id_hash_or_label"] != "tg_user_hash:unknown"
     assert "init_data" not in captured
@@ -117,6 +123,7 @@ def test_human_paper_decision_snapshot_failure_still_returns_journal_saved(monke
     assert status.startswith("200")
     assert payload["journal_saved"] is True
     assert payload["snapshot_saved"] is False
+    assert payload["snapshot_id"] is None
 
 
 def test_human_paper_decision_builder_failure_after_journal_write_is_partial_success(monkeypatch):

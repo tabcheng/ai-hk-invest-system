@@ -466,3 +466,4 @@ Use this checklist when reviewing Mini App read-only surfaces:
 - Step 129 note: `/pnl_review` output now includes compact per-ticker paper position/exposure/PnL lines with explicit paper-only boundary wording.
 
 - Step 131 operator note: Mini App journal submit success now includes separate journal/context-snapshot save status; if snapshot save fails, treat as partial success and re-check context data freshness before next review.
+- Step 131A operator UX note: Journal banner now appears at card top; if banner shows `snapshot_saved=false` (amber warning), treat as partial success (`journal_saved=true`) and check backend/migration logs before relying on snapshot review evidence.

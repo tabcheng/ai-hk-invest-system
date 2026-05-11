@@ -105,13 +105,16 @@ def build_human_decision_context_snapshot(
 
 def persist_decision_context_snapshot(client: Any, *, snapshot: dict[str, Any]) -> dict[str, Any]:
     market = snapshot.get("market_data_snapshot") or {}
+    human_paper_decision = snapshot.get("human_paper_decision") or {}
     payload = {
         "human_decision_journal_entry_id": snapshot.get("human_decision_journal_entry_id"),
         "ticker": snapshot.get("ticker"),
         "latest_run_id": snapshot.get("latest_run_id"),
         "business_date_hkt": snapshot.get("business_date_hkt"),
-        "decision_type": (snapshot.get("human_paper_decision") or {}).get("decision_type"),
-        "confidence_label": (snapshot.get("human_paper_decision") or {}).get("confidence_label"),
+        "decision_type": human_paper_decision.get("decision_type"),
+        "confidence_label": human_paper_decision.get("confidence_label"),
+        "rationale_text": human_paper_decision.get("rationale_text"),
+        "operator_user_id_hash_or_label": human_paper_decision.get("operator_user_id_hash_or_label"),
         "snapshot_schema_version": snapshot.get("snapshot_schema_version"),
         "created_at_hkt": snapshot.get("created_at_hkt"),
         "delay_minutes": market.get("delay_minutes"),

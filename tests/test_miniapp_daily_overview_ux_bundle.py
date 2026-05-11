@@ -35,7 +35,7 @@ class Element {{
   addEventListener(name, handler) {{ this._listeners[name] = handler; }}
   set innerHTML(v) {{
     this._text = String(v || "");
-    const ids = ["journal-context","journal-form","journal-ticker","journal-rationale","journal-counter","journal-confidence","journal-ack","journal-submit","journal-result"];
+    const ids = ["journal-result-banner","journal-context","journal-form","journal-ticker","journal-decision-type","journal-rationale","journal-counter","journal-confidence","journal-ack","journal-submit","journal-result"];
     ids.forEach((id) => {{
       if (this._text.includes(`id="${{id}}"`) && !byId[id]) {{
         byId[id] = new Element(id === "journal-form" ? "form" : "div");

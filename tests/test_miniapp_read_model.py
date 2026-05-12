@@ -365,6 +365,7 @@ def test_stock_dossier_has_no_execution_wording_in_english_or_chinese():
     serialized = str(section)
     for forbidden in [
         "Buy now", "Sell now", "Execute", "Order", "Trade action",
-        "立即落盤", "真實買入", "真實賣出", "建立訂單", "下單指令",
+        "立即落盤", "真實買入", "真實賣出", "下單指令", "請建立訂單", "立即建立訂單", "建立訂單：",
     ]:
         assert forbidden not in serialized
+    assert "不建立訂單" in serialized

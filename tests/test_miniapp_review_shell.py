@@ -15,6 +15,7 @@ def test_step92f_ui_review_shell_static_contract() -> None:
         "你下一步要做咩",
         "查看 Outcome Review",
         "寫低你嘅模擬決定理由（paper decision journal）",
+        "真實買賣決定由人類在系統外作出",
         "查看技術資料",
         "最新系統運行",
         "每日檢視摘要",

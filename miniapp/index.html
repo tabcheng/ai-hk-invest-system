@@ -121,7 +121,7 @@
         const riskText = risk?.status === "ok" ? (riskLevel === "high" ? "風險較高，暫時不建議依賴此方向。" : "風險可控，但仍需人手 review。") : "風險資料不足，暫時不建議依賴此方向。";
         const aiDirection = coverage === "ready" ? "模擬持有 / 繼續觀察" : (coverage === "partial" ? "暫時跳過 / 繼續觀察" : "暫時只觀察");
         const note=document.createElement("p"); note.className="helper-text";
-        if (coverage === "ready") note.textContent = "你下一步：先看風險提示，再決定是否寫入人類 paper decision journal。";
+        if (coverage === "ready") note.textContent = "你下一步：先看風險提示，再決定是否寫低你嘅模擬決定理由（paper decision journal）。";
         else if (coverage === "partial") note.textContent = "你下一步：先補看缺少資料，暫時不要依賴單一方向。";
         else note.textContent = "你下一步：暫時只觀察，等資料更新後再 review。";
         const summary = document.createElement("span");
@@ -133,7 +133,8 @@
         const nextTitle=document.createElement("h3"); nextTitle.textContent="你下一步要做咩";
         const nextList=document.createElement("ul");
         ["查看 Outcome Review", "查看風險提示", coverage === "ready" ? "寫低你嘅模擬決定理由（paper decision journal）" : "暫時只觀察，不作模擬決策"].forEach((x)=>{ const li=document.createElement("li"); li.textContent=x; nextList.appendChild(li); });
-        card.append(h,line1,line2,line3,line4,availabilityGrid,riskLine,directionLine,nextTitle,nextList,note);
+        const safetyLine=document.createElement("p"); safetyLine.className="helper-text"; safetyLine.textContent="真實買賣決定由人類在系統外作出。";
+        card.append(h,line1,line2,line3,line4,availabilityGrid,riskLine,directionLine,nextTitle,nextList,note,safetyLine);
       }
       function renderTeamRole(latest,daily,signals,risk){
         const card=document.getElementById("team-card");

@@ -258,3 +258,15 @@ Mini App should **not**:
 - Safety wording must remain visible in the outcome surface:
   - `只供模擬檢視` / `不建立訂單` / `不連接券商` / `不是真實買賣建議`.
 - Do not use execution-implying words (`Buy now`, `Sell now`, `Execute`, `Order`, `Trade action`).
+
+## Step 134A future Mini App surface map (AI Team Workbench)
+Planned user-facing surfaces (Chinese primary, English helper):
+1. 今日簡報 / Daily Brief
+2. AI 觀察名單 / AI Watchlist
+3. 股票檢視 / Stock Review
+4. 決策日誌 / Journal
+5. 回顧 / Review
+6. 策略回顧 / Strategy Review
+7. AI 團隊 / AI Team
+
+All surfaces remain read/review-first and paper-only unless a later explicit gated step approves bounded write/simulation actions.

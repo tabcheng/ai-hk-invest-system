@@ -122,3 +122,9 @@ Keep these aligned:
 - Execute
 - Order
 - Trade action
+
+## Step 134A AI Team Operating Model summary (mandatory)
+- AI team operating model is docs-of-record in `docs/ai-team-operating-model.md`.
+- All PRs must preserve role boundaries across data/research/strategy/decision/governance/human layers.
+- PRs must not bypass AI team boundaries (especially paper-only, no broker/live/order behavior).
+- Reusable Mini App and Telegram UI wording/safety rules remain governed by docs-of-record and must stay aligned.

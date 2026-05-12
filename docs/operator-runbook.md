@@ -487,3 +487,25 @@ When validating Mini App Journal Outcome Review and Telegram `/journal_outcome`,
    - `資料可能過舊，請勿用作即時判斷。`
 5. Safety wording appears: `只供模擬檢視` / `不建立訂單` / `不連接券商` / `不是真實買賣建議`.
 6. Technical fields appear only under collapsed `查看技術資料`.
+
+## Step 134A operator guide — AI Team outputs
+### How to read AI Decision Advisor output
+- Start with one-line conclusion, then verify `can/cannot conclude`.
+- Check missing-data and conflict fields before treating direction as usable.
+- Treat learning notes as improvement proposals, not execution instructions.
+
+### How to read Paper Investment Committee output
+- Interpret only as AI simulated decision (`paper_watch`, `paper_skip`, `paper_hold`, `paper_buy_intent`, `paper_sell_intent`).
+- Treat paper sizing (`0%`, `very small`, `small`, `normal`, `reduce`) as simulation-only advisory.
+- Require explicit risk-gate rationale before accepting paper sizing context.
+
+### How to interpret alert severity
+- `info`: informational only.
+- `caution`: review recommended soon.
+- `warning`: review required before relying on output.
+- `block`: do not proceed with paper decision interpretation until resolved.
+
+### How to treat paper sizing suggestions
+- Use as relative simulation guidance only.
+- Never map directly to real-money execution size.
+- Re-check data sufficiency, risk notes, and stale/no-data alerts first.

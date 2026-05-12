@@ -63,11 +63,11 @@
         <p>Paper trading only · No broker/live execution</p>
       </header>
       <section class="boundary-banner">只限模擬交易 · 決策支援 · 不連接券商 · 不作真實落盤</section>
-      <nav class="tab-bar" role="tablist" aria-label="Mini App sections"><button id="tab-today" role="tab" aria-selected="true" data-tab="today" aria-controls="overview-card">今日（預設）</button><button id="tab-signals" role="tab" aria-selected="false" data-tab="signals" aria-controls="signals-card">信號</button><button id="tab-context" role="tab" aria-selected="false" data-tab="context" aria-controls="context-card">Context</button><button id="tab-journal" role="tab" aria-selected="false" data-tab="journal" aria-controls="journal-card">Journal</button></nav><section id="overview-card" class="overview-card" data-tab-panel="today" role="tabpanel" aria-labelledby="tab-today"><h2>今日簡報 / Daily Brief</h2><p class="helper-text">載入中...</p></section>
+      <nav class="tab-bar" role="tablist" aria-label="Mini App sections"><button id="tab-today" role="tab" aria-selected="true" data-tab="today" aria-controls="overview-card">今日（預設）</button><button id="tab-signals" role="tab" aria-selected="false" data-tab="signals" aria-controls="signals-card">信號</button><button id="tab-context" role="tab" aria-selected="false" data-tab="context" aria-controls="context-card">Context</button><button id="tab-stock-review" role="tab" aria-selected="false" data-tab="stock-review" aria-controls="stock-review-card">股票檢視</button><button id="tab-journal" role="tab" aria-selected="false" data-tab="journal" aria-controls="journal-card">Journal</button></nav><section id="overview-card" class="overview-card" data-tab-panel="today" role="tabpanel" aria-labelledby="tab-today"><h2>今日簡報 / Daily Brief</h2><p class="helper-text">載入中...</p></section>
       <section id="team-card" class="section-card" data-tab-panel="today" role="tabpanel" aria-labelledby="tab-today"><h2>AI 團隊正在幫你檢查乜</h2></section>
       <section id="latest-card" class="section-card" data-tab-panel="today" role="tabpanel" aria-labelledby="tab-today"><h2>最新系統運行</h2></section>
       <section id="daily-card" class="section-card" data-tab-panel="today" role="tabpanel" aria-labelledby="tab-today"><h2>每日檢視摘要</h2></section>
-      <section id="signals-card" class="section-card" data-tab-panel="signals" role="tabpanel" aria-labelledby="tab-signals"><h2>信號摘要</h2></section><section id="context-card" class="section-card" data-tab-panel="context" role="tabpanel" aria-labelledby="tab-context"><h2>Decision Context</h2><div id="context-shell" class="helper-text">載入中...</div></section>
+      <section id="signals-card" class="section-card" data-tab-panel="signals" role="tabpanel" aria-labelledby="tab-signals"><h2>信號摘要</h2></section><section id="context-card" class="section-card" data-tab-panel="context" role="tabpanel" aria-labelledby="tab-context"><h2>Decision Context</h2><div id="context-shell" class="helper-text">載入中...</div></section><section id="stock-review-card" class="section-card" data-tab-panel="stock-review" role="tabpanel" aria-labelledby="tab-stock-review"><h2>股票檢視 / Stock Review</h2><p class="helper-text">AI 模擬方向：偏正面觀察 / 繼續觀察 / 謹慎 / 資料不足</p><div id="stock-review-shell" class="helper-text">載入中...</div></section>
       <section id="paper-pnl-card" class="section-card" data-tab-panel="today" role="tabpanel" aria-labelledby="tab-today"><h2>模擬盈虧摘要</h2></section>
       <section id="risk-card" class="section-card" data-tab-panel="today" role="tabpanel" aria-labelledby="tab-today"><h2>風險摘要</h2></section>
       <section id="journal-card" class="section-card" data-tab-panel="journal" role="tabpanel" aria-labelledby="tab-journal"><h2>Human Paper Decision Journal / 人手模擬決策日誌</h2></section>
@@ -307,6 +307,39 @@
         });
       }
       function renderPaperPnl(pnl){ if (!pnl || pnl.status !== "ok") return fillUnavailable("paper-pnl-card","模擬盈虧摘要"); const card=document.getElementById("paper-pnl-card"); card.textContent=""; const h=document.createElement("h2"); h.textContent="模擬盈虧摘要"; card.append(h, renderStatusChip(pnl.status)); card.appendChild(renderMetricGrid([{label:"貨幣",value:pnl.currency || "HKD"},{label:"總持倉數",value:pnl.total_positions},{label:"開倉數",value:pnl.open_positions},{label:"平倉數",value:pnl.closed_positions},{label:"已實現盈虧 (Paper/模擬)",value:pnl.realized_pnl},{label:"未實現盈虧 (Paper/模擬)",value:pnl.unrealized_pnl},{label:"總盈虧 (Paper/模擬)",value:pnl.total_pnl}])); const ts = pnl.data_timestamp_hkt || pnl.updated_at_hkt; if (ts) { const t=document.createElement("p"); t.className="row"; t.textContent=`資料時間：${ts}`; card.appendChild(t); } if (Array.isArray(pnl.limitations) && pnl.limitations.length > 0) { const h3=document.createElement("h3"); h3.textContent="限制"; const ul=document.createElement("ul"); pnl.limitations.forEach((x)=>{const li=document.createElement("li"); li.textContent=String(x); ul.appendChild(li);}); card.append(h3,ul); } const helper=document.createElement("p"); helper.className="helper-text"; helper.textContent="以上為模擬 / paper-trading 盈虧，只供檢視，不代表真實戶口表現。"; card.appendChild(helper); }
+      function renderStockReview(stockReview){
+        const shell = document.getElementById("stock-review-shell");
+        if (!shell) return;
+        shell.textContent = "";
+        const rows = Array.isArray(stockReview?.items) ? stockReview.items : [];
+        if (!rows.length) { shell.textContent = "暫時未有已保存的決策紀錄。"; return; }
+        const pickerLabel = document.createElement("label");
+        pickerLabel.textContent = "選擇股票";
+        const picker = document.createElement("select");
+        rows.forEach((item) => { const opt = document.createElement("option"); opt.value = String(item.ticker || ""); opt.textContent = String(item.ticker || ""); picker.appendChild(opt); });
+        pickerLabel.appendChild(picker);
+        const card = document.createElement("div");
+        const renderOne = () => {
+          card.textContent = "";
+          const chosen = rows.find((x) => String(x.ticker || "") === String(picker.value || "")) || rows[0];
+          ["headline_summary","data_sufficiency","technical_observation","risk_brief","portfolio_context","simulated_direction","safety_note"].forEach((key) => {
+            const p = document.createElement("p");
+            p.className = "row";
+            p.textContent = String(chosen?.[key] || "未有資料");
+            card.appendChild(p);
+          });
+          const actionsTitle = document.createElement("h3"); actionsTitle.textContent = "你下一步要做咩";
+          const ul = document.createElement("ul");
+          (chosen?.operator_next_actions || []).forEach((a) => { const li = document.createElement("li"); li.textContent = String(a); ul.appendChild(li); });
+          card.append(actionsTitle, ul);
+          const d = document.createElement("details"); const s = document.createElement("summary"); s.textContent = "查看技術資料";
+          const tech = document.createElement("pre"); tech.className="helper-text"; tech.textContent = JSON.stringify(chosen?.technical_details || {}, null, 2);
+          d.append(s, tech); card.appendChild(d);
+        };
+        picker.addEventListener("change", renderOne);
+        shell.append(pickerLabel, card);
+        renderOne();
+      }
       function renderRisk(risk){ if (!risk || risk.status !== "ok") return fillUnavailable("risk-card","風險摘要"); const card=document.getElementById("risk-card"); card.textContent=""; const h=document.createElement("h2"); h.textContent="風險摘要"; card.append(h, renderStatusChip(risk.status)); const p=document.createElement("p"); p.className="row"; p.textContent=`Risk level（Paper review）：${String(risk.risk_level||"unknown")}`; card.appendChild(p); const ts=risk.data_timestamp_hkt || risk.updated_at_hkt; if (ts) { const t=document.createElement("p"); t.className="row"; t.textContent=`資料時間：${ts}`; card.appendChild(t); } const w=document.createElement("h3"); w.textContent="風險警示"; card.appendChild(w); if (Array.isArray(risk.warnings) && risk.warnings.length > 0) { const ul=document.createElement("ul"); risk.warnings.forEach((x)=>{const li=document.createElement("li"); li.textContent=String(x); ul.appendChild(li);}); card.appendChild(ul);} else { const none=document.createElement("p"); none.className="helper-text"; none.textContent="暫無風險警示"; card.appendChild(none);} if (Array.isArray(risk.limitations) && risk.limitations.length > 0) { const h3=document.createElement("h3"); h3.textContent="限制"; const ul=document.createElement("ul"); risk.limitations.forEach((x)=>{const li=document.createElement("li"); li.textContent=String(x); ul.appendChild(li);}); card.append(h3,ul);} const helper=document.createElement("p"); helper.className="helper-text"; helper.textContent="風險摘要只供 review，不會自動阻止或建立任何真實交易。"; card.appendChild(helper); }
       function renderJournal(latest, signals, paperPnl, risk, decisionContext){
         const card=document.getElementById("journal-card"); card.textContent="";
@@ -481,8 +514,8 @@
         } catch (_error) { box.innerHTML = `<h3>後續結果 / Outcome Review</h3><p class="helper-text">暫時未能載入，請稍後再試。</p>`; }
       }
 
-      function setActiveTab(tab){ const panelMap={today:["overview-card","team-card","latest-card","daily-card","paper-pnl-card","risk-card"],signals:["signals-card"],context:["context-card"],journal:["journal-card"]}; Object.keys(panelMap).forEach((k)=>panelMap[k].forEach((id)=>{const el=document.getElementById(id); if(el) el.style = (k===tab)?"":"display:none;";})); const tabs=["today","signals","context","journal"]; tabs.forEach((name)=>{const btn=document.getElementById(`tab-${name}`); if(btn){ const on=name===tab; btn.setAttribute("aria-selected", on?"true":"false"); }}); }
-      function bindTabs(){ const tabs=["today","signals","context","journal"]; tabs.forEach((name)=>{ const b=document.getElementById(`tab-${name}`); if(b) b.addEventListener("click", ()=> setActiveTab(name)); }); setActiveTab("today"); }
+      function setActiveTab(tab){ const panelMap={today:["overview-card","team-card","latest-card","daily-card","paper-pnl-card","risk-card"],signals:["signals-card"],context:["context-card"],"stock-review":["stock-review-card"],journal:["journal-card"]}; Object.keys(panelMap).forEach((k)=>panelMap[k].forEach((id)=>{const el=document.getElementById(id); if(el) el.style = (k===tab)?"":"display:none;";})); const tabs=["today","signals","context","stock-review","journal"]; tabs.forEach((name)=>{const btn=document.getElementById(`tab-${name}`); if(btn){ const on=name===tab; btn.setAttribute("aria-selected", on?"true":"false"); }}); }
+      function bindTabs(){ const tabs=["today","signals","context","stock-review","journal"]; tabs.forEach((name)=>{ const b=document.getElementById(`tab-${name}`); if(b) b.addEventListener("click", ()=> setActiveTab(name)); }); setActiveTab("today"); }
       async function loadReviewShell() {
         const initData = (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initData) || "";
         const apiBaseUrl = resolveApiBaseUrl();
@@ -508,12 +541,14 @@
           renderTeamRole(latest, daily, signals, risk);
           const decisionContext = payload?.sections?.decision_context_summary;
           renderContextTab(signals, decisionContext, selectedTicker, tickerPortfolio);
+          renderStockReview(payload?.sections?.stock_dossier_review);
           renderJournal(latest, signals, pnl, risk, decisionContext);
         } catch (_error) {
           renderOverview(null, null, null);
           fillUnavailable("latest-card", "最新系統運行");
           fillUnavailable("daily-card", "每日檢視摘要");
           fillUnavailable("signals-card", "信號摘要");
+          fillUnavailable("stock-review-card", "股票檢視");
           fillUnavailable("paper-pnl-card", "模擬盈虧摘要");
           fillUnavailable("risk-card", "風險摘要");
           renderJournal(null, null, null, null, null);

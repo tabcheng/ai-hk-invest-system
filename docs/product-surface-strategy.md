@@ -282,3 +282,9 @@ All surfaces remain read/review-first and paper-only unless a later explicit gat
 - Stock dossier first-layer should prioritize: `headline_summary`, `data_sufficiency`, `risk_brief`, `simulated_direction`, `operator_next_actions`, and `safety_note`.
 - Safety wording remains mandatory: `只供模擬檢視` / `不建立訂單` / `不連接券商` / `不是真實買賣建議`.
 - Boundaries unchanged: no broker/live execution, no real-money order creation, no autonomous execution.
+
+## Step 135B Stock Review surface policy
+- Add a bounded `股票檢視 / Stock Review` shell for non-professional operators.
+- First-layer wording remains simple Traditional Chinese and paper-only (`AI 模擬方向`, `只供模擬檢視`).
+- Technical source/status/timestamps/internal fields must stay under `查看技術資料`.
+- This surface is read-only and must not imply or enable execution/order behavior.

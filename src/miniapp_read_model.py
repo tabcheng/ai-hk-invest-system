@@ -12,6 +12,94 @@ from src.miniapp_data_provider import (
 _HKT = timezone(timedelta(hours=8))
 
 
+def build_stock_dossiers_v1_section(
+    signals_summary: Mapping[str, Any],
+    risk_summary: Mapping[str, Any],
+    decision_context_summary: Mapping[str, Any],
+    ticker_level_paper_portfolio_review: Mapping[str, Any],
+    latest_system_run: Mapping[str, Any] | None = None,
+    daily_review_summary: Mapping[str, Any] | None = None,
+) -> dict[str, Any]:
+    items = list(signals_summary.get("top_items") or [])
+    context_rows = {str(row.get("ticker") or ""): row for row in list(decision_context_summary.get("tickers") or [])}
+    portfolio_rows = {str(row.get("ticker") or ""): row for row in list(ticker_level_paper_portfolio_review.get("rows") or [])}
+    candidate_tickers: list[str] = []
+    for row in items:
+        ticker = str(row.get("ticker") or "").strip()
+        if ticker and ticker not in candidate_tickers:
+            candidate_tickers.append(ticker)
+    for ticker in list(context_rows.keys()) + list(portfolio_rows.keys()):
+        t = str(ticker or "").strip()
+        if t and t not in candidate_tickers:
+            candidate_tickers.append(t)
+
+    signal_lookup = {
+        str(row.get("ticker") or "").strip(): str(row.get("signal") or row.get("signal_label") or "unknown").lower()
+        for row in items
+        if str(row.get("ticker") or "").strip()
+    }
+    output_items = []
+    for ticker in candidate_tickers:
+        signal = signal_lookup.get(ticker, "unknown")
+        risk_level = str((context_rows.get(ticker, {}).get("risk", {}) or {}).get("risk_level") or risk_summary.get("risk_level") or "unknown").lower()
+        has_enough_data = signal in {"positive", "neutral", "negative"} and risk_level in {"low", "medium", "high"}
+        data_sufficiency = "資料足夠，可作模擬檢視。" if has_enough_data else "資料不足，暫時只可觀察。"
+        if signal == "positive":
+            simulated_direction = "AI 模擬方向：偏正面觀察"
+            technical_observation = "技術觀察偏正面，但仍要人手覆核。"
+        elif signal == "negative":
+            simulated_direction = "AI 模擬方向：偏審慎觀察"
+            technical_observation = "技術觀察偏弱，建議先控制風險。"
+        elif signal == "neutral":
+            simulated_direction = "AI 模擬方向：繼續觀察"
+            technical_observation = "技術觀察中性，未見明確方向。"
+        else:
+            simulated_direction = "AI 模擬方向：資料不足"
+            technical_observation = "技術資料不足，暫不作方向判斷。"
+        if risk_level == "high":
+            risk_brief = "風險較高，請先保守處理，唔好急於判斷。"
+        elif risk_level == "medium":
+            risk_brief = "風險中等，請先查看風險來源再作人手判斷。"
+        elif risk_level == "low":
+            risk_brief = "風險較低，但仍需人手覆核。"
+        else:
+            risk_brief = "未有足夠風險資料，請先觀察。"
+        p = portfolio_rows.get(ticker, {})
+        if p:
+            portfolio_context = f"模擬組合背景：持倉={p.get('quantity', 0)}，總盈虧={p.get('total_pnl', '未有資料')}。"
+        else:
+            portfolio_context = "模擬組合背景：未有持倉資料。"
+        output_items.append(
+            {
+                "ticker": ticker,
+                "headline_summary": f"{ticker}：先看風險，再看方向；只供模擬檢視。",
+                "data_sufficiency": data_sufficiency,
+                "technical_observation": technical_observation,
+                "fundamental_observation": "未有基本面資料，暫不作基本面判斷。",
+                "catalyst_observation": "未有新聞/催化資料，暫不作催化判斷。",
+                "risk_brief": risk_brief,
+                "portfolio_context": portfolio_context,
+                "simulated_direction": simulated_direction,
+                "operator_next_actions": [
+                    "先確認資料夠唔夠。",
+                    "再查看風險提示。",
+                    "最後由人手在系統外作出真實買賣決定。",
+                ],
+                "technical_details": {
+                    "signal": signal,
+                    "risk_level": risk_level,
+                    "decision_context_status": decision_context_summary.get("status"),
+                    "signals_status": signals_summary.get("status"),
+                    "risk_status": risk_summary.get("status"),
+                    "latest_run_id": latest_system_run.get("run_id") if isinstance(latest_system_run, Mapping) else None,
+                    "daily_review_status": daily_review_summary.get("status") if isinstance(daily_review_summary, Mapping) else None,
+                },
+                "safety_note": "只供模擬檢視｜不建立訂單｜不連接券商｜不是真實買賣建議｜真實買賣決定由人類在系統外作出",
+            }
+        )
+    return {"status": "ok", "source": "stock_dossier_v1_read_model", "items": output_items}
+
+
 def build_daily_brief_section(
     daily_review_summary: Mapping[str, Any],
     signals_summary: Mapping[str, Any],
@@ -119,6 +207,14 @@ def build_miniapp_review_shell_response(
     }
     sections["daily_brief"] = build_daily_brief_section(
         sections["daily_review_summary"], sections["signals_summary"], sections["risk_summary"]
+    )
+    sections["stock_dossier_review"] = build_stock_dossiers_v1_section(
+        sections["signals_summary"],
+        sections["risk_summary"],
+        sections["decision_context_summary"],
+        sections["ticker_level_paper_portfolio_review"],
+        latest_system_run=sections["latest_system_run"],
+        daily_review_summary=sections["daily_review_summary"],
     )
     return {
         "status": "ok",

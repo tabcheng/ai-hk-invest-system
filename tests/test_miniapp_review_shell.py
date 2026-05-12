@@ -20,6 +20,8 @@ def test_step92f_ui_review_shell_static_contract() -> None:
         "最新系統運行",
         "每日檢視摘要",
         "信號摘要",
+        "股票檢視 / Stock Review",
+        "AI 模擬方向：偏正面觀察 / 繼續觀察 / 謹慎 / 資料不足",
         "安全與邊界說明",
         "只限模擬交易",
         "不連接券商",

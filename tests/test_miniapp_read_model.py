@@ -3,6 +3,7 @@ from datetime import datetime, timezone
 from src.miniapp_read_model import (
     build_miniapp_review_shell_response,
     build_runtime_status_section,
+    build_stock_dossiers_v1_section,
 )
 
 
@@ -308,3 +309,63 @@ def test_review_shell_includes_ticker_level_portfolio_section_and_read_only_guar
     serialized = str(payload)
     assert "EODHD_API_TOKEN" not in serialized
     assert "raw_payload" not in serialized.lower()
+
+def test_stock_dossier_positive_low_risk():
+    section = build_stock_dossiers_v1_section(
+        {"status": "ok", "top_items": [{"ticker": "0700.HK", "signal": "positive"}]},
+        {"status": "ok", "risk_level": "low"},
+        {"status": "ok", "tickers": [{"ticker": "0700.HK", "risk": {"risk_level": "low"}}]},
+        {"status": "ok", "rows": [{"ticker": "0700.HK", "quantity": 100, "total_pnl": 12.3}]},
+    )
+    item = section["items"][0]
+    assert item["ticker"] == "0700.HK"
+    assert "偏正面觀察" in item["simulated_direction"]
+
+
+def test_stock_dossier_neutral_medium_risk():
+    section = build_stock_dossiers_v1_section(
+        {"status": "ok", "top_items": [{"ticker": "0005.HK", "signal": "neutral"}]},
+        {"status": "ok", "risk_level": "medium"},
+        {"status": "ok", "tickers": [{"ticker": "0005.HK", "risk": {"risk_level": "medium"}}]},
+        {"status": "ok", "rows": []},
+    )
+    assert "繼續觀察" in section["items"][0]["simulated_direction"]
+
+
+def test_stock_dossier_negative_high_risk_and_unknown_source_fallback():
+    section = build_stock_dossiers_v1_section(
+        {"status": "ok", "top_items": [{"ticker": "0011.HK", "signal": "negative"}]},
+        {"status": "ok", "risk_level": "high"},
+        {"status": "ok", "tickers": [{"ticker": "0011.HK", "risk": {"risk_level": "high"}}]},
+        {"status": "ok", "rows": []},
+    )
+    item = section["items"][0]
+    assert "偏審慎觀察" in item["simulated_direction"]
+    assert "風險較高" in item["risk_brief"]
+
+
+def test_stock_dossier_includes_context_ticker_when_signal_ticker_missing():
+    section = build_stock_dossiers_v1_section(
+        {"status": "ok", "top_items": [{"ticker": "", "signal": "positive"}]},
+        {"status": "unavailable"},
+        {"status": "ok", "tickers": [{"ticker": "0388.HK", "risk": {"risk_level": "unknown"}}]},
+        {"status": "ok", "rows": []},
+    )
+    assert section["items"][0]["ticker"] == "0388.HK"
+    assert "資料不足" in section["items"][0]["data_sufficiency"]
+
+
+def test_stock_dossier_has_no_execution_wording_in_english_or_chinese():
+    section = build_stock_dossiers_v1_section(
+        {"status": "ok", "top_items": [{"ticker": "0700.HK", "signal": "positive"}]},
+        {"status": "ok", "risk_level": "low"},
+        {"status": "ok", "tickers": []},
+        {"status": "ok", "rows": []},
+    )
+    serialized = str(section)
+    for forbidden in [
+        "Buy now", "Sell now", "Execute", "Order", "Trade action",
+        "立即落盤", "真實買入", "真實賣出", "下單指令", "請建立訂單", "立即建立訂單", "建立訂單：",
+    ]:
+        assert forbidden not in serialized
+    assert "不建立訂單" in serialized

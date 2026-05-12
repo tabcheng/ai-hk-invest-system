@@ -341,3 +341,8 @@ No broker integration or autonomous real-money execution is authorized by this p
 - Step 134B 補充：Mini App 首層「Daily Brief」與「AI 團隊角色」屬 read-only 解讀層，不新增前端寫入權限，不暴露任何 secret / initData 原文。
 
 - Step 134C: review-shell adds bounded read-only `sections.daily_brief` for first-layer Daily Brief interpretation. Contract is backend-built and frontend-consumed first; fallback must remain safety-preserving and non-transactional.
+
+## Step 135B boundary note — Stock Dossier v1
+- Mini App `Stock Review` / `股票檢視` uses read-only aggregated fields from existing sections only (signals/risk/decision-context/paper-portfolio review).
+- No DB writes are introduced by this section.
+- No vendor token, no AI token, no broker connection, and no real-money execution path are introduced.

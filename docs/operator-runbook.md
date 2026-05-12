@@ -513,3 +513,9 @@ When validating Mini App Journal Outcome Review and Telegram `/journal_outcome`,
 - Step 134B 操作指引：先看「今日簡報 / Daily Brief」與「AI 團隊正在幫你檢查乜」，再按下一步提示做 Outcome/Risk/Journal review；真實買賣決定必須在系統外由人類作出。
 
 - Step 134C operation note: On Mini App 今日頁, read backend `sections.daily_brief` first for headline/risk/simulated direction/next actions; if unavailable, fallback wording must still keep `只供模擬檢視 / 不建立訂單 / 不連接券商 / 不是真實買賣建議`.
+
+## Step 135B — 如何閱讀股票檢視（Stock Dossier v1）
+- 先看：`一句總結`、`資料夠唔夠`、`風險提示`。
+- 再看：`AI 模擬方向`與`你下一步要做咩`，只作人手 paper review 參考。
+- `查看技術資料`內才看來源/狀態/時間/內部欄位。
+- 任何真實買賣決定都必須由人類在系統外作出。

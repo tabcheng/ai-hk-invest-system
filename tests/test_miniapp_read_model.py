@@ -319,7 +319,9 @@ def test_stock_dossier_positive_low_risk():
     )
     item = section["items"][0]
     assert item["ticker"] == "0700.HK"
-    assert "偏正面觀察" in item["simulated_direction"]
+    assert item["simulated_direction"] == "偏正面觀察"
+    assert "AI 模擬方向：" not in item["simulated_direction"]
+    assert item["portfolio_context"] == "持倉=100，總盈虧=12.3。"
 
 
 def test_stock_dossier_neutral_medium_risk():
@@ -329,7 +331,7 @@ def test_stock_dossier_neutral_medium_risk():
         {"status": "ok", "tickers": [{"ticker": "0005.HK", "risk": {"risk_level": "medium"}}]},
         {"status": "ok", "rows": []},
     )
-    assert "繼續觀察" in section["items"][0]["simulated_direction"]
+    assert section["items"][0]["simulated_direction"] == "繼續觀察"
 
 
 def test_stock_dossier_negative_high_risk_and_unknown_source_fallback():
@@ -340,8 +342,9 @@ def test_stock_dossier_negative_high_risk_and_unknown_source_fallback():
         {"status": "ok", "rows": []},
     )
     item = section["items"][0]
-    assert "偏審慎觀察" in item["simulated_direction"]
+    assert item["simulated_direction"] == "偏審慎觀察"
     assert "風險較高" in item["risk_brief"]
+    assert item["portfolio_context"] == "未有持倉資料。"
 
 
 def test_stock_dossier_includes_context_ticker_when_signal_ticker_missing():

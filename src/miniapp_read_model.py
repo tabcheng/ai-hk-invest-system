@@ -45,16 +45,16 @@ def build_stock_dossiers_v1_section(
         has_enough_data = signal in {"positive", "neutral", "negative"} and risk_level in {"low", "medium", "high"}
         data_sufficiency = "資料足夠，可作模擬檢視。" if has_enough_data else "資料不足，暫時只可觀察。"
         if signal == "positive":
-            simulated_direction = "AI 模擬方向：偏正面觀察"
+            simulated_direction = "偏正面觀察"
             technical_observation = "技術觀察偏正面，但仍要人手覆核。"
         elif signal == "negative":
-            simulated_direction = "AI 模擬方向：偏審慎觀察"
+            simulated_direction = "偏審慎觀察"
             technical_observation = "技術觀察偏弱，建議先控制風險。"
         elif signal == "neutral":
-            simulated_direction = "AI 模擬方向：繼續觀察"
+            simulated_direction = "繼續觀察"
             technical_observation = "技術觀察中性，未見明確方向。"
         else:
-            simulated_direction = "AI 模擬方向：資料不足"
+            simulated_direction = "資料不足"
             technical_observation = "技術資料不足，暫不作方向判斷。"
         if risk_level == "high":
             risk_brief = "風險較高，請先保守處理，唔好急於判斷。"
@@ -66,9 +66,9 @@ def build_stock_dossiers_v1_section(
             risk_brief = "未有足夠風險資料，請先觀察。"
         p = portfolio_rows.get(ticker, {})
         if p:
-            portfolio_context = f"模擬組合背景：持倉={p.get('quantity', 0)}，總盈虧={p.get('total_pnl', '未有資料')}。"
+            portfolio_context = f"持倉={p.get('quantity', 0)}，總盈虧={p.get('total_pnl', '未有資料')}。"
         else:
-            portfolio_context = "模擬組合背景：未有持倉資料。"
+            portfolio_context = "未有持倉資料。"
         output_items.append(
             {
                 "ticker": ticker,

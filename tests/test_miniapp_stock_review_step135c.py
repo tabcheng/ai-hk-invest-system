@@ -44,6 +44,16 @@ def test_stock_review_uses_textcontent_no_html_injection() -> None:
     assert "textContent" in block
     assert "opt.textContent = String(item.ticker || \"\")" in block
     assert "p.textContent = `${label}：${String(value || \"未有資料\")}`;" in block
+    assert "chosen?.catalyst_observation" in block
+    assert "chosen?.news_catalyst_observation" not in block
+
+
+def test_stock_review_prevents_duplicate_prefixed_strings() -> None:
+    html = Path("miniapp/index.html").read_text(encoding="utf-8")
+    block = _stock_review_block(html)
+
+    assert "AI 模擬方向：AI 模擬方向" not in block
+    assert "模擬組合背景：模擬組合背景" not in block
 
 
 def test_stock_review_no_execution_wording_and_no_secret_exposure() -> None:

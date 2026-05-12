@@ -256,6 +256,28 @@ def test_low_risk_wording_and_no_signal_risk_unavailable_fallback() -> None:
     assert full_text2.count("只供模擬檢視｜不建立訂單｜不連接券商｜不是真實買賣建議") == 1
 
 
+def test_daily_brief_missing_uses_risk_fallback_mapping() -> None:
+    sections = _base_sections()
+    sections.pop("daily_brief", None)
+
+    sections["risk_summary"] = {"status": "ok", "risk_level": "high", "warnings": ["r1"]}
+    high = str(_render_with_sample_payload({"sections": sections})["full_render_text"])
+    assert "風險提示：風險偏高，先做風險檢查，唔好急住跟方向。" in high
+
+    sections["risk_summary"] = {"status": "ok", "risk_level": "medium", "warnings": ["r1"]}
+    medium = str(_render_with_sample_payload({"sections": sections})["full_render_text"])
+    assert "風險提示：有中等風險提示，請先查看風險詳情，不要只靠方向判斷。" in medium
+
+    sections["risk_summary"] = {"status": "ok", "risk_level": "low", "warnings": []}
+    low = str(_render_with_sample_payload({"sections": sections})["full_render_text"])
+    assert "風險提示：暫未見重大風險警示，但仍要人手覆核。" in low
+
+    sections["risk_summary"] = {"status": "unavailable", "risk_level": "unknown", "warnings": []}
+    unknown = str(_render_with_sample_payload({"sections": sections})["full_render_text"])
+    assert "風險提示：風險資料不足，暫時未有足夠資訊。" in unknown
+    assert "AI 模擬方向：AI 模擬方向" not in unknown
+
+
 def test_layout_polish_rows_and_timestamp_wrap_guard_present() -> None:
     assert "row-inline" in INDEX_HTML
     assert "time-label" in INDEX_HTML

@@ -339,3 +339,5 @@ No broker integration or autonomous real-money execution is authorized by this p
 - Frontend presentation must keep `只供模擬檢視` and related no-execution safety wording visible.
 
 - Step 134B 補充：Mini App 首層「Daily Brief」與「AI 團隊角色」屬 read-only 解讀層，不新增前端寫入權限，不暴露任何 secret / initData 原文。
+
+- Step 134C: review-shell adds bounded read-only `sections.daily_brief` for first-layer Daily Brief interpretation. Contract is backend-built and frontend-consumed first; fallback must remain safety-preserving and non-transactional.

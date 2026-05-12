@@ -123,6 +123,15 @@ def _base_sections() -> dict[str, object]:
         "latest_system_run": {"status": "ok", "runner_status": "success", "business_date": "2026-05-08", "data_timestamp_hkt": "2026-05-08 20:00:00 HKT", "run_id": "run-113", "processed_tickers": 10, "successful_tickers": 8, "failed_tickers": 2},
         "signals_summary": {"status": "ok", "review_readiness": "ok", "business_date": "2026-05-08", "data_timestamp_hkt": "2026-05-08 20:00:00 HKT", "covered_tickers": 3, "shown_signals": 3, "shown_positive_signals": 1, "shown_neutral_signals": 1, "shown_negative_signals": 1, "shown_unknown_signals": 0, "top_items": []},
         "daily_review_summary": {"status": "ok", "review_readiness": "partial", "available_sections": ["latest_system_run"], "unavailable_sections": ["signals", "paper_pnl", "risk"]},
+        "daily_brief": {
+            "status": "ok",
+            "headline_summary": "今日先檢查資料與風險，再做人手模擬決定。",
+            "risk_brief": "有中等風險提示，請先查看風險詳情，不要只靠方向判斷。",
+            "simulated_direction": "繼續觀察，等待更多確認訊號",
+            "operator_next_actions": ["先看風險摘要。", "再看信號原因。"],
+            "technical_details": {"review_readiness": "partial", "risk_level": "medium", "signals_status": "ok"},
+            "safety_note": "只供模擬檢視｜不建立訂單｜不連接券商｜不是真實買賣建議",
+        },
         "paper_pnl_summary": {"status": "unavailable"},
         "risk_summary": {"status": "unavailable"},
     }
@@ -166,6 +175,8 @@ def test_render_level_daily_summary_availability_consistency() -> None:
     assert "place order" not in full_text
     assert "execute trade" not in full_text
     assert "broker execution" not in full_text
+    assert "查看技術資料" in full_text
+    assert "只供模擬檢視｜不建立訂單｜不連接券商｜不是真實買賣建議" in full_text
 
 
 def test_ready_copy_and_no_empty_missing_chip_area() -> None:
@@ -177,7 +188,7 @@ def test_ready_copy_and_no_empty_missing_chip_area() -> None:
         {"sections": sections}
     )
     full_text = str(rendered["full_render_text"])
-    assert "今日資料足夠，可做模擬 review。" in full_text
+    assert "今日先檢查資料與風險，再做人手模擬決定。" in full_text
     assert "暫無缺失區塊" in full_text
     assert "未有資料信號摘要" not in full_text
     assert "以上為模擬 / paper-trading 盈虧" in full_text
@@ -193,60 +204,78 @@ def test_unavailable_coverage_copy_present() -> None:
     sections["signals_summary"] = {"status": "unavailable"}
     sections["daily_review_summary"] = {"status": "ok", "available_sections": [], "unavailable_sections": []}
     rendered = _render_with_sample_payload({"sections": sections})
-    assert "今日未適合判斷。" in str(rendered["full_render_text"])
+    assert "今日先檢查資料與風險，再做人手模擬決定。" in str(rendered["full_render_text"])
 
 
 def test_ai_direction_positive_dominant_wording() -> None:
     sections = _base_sections()
     sections["daily_review_summary"] = {"status": "ok", "available_sections": ["latest_system_run", "signals", "paper_pnl", "risk"], "unavailable_sections": []}
-    sections["signals_summary"]["top_items"] = [
-        {"ticker": "0700.HK", "signal_label": "positive"},
-        {"ticker": "0388.HK", "signal_label": "positive"},
-        {"ticker": "1299.HK", "signal_label": "neutral"},
-    ]
+    sections["daily_brief"]["simulated_direction"] = "模擬偏向正面觀察"
     sections["risk_summary"] = {"status": "ok", "risk_level": "low", "warnings": []}
     rendered = _render_with_sample_payload({"sections": sections})
     full_text = str(rendered["full_render_text"])
-    assert "AI 模擬方向：模擬偏向正面觀察（只供模擬檢視）" in full_text
+    assert "AI 模擬方向：模擬偏向正面觀察" in full_text
+    assert "AI 模擬方向：AI 模擬方向偏正面" not in full_text
 
 
 def test_ai_direction_negative_dominant_wording() -> None:
     sections = _base_sections()
-    sections["signals_summary"]["top_items"] = [
-        {"ticker": "0700.HK", "signal_label": "negative"},
-        {"ticker": "0388.HK", "signal_label": "negative"},
-        {"ticker": "1299.HK", "signal_label": "neutral"},
-    ]
+    sections["daily_brief"]["simulated_direction"] = "模擬偏向審慎，暫時以防守為主"
     sections["risk_summary"] = {"status": "ok", "risk_level": "high", "warnings": ["r1"]}
     rendered = _render_with_sample_payload({"sections": sections})
     full_text = str(rendered["full_render_text"])
-    assert "AI 模擬方向：暫時跳過 / 小心風險（只供模擬檢視）" in full_text
+    assert "AI 模擬方向：模擬偏向審慎，暫時以防守為主" in full_text
 
 
 def test_medium_risk_uses_caution_wording_not_controllable() -> None:
     sections = _base_sections()
-    sections["signals_summary"]["top_items"] = [{"ticker": "0700.HK", "signal_label": "neutral"}]
+    sections["daily_brief"]["risk_brief"] = "有中等風險提示，請先查看風險詳情，不要只靠方向判斷。"
     sections["risk_summary"] = {"status": "ok", "risk_level": "medium", "warnings": ["r1"]}
     rendered = _render_with_sample_payload({"sections": sections})
     full_text = str(rendered["full_render_text"])
-    assert "有風險提示，請先查看風險詳情，暫時不要只靠方向判斷。" in full_text
+    assert "有中等風險提示，請先查看風險詳情，不要只靠方向判斷。" in full_text
     assert "風險可控" not in full_text
 
 
 def test_low_risk_wording_and_no_signal_risk_unavailable_fallback() -> None:
     sections = _base_sections()
-    sections["signals_summary"]["top_items"] = [{"ticker": "0700.HK", "signal_label": "neutral"}]
+    sections["daily_brief"]["risk_brief"] = "暫未見重大風險警示，但仍要人手覆核。"
     sections["risk_summary"] = {"status": "ok", "risk_level": "low", "warnings": []}
     rendered_low = _render_with_sample_payload({"sections": sections})
-    assert "暫未見主要風險提示，但仍需人手 review。" in str(rendered_low["full_render_text"])
+    assert "暫未見重大風險警示，但仍要人手覆核。" in str(rendered_low["full_render_text"])
 
     sections2 = _base_sections()
+    sections2["daily_brief"]["risk_brief"] = "風險資料不足，暫時未有足夠資訊。"
+    sections2["daily_brief"]["simulated_direction"] = "資料不足，暫時只可觀察"
     sections2["signals_summary"] = {"status": "unavailable"}
     sections2["risk_summary"] = {"status": "unavailable"}
     rendered_unavailable = _render_with_sample_payload({"sections": sections2})
     full_text2 = str(rendered_unavailable["full_render_text"])
-    assert "AI 模擬方向：暫時只觀察（只供模擬檢視）" in full_text2
-    assert "風險資料不足／風險狀態未清楚，暫時不建議依賴此方向。" in full_text2
+    assert "AI 模擬方向：資料不足，暫時只可觀察" in full_text2
+    assert "風險資料不足，暫時未有足夠資訊。" in full_text2
+    assert full_text2.count("只供模擬檢視｜不建立訂單｜不連接券商｜不是真實買賣建議") == 1
+
+
+def test_daily_brief_missing_uses_risk_fallback_mapping() -> None:
+    sections = _base_sections()
+    sections.pop("daily_brief", None)
+
+    sections["risk_summary"] = {"status": "ok", "risk_level": "high", "warnings": ["r1"]}
+    high = str(_render_with_sample_payload({"sections": sections})["full_render_text"])
+    assert "風險提示：風險偏高，先做風險檢查，唔好急住跟方向。" in high
+
+    sections["risk_summary"] = {"status": "ok", "risk_level": "medium", "warnings": ["r1"]}
+    medium = str(_render_with_sample_payload({"sections": sections})["full_render_text"])
+    assert "風險提示：有中等風險提示，請先查看風險詳情，不要只靠方向判斷。" in medium
+
+    sections["risk_summary"] = {"status": "ok", "risk_level": "low", "warnings": []}
+    low = str(_render_with_sample_payload({"sections": sections})["full_render_text"])
+    assert "風險提示：暫未見重大風險警示，但仍要人手覆核。" in low
+
+    sections["risk_summary"] = {"status": "unavailable", "risk_level": "unknown", "warnings": []}
+    unknown = str(_render_with_sample_payload({"sections": sections})["full_render_text"])
+    assert "風險提示：風險資料不足，暫時未有足夠資訊。" in unknown
+    assert "AI 模擬方向：AI 模擬方向" not in unknown
 
 
 def test_layout_polish_rows_and_timestamp_wrap_guard_present() -> None:

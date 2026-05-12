@@ -71,7 +71,7 @@
       <section id="paper-pnl-card" class="section-card" data-tab-panel="today" role="tabpanel" aria-labelledby="tab-today"><h2>模擬盈虧摘要</h2></section>
       <section id="risk-card" class="section-card" data-tab-panel="today" role="tabpanel" aria-labelledby="tab-today"><h2>風險摘要</h2></section>
       <section id="journal-card" class="section-card" data-tab-panel="journal" role="tabpanel" aria-labelledby="tab-journal"><h2>Human Paper Decision Journal / 人手模擬決策日誌</h2></section>
-      <section class="footer-guardrail"><h2>安全與邊界說明</h2><ul><li>Telegram initData 只在後端驗證</li><li>前端不使用 initDataUnsafe 作授權</li><li>前端不保存 Supabase secret / service role key</li><li>系統不連接券商、不作真實落盤</li><li>所有信號只供模擬檢視，並非買賣指示</li></ul></section>
+      <section class="footer-guardrail"><h2>安全與邊界說明</h2><ul><li>Telegram initData 只在後端驗證</li><li>前端不使用 initDataUnsafe 作授權</li><li>前端不保存 Supabase secret / service role key</li><li>系統不連接券商、不作真實落盤</li><li>所有信號只供模擬檢視，並非買賣指示</li><li>真實買賣決定由人類在系統外作出</li></ul></section>
           <p id="build-meta" class="helper-text">UI build: unknown · Deployed build: unknown</p>
     </main>
     <script>
@@ -88,6 +88,12 @@
       function renderMetricGrid(items) { const grid = document.createElement("div"); grid.className = "metric-grid"; items.forEach((item) => { const node = document.createElement("div"); node.className = "metric-item"; const l = document.createElement("div"); l.className = "label"; l.textContent = item.label; const v = document.createElement("div"); v.className = "value"; v.textContent = String(item.value ?? "-"); node.append(l,v); grid.appendChild(node); }); return grid; }
       function asSectionNames(values) { return Array.isArray(values) ? values.map((v) => SECTION_NAME_MAP[String(v)] || String(v)) : []; }
       function renderSignalItems(items, onViewContext) { const list = document.createElement("ul"); list.className = "signal-list"; (Array.isArray(items) ? items : []).forEach((item) => { const li = document.createElement("li"); li.className = "signal-item"; const ticker = document.createElement("div"); ticker.textContent = `股票：${String(item.ticker || "-")}`; const sig = document.createElement("div"); sig.textContent = `模擬信號方向：${SIGNAL_LABEL[String(item.signal_label)] || SIGNAL_LABEL.unknown}`; const confidenceLabel = String(item.confidence_label || "unknown").toLowerCase() === "unknown" ? "未提供 / Unknown" : String(item.confidence_label || "-"); const c = document.createElement("div"); c.textContent = `信心：${confidenceLabel}`; const r = document.createElement("div"); r.textContent = `原因：${String(item.reason_short || "未提供")}`; const btn = document.createElement("button"); btn.type = "button"; btn.textContent = "查看 Context"; btn.addEventListener("click", () => onViewContext(String(item.ticker || ""))); li.append(ticker,sig,c,r,btn); list.appendChild(li); }); return list; }
+      function fallbackRiskText(riskLevel) {
+        if (riskLevel === "high") return "風險偏高，先做風險檢查，唔好急住跟方向。";
+        if (riskLevel === "medium") return "有中等風險提示，請先查看風險詳情，不要只靠方向判斷。";
+        if (riskLevel === "low") return "暫未見重大風險警示，但仍要人手覆核。";
+        return "風險資料不足，暫時未有足夠資訊。";
+      }
       function deriveAiDirection(signals) {
         if (!signals || signals.status !== "ok") return "暫時只觀察";
         const items = Array.isArray(signals.top_items) ? signals.top_items : [];
@@ -100,7 +106,7 @@
         return "訊號未一致，先做人工 review";
       }
       function fillUnavailable(cardId, title){ const card=document.getElementById(cardId); card.textContent=""; const h=document.createElement("h2"); h.textContent=title; const chip=renderStatusChip("unavailable"); const p=document.createElement("p"); p.className="helper-text"; p.textContent=`${title}未有資料（Data not available yet）`; card.append(h,chip,p); }
-      function renderOverview(latest,daily,signals,risk){
+      function renderOverview(latest,daily,signals,risk,dailyBrief){
         const card=document.getElementById("overview-card");
         card.textContent="";
         const h=document.createElement("h2");
@@ -129,31 +135,36 @@
         ].forEach((entry) => { const item=document.createElement("div"); item.className="availability-item"; const l=document.createElement("div"); l.className="label"; l.textContent=entry.label; item.append(l, renderAvailabilityChip(entry.available)); availabilityGrid.appendChild(item); });
 
         const riskLevel = String(risk?.risk_level || "unknown").toLowerCase();
-        const riskText = risk?.status !== "ok"
-          ? "風險資料不足／風險狀態未清楚，暫時不建議依賴此方向。"
-          : (riskLevel === "high"
-            ? "風險較高，暫時不建議依賴此方向。"
-            : riskLevel === "medium"
-              ? "有風險提示，請先查看風險詳情，暫時不要只靠方向判斷。"
-              : riskLevel === "low"
-                ? "暫未見主要風險提示，但仍需人手 review。"
-                : "風險資料不足／風險狀態未清楚，暫時不建議依賴此方向。");
-        const aiDirection = deriveAiDirection(signals);
+        const riskText = String(dailyBrief?.risk_brief || "");
+        const aiDirection = String(dailyBrief?.simulated_direction || deriveAiDirection(signals));
         const note=document.createElement("p"); note.className="helper-text";
         if (coverage === "ready") note.textContent = "你下一步：先看風險提示，再決定是否寫低你嘅模擬決定理由（paper decision journal）。";
         else if (coverage === "partial") note.textContent = "你下一步：先補看缺少資料，暫時不要依賴單一方向。";
         else note.textContent = "你下一步：暫時只觀察，等資料更新後再 review。";
         const summary = document.createElement("span");
-        summary.textContent = coverage === "ready" ? "今日資料足夠，可做模擬 review。" : (coverage === "partial" ? "今日要小心，部分資料不足。" : "今日未適合判斷。");
+        summary.textContent = String(dailyBrief?.headline_summary || (coverage === "ready" ? "今日資料足夠，可做模擬 review。" : (coverage === "partial" ? "今日要小心，部分資料不足。" : "今日未適合判斷。")));
         line2.appendChild(summary);
         line3.appendChild(renderStatusChip(coverage));
-        const riskLine=document.createElement("p"); riskLine.className="row"; riskLine.textContent=`風險提示：${riskText}`;
-        const directionLine=document.createElement("p"); directionLine.className="row"; directionLine.textContent=`AI 模擬方向：${aiDirection}（只供模擬檢視）`;
+        const riskLine=document.createElement("p"); riskLine.className="row"; riskLine.textContent=`風險提示：${riskText || fallbackRiskText(riskLevel)}`;
+        const directionLine=document.createElement("p"); directionLine.className="row"; directionLine.textContent=`AI 模擬方向：${aiDirection}`;
         const nextTitle=document.createElement("h3"); nextTitle.textContent="你下一步要做咩";
         const nextList=document.createElement("ul");
-        ["查看 Outcome Review", "查看風險提示", coverage === "ready" ? "寫低你嘅模擬決定理由（paper decision journal）" : "暫時只觀察，不作模擬決策"].forEach((x)=>{ const li=document.createElement("li"); li.textContent=x; nextList.appendChild(li); });
-        const safetyLine=document.createElement("p"); safetyLine.className="helper-text"; safetyLine.textContent="真實買賣決定由人類在系統外作出。";
+        const actions = Array.isArray(dailyBrief?.operator_next_actions) && dailyBrief.operator_next_actions.length > 0
+          ? dailyBrief.operator_next_actions.slice(0,3)
+          : ["查看 Outcome Review", "查看風險提示", coverage === "ready" ? "寫低你嘅模擬決定理由（paper decision journal）" : "暫時只觀察，不作模擬決策"];
+        actions.forEach((x)=>{ const li=document.createElement("li"); li.textContent=String(x); nextList.appendChild(li); });
+        const safetyLine=document.createElement("p"); safetyLine.className="helper-text"; safetyLine.textContent=String(dailyBrief?.safety_note || "只供模擬檢視｜不建立訂單｜不連接券商｜不是真實買賣建議");
         card.append(h,line1,line2,line3,line4,availabilityGrid,riskLine,directionLine,nextTitle,nextList,note,safetyLine);
+        if (dailyBrief?.technical_details) {
+          const details = document.createElement("details");
+          const dSummary = document.createElement("summary");
+          dSummary.textContent = "查看技術資料";
+          const tech = document.createElement("p");
+          tech.className = "helper-text";
+          tech.textContent = `readiness=${String(dailyBrief.technical_details.review_readiness || "unknown")}；risk=${String(dailyBrief.technical_details.risk_level || "unknown")}；signals_status=${String(dailyBrief.technical_details.signals_status || "unknown")}`;
+          details.append(dSummary, tech);
+          card.appendChild(details);
+        }
       }
       function renderTeamRole(latest,daily,signals,risk){
         const card=document.getElementById("team-card");
@@ -484,7 +495,8 @@
           const signals = payload?.sections?.signals_summary;
           const pnl = payload?.sections?.paper_pnl_summary;
           const risk = payload?.sections?.risk_summary;
-          renderOverview(latest, daily, signals, risk);
+          const dailyBrief = payload?.sections?.daily_brief;
+          renderOverview(latest, daily, signals, risk, dailyBrief);
           renderLatest(latest);
           renderDaily(daily, signals);
           let selectedTicker = Array.isArray(signals?.top_items) && signals.top_items.length > 0 ? String(signals.top_items[0].ticker || "") : "";

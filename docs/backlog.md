@@ -315,3 +315,8 @@ Prioritization:
 - [ ] Step 134B: Daily Brief + AI Team role UI（Mini App 第一層結論先行 + AI team role 人話化；保持 read-only / paper-only）
 
 - **Step 134C (in progress):** Backend Daily Brief read model + Mini App first-layer consumption from bounded `sections.daily_brief`, with fallback rendering and focused tests. Guardrails unchanged: read-only/paper-only/no broker/no live execution/no order creation.
+
+1. **Step 135B — Stock Dossier v1 bounded slice (in progress)**
+   - Add read-only backend stock dossier builder and expose via Mini App review-shell bounded section.
+   - Add Mini App 股票檢視 shell with ticker selector and Chinese-first first-layer wording + `查看技術資料` split.
+   - Add focused backend/Mini App tests and keep no-write/no-execution/no-vendor-token constraints.

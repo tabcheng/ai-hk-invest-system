@@ -1,6 +1,7 @@
 from datetime import datetime, timezone
 
 from src.miniapp_read_model import (
+    build_stock_dossiers_v1_section,
     build_miniapp_review_shell_response,
     build_runtime_status_section,
 )
@@ -140,6 +141,32 @@ def test_provider_injection_can_override_runtime_status_and_latest_system_run():
     assert payload["sections"]["runner_status"] == {"status": "ok", "source": "stub_runtime"}
     assert payload["sections"]["latest_system_run"]["source"] == "stub_system_run"
     assert payload["sections"]["latest_system_run"]["run_id"] == 86
+
+
+def test_stock_dossier_v1_positive_low_risk():
+    section = build_stock_dossiers_v1_section(
+        {"status": "ok", "top_items": [{"ticker": "0700.HK", "signal": "positive"}]},
+        {"status": "ok", "risk_level": "low"},
+        {"status": "ok", "tickers": [{"ticker": "0700.HK", "risk": {"risk_level": "low"}}]},
+        {"status": "ok", "rows": [{"ticker": "0700.HK", "quantity": 100, "total_pnl": 12.3}]},
+    )
+    item = section["items"][0]
+    assert "偏正面觀察" in item["simulated_direction"]
+    assert "不建立訂單" in item["safety_note"]
+    assert "Buy now" not in str(item)
+
+
+def test_stock_dossier_v1_negative_high_risk_and_missing_data():
+    section = build_stock_dossiers_v1_section(
+        {"status": "ok", "top_items": [{"ticker": "0005.HK", "signal": "negative"}, {"ticker": "", "signal": "neutral"}]},
+        {"status": "unavailable"},
+        {"status": "unavailable", "tickers": []},
+        {"status": "ok", "rows": []},
+    )
+    assert len(section["items"]) == 1
+    item = section["items"][0]
+    assert "偏審慎觀察" in item["simulated_direction"]
+    assert "資料不足" in item["data_sufficiency"] or "觀察" in item["data_sufficiency"]
     assert payload["sections"]["daily_review_summary"]["source"] == "stub_daily_review"
     assert payload["sections"]["signals_summary"]["source"] == "stub_signals"
     assert payload["sections"]["paper_pnl_summary"]["source"] == "stub_pnl"

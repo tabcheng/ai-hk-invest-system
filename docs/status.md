@@ -585,3 +585,5 @@
 - Mini App overview now renders backend Daily Brief first; when missing, falls back to existing frontend-safe derivation.
 - Technical diagnostics remain under `查看技術資料`; first-layer wording keeps Traditional Chinese + paper-only safety note.
 - Added focused tests for Daily Brief read-model direction/risk/data sufficiency and Mini App render guardrails.
+
+- Step 135B in progress: added read-only Stock Dossier v1 section in Mini App review-shell (`sections.stock_dossier_review`) and Chinese-first Stock Review UI shell; scope remains read-only with no DB writes, no broker/live execution, and no vendor/AI token integrations. GitHub impact: backend read-model + Mini App shell/tests/docs updates. Railway impact: no topology/env/scheduler change required. Supabase impact: read-only existing-source consumption only, no schema/RLS migration.

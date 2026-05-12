@@ -288,3 +288,11 @@ All surfaces remain read/review-first and paper-only unless a later explicit gat
 - First-layer wording remains simple Traditional Chinese and paper-only (`AI 模擬方向`, `只供模擬檢視`).
 - Technical source/status/timestamps/internal fields must stay under `查看技術資料`.
 - This surface is read-only and must not imply or enable execution/order behavior.
+
+## Step 135C Stock Review readability polish policy
+- Stock Review first-layer must present fixed human-readable labels in Traditional Chinese:
+  `一句總結`, `資料夠唔夠`, `技術觀察`, `基本面觀察`, `新聞 / 催化觀察`, `風險提示`, `模擬組合背景`, `AI 模擬方向`, `你下一步要做咩`.
+- Empty state wording uses: `暫時未有可檢視的股票簡報。系統會在有 signals / risk / portfolio context 後顯示。`
+- If static helper text is shown for simulated direction, use:
+  `AI 模擬方向只分為：偏正面觀察、繼續觀察、謹慎、資料不足。只供模擬檢視。`
+- Technical/internal/raw fields continue to stay under collapsed `查看技術資料` only.

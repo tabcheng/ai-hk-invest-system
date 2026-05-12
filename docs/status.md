@@ -557,11 +557,11 @@
 - Step 133 docs hardening completed: promoted Mini App Outcome Review wording/state/safety constraints from one-off implementation notes into long-term docs-of-record contract (AGENTS + product-surface + miniapp-boundary + runbook + spec).
 
 ## 2026-05-12 — Step 134A AI Team Operating Model docs direction
-- Step 134A completed as docs-only architecture/product-direction definition for AI HK equity investing team operating model.
+- Step 134A in progress / PR review pending (docs-only architecture/product-direction definition for AI HK equity investing team operating model).
 - Added new docs-of-record file: `docs/ai-team-operating-model.md` covering purpose, team layers, role contracts (purpose/inputs/outputs/must-not/UI wording/boundary), decision chain, UI hierarchy, and hard boundaries.
 - Updated system-of-record docs (`AGENTS.md`, `docs/spec.md`, `docs/architecture-v3.md`, `docs/product-surface-strategy.md`, `docs/miniapp-readonly-data-boundary.md`, `docs/operator-runbook.md`, `docs/backlog.md`) for AI Team Workbench direction alignment.
 - Runtime behavior change: none.
 - Railway impact: none.
 - Supabase impact: none.
-- Post-merge QA Check (docs scope): pass — role boundaries and paper-only constraints are explicitly documented.
-- Post-merge Domain Check (docs scope): pass — AI HK alignment and no broker/live/real-money execution boundary preserved.
+- Post-merge QA: pending merge.
+- Post-merge Domain Check: pending merge.

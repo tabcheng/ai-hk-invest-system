@@ -8,7 +8,15 @@ def test_step92f_ui_review_shell_static_contract() -> None:
 
     required_text = [
         "AI 港股投資系統",
-        "今日檢視",
+        "今日簡報 / Daily Brief",
+        "AI 團隊正在幫你檢查乜",
+        "風險提示：",
+        "AI 模擬方向：",
+        "你下一步要做咩",
+        "查看 Outcome Review",
+        "寫低你嘅模擬決定理由（paper decision journal）",
+        "真實買賣決定由人類在系統外作出",
+        "查看技術資料",
         "最新系統運行",
         "每日檢視摘要",
         "信號摘要",
@@ -16,6 +24,8 @@ def test_step92f_ui_review_shell_static_contract() -> None:
         "只限模擬交易",
         "不連接券商",
         "不作真實落盤",
+        "只供模擬檢視",
+        "不是真實買賣建議",
         "並非買賣指示",
         "app-shell",
         "section-card",
@@ -46,6 +56,11 @@ def test_step92f_ui_review_shell_static_contract() -> None:
         "Read-only partial daily review summary from latest system run only; human final decision remains outside system.",
         "read-only latest-state row; no broker/live execution",
         "read-only review surface; no decision capture, no order creation, no broker/live execution",
+        "Buy now",
+        "Sell now",
+        "Execute",
+        "Order",
+        "Trade action",
     ]
 
     for text in required_text:

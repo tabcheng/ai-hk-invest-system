@@ -306,3 +306,5 @@ Prioritization:
 - Step 134E: Monitoring & Alert Desk severity model.
 - Step 134F: Model Auditor guardrail checks.
 - Later candidate: controlled paper-only simulated order flow, only after explicit design/approval.
+
+- [ ] Step 134B: Daily Brief + AI Team role UI（Mini App 第一層結論先行 + AI team role 人話化；保持 read-only / paper-only）

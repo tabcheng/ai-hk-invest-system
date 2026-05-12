@@ -565,3 +565,10 @@
 - Supabase impact: none.
 - Post-merge QA: pending merge.
 - Post-merge Domain Check: pending merge.
+
+
+## 2026-05-12 — Step 134B Daily Brief + AI Team role UI (in progress)
+- Mini App 今日頁第一層改為「今日簡報 / Daily Brief」，以結論先行方式提供一句總結、資料夠唔夠、及下一步行動。
+- 新增「AI 團隊正在幫你檢查乜」角色區塊，使用非專業、人話描述 AI 團隊分工，並保留人類操作員最終 review 邊界。
+- 保持 read-only/paper-only：不建立訂單、不連接券商、不是真實買賣建議。
+- Step 134B review follow-up: Daily Brief now explicitly includes first-layer risk提示 + AI模擬方向 + Human Operator 下一步清單，並把 technical status 放入「查看技術資料」。

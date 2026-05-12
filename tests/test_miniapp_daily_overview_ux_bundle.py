@@ -47,6 +47,7 @@ class Element {{
 
 const byId = {{
   "overview-card": new Element("section"),
+  "team-card": new Element("section"),
   "latest-card": new Element("section"),
   "daily-card": new Element("section"),
   "signals-card": new Element("section"),
@@ -89,9 +90,9 @@ globalThis.fetch = fetch;
     pnl_card_unavailable: byId["paper-pnl-card"].textContent.includes("未有資料"),
     risk_card_unavailable: byId["risk-card"].textContent.includes("未有資料"),
     build_meta_visible: byId["build-meta"].textContent.includes("UI build:") && byId["build-meta"].textContent.includes("Deployed build:"),
-    boundary_visible: byId["overview-card"].textContent.includes("Daily Overview"),
-    system_row_has_chip_text: systemRowText.includes("System Run Status") && systemRowText.includes("成功"),
-    coverage_row_has_chip_text: coverageRowText.includes("Daily Review Coverage") && coverageRowText.includes("部分完成"),
+    boundary_visible: byId["overview-card"].textContent.includes("Daily Brief"),
+    system_row_has_chip_text: systemRowText.includes("一句總結"),
+    coverage_row_has_chip_text: coverageRowText.includes("資料夠唔夠"),
     journal_selected_ticker: byId["journal-ticker"] ? byId["journal-ticker"].value : "",
     journal_ticker_options: byId["journal-ticker"] ? byId["journal-ticker"].children.map((c) => c.textContent) : [],
     journal_context_text: byId["journal-context"] ? byId["journal-context"].textContent : "",
@@ -128,11 +129,13 @@ def _base_sections() -> dict[str, object]:
 
 
 def test_status_hierarchy_labels_present() -> None:
-    assert "System Run Status" in INDEX_HTML
-    assert "Daily Review Coverage" in INDEX_HTML
-    assert "部分完成表示部分檢視區塊仍未有資料，並不代表最新系統運行失敗" in INDEX_HTML
-    assert "今日主要檢視區塊已載入；內容只供模擬交易檢視及決策支援。" in INDEX_HTML
-    assert "每日檢視暫時未完整載入；請先檢查最新系統運行狀態。" in INDEX_HTML
+    assert "今日簡報 / Daily Brief" in INDEX_HTML
+    assert "一句總結" in INDEX_HTML
+    assert "資料夠唔夠" in INDEX_HTML
+    assert "風險提示" in INDEX_HTML
+    assert "AI 模擬方向" in INDEX_HTML
+    assert "你下一步要做咩" in INDEX_HTML
+    assert "查看技術資料" in INDEX_HTML
 
 
 def test_data_availability_card_wording_present() -> None:
@@ -174,7 +177,7 @@ def test_ready_copy_and_no_empty_missing_chip_area() -> None:
         {"sections": sections}
     )
     full_text = str(rendered["full_render_text"])
-    assert "今日主要檢視區塊已載入；內容只供模擬交易檢視及決策支援。" in full_text
+    assert "今日資料足夠，可做模擬 review。" in full_text
     assert "暫無缺失區塊" in full_text
     assert "未有資料信號摘要" not in full_text
     assert "以上為模擬 / paper-trading 盈虧" in full_text
@@ -190,7 +193,60 @@ def test_unavailable_coverage_copy_present() -> None:
     sections["signals_summary"] = {"status": "unavailable"}
     sections["daily_review_summary"] = {"status": "ok", "available_sections": [], "unavailable_sections": []}
     rendered = _render_with_sample_payload({"sections": sections})
-    assert "每日檢視暫時未完整載入；請先檢查最新系統運行狀態。" in str(rendered["full_render_text"])
+    assert "今日未適合判斷。" in str(rendered["full_render_text"])
+
+
+def test_ai_direction_positive_dominant_wording() -> None:
+    sections = _base_sections()
+    sections["daily_review_summary"] = {"status": "ok", "available_sections": ["latest_system_run", "signals", "paper_pnl", "risk"], "unavailable_sections": []}
+    sections["signals_summary"]["top_items"] = [
+        {"ticker": "0700.HK", "signal_label": "positive"},
+        {"ticker": "0388.HK", "signal_label": "positive"},
+        {"ticker": "1299.HK", "signal_label": "neutral"},
+    ]
+    sections["risk_summary"] = {"status": "ok", "risk_level": "low", "warnings": []}
+    rendered = _render_with_sample_payload({"sections": sections})
+    full_text = str(rendered["full_render_text"])
+    assert "AI 模擬方向：模擬偏向正面觀察（只供模擬檢視）" in full_text
+
+
+def test_ai_direction_negative_dominant_wording() -> None:
+    sections = _base_sections()
+    sections["signals_summary"]["top_items"] = [
+        {"ticker": "0700.HK", "signal_label": "negative"},
+        {"ticker": "0388.HK", "signal_label": "negative"},
+        {"ticker": "1299.HK", "signal_label": "neutral"},
+    ]
+    sections["risk_summary"] = {"status": "ok", "risk_level": "high", "warnings": ["r1"]}
+    rendered = _render_with_sample_payload({"sections": sections})
+    full_text = str(rendered["full_render_text"])
+    assert "AI 模擬方向：暫時跳過 / 小心風險（只供模擬檢視）" in full_text
+
+
+def test_medium_risk_uses_caution_wording_not_controllable() -> None:
+    sections = _base_sections()
+    sections["signals_summary"]["top_items"] = [{"ticker": "0700.HK", "signal_label": "neutral"}]
+    sections["risk_summary"] = {"status": "ok", "risk_level": "medium", "warnings": ["r1"]}
+    rendered = _render_with_sample_payload({"sections": sections})
+    full_text = str(rendered["full_render_text"])
+    assert "有風險提示，請先查看風險詳情，暫時不要只靠方向判斷。" in full_text
+    assert "風險可控" not in full_text
+
+
+def test_low_risk_wording_and_no_signal_risk_unavailable_fallback() -> None:
+    sections = _base_sections()
+    sections["signals_summary"]["top_items"] = [{"ticker": "0700.HK", "signal_label": "neutral"}]
+    sections["risk_summary"] = {"status": "ok", "risk_level": "low", "warnings": []}
+    rendered_low = _render_with_sample_payload({"sections": sections})
+    assert "暫未見主要風險提示，但仍需人手 review。" in str(rendered_low["full_render_text"])
+
+    sections2 = _base_sections()
+    sections2["signals_summary"] = {"status": "unavailable"}
+    sections2["risk_summary"] = {"status": "unavailable"}
+    rendered_unavailable = _render_with_sample_payload({"sections": sections2})
+    full_text2 = str(rendered_unavailable["full_render_text"])
+    assert "AI 模擬方向：暫時只觀察（只供模擬檢視）" in full_text2
+    assert "風險資料不足／風險狀態未清楚，暫時不建議依賴此方向。" in full_text2
 
 
 def test_layout_polish_rows_and_timestamp_wrap_guard_present() -> None:
@@ -198,7 +254,7 @@ def test_layout_polish_rows_and_timestamp_wrap_guard_present() -> None:
     assert "time-label" in INDEX_HTML
     assert "time-value" in INDEX_HTML
     assert "line4.append(timeLabel,timeValue);" in INDEX_HTML
-    assert "line2.appendChild(renderStatusChip" in INDEX_HTML
+    assert "line2.appendChild(summary)" in INDEX_HTML
     assert "line3.appendChild(renderStatusChip" in INDEX_HTML
 
 

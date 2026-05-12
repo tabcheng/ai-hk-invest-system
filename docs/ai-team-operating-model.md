@@ -271,3 +271,8 @@ Raw status / IDs / timestamps belong in `查看技術資料`.
 - No raw vendor payload.
 - No frontend secrets.
 - No raw Telegram initData.
+
+
+## L. Cross-link: AI Team Analysis Blueprint (Step 135A)
+- Detailed per-ticker analysis contracts (all 15 departments), Stock Dossier v1 schema, scorecard vocabulary, and phased implementation model are defined in `docs/ai-team-analysis-blueprint.md`.
+- This operating model remains the role-boundary/governance layer; blueprint defines the analysis contract details used by those roles.

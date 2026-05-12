@@ -8,6 +8,11 @@ Prioritization:
 ## Active backlog (pending)
 
 ### P0
+1. **Step 135A — AI Team Analysis Blueprint docs-of-record alignment (docs-only)**
+   - Add and align `docs/ai-team-analysis-blueprint.md` as per-ticker analysis contract across all 15 AI team departments.
+   - Standardize Stock Dossier v1 fields + scorecard vocabulary + phased implementation contract.
+   - Keep strict paper-only/decision-support boundary and Chinese-first first-layer wording with `查看技術資料` separation.
+
 1. **Operator-facing runner status surface refinement (future)**
    - Keep improving operator-facing run-status readability and hierarchy beyond Step 112 baseline.
 

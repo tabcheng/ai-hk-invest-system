@@ -274,3 +274,11 @@ All surfaces remain read/review-first and paper-only unless a later explicit gat
 - Step 134B Mini App first-layer: 今日頁以「Daily Brief + AI Team role UI」為首層工作台，先回答「今日 AI 團隊發現咩、資料夠唔夠、風險、模擬方向、人類下一步」，技術細節後置於「查看技術資料」。
 
 - Step 134C: Mini App first layer (`今日簡報 / Daily Brief`) should prefer backend bounded `sections.daily_brief` contract; frontend fallback is allowed only when section is unavailable. Keep technical fields in `查看技術資料` and keep paper-only/no-broker wording.
+
+
+## 2026-05-12 — Step 135A AI Team Analysis Blueprint surface policy
+- Mini App/Telegram first-layer analysis wording must stay Traditional Chinese + non-professional friendly, with conclusion/risk/next action understandable within ~10 seconds.
+- Professional analysis depth is allowed internally, but technical fields must be placed under `查看技術資料`.
+- Stock dossier first-layer should prioritize: `headline_summary`, `data_sufficiency`, `risk_brief`, `simulated_direction`, `operator_next_actions`, and `safety_note`.
+- Safety wording remains mandatory: `只供模擬檢視` / `不建立訂單` / `不連接券商` / `不是真實買賣建議`.
+- Boundaries unchanged: no broker/live execution, no real-money order creation, no autonomous execution.

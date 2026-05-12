@@ -573,6 +573,13 @@
 - 保持 read-only/paper-only：不建立訂單、不連接券商、不是真實買賣建議。
 - Step 134B review follow-up: Daily Brief now explicitly includes first-layer risk提示 + AI模擬方向 + Human Operator 下一步清單，並把 technical status 放入「查看技術資料」。
 
+## 2026-05-12 — Step 135A AI Team Analysis Blueprint docs-of-record (in progress)
+- Added `docs/ai-team-analysis-blueprint.md` as the per-ticker analysis contract across 15 AI team departments (purpose/inputs/methods/output/UI/must-not/evidence).
+- Defined Stock Dossier v1 output schema and standardized scorecard vocabulary for data quality, technical, fundamental, catalyst, risk, confidence, and simulated direction.
+- Defined phased implementation path (Phase 1 deterministic read models -> Phase 2 backend-only AI synthesis -> Phase 3 DB audit persistence -> Phase 4 strategy learning).
+- Boundaries reaffirmed: paper-only/decision-support only, no broker/live/real-money/autonomous execution, no frontend secrets, no raw initData, no vendor token usage.
+- Runtime behavior change: none. Railway impact: none. Supabase impact: none.
+
 ## 2026-05-12 — Step 134C Daily Brief backend read model (in progress)
 - Added backend read-only `daily_brief` section in Mini App review-shell contract with bounded fields: headline_summary/data_sufficiency/risk_brief/simulated_direction/operator_next_actions/technical_details/safety_note.
 - Mini App overview now renders backend Daily Brief first; when missing, falls back to existing frontend-safe derivation.

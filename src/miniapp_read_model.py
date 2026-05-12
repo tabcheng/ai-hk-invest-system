@@ -37,19 +37,19 @@ def build_daily_brief_section(
         "insufficient": "資料不足，暫時未能作方向判斷。",
     }[data_state]
     if total <= 0 or dominant == "unknown":
-        sim_direction = "資料不足，暫時只可觀察。"
+        sim_direction = "資料不足，暫時只可觀察"
     elif risk_level in {"unknown", "unavailable"} or data_state == "insufficient":
-        sim_direction = "資料不足，暫時只可觀察。"
+        sim_direction = "資料不足，暫時只可觀察"
     elif dominant == "positive":
-        sim_direction = "AI 模擬方向偏正面，但只供模擬檢視。"
+        sim_direction = "模擬偏向正面觀察"
     elif dominant == "negative":
-        sim_direction = "AI 模擬方向偏審慎，暫時以防守為主。"
+        sim_direction = "模擬偏向審慎，暫時以防守為主"
     else:
-        sim_direction = "AI 模擬方向偏觀望，先等更多確認訊號。"
+        sim_direction = "繼續觀察，等待更多確認訊號"
     if risk_level == "high":
         risk_brief = "風險偏高，先做風險檢查，唔好急住跟方向。"
     elif risk_level == "medium":
-        risk_brief = "有中等風險提示，要小心解讀，唔可以當作風險可控。"
+        risk_brief = "有中等風險提示，請先查看風險詳情，不要只靠方向判斷。"
     elif risk_level == "low":
         risk_brief = "暫未見重大風險警示，但仍要人手覆核。"
     else:

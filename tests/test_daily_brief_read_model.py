@@ -23,14 +23,14 @@ def _risk(level: str, status: str = "ok") -> dict:
 @pytest.mark.parametrize(
     ("signals", "risk", "daily", "expected_direction"),
     [
-        (_signals(3, 1, 0), _risk("low"), _daily("ready"), "偏正面"),
-        (_signals(1, 4, 0), _risk("low"), _daily("ready"), "偏觀望"),
-        (_signals(0, 1, 4), _risk("high"), _daily("ready"), "偏審慎"),
-        (_signals(2, 2, 1), _risk("medium"), _daily("ready"), "偏觀望"),
-        (_signals(0, 0, 0), _risk("low"), _daily("ready"), "只可觀察"),
-        (_signals(2, 1, 0, status="unavailable"), _risk("low"), _daily("ready"), "只可觀察"),
-        (_signals(2, 1, 0), _risk("unknown", status="unavailable"), _daily("ready"), "只可觀察"),
-        (_signals(2, 1, 0), _risk("low"), _daily("insufficient"), "只可觀察"),
+        (_signals(3, 1, 0), _risk("low"), _daily("ready"), "模擬偏向正面觀察"),
+        (_signals(1, 4, 0), _risk("low"), _daily("ready"), "繼續觀察"),
+        (_signals(0, 1, 4), _risk("high"), _daily("ready"), "模擬偏向審慎"),
+        (_signals(2, 2, 1), _risk("medium"), _daily("ready"), "繼續觀察"),
+        (_signals(0, 0, 0), _risk("low"), _daily("ready"), "資料不足"),
+        (_signals(2, 1, 0, status="unavailable"), _risk("low"), _daily("ready"), "資料不足"),
+        (_signals(2, 1, 0), _risk("unknown", status="unavailable"), _daily("ready"), "資料不足"),
+        (_signals(2, 1, 0), _risk("low"), _daily("insufficient"), "資料不足"),
     ],
 )
 def test_daily_brief_direction_matrix(signals: dict, risk: dict, daily: dict, expected_direction: str) -> None:

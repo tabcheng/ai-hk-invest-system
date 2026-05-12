@@ -126,8 +126,8 @@ def _base_sections() -> dict[str, object]:
         "daily_brief": {
             "status": "ok",
             "headline_summary": "今日先檢查資料與風險，再做人手模擬決定。",
-            "risk_brief": "有中等風險提示，要小心解讀，唔可以當作風險可控。",
-            "simulated_direction": "AI 模擬方向偏觀望，先等更多確認訊號。",
+            "risk_brief": "有中等風險提示，請先查看風險詳情，不要只靠方向判斷。",
+            "simulated_direction": "繼續觀察，等待更多確認訊號",
             "operator_next_actions": ["先看風險摘要。", "再看信號原因。"],
             "technical_details": {"review_readiness": "partial", "risk_level": "medium", "signals_status": "ok"},
             "safety_note": "只供模擬檢視｜不建立訂單｜不連接券商｜不是真實買賣建議",
@@ -210,29 +210,31 @@ def test_unavailable_coverage_copy_present() -> None:
 def test_ai_direction_positive_dominant_wording() -> None:
     sections = _base_sections()
     sections["daily_review_summary"] = {"status": "ok", "available_sections": ["latest_system_run", "signals", "paper_pnl", "risk"], "unavailable_sections": []}
-    sections["daily_brief"]["simulated_direction"] = "AI 模擬方向偏正面，但只供模擬檢視。"
+    sections["daily_brief"]["simulated_direction"] = "模擬偏向正面觀察"
     sections["risk_summary"] = {"status": "ok", "risk_level": "low", "warnings": []}
     rendered = _render_with_sample_payload({"sections": sections})
     full_text = str(rendered["full_render_text"])
-    assert "AI 模擬方向：AI 模擬方向偏正面，但只供模擬檢視。（只供模擬檢視）" in full_text
+    assert "AI 模擬方向：模擬偏向正面觀察" in full_text
+    assert "AI 模擬方向：AI 模擬方向偏正面" not in full_text
 
 
 def test_ai_direction_negative_dominant_wording() -> None:
     sections = _base_sections()
-    sections["daily_brief"]["simulated_direction"] = "AI 模擬方向偏審慎，暫時以防守為主。"
+    sections["daily_brief"]["simulated_direction"] = "模擬偏向審慎，暫時以防守為主"
     sections["risk_summary"] = {"status": "ok", "risk_level": "high", "warnings": ["r1"]}
     rendered = _render_with_sample_payload({"sections": sections})
     full_text = str(rendered["full_render_text"])
-    assert "AI 模擬方向：AI 模擬方向偏審慎，暫時以防守為主。（只供模擬檢視）" in full_text
+    assert "AI 模擬方向：模擬偏向審慎，暫時以防守為主" in full_text
 
 
 def test_medium_risk_uses_caution_wording_not_controllable() -> None:
     sections = _base_sections()
-    sections["daily_brief"]["risk_brief"] = "有中等風險提示，要小心解讀，唔可以當作風險可控。"
+    sections["daily_brief"]["risk_brief"] = "有中等風險提示，請先查看風險詳情，不要只靠方向判斷。"
     sections["risk_summary"] = {"status": "ok", "risk_level": "medium", "warnings": ["r1"]}
     rendered = _render_with_sample_payload({"sections": sections})
     full_text = str(rendered["full_render_text"])
-    assert "有中等風險提示，要小心解讀，唔可以當作風險可控。" in full_text
+    assert "有中等風險提示，請先查看風險詳情，不要只靠方向判斷。" in full_text
+    assert "風險可控" not in full_text
 
 
 def test_low_risk_wording_and_no_signal_risk_unavailable_fallback() -> None:
@@ -244,13 +246,14 @@ def test_low_risk_wording_and_no_signal_risk_unavailable_fallback() -> None:
 
     sections2 = _base_sections()
     sections2["daily_brief"]["risk_brief"] = "風險資料不足，暫時未有足夠資訊。"
-    sections2["daily_brief"]["simulated_direction"] = "資料不足，暫時只可觀察。"
+    sections2["daily_brief"]["simulated_direction"] = "資料不足，暫時只可觀察"
     sections2["signals_summary"] = {"status": "unavailable"}
     sections2["risk_summary"] = {"status": "unavailable"}
     rendered_unavailable = _render_with_sample_payload({"sections": sections2})
     full_text2 = str(rendered_unavailable["full_render_text"])
-    assert "AI 模擬方向：資料不足，暫時只可觀察。（只供模擬檢視）" in full_text2
+    assert "AI 模擬方向：資料不足，暫時只可觀察" in full_text2
     assert "風險資料不足，暫時未有足夠資訊。" in full_text2
+    assert full_text2.count("只供模擬檢視｜不建立訂單｜不連接券商｜不是真實買賣建議") == 1
 
 
 def test_layout_polish_rows_and_timestamp_wrap_guard_present() -> None:

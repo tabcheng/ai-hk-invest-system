@@ -140,7 +140,7 @@
         line2.appendChild(summary);
         line3.appendChild(renderStatusChip(coverage));
         const riskLine=document.createElement("p"); riskLine.className="row"; riskLine.textContent=`風險提示：${riskText || (riskLevel === "medium" ? "有中等風險提示，要小心解讀。" : "風險資料不足，暫時未有足夠資訊。")}`;
-        const directionLine=document.createElement("p"); directionLine.className="row"; directionLine.textContent=`AI 模擬方向：${aiDirection}（只供模擬檢視）`;
+        const directionLine=document.createElement("p"); directionLine.className="row"; directionLine.textContent=`AI 模擬方向：${aiDirection}`;
         const nextTitle=document.createElement("h3"); nextTitle.textContent="你下一步要做咩";
         const nextList=document.createElement("ul");
         const actions = Array.isArray(dailyBrief?.operator_next_actions) && dailyBrief.operator_next_actions.length > 0

@@ -320,3 +320,7 @@ Prioritization:
    - Add read-only backend stock dossier builder and expose via Mini App review-shell bounded section.
    - Add Mini App 股票檢視 shell with ticker selector and Chinese-first first-layer wording + `查看技術資料` split.
    - Add focused backend/Mini App tests and keep no-write/no-execution/no-vendor-token constraints.
+2. **Step 135C — Stock Review first-layer UX polish (in progress)**
+   - Keep first-layer labels simple and explicit for non-professional operators (`一句總結`, `資料夠唔夠`, `風險提示`, `AI 模擬方向`, `你下一步要做咩` etc.).
+   - Keep technical/internal fields only under collapsed `查看技術資料`.
+   - Verify empty-state wording/safety note/no-execution wording and textContent-only rendering guardrails through focused tests.

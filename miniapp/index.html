@@ -67,7 +67,7 @@
       <section id="team-card" class="section-card" data-tab-panel="today" role="tabpanel" aria-labelledby="tab-today"><h2>AI 團隊正在幫你檢查乜</h2></section>
       <section id="latest-card" class="section-card" data-tab-panel="today" role="tabpanel" aria-labelledby="tab-today"><h2>最新系統運行</h2></section>
       <section id="daily-card" class="section-card" data-tab-panel="today" role="tabpanel" aria-labelledby="tab-today"><h2>每日檢視摘要</h2></section>
-      <section id="signals-card" class="section-card" data-tab-panel="signals" role="tabpanel" aria-labelledby="tab-signals"><h2>信號摘要</h2></section><section id="context-card" class="section-card" data-tab-panel="context" role="tabpanel" aria-labelledby="tab-context"><h2>Decision Context</h2><div id="context-shell" class="helper-text">載入中...</div></section><section id="stock-review-card" class="section-card" data-tab-panel="stock-review" role="tabpanel" aria-labelledby="tab-stock-review"><h2>股票檢視 / Stock Review</h2><p class="helper-text">AI 模擬方向：偏正面觀察 / 繼續觀察 / 謹慎 / 資料不足</p><div id="stock-review-shell" class="helper-text">載入中...</div></section>
+      <section id="signals-card" class="section-card" data-tab-panel="signals" role="tabpanel" aria-labelledby="tab-signals"><h2>信號摘要</h2></section><section id="context-card" class="section-card" data-tab-panel="context" role="tabpanel" aria-labelledby="tab-context"><h2>Decision Context</h2><div id="context-shell" class="helper-text">載入中...</div></section><section id="stock-review-card" class="section-card" data-tab-panel="stock-review" role="tabpanel" aria-labelledby="tab-stock-review"><h2>股票檢視 / Stock Review</h2><p class="helper-text">AI 模擬方向只分為：偏正面觀察、繼續觀察、謹慎、資料不足。只供模擬檢視。</p><div id="stock-review-shell" class="helper-text">載入中...</div></section>
       <section id="paper-pnl-card" class="section-card" data-tab-panel="today" role="tabpanel" aria-labelledby="tab-today"><h2>模擬盈虧摘要</h2></section>
       <section id="risk-card" class="section-card" data-tab-panel="today" role="tabpanel" aria-labelledby="tab-today"><h2>風險摘要</h2></section>
       <section id="journal-card" class="section-card" data-tab-panel="journal" role="tabpanel" aria-labelledby="tab-journal"><h2>Human Paper Decision Journal / 人手模擬決策日誌</h2></section>
@@ -312,7 +312,7 @@
         if (!shell) return;
         shell.textContent = "";
         const rows = Array.isArray(stockReview?.items) ? stockReview.items : [];
-        if (!rows.length) { shell.textContent = "暫時未有已保存的決策紀錄。"; return; }
+        if (!rows.length) { shell.textContent = "暫時未有可檢視的股票簡報。系統會在有 signals / risk / portfolio context 後顯示。"; return; }
         const pickerLabel = document.createElement("label");
         pickerLabel.textContent = "選擇股票";
         const picker = document.createElement("select");
@@ -322,16 +322,29 @@
         const renderOne = () => {
           card.textContent = "";
           const chosen = rows.find((x) => String(x.ticker || "") === String(picker.value || "")) || rows[0];
-          ["headline_summary","data_sufficiency","technical_observation","risk_brief","portfolio_context","simulated_direction","safety_note"].forEach((key) => {
+          const addRow = (label, value) => {
             const p = document.createElement("p");
             p.className = "row";
-            p.textContent = String(chosen?.[key] || "未有資料");
+            p.textContent = `${label}：${String(value || "未有資料")}`;
             card.appendChild(p);
-          });
+          };
+          addRow("一句總結", chosen?.headline_summary);
+          addRow("資料夠唔夠", chosen?.data_sufficiency);
+          addRow("技術觀察", chosen?.technical_observation);
+          addRow("基本面觀察", chosen?.fundamental_observation);
+          addRow("新聞 / 催化觀察", chosen?.catalyst_observation);
+          addRow("風險提示", chosen?.risk_brief);
+          addRow("模擬組合背景", chosen?.portfolio_context);
+          addRow("AI 模擬方向", chosen?.simulated_direction);
+          const directionHelper = document.createElement("p");
+          directionHelper.className = "helper-text";
+          directionHelper.textContent = "AI 模擬方向只分為：偏正面觀察、繼續觀察、謹慎、資料不足。只供模擬檢視。";
+          card.appendChild(directionHelper);
           const actionsTitle = document.createElement("h3"); actionsTitle.textContent = "你下一步要做咩";
           const ul = document.createElement("ul");
           (chosen?.operator_next_actions || []).forEach((a) => { const li = document.createElement("li"); li.textContent = String(a); ul.appendChild(li); });
           card.append(actionsTitle, ul);
+          addRow("安全提示", chosen?.safety_note || "只供模擬檢視｜不建立訂單｜不連接券商｜不是真實買賣建議");
           const d = document.createElement("details"); const s = document.createElement("summary"); s.textContent = "查看技術資料";
           const tech = document.createElement("pre"); tech.className="helper-text"; tech.textContent = JSON.stringify(chosen?.technical_details || {}, null, 2);
           d.append(s, tech); card.appendChild(d);

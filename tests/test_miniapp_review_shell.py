@@ -21,7 +21,15 @@ def test_step92f_ui_review_shell_static_contract() -> None:
         "每日檢視摘要",
         "信號摘要",
         "股票檢視 / Stock Review",
-        "AI 模擬方向：偏正面觀察 / 繼續觀察 / 謹慎 / 資料不足",
+        "AI 模擬方向只分為：偏正面觀察、繼續觀察、謹慎、資料不足。只供模擬檢視。",
+        "一句總結",
+        "資料夠唔夠",
+        "技術觀察",
+        "基本面觀察",
+        "新聞 / 催化觀察",
+        "模擬組合背景",
+        "你下一步要做咩",
+        "暫時未有可檢視的股票簡報。系統會在有 signals / risk / portfolio context 後顯示。",
         "安全與邊界說明",
         "只限模擬交易",
         "不連接券商",
@@ -104,6 +112,9 @@ def test_step92f_ui_review_shell_static_contract() -> None:
     ]
     for pattern in forbidden_write_ui_patterns:
         assert re.search(pattern, html, flags=re.IGNORECASE) is None
+
+    assert "if (!rows.length) { shell.textContent = \"暫時未有可檢視的股票簡報。系統會在有 signals / risk / portfolio context 後顯示。\"; return; }" in html
+    assert "card.innerHTML" not in html[html.index("function renderStockReview"):html.index("function renderRisk")]
 
 
 def test_step92c_runtime_config_container_contract() -> None:

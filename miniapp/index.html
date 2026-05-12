@@ -130,13 +130,15 @@
         line3.appendChild(renderStatusChip(coverage));
         const riskLine=document.createElement("p"); riskLine.className="row"; riskLine.textContent=`風險提示：${riskText}`;
         const directionLine=document.createElement("p"); directionLine.className="row"; directionLine.textContent=`AI 模擬方向：${aiDirection}（只供模擬檢視）`;
-        const nextTitle=document.createElement("h3"); nextTitle.textContent="Human Operator 下一步";
+        const nextTitle=document.createElement("h3"); nextTitle.textContent="你下一步要做咩";
         const nextList=document.createElement("ul");
-        ["查看 Outcome Review", "查看風險提示", coverage === "ready" ? "寫入人類 paper decision journal" : "暫時只觀察，不作模擬決策"].forEach((x)=>{ const li=document.createElement("li"); li.textContent=x; nextList.appendChild(li); });
+        ["查看 Outcome Review", "查看風險提示", coverage === "ready" ? "寫低你嘅模擬決定理由（paper decision journal）" : "暫時只觀察，不作模擬決策"].forEach((x)=>{ const li=document.createElement("li"); li.textContent=x; nextList.appendChild(li); });
         card.append(h,line1,line2,line3,line4,availabilityGrid,riskLine,directionLine,nextTitle,nextList,note);
       }
       function renderTeamRole(latest,daily,signals,risk){
-        const card=document.getElementById("team-card"); card.textContent="";
+        const card=document.getElementById("team-card");
+        if (!card) return;
+        card.textContent="";
         const h=document.createElement("h2"); h.textContent="AI 團隊正在幫你檢查乜";
         card.appendChild(h);
         const roles = [

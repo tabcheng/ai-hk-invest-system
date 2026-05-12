@@ -337,3 +337,5 @@ No broker integration or autonomous real-money execution is authorized by this p
 - `Paper Investment Committee` output is read-only and paper-only simulated direction only.
 - Any paper sizing suggestion is advisory for simulation only, not a real-money instruction.
 - Frontend presentation must keep `只供模擬檢視` and related no-execution safety wording visible.
+
+- Step 134B 補充：Mini App 首層「Daily Brief」與「AI 團隊角色」屬 read-only 解讀層，不新增前端寫入權限，不暴露任何 secret / initData 原文。

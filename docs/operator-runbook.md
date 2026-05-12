@@ -509,3 +509,5 @@ When validating Mini App Journal Outcome Review and Telegram `/journal_outcome`,
 - Use as relative simulation guidance only.
 - Never map directly to real-money execution size.
 - Re-check data sufficiency, risk notes, and stale/no-data alerts first.
+
+- Step 134B 操作指引：先看「今日簡報 / Daily Brief」與「AI 團隊正在幫你檢查乜」，再按下一步提示做 Outcome/Risk/Journal review；真實買賣決定必須在系統外由人類作出。

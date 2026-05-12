@@ -196,6 +196,59 @@ def test_unavailable_coverage_copy_present() -> None:
     assert "今日未適合判斷。" in str(rendered["full_render_text"])
 
 
+def test_ai_direction_positive_dominant_wording() -> None:
+    sections = _base_sections()
+    sections["daily_review_summary"] = {"status": "ok", "available_sections": ["latest_system_run", "signals", "paper_pnl", "risk"], "unavailable_sections": []}
+    sections["signals_summary"]["top_items"] = [
+        {"ticker": "0700.HK", "signal_label": "positive"},
+        {"ticker": "0388.HK", "signal_label": "positive"},
+        {"ticker": "1299.HK", "signal_label": "neutral"},
+    ]
+    sections["risk_summary"] = {"status": "ok", "risk_level": "low", "warnings": []}
+    rendered = _render_with_sample_payload({"sections": sections})
+    full_text = str(rendered["full_render_text"])
+    assert "AI 模擬方向：模擬偏向正面觀察（只供模擬檢視）" in full_text
+
+
+def test_ai_direction_negative_dominant_wording() -> None:
+    sections = _base_sections()
+    sections["signals_summary"]["top_items"] = [
+        {"ticker": "0700.HK", "signal_label": "negative"},
+        {"ticker": "0388.HK", "signal_label": "negative"},
+        {"ticker": "1299.HK", "signal_label": "neutral"},
+    ]
+    sections["risk_summary"] = {"status": "ok", "risk_level": "high", "warnings": ["r1"]}
+    rendered = _render_with_sample_payload({"sections": sections})
+    full_text = str(rendered["full_render_text"])
+    assert "AI 模擬方向：暫時跳過 / 小心風險（只供模擬檢視）" in full_text
+
+
+def test_medium_risk_uses_caution_wording_not_controllable() -> None:
+    sections = _base_sections()
+    sections["signals_summary"]["top_items"] = [{"ticker": "0700.HK", "signal_label": "neutral"}]
+    sections["risk_summary"] = {"status": "ok", "risk_level": "medium", "warnings": ["r1"]}
+    rendered = _render_with_sample_payload({"sections": sections})
+    full_text = str(rendered["full_render_text"])
+    assert "有風險提示，請先查看風險詳情，暫時不要只靠方向判斷。" in full_text
+    assert "風險可控" not in full_text
+
+
+def test_low_risk_wording_and_no_signal_risk_unavailable_fallback() -> None:
+    sections = _base_sections()
+    sections["signals_summary"]["top_items"] = [{"ticker": "0700.HK", "signal_label": "neutral"}]
+    sections["risk_summary"] = {"status": "ok", "risk_level": "low", "warnings": []}
+    rendered_low = _render_with_sample_payload({"sections": sections})
+    assert "暫未見主要風險提示，但仍需人手 review。" in str(rendered_low["full_render_text"])
+
+    sections2 = _base_sections()
+    sections2["signals_summary"] = {"status": "unavailable"}
+    sections2["risk_summary"] = {"status": "unavailable"}
+    rendered_unavailable = _render_with_sample_payload({"sections": sections2})
+    full_text2 = str(rendered_unavailable["full_render_text"])
+    assert "AI 模擬方向：暫時只觀察（只供模擬檢視）" in full_text2
+    assert "風險資料不足／風險狀態未清楚，暫時不建議依賴此方向。" in full_text2
+
+
 def test_layout_polish_rows_and_timestamp_wrap_guard_present() -> None:
     assert "row-inline" in INDEX_HTML
     assert "time-label" in INDEX_HTML

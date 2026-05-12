@@ -88,6 +88,17 @@
       function renderMetricGrid(items) { const grid = document.createElement("div"); grid.className = "metric-grid"; items.forEach((item) => { const node = document.createElement("div"); node.className = "metric-item"; const l = document.createElement("div"); l.className = "label"; l.textContent = item.label; const v = document.createElement("div"); v.className = "value"; v.textContent = String(item.value ?? "-"); node.append(l,v); grid.appendChild(node); }); return grid; }
       function asSectionNames(values) { return Array.isArray(values) ? values.map((v) => SECTION_NAME_MAP[String(v)] || String(v)) : []; }
       function renderSignalItems(items, onViewContext) { const list = document.createElement("ul"); list.className = "signal-list"; (Array.isArray(items) ? items : []).forEach((item) => { const li = document.createElement("li"); li.className = "signal-item"; const ticker = document.createElement("div"); ticker.textContent = `股票：${String(item.ticker || "-")}`; const sig = document.createElement("div"); sig.textContent = `模擬信號方向：${SIGNAL_LABEL[String(item.signal_label)] || SIGNAL_LABEL.unknown}`; const confidenceLabel = String(item.confidence_label || "unknown").toLowerCase() === "unknown" ? "未提供 / Unknown" : String(item.confidence_label || "-"); const c = document.createElement("div"); c.textContent = `信心：${confidenceLabel}`; const r = document.createElement("div"); r.textContent = `原因：${String(item.reason_short || "未提供")}`; const btn = document.createElement("button"); btn.type = "button"; btn.textContent = "查看 Context"; btn.addEventListener("click", () => onViewContext(String(item.ticker || ""))); li.append(ticker,sig,c,r,btn); list.appendChild(li); }); return list; }
+      function deriveAiDirection(signals) {
+        if (!signals || signals.status !== "ok") return "暫時只觀察";
+        const items = Array.isArray(signals.top_items) ? signals.top_items : [];
+        if (items.length === 0) return "暫時只觀察";
+        const counts = { positive: 0, neutral: 0, negative: 0, unknown: 0 };
+        items.forEach((item) => { const key = String(item?.signal_label || "unknown"); counts[key] = (counts[key] || 0) + 1; });
+        if (counts.positive > counts.neutral && counts.positive > counts.negative) return "模擬偏向正面觀察";
+        if (counts.negative > counts.positive && counts.negative > counts.neutral) return "暫時跳過 / 小心風險";
+        if (counts.neutral > counts.positive && counts.neutral > counts.negative) return "繼續觀察 / 等待更清楚訊號";
+        return "訊號未一致，先做人工 review";
+      }
       function fillUnavailable(cardId, title){ const card=document.getElementById(cardId); card.textContent=""; const h=document.createElement("h2"); h.textContent=title; const chip=renderStatusChip("unavailable"); const p=document.createElement("p"); p.className="helper-text"; p.textContent=`${title}未有資料（Data not available yet）`; card.append(h,chip,p); }
       function renderOverview(latest,daily,signals,risk){
         const card=document.getElementById("overview-card");
@@ -118,8 +129,16 @@
         ].forEach((entry) => { const item=document.createElement("div"); item.className="availability-item"; const l=document.createElement("div"); l.className="label"; l.textContent=entry.label; item.append(l, renderAvailabilityChip(entry.available)); availabilityGrid.appendChild(item); });
 
         const riskLevel = String(risk?.risk_level || "unknown").toLowerCase();
-        const riskText = risk?.status === "ok" ? (riskLevel === "high" ? "風險較高，暫時不建議依賴此方向。" : "風險可控，但仍需人手 review。") : "風險資料不足，暫時不建議依賴此方向。";
-        const aiDirection = coverage === "ready" ? "模擬持有 / 繼續觀察" : (coverage === "partial" ? "暫時跳過 / 繼續觀察" : "暫時只觀察");
+        const riskText = risk?.status !== "ok"
+          ? "風險資料不足／風險狀態未清楚，暫時不建議依賴此方向。"
+          : (riskLevel === "high"
+            ? "風險較高，暫時不建議依賴此方向。"
+            : riskLevel === "medium"
+              ? "有風險提示，請先查看風險詳情，暫時不要只靠方向判斷。"
+              : riskLevel === "low"
+                ? "暫未見主要風險提示，但仍需人手 review。"
+                : "風險資料不足／風險狀態未清楚，暫時不建議依賴此方向。");
+        const aiDirection = deriveAiDirection(signals);
         const note=document.createElement("p"); note.className="helper-text";
         if (coverage === "ready") note.textContent = "你下一步：先看風險提示，再決定是否寫低你嘅模擬決定理由（paper decision journal）。";
         else if (coverage === "partial") note.textContent = "你下一步：先補看缺少資料，暫時不要依賴單一方向。";

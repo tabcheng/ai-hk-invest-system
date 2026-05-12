@@ -588,3 +588,10 @@
 
 - Step 135B in progress: added read-only Stock Dossier v1 section in Mini App review-shell (`sections.stock_dossier_review`) and Chinese-first Stock Review UI shell; scope remains read-only with no DB writes, no broker/live execution, and no vendor/AI token integrations. GitHub impact: backend read-model + Mini App shell/tests/docs updates. Railway impact: no topology/env/scheduler change required. Supabase impact: read-only existing-source consumption only, no schema/RLS migration.
 - Step 135C in progress: polished Stock Review first-layer UX for non-professional operators with explicit labeled rows (`一句總結 / 資料夠唔夠 / 技術觀察 / 基本面觀察 / 新聞 / 催化觀察 / 風險提示 / 模擬組合背景 / AI 模擬方向 / 你下一步要做咩`) while keeping technical/internal values under collapsed `查看技術資料`. Empty-state wording updated to `暫時未有可檢視的股票簡報。系統會在有 signals / risk / portfolio context 後顯示。` and safety helper text retained (`只供模擬檢視`). GitHub impact: Mini App stock-review renderer/tests/docs only. Railway impact: none. Supabase impact: read-only existing-source consumption only, no schema/RLS migration.
+
+## 2026-05-12 — Step 135D HK Equity Strategy Research Reference docs-of-record (in progress)
+- Added `docs/hk-equity-strategy-research-reference-20260512.md` from research source 「港股 AI Team Analysis Blueprint 落地研究報告 20260512」 as long-term internal strategy reference (not trading advice).
+- Defined explicit horizon policy: short-term stays observation/alert only in current phase; medium/long-term are primary design scopes for Stock Dossier + AI Decision Advisor v1.
+- Documented HK market characteristics, horizon-based data requirements/freshness risks, strategy families, AI desk mapping, multidimensional scorecard + risk-gate + human review contract, and phased implementation path.
+- Reaffirmed hard boundaries: paper-only decision-support, no broker/live execution/real-money order creation, no frontend secrets, no raw Telegram initData exposure, backend-only vendor token abstractions.
+- Platform impact: GitHub docs-only updates; Railway unchanged; Supabase unchanged.

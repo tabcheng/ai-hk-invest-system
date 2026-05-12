@@ -536,3 +536,10 @@ When validating Mini App Journal Outcome Review and Telegram `/journal_outcome`,
 - `AI 模擬方向`只作 paper-only 參考；固定提醒：
   `AI 模擬方向只分為：偏正面觀察、繼續觀察、謹慎、資料不足。只供模擬檢視。`
 - `查看技術資料`以外不可顯示內部原始鍵名/技術欄位。
+
+## Step 135D operator interpretation note (HK strategy research reference)
+- New docs-of-record: `docs/hk-equity-strategy-research-reference-20260512.md`.
+- Operator interpretation baseline: short-term signals are observation/alert only in current phase; do not treat as paper execution instruction.
+- For medium/long-term review, prioritize multi-dimensional checks (`data_quality_state`, `technical_state`, `fundamental_state`, `catalyst_state`, `risk_level`, `liquidity_state`, `portfolio_exposure_state`, `confidence_level`, `simulated_direction`) instead of one total score.
+- If stale/insufficient data appears, keep conservative wording (`資料不足`, `資料可能過舊`) and stop at review action planning.
+- Safety wording remains mandatory: `只供模擬檢視` / `不建立訂單` / `不連接券商` / `不是真實買賣建議`.

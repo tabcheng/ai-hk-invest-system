@@ -23,14 +23,27 @@ def build_stock_dossiers_v1_section(
     items = list(signals_summary.get("top_items") or [])
     context_rows = {str(row.get("ticker") or ""): row for row in list(decision_context_summary.get("tickers") or [])}
     portfolio_rows = {str(row.get("ticker") or ""): row for row in list(ticker_level_paper_portfolio_review.get("rows") or [])}
-    output_items = []
+    candidate_tickers: list[str] = []
     for row in items:
         ticker = str(row.get("ticker") or "").strip()
-        if not ticker:
-            continue
-        signal = str(row.get("signal") or "unknown").lower()
+        if ticker and ticker not in candidate_tickers:
+            candidate_tickers.append(ticker)
+    for ticker in list(context_rows.keys()) + list(portfolio_rows.keys()):
+        t = str(ticker or "").strip()
+        if t and t not in candidate_tickers:
+            candidate_tickers.append(t)
+
+    signal_lookup = {
+        str(row.get("ticker") or "").strip(): str(row.get("signal") or row.get("signal_label") or "unknown").lower()
+        for row in items
+        if str(row.get("ticker") or "").strip()
+    }
+    output_items = []
+    for ticker in candidate_tickers:
+        signal = signal_lookup.get(ticker, "unknown")
         risk_level = str((context_rows.get(ticker, {}).get("risk", {}) or {}).get("risk_level") or risk_summary.get("risk_level") or "unknown").lower()
-        data_sufficiency = "資料足夠，可作模擬檢視。" if signal != "unknown" and risk_level not in {"unknown", "unavailable"} else "資料不足，暫時只可觀察。"
+        has_enough_data = signal in {"positive", "neutral", "negative"} and risk_level in {"low", "medium", "high"}
+        data_sufficiency = "資料足夠，可作模擬檢視。" if has_enough_data else "資料不足，暫時只可觀察。"
         if signal == "positive":
             simulated_direction = "AI 模擬方向：偏正面觀察"
             technical_observation = "技術觀察偏正面，但仍要人手覆核。"

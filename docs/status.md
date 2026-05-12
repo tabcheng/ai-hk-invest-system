@@ -572,3 +572,9 @@
 - 新增「AI 團隊正在幫你檢查乜」角色區塊，使用非專業、人話描述 AI 團隊分工，並保留人類操作員最終 review 邊界。
 - 保持 read-only/paper-only：不建立訂單、不連接券商、不是真實買賣建議。
 - Step 134B review follow-up: Daily Brief now explicitly includes first-layer risk提示 + AI模擬方向 + Human Operator 下一步清單，並把 technical status 放入「查看技術資料」。
+
+## 2026-05-12 — Step 134C Daily Brief backend read model (in progress)
+- Added backend read-only `daily_brief` section in Mini App review-shell contract with bounded fields: headline_summary/data_sufficiency/risk_brief/simulated_direction/operator_next_actions/technical_details/safety_note.
+- Mini App overview now renders backend Daily Brief first; when missing, falls back to existing frontend-safe derivation.
+- Technical diagnostics remain under `查看技術資料`; first-layer wording keeps Traditional Chinese + paper-only safety note.
+- Added focused tests for Daily Brief read-model direction/risk/data sufficiency and Mini App render guardrails.

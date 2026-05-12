@@ -308,3 +308,5 @@ Prioritization:
 - Later candidate: controlled paper-only simulated order flow, only after explicit design/approval.
 
 - [ ] Step 134B: Daily Brief + AI Team role UI（Mini App 第一層結論先行 + AI team role 人話化；保持 read-only / paper-only）
+
+- **Step 134C (in progress):** Backend Daily Brief read model + Mini App first-layer consumption from bounded `sections.daily_brief`, with fallback rendering and focused tests. Guardrails unchanged: read-only/paper-only/no broker/no live execution/no order creation.

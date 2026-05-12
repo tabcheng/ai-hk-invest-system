@@ -511,3 +511,5 @@ When validating Mini App Journal Outcome Review and Telegram `/journal_outcome`,
 - Re-check data sufficiency, risk notes, and stale/no-data alerts first.
 
 - Step 134B 操作指引：先看「今日簡報 / Daily Brief」與「AI 團隊正在幫你檢查乜」，再按下一步提示做 Outcome/Risk/Journal review；真實買賣決定必須在系統外由人類作出。
+
+- Step 134C operation note: On Mini App 今日頁, read backend `sections.daily_brief` first for headline/risk/simulated direction/next actions; if unavailable, fallback wording must still keep `只供模擬檢視 / 不建立訂單 / 不連接券商 / 不是真實買賣建議`.

@@ -272,3 +272,5 @@ Planned user-facing surfaces (Chinese primary, English helper):
 All surfaces remain read/review-first and paper-only unless a later explicit gated step approves bounded write/simulation actions.
 
 - Step 134B Mini App first-layer: 今日頁以「Daily Brief + AI Team role UI」為首層工作台，先回答「今日 AI 團隊發現咩、資料夠唔夠、風險、模擬方向、人類下一步」，技術細節後置於「查看技術資料」。
+
+- Step 134C: Mini App first layer (`今日簡報 / Daily Brief`) should prefer backend bounded `sections.daily_brief` contract; frontend fallback is allowed only when section is unavailable. Keep technical fields in `查看技術資料` and keep paper-only/no-broker wording.

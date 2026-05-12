@@ -17,7 +17,8 @@
 - No paper order creation in this docs-only step.
 - No frontend secrets.
 - No raw Telegram initData exposure.
-- No vendor token usage.
+- No vendor token exposure in frontend, browser, client-side code, logs, docs, Telegram messages, or chat.
+- Backend-only vendor token usage is allowed only through approved provider abstractions and backend/server environment variables.
 
 ## 3) Cross-Desk Shared Vocabulary
 
@@ -343,5 +344,6 @@ Per ticker, the first-layer dossier output uses:
 - No runtime code changes.
 - No Railway changes.
 - No Supabase changes.
-- No vendor / AI token integration.
+- No new vendor / AI token integration in this docs-only step.
+- Existing backend-only vendor-token policy remains unchanged.
 - No DB writes.

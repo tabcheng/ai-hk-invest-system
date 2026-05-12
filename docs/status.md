@@ -577,7 +577,7 @@
 - Added `docs/ai-team-analysis-blueprint.md` as the per-ticker analysis contract across 15 AI team departments (purpose/inputs/methods/output/UI/must-not/evidence).
 - Defined Stock Dossier v1 output schema and standardized scorecard vocabulary for data quality, technical, fundamental, catalyst, risk, confidence, and simulated direction.
 - Defined phased implementation path (Phase 1 deterministic read models -> Phase 2 backend-only AI synthesis -> Phase 3 DB audit persistence -> Phase 4 strategy learning).
-- Boundaries reaffirmed: paper-only/decision-support only, no broker/live/real-money/autonomous execution, no frontend secrets, no raw initData, no vendor token usage.
+- Boundaries reaffirmed: paper-only/decision-support only, no broker/live/real-money/autonomous execution, no frontend secrets, no raw initData, no vendor token exposure in frontend/browser/client/logs/docs/Telegram/chat; backend-only vendor-token policy via approved provider abstractions remains unchanged.
 - Runtime behavior change: none. Railway impact: none. Supabase impact: none.
 
 ## 2026-05-12 — Step 134C Daily Brief backend read model (in progress)

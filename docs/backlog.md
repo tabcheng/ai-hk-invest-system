@@ -298,3 +298,11 @@ Prioritization:
 - Step 133 follow-up: validate outcome-link deltas against production paper position timing (`valuation_timestamp_hkt`) and keep stale market acceptance preserved in UI/Telegram displays.
 
 - Step 133 follow-up guardrail: keep UI wording contract tests aligned with docs-of-record (Traditional Chinese primary, simple-label-first, technical details collapsed, required state-copy set, no execution-implying labels).
+
+## Step 134A follow-up implementation roadmap
+- Step 134B: Daily Brief + AI Team role UI.
+- Step 134C: AI Decision Advisor read model.
+- Step 134D: Paper Investment Committee read model.
+- Step 134E: Monitoring & Alert Desk severity model.
+- Step 134F: Model Auditor guardrail checks.
+- Later candidate: controlled paper-only simulated order flow, only after explicit design/approval.

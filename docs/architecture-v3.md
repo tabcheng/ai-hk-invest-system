@@ -330,3 +330,9 @@ The platform is designed as an **AI investment firm operating model** with stric
 - Read model contract updated: decision_context_snapshots summary list endpoint and Telegram bounded review command.
 
 - Added Step 133 read-model/API contract note: Journal snapshot outcome-link aggregation joins saved snapshot fields to latest paper position/PnL read model without write-path or execution-surface expansion.
+
+## Step 134A architecture addendum — AI Team Operating Model surfaces
+- AI team roles are implemented as **read-model / reasoning / review surfaces first**.
+- Decision layer outputs are strictly **paper-only** and simulation-oriented.
+- Governance layer (`Model Auditor`, `Compliance & Boundary Desk`) checks model quality and boundary risk before interpretation is escalated.
+- Architecture includes no broker/live execution path and no real-money order path.

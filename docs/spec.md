@@ -542,3 +542,10 @@ Proposed table: `human_decision_journal_entries` with draft columns:
   - Prefer labels: `當時資料`, `現在結果`, `盈虧變化`, `資料不足`, `資料可能過舊`, `只供模擬檢視`.
   - Raw technical labels are not first-layer UX; IDs/statuses only under `查看技術資料`.
   - Required state messages: loading/empty/success/partial/error/stale per Step 133 wording contract.
+
+## Step 134A product concept — AI HK Equity Investing Team Workbench
+- Product concept is upgraded from engineering-data display toward an **AI HK Equity Investing Team Workbench**.
+- The workbench is organized by AI team roles: data/monitoring, research, strategy/portfolio, decision, governance, and human-operator layers.
+- AI outputs remain analysis and paper-only/simulated decision-support artifacts.
+- Human operator remains the final real-money decision authority, and real trades are made outside the system.
+- No broker integration, no live execution path, and no autonomous real-money execution are in scope.

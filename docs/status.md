@@ -555,3 +555,13 @@
 - Step 133 in progress: added bounded journal snapshot outcome link read model (`build_journal_snapshot_outcome_review`), Mini App read-only `/miniapp/api/journal-outcomes` + Journal tab outcome panel, and Telegram `/journal_outcome` command. Preserves paper-trading decision-support boundary (no broker/live/real-money execution, no order creation, no position mutation).
 
 - Step 133 docs hardening completed: promoted Mini App Outcome Review wording/state/safety constraints from one-off implementation notes into long-term docs-of-record contract (AGENTS + product-surface + miniapp-boundary + runbook + spec).
+
+## 2026-05-12 — Step 134A AI Team Operating Model docs direction
+- Step 134A in progress / PR review pending (docs-only architecture/product-direction definition for AI HK equity investing team operating model).
+- Added new docs-of-record file: `docs/ai-team-operating-model.md` covering purpose, team layers, role contracts (purpose/inputs/outputs/must-not/UI wording/boundary), decision chain, UI hierarchy, and hard boundaries.
+- Updated system-of-record docs (`AGENTS.md`, `docs/spec.md`, `docs/architecture-v3.md`, `docs/product-surface-strategy.md`, `docs/miniapp-readonly-data-boundary.md`, `docs/operator-runbook.md`, `docs/backlog.md`) for AI Team Workbench direction alignment.
+- Runtime behavior change: none.
+- Railway impact: none.
+- Supabase impact: none.
+- Post-merge QA: pending merge.
+- Post-merge Domain Check: pending merge.

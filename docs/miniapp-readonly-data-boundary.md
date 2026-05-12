@@ -331,3 +331,9 @@ No broker integration or autonomous real-money execution is authorized by this p
   - Technical labels hidden under `查看技術資料`.
   - Primary copy uses simple user labels (`當時資料` / `現在結果` / `盈虧變化` / `資料不足` / `資料可能過舊`).
   - Required state copy: loading/empty/success/partial/error/stale messages per Step 133 contract.
+
+## Step 134A read-only clarification (AI Decision + Committee)
+- `AI Decision Advisor` output is read-only analysis and simulated decision-support only.
+- `Paper Investment Committee` output is read-only and paper-only simulated direction only.
+- Any paper sizing suggestion is advisory for simulation only, not a real-money instruction.
+- Frontend presentation must keep `只供模擬檢視` and related no-execution safety wording visible.

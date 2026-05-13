@@ -5,14 +5,31 @@
 
 
 
-## 2026-05-13 — Current status as of Step 135D
+## 2026-05-13 — Current status as of Step 135E
+
+- Step 135E repo merge completed: yes.
+- PR #145 merged: yes.
+- Core deliverable (Step 135E):
+  - deterministic strategy horizon policy fields added in Stock Dossier read model.
+  - Mini App Stock Review added first-layer `策略週期判斷` section.
+  - medium-term readiness now requires matching ticker-level decision context (global decision-context status alone is insufficient).
+  - short-term boundary remains monitoring / alert / observation only.
+  - long-term fundamentals/data-gap visibility remains explicit (fundamentals / valuation / earnings / cash flow / balance sheet / sector-cycle context).
+- CI/test evidence before merge: `pytest` (494 passed).
+- Post-merge QA Check: pass (docs/status + docs/backlog post-merge closure is recorded by this docs-only PR).
+- Post-merge Domain Check: pass (paper-only / decision-support only; no broker/live/real-money/order path introduced).
+- Railway impact: unchanged.
+- Supabase impact: unchanged (no schema/RLS/write change).
+- Post-deploy UI smoke: not required / not run in this docs-only closure because no runtime deployment acceptance is being claimed.
+- Wording discipline reminder: `docs/status.md` records merge-completion truth and acceptance outcomes; `docs/backlog.md` records pending follow-up work only.
+
+## 2026-05-13 — Historical context (Step 135D)
 
 - Step 135B (PR #141) repo merge completed: Stock Dossier v1 backend read model + Mini App Stock Review shell completed in GitHub history.
 - Step 135C (PR #142) repo merge completed: Stock Review first-layer UX polish completed in GitHub history.
 - Step 135D (PR #143) repo merge completed: `docs/hk-equity-strategy-research-reference-20260512.md` added as HK strategy research reference docs-of-record.
-- Post-merge QA Check: pending retrospective record.
-- Post-merge Domain Check: pending retrospective record.
-- Wording discipline reminder: `docs/status.md` records merge-completion truth and acceptance outcomes; `docs/backlog.md` records pending follow-up work only.
+- Post-merge QA Check: pending retrospective record (superseded by Step 135E status closure above).
+- Post-merge Domain Check: pending retrospective record (superseded by Step 135E status closure above).
 
 ## 2026-05-06 — Step 91C Runtime Acceptance ledger update
 - repo merge completed: yes

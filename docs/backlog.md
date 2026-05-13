@@ -8,17 +8,17 @@ Prioritization:
 ## Active backlog (pending)
 
 ### P0
-1. **Step 135E — Strategy Horizon Policy in Stock Dossier**
-   - Add Stock Review horizon policy display aligned with Step 135D strategy reference.
-   - Keep short-term horizon as monitoring / alert / observation only.
-   - Keep medium/long-term horizons as current review focus.
-   - Preserve first-layer compact UI readability and Traditional Chinese operator-first wording.
+1. **Step 135F — Stock Review horizon policy calibration**
+   - Calibration-only / deterministic helper refinement for Stock Review horizon policy interpretation.
+   - Preserve short-term monitoring / alert / observation-only boundary.
+   - Keep medium/long-term scope bounded to review-readiness interpretation calibration only.
+   - Explicit non-goals: no vendor integration, no AI token, no DB write, no Telegram command, no broker/live/real-money execution, no paper order / simulated order creation.
+   - Required deliverables: docs updates + focused tests.
 
 ### P1
-1. **Stock Review horizon policy calibration (pending)**
-2. **Stock Review wording regression tests (pending)**
-3. **Long-term fundamentals coverage roadmap (pending)**
-4. **Docs-of-record consistency monitoring (pending)**
+1. **Stock Review wording regression tests (pending)**
+2. **Long-term fundamentals coverage roadmap (pending)**
+3. **Docs-of-record consistency monitoring (pending)**
 
 ### P0.5 — Active track scaffolding (Step 69 direction alignment)
 
@@ -67,6 +67,7 @@ Prioritization:
 - Step 135B — Stock Dossier v1 backend read model + Mini App Stock Review shell completed and merged (PR #141).
 - Step 135C — Stock Review first-layer UX polish completed and merged (PR #142).
 - Step 135D — HK Equity Strategy Research Reference docs-of-record completed and merged (PR #143).
+- Step 135E — Strategy Horizon Policy in Stock Dossier completed and merged (PR #145).
 
 ## Completed backlog (archived)
 

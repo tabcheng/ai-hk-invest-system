@@ -1,4 +1,4 @@
-## Current state checkpoint (as of Step 135D)
+## Current state checkpoint (as of Step 135E)
 
 Recent completed product track summary (compact):
 - AI Team Operating Model docs-of-record established and active as role-boundary baseline.
@@ -9,7 +9,7 @@ Recent completed product track summary (compact):
 - HK Equity Strategy Research Reference (`docs/hk-equity-strategy-research-reference-20260512.md`) delivered as strategy reference docs-of-record.
 
 Next implementation candidate:
-- **Step 135E — Strategy Horizon Policy in Stock Dossier**
+- **Step 135F — Stock Review horizon policy calibration**
 
 # Project Implementation Plan (System-of-Record View)
 

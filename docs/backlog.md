@@ -8,18 +8,10 @@ Prioritization:
 ## Active backlog (pending)
 
 ### P0
-1. **Step 135I — Mini App Operator Workflow Finalization（in progress）**
-   - Separate load-state vs sufficiency wording (`已載入` vs `資料不足/未能判斷`)。
-   - Compress Stock Review first-layer while keeping horizon/risk visibility.
-   - Split Journal into `新增人手模擬決策 / 最近紀錄 / 後續結果` with paper-only labels.
-   - Keep short safety boundary visible; move full boundary text to System collapsed section.
+- (none currently; next P0 to be selected after Step 135J merge verification)
 
 ### P1
-1. **Step 135J — Stock Review Data Gap Action Model (candidate)**
-   - Convert Stock Review data gaps into operator action guidance only.
-   - No AI token, no vendor integration, no DB write unless separately approved.
-   - No broker/order/live/real-money execution.
-2. **Stock Review wording regression tests (pending)**
+1. **Stock Review wording regression tests (pending)**
 2. **Long-term fundamentals coverage roadmap (pending)**
 3. **Docs-of-record consistency monitoring (pending)**
 4. **Documentation governance periodic audit.**
@@ -78,6 +70,8 @@ Prioritization:
 - Step 135E — Strategy Horizon Policy in Stock Dossier completed and merged (PR #145).
 - Step 135F — Stock Review horizon policy calibration completed and merged (PR #147).
 - Step 135H — Mini App Operator First-View Polish from Screenshot Smoke Review completed and merged (PR #149).
+- Step 135I — Mini App Operator Workflow Finalization completed and merged (PR #150, merge commit `ce8ef2132a3f06df978cc509a5232dd2fd8e239c`).
+- Step 135J — Stock Review Data Gap Action Model completed and merged in follow-up closure PR (this branch).
 
 ## Completed backlog (archived)
 

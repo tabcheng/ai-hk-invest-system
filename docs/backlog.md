@@ -272,3 +272,9 @@ Prioritization:
 - **Step 134C completed:** Backend Daily Brief read model + Mini App first-layer consumption from bounded `sections.daily_brief` landed with fallback rendering and focused tests. Guardrails unchanged: read-only/paper-only/no broker/no live execution/no order creation.
 
 - Step 135E: Strategy Horizon Policy in Stock Dossier added deterministic horizon fields (recommended_review_horizon, short/medium/long policies, data states, data gaps, confidence notes, paper_decision_scope) and Stock Review "策略週期判斷" UI section; short-term remains monitoring/observation-only; no broker/order/live/real-money path.
+## Active P0
+- Step 135H — Mini App Operator First-View Polish from Screenshot Smoke Review（in progress）
+  - Separate load-state vs sufficiency wording (`已載入` vs `資料不足/未能判斷`)。
+  - Compress Stock Review first-layer while keeping horizon/risk visibility.
+  - Split Journal into `新增人手模擬決策 / 最近紀錄 / 後續結果` with paper-only labels.
+  - Keep short safety boundary visible; move full boundary text to System collapsed section.

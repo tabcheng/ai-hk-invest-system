@@ -643,3 +643,9 @@
 
 - Step 135E: Strategy Horizon Policy in Stock Dossier added deterministic horizon fields (recommended_review_horizon, short/medium/long policies, data states, data gaps, confidence notes, paper_decision_scope) and Stock Review "策略週期判斷" UI section; short-term remains monitoring/observation-only; no broker/order/live/real-money path.
 - Step 135E follow-up fix: medium-term readiness now requires ticker-level decision-context match (not global status alone); if no matching ticker context/outcome context, medium-term cannot be marked sufficient.
+## 2026-05-13 — Step 135H Mini App Operator First-View Polish（screenshot smoke follow-up）
+- Step 135G（PR #148）已合併並完成；手動 screenshot smoke 顯示「今日」首屏方向通過，但仍需 Step 135H UI polish。
+- Screenshot smoke findings captured: 股票檢視第一層偏長、日誌頁過長混合、載入成功與資料充分語意混淆、日誌 buy/sell wording 過近交易語意、完整安全卡過度重複、系統頁需分組可摺疊。
+- Step 135H scope（frontend-only）: 分離「已載入」與「資料不足/未能判斷」語意、壓縮股票檢視第一層、日誌改為分段主次、完整安全說明移到系統分頁可摺疊區塊。
+- Domain check: pass（paper-only / decision-support only；無 broker/live/order/real-money 路徑）。
+- Platform impact: GitHub Mini App UI only；Railway/Supabase/runtime schema/API 無變更。

@@ -315,4 +315,5 @@ All surfaces remain read/review-first and paper-only unless a later explicit gat
   - Mini App main wording stays Traditional Chinese first (English only secondary/helper),
   - paper-only / decision-support boundary remains explicit,
   - no broker connection, no live order placement, no autonomous real-money execution.
-\n- Step 135E: Strategy Horizon Policy in Stock Dossier added deterministic horizon fields (recommended_review_horizon, short/medium/long policies, data states, data gaps, confidence notes, paper_decision_scope) and Stock Review "策略週期判斷" UI section; short-term remains monitoring/observation-only; no broker/order/live/real-money path.
+
+- Step 135E: Strategy Horizon Policy in Stock Dossier added deterministic horizon fields (recommended_review_horizon, short/medium/long policies, data states, data gaps, confidence notes, paper_decision_scope) and Stock Review "策略週期判斷" UI section; short-term remains monitoring/observation-only; no broker/order/live/real-money path.

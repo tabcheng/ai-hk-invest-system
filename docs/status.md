@@ -605,4 +605,5 @@
 - Step 135D wording fix: canonical implementation phase numbering remains in `docs/ai-team-analysis-blueprint.md`; Step 135D now describes strategy workstreams only and does not renumber roadmap phases.
 - Reaffirmed hard boundaries: paper-only decision-support, no broker/live execution/real-money order creation, no frontend secrets, no raw Telegram initData exposure, backend-only vendor token abstractions.
 - Platform impact: GitHub docs-only updates; Railway unchanged; Supabase unchanged.
-\n- Step 135E: Strategy Horizon Policy in Stock Dossier added deterministic horizon fields (recommended_review_horizon, short/medium/long policies, data states, data gaps, confidence notes, paper_decision_scope) and Stock Review "策略週期判斷" UI section; short-term remains monitoring/observation-only; no broker/order/live/real-money path.
+
+- Step 135E: Strategy Horizon Policy in Stock Dossier added deterministic horizon fields (recommended_review_horizon, short/medium/long policies, data states, data gaps, confidence notes, paper_decision_scope) and Stock Review "策略週期判斷" UI section; short-term remains monitoring/observation-only; no broker/order/live/real-money path.

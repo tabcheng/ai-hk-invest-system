@@ -549,4 +549,5 @@ Proposed table: `human_decision_journal_entries` with draft columns:
 - AI outputs remain analysis and paper-only/simulated decision-support artifacts.
 - Human operator remains the final real-money decision authority, and real trades are made outside the system.
 - No broker integration, no live execution path, and no autonomous real-money execution are in scope.
-\n- Step 135E: Strategy Horizon Policy in Stock Dossier added deterministic horizon fields (recommended_review_horizon, short/medium/long policies, data states, data gaps, confidence notes, paper_decision_scope) and Stock Review "策略週期判斷" UI section; short-term remains monitoring/observation-only; no broker/order/live/real-money path.
+
+- Step 135E: Strategy Horizon Policy in Stock Dossier added deterministic horizon fields (recommended_review_horizon, short/medium/long policies, data states, data gaps, confidence notes, paper_decision_scope) and Stock Review "策略週期判斷" UI section; short-term remains monitoring/observation-only; no broker/order/live/real-money path.

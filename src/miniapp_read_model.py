@@ -121,10 +121,15 @@ def _compute_horizon_policy(signal: str, risk_level: str, has_portfolio: bool, d
     long_gaps=["缺少基本面資料","缺少估值資料","缺少盈利資料","缺少現金流資料","缺少資產負債表資料","缺少行業/週期資料"]
     recommended='medium' if medium_state=='sufficient' else 'observation_only'
     paper_scope='medium_term_review_only' if medium_state=='sufficient' else 'observation_only'
+    medium_policy = (
+        "中線：資料足夠，可作模擬檢視。"
+        if medium_state == "sufficient"
+        else "中線：資料未齊，先補風險/組合/結果脈絡，再作模擬檢視。"
+    )
     return {
       'recommended_review_horizon': recommended,
       'short_term_policy': short_term_policy,
-      'medium_term_policy': '中線：可用於 daily/weekly + risk + portfolio + outcome review 的模擬檢視。',
+      'medium_term_policy': medium_policy,
       'long_term_policy': '長線：需要基本面/估值/盈利/現金流/資產負債表/行業週期資料，否則只可保守觀察。',
       'medium_term_data_state': medium_state,
       'long_term_data_state': 'insufficient',

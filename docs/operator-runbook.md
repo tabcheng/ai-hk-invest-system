@@ -543,4 +543,5 @@ When validating Mini App Journal Outcome Review and Telegram `/journal_outcome`,
 - For medium/long-term review, prioritize multi-dimensional checks (`data_quality_state`, `technical_state`, `fundamental_state`, `catalyst_state`, `risk_level`, `liquidity_state`, `portfolio_exposure_state`, `confidence_level`, `simulated_direction`) instead of one total score.
 - If stale/insufficient data appears, keep conservative wording (`資料不足`, `資料可能過舊`) and stop at review action planning.
 - Safety wording remains mandatory: `只供模擬檢視` / `不建立訂單` / `不連接券商` / `不是真實買賣建議`.
-\n- Step 135E: Strategy Horizon Policy in Stock Dossier added deterministic horizon fields (recommended_review_horizon, short/medium/long policies, data states, data gaps, confidence notes, paper_decision_scope) and Stock Review "策略週期判斷" UI section; short-term remains monitoring/observation-only; no broker/order/live/real-money path.
+
+- Step 135E: Strategy Horizon Policy in Stock Dossier added deterministic horizon fields (recommended_review_horizon, short/medium/long policies, data states, data gaps, confidence notes, paper_decision_scope) and Stock Review "策略週期判斷" UI section; short-term remains monitoring/observation-only; no broker/order/live/real-money path.

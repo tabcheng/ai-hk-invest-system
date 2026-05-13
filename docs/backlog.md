@@ -17,6 +17,11 @@ Prioritization:
 1. **Stock Review wording regression tests (pending)**
 2. **Long-term fundamentals coverage roadmap (pending)**
 3. **Docs-of-record consistency monitoring (pending)**
+4. **Documentation governance periodic audit.**
+5. **AI risk register expansion before AI-token/LLM integration (required gate).**
+6. **Regulatory boundary review before any client-facing/advisory/execution feature.**
+7. **Mini App accessibility checklist and periodic verification.**
+8. **Branch protection + required conversation resolution verification.**
 
 ### P0.5 — Active track scaffolding (Step 69 direction alignment)
 

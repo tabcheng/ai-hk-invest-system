@@ -128,3 +128,7 @@ Keep these aligned:
 - All PRs must preserve role boundaries across data/research/strategy/decision/governance/human layers.
 - PRs must not bypass AI team boundaries (especially paper-only, no broker/live/order behavior).
 - Reusable Mini App and Telegram UI wording/safety rules remain governed by docs-of-record and must stay aligned.
+
+## Documentation capture cross-reference
+- Follow `docs/documentation-governance.md` for source-of-truth and Documentation Capture Check requirements.
+- Any decisions affecting product/architecture/UI/security/review process must be captured in docs-of-record before approval.

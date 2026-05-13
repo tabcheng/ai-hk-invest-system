@@ -367,3 +367,11 @@ No broker integration or autonomous real-money execution is authorized by this p
 - Change scope is Mini App information architecture and wording placement only.
 - No new API route, no write-path expansion, no Supabase schema/RLS change, no secret exposure change.
 - Runtime/system/diagnostic cards move to 系統 tab; portfolio detail moves to 模擬組合 tab; Today remains compact summary-only first view.
+
+
+## Step 135G-DOC secret posture
+- Supabase secret/service-role class keys are backend-only.
+- Never expose secret/service-role keys in browser, frontend bundle, docs, logs, Telegram output, PR comments, or chat.
+- Frontend may only use non-secret runtime config.
+- Any production data access must be backend-mediated with server-side Telegram initData validation and operator authorization.
+- Raw Telegram initData, allowlist IDs, vendor tokens, and raw vendor payloads must not appear in frontend/logs/docs/chat.

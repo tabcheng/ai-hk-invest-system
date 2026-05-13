@@ -297,7 +297,7 @@ def test_safety_boundary_copy_present() -> None:
     assert "Telegram initData 只在後端驗證" in INDEX_HTML
     assert "前端不使用 initDataUnsafe 作授權" in INDEX_HTML
     assert "前端不保存 Supabase secret / service role key" in INDEX_HTML
-    assert "所有信號只供模擬檢視，並非買賣指示" in INDEX_HTML
+    assert "只供模擬檢視，不建立訂單，不連接券商" in INDEX_HTML
     assert "UI build:" in INDEX_HTML
     assert "Deployed build:" in INDEX_HTML
 

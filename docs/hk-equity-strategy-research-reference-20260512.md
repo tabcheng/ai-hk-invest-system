@@ -126,13 +126,16 @@ Decision contract:
 - Avoid theme chasing without evidence.
 - Risk Desk may downgrade confidence or block positive paper-only simulated direction.
 
-## 9) Implementation phases
-1. **Phase 1**: deterministic read models + Stock Dossier + Daily Brief.
-2. **Phase 2**: Strategy Research Desk outcome-review loop and horizon tagging.
-3. **Phase 3**: News/Catalyst + Fundamental source planning and data contracts.
-4. **Phase 4**: AI Decision Advisor deterministic synthesis.
-5. **Phase 5**: backend-only AI vendor synthesis (only if justified) with strict audit/prompt/version controls.
-6. **Phase 6**: DB persistence extension for audit/outcome learning only if needed.
+## 9) Implementation relationship to existing roadmap
+Canonical implementation phase numbering remains defined in `docs/ai-team-analysis-blueprint.md`.
+
+This research reference does **not** redefine canonical phase numbering. It provides strategy workstreams/themes for future planning:
+- deterministic read models + Stock Dossier + Daily Brief
+- horizon tagging and Strategy Research Desk outcome-review loop
+- News/Catalyst + Fundamental source planning and data contracts
+- AI Decision Advisor deterministic synthesis
+- backend-only AI vendor synthesis only if justified, with strict audit/prompt/version controls
+- DB persistence for audit/outcome learning only if needed
 
 ## 10) Hard boundaries (reaffirmed)
 - No broker integration.

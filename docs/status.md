@@ -593,5 +593,6 @@
 - Added `docs/hk-equity-strategy-research-reference-20260512.md` from research source 「港股 AI Team Analysis Blueprint 落地研究報告 20260512」 as long-term internal strategy reference (not trading advice).
 - Defined explicit horizon policy: short-term stays observation/alert only in current phase; medium/long-term are primary design scopes for Stock Dossier + AI Decision Advisor v1.
 - Documented HK market characteristics, horizon-based data requirements/freshness risks, strategy families, AI desk mapping, multidimensional scorecard + risk-gate + human review contract, and phased implementation path.
+- Step 135D wording fix: canonical implementation phase numbering remains in `docs/ai-team-analysis-blueprint.md`; Step 135D now describes strategy workstreams only and does not renumber roadmap phases.
 - Reaffirmed hard boundaries: paper-only decision-support, no broker/live execution/real-money order creation, no frontend secrets, no raw Telegram initData exposure, backend-only vendor token abstractions.
 - Platform impact: GitHub docs-only updates; Railway unchanged; Supabase unchanged.

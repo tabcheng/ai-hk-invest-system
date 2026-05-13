@@ -553,3 +553,8 @@ Proposed table: `human_decision_journal_entries` with draft columns:
 - Step 135E: Strategy Horizon Policy in Stock Dossier added deterministic horizon fields (recommended_review_horizon, short/medium/long policies, data states, data gaps, confidence notes, paper_decision_scope) and Stock Review "策略週期判斷" UI section; short-term remains monitoring/observation-only; no broker/order/live/real-money path.
 - Step 135E follow-up contract refinement: medium-term sufficiency requires matching ticker-level decision context; global decision-context status without ticker match is insufficient for medium-term recommendation.
 - Step 135F UI contract refinement: Stock Review first-layer ordering is fixed to `一句總結 -> 資料夠唔夠 -> 策略週期判斷 -> 風險提示 -> AI 模擬方向 -> 你下一步要做咩 -> 查看技術資料`; horizon gaps are Chinese-first for operator interpretation, while raw/internal horizon fields stay under technical details.
+
+## 2026-05-13 — Step 135G Mini App first-view IA cleanup contract
+- Mini App default Today first screen is a compact single-hero decision-support summary.
+- Full diagnostics/runtime metadata and full PnL/risk breakdown move to dedicated secondary tabs.
+- This is presentation/IA refinement only; no new trading capability, no write path expansion, no broker/live/real-money execution behavior.

@@ -557,3 +557,11 @@ When validating Mini App Journal Outcome Review and Telegram `/journal_outcome`,
   - 短線固定為監察/提示/觀察用途，不建立任何模擬或真實訂單。
   - 中線若資料不足，第一層必須用中文缺口提示（信號/風險/模擬組合/個股決策脈絡）。
   - 長線若不足，第一層以精簡人話顯示「長線資料不足：缺少基本面 / 估值 / 現金流等資料」。
+
+## Step 135G Mini App first-view reading order
+- 預設先看「今日」一張主卡：一句總結 → 資料夠唔夠 → 主要風險 → AI 模擬方向 → 下一步。
+- 進階資料改到分頁：
+  - 「模擬組合」看完整 PnL / 風險細節；
+  - 「系統」看 latest run / daily summary / 診斷資料；
+  - 「股票檢視」維持 Step 135F 的策略週期判斷與查看技術資料。
+- 所有解讀仍屬 paper-only decision support。

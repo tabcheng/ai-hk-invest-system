@@ -323,3 +323,64 @@ All surfaces remain read/review-first and paper-only unless a later explicit gat
   - short-term stays observation-only (`短線只供監察 / 提示 / 觀察，不建立任何模擬或真實訂單`);
   - medium-term sufficiency cannot be inferred from global status alone and must keep ticker-context-aware missing-gap summary;
   - long-term first-layer uses compact human summary (`長線資料不足：缺少基本面 / 估值 / 現金流等資料`), with detailed fields under technical details.
+
+## 2026-05-13 — Step 135G first-view IA contract
+- Today (今日) default first-screen keeps one primary hero summary card only.
+- Hero must include: 今日狀態/一句總結/資料夠唔夠/主要風險/AI 模擬方向/你下一步要做咩 + short safety boundary.
+- Secondary responsibility split:
+  - 股票檢視: Stock Review first-layer contract from Step 135F.
+  - 模擬組合: full paper PnL + risk breakdown.
+  - 日誌: human paper decision journal/outcome review surfaces.
+  - 系統: Latest System Run, Daily Review Summary, signals/context diagnostics, build metadata visibility.
+- Boundary unchanged: read-only/paper-only decision support; no broker/live/order/real-money execution.
+
+
+## Mini App First-View Contract (Step 135G-DOC)
+- Mini App is an AI HK equity review workspace, not a dense dashboard, broker dashboard, trading terminal, or execution console.
+- Default first screen must show one primary operator decision-support summary before secondary/technical cards:
+  1. 今日狀態
+  2. 一句總結
+  3. 資料夠唔夠
+  4. 主要風險
+  5. AI 模擬方向
+  6. 你下一步要做咩
+  7. short paper-only boundary
+- Secondary data may exist but must be moved to secondary tabs or collapsed details:
+  - Latest System Run
+  - build metadata
+  - market smoke diagnostics
+  - raw source/timestamps
+  - detailed PnL/risk breakdown
+  - long AI team explanation
+  - technical/internal fields
+- First-view must be Traditional Chinese first and understandable for non-technical operators.
+- Technical/internal/raw fields belong under 查看技術資料 / 系統資料 / secondary tabs.
+- Advice/data/details can remain accessible; they must not dominate the first image / first screen.
+
+## Forbidden UI direction
+Do not let Mini App become:
+- dense dashboard
+- broker dashboard
+- live trading terminal
+- autonomous AI execution console
+
+Forbidden or restricted wording:
+- Buy now
+- Sell now
+- Execute
+- Order
+- Trade action
+- AI final decision
+- Autonomous trading
+- 真實落盤
+- 立即買入 / 立即賣出
+
+Allowed safer wording:
+- AI 模擬方向
+- 只供模擬檢視
+- 人手覆核
+- 你下一步要做咩
+- 暫時只觀察
+- 不建立訂單
+- 不連接券商
+- 不是真實買賣建議

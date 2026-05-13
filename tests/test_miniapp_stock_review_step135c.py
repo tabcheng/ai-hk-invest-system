@@ -15,11 +15,12 @@ def test_stock_review_tab_and_first_layer_labels_exist() -> None:
     assert "股票檢視 / Stock Review" in html
     for label in [
         "一句總結",
-        "資料夠唔夠",
+        "檢視結論",
         "策略週期判斷",
         "短線判斷",
         "中線資料狀態",
         "長線資料狀態",
+        "主要缺口",
         "風險提示",
         "AI 模擬方向",
         "你下一步要做咩",
@@ -32,7 +33,7 @@ def test_stock_review_empty_state_and_safety_text() -> None:
     block = _stock_review_block(html)
 
     assert "暫時未有可檢視的股票簡報。系統會在有 signals / risk / portfolio context 後顯示。" in block
-    assert "AI 模擬方向只分為：偏正面觀察、繼續觀察、謹慎、資料不足。只供模擬檢視。" in html
+    assert "第一層只顯示重點，完整資料放在可展開區塊。只供模擬檢視。" in html
     assert "只供模擬檢視｜不建立訂單｜不連接券商｜不是真實買賣建議" in block
     assert "短線只供監察 / 提示 / 觀察，不建立任何模擬或真實訂單" in block
     assert "長線資料不足：缺少基本面 / 估值 / 現金流等資料" in block
@@ -69,7 +70,7 @@ def test_stock_review_horizon_first_layer_uses_human_labels_not_raw_enum() -> No
     assert "const mediumGaps = Array.from(new Set((Array.isArray(horizon.horizon_data_gaps)" in block
     assert "if (!mediumReady && !mediumGaps.length) mediumGaps.push(\"中線資料不足：請先補充信號、風險、模擬組合與個股決策脈絡\")" in block
     assert 'horizon.recommended_review_horizon' in block
-    assert '`建議：${horizonLabel(horizon.recommended_review_horizon)}`' in block
+    assert '`建議：${horizonLabel(horizon.recommended_review_horizon)}`' not in block
     assert "decision_context_summary.status" not in block
     assert "technical_observation: chosen?.technical_observation" in block
     assert "fundamental_observation: chosen?.fundamental_observation" in block
@@ -80,7 +81,7 @@ def test_stock_review_horizon_first_layer_uses_human_labels_not_raw_enum() -> No
 def test_stock_review_first_layer_avoids_english_only_gap_labels() -> None:
     html = Path("miniapp/index.html").read_text(encoding="utf-8")
     block = _stock_review_block(html)
-    assert 'addRow("中線資料缺口", mediumGaps.join("；"));' in block
+    assert 'addRow("主要缺口", mediumGaps.slice(0, 3).join("；"));' in block
     assert 'if (lower.includes("daily/weekly signals")) return "缺少日線 / 週線信號";' in block
     assert 'if (lower.includes("risk context")) return "缺少風險脈絡";' in block
     assert 'if (lower.includes("paper portfolio context")) return "缺少模擬組合背景";' in block

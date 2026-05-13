@@ -297,9 +297,22 @@ def test_safety_boundary_copy_present() -> None:
     assert "Telegram initData 只在後端驗證" in INDEX_HTML
     assert "前端不使用 initDataUnsafe 作授權" in INDEX_HTML
     assert "前端不保存 Supabase secret / service role key" in INDEX_HTML
-    assert "所有信號只供模擬檢視，並非買賣指示" in INDEX_HTML
+    assert "只供模擬檢視，不建立訂單，不連接券商" in INDEX_HTML
     assert "UI build:" in INDEX_HTML
     assert "Deployed build:" in INDEX_HTML
+
+
+def test_system_safety_card_is_system_tab_only() -> None:
+    assert 'id="system-safety-card"' in INDEX_HTML
+    assert 'data-tab-panel="system"' in INDEX_HTML
+    assert 'system:["signals-card","context-card","team-card","latest-card","daily-card","system-safety-card"]' in INDEX_HTML
+
+
+def test_risk_warning_wording_branches_present() -> None:
+    assert "暫無明確風險警示" in INDEX_HTML
+    assert "暫無明確警示，但風險資料不足" in INDEX_HTML
+    assert 'const hasInsufficientRisk = riskRaw === "unknown" || hasLimitations' in INDEX_HTML
+    assert 'none.textContent=hasInsufficientRisk ? "暫無明確警示，但風險資料不足" : "暫無明確風險警示"' in INDEX_HTML
 
 
 def test_journal_ticker_picker_and_context_updates() -> None:

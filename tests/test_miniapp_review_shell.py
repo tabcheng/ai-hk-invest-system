@@ -9,7 +9,7 @@ def test_step92f_ui_review_shell_static_contract() -> None:
     required_text = [
         "AI 港股投資系統",
         "今日簡報 / Daily Brief",
-        "AI 團隊正在幫你檢查乜",
+        "AI 團隊說明",
         "風險提示：",
         "AI 模擬方向：",
         "你下一步要做咩",
@@ -21,9 +21,9 @@ def test_step92f_ui_review_shell_static_contract() -> None:
         "每日檢視摘要",
         "信號摘要",
         "股票檢視 / Stock Review",
-        "AI 模擬方向只分為：偏正面觀察、繼續觀察、謹慎、資料不足。只供模擬檢視。",
+        "第一層只顯示重點，完整資料放在可展開區塊。只供模擬檢視。",
         "一句總結",
-        "資料夠唔夠",
+        "檢視結論",
         "策略週期判斷",
         "風險提示",
         "AI 模擬方向",
@@ -41,7 +41,7 @@ def test_step92f_ui_review_shell_static_contract() -> None:
         "status-chip",
         "metric-grid",
         "signal-list",
-        "footer-guardrail",
+        "boundary-banner",
         "https://telegram.org/js/telegram-web-app.js",
         "/miniapp/api/review-shell",
         "init_data",
@@ -113,6 +113,7 @@ def test_step92f_ui_review_shell_static_contract() -> None:
         assert re.search(pattern, html, flags=re.IGNORECASE) is None
 
     assert "if (!rows.length) { shell.textContent = \"暫時未有可檢視的股票簡報。系統會在有 signals / risk / portfolio context 後顯示。\"; return; }" in html
+    assert 'system:["signals-card","context-card","team-card","latest-card","daily-card","system-safety-card"]' in html
     stock_review_block = html[html.index("function renderStockReview"):html.index("function renderRisk")]
     assert "card.innerHTML" not in stock_review_block
     assert "technical_observation: chosen?.technical_observation" in stock_review_block

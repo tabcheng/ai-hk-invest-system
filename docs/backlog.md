@@ -8,10 +8,11 @@ Prioritization:
 ## Active backlog (pending)
 
 ### P0
-1. **Step 135G — Mini App First-View IA Cleanup**
-   - Today tab first view keeps one compact decision-support hero; secondary cards move to dedicated tabs/details.
-   - Tabs use Traditional Chinese primary labels: 今日 / 股票檢視 / 模擬組合 / 日誌 / 系統.
-   - Preserve paper-only/read-only boundary and no execution semantics.
+1. **Step 135H — Mini App Operator First-View Polish from Screenshot Smoke Review（in progress）**
+   - Separate load-state vs sufficiency wording (`已載入` vs `資料不足/未能判斷`)。
+   - Compress Stock Review first-layer while keeping horizon/risk visibility.
+   - Split Journal into `新增人手模擬決策 / 最近紀錄 / 後續結果` with paper-only labels.
+   - Keep short safety boundary visible; move full boundary text to System collapsed section.
 
 ### P1
 1. **Stock Review wording regression tests (pending)**
@@ -272,3 +273,5 @@ Prioritization:
 - **Step 134C completed:** Backend Daily Brief read model + Mini App first-layer consumption from bounded `sections.daily_brief` landed with fallback rendering and focused tests. Guardrails unchanged: read-only/paper-only/no broker/no live execution/no order creation.
 
 - Step 135E: Strategy Horizon Policy in Stock Dossier added deterministic horizon fields (recommended_review_horizon, short/medium/long policies, data states, data gaps, confidence notes, paper_decision_scope) and Stock Review "策略週期判斷" UI section; short-term remains monitoring/observation-only; no broker/order/live/real-money path.
+## Completed / Archived recent
+- Step 135G — Mini App First-View IA Cleanup（merged via PR #148）: Today compact hero summary, Chinese-first tabs, system/portfolio separation, docs governance/risk/regulatory/accessibility baseline, aria-labelledby tabpanel fix.

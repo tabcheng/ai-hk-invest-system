@@ -66,6 +66,8 @@ def test_stock_review_horizon_first_layer_uses_human_labels_not_raw_enum() -> No
     assert "缺少風險脈絡" in block
     assert "缺少模擬組合背景" in block
     assert "缺少個股層級決策 / 結果脈絡" in block
+    assert "const mediumGaps = Array.from(new Set((Array.isArray(horizon.horizon_data_gaps)" in block
+    assert "if (!mediumReady && !mediumGaps.length) mediumGaps.push(\"中線資料不足：請先補充信號、風險、模擬組合與個股決策脈絡\")" in block
     assert 'horizon.recommended_review_horizon' in block
     assert '`建議：${horizonLabel(horizon.recommended_review_horizon)}`' in block
     assert "decision_context_summary.status" not in block
@@ -78,13 +80,15 @@ def test_stock_review_horizon_first_layer_uses_human_labels_not_raw_enum() -> No
 def test_stock_review_first_layer_avoids_english_only_gap_labels() -> None:
     html = Path("miniapp/index.html").read_text(encoding="utf-8")
     block = _stock_review_block(html)
-    for forbidden in [
-        "daily/weekly signals",
-        "risk context",
-        "paper portfolio context",
-        "outcome review/context",
-    ]:
-        assert forbidden not in block
+    assert 'addRow("中線資料缺口", mediumGaps.join("；"));' in block
+    assert 'if (lower.includes("daily/weekly signals")) return "缺少日線 / 週線信號";' in block
+    assert 'if (lower.includes("risk context")) return "缺少風險脈絡";' in block
+    assert 'if (lower.includes("paper portfolio context")) return "缺少模擬組合背景";' in block
+    assert 'if (lower.includes("outcome review/context") || lower.includes("個股層級脈絡資料")) return "缺少個股層級決策 / 結果脈絡";' in block
+    assert "mediumGaps.push(\"缺少日線 / 週線信號\")" not in block
+    assert "mediumGaps.push(\"缺少風險脈絡\")" not in block
+    assert "mediumGaps.push(\"缺少模擬組合背景\")" not in block
+    assert "mediumGaps.push(\"缺少個股層級決策 / 結果脈絡\")" not in block
 
 
 def test_stock_review_no_execution_wording_and_no_secret_exposure() -> None:

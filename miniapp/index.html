@@ -328,12 +328,15 @@
             if (key === "long") return "長線檢視";
             return "只供觀察";
           };
-          const dataStateLabel = (value) => {
-            const key = String(value || "");
-            if (key === "sufficient") return "足夠";
-            if (key === "partial") return "部分";
-            if (key === "unavailable") return "未能提供";
-            return "不足";
+          const mapMediumGapToChinese = (gap) => {
+            const raw = String(gap || "").trim();
+            if (!raw) return "";
+            const lower = raw.toLowerCase();
+            if (lower.includes("daily/weekly signals")) return "缺少日線 / 週線信號";
+            if (lower.includes("risk context")) return "缺少風險脈絡";
+            if (lower.includes("paper portfolio context")) return "缺少模擬組合背景";
+            if (lower.includes("outcome review/context") || lower.includes("個股層級脈絡資料")) return "缺少個股層級決策 / 結果脈絡";
+            return raw;
           };
           const addRow = (label, value) => {
             const p = document.createElement("p");
@@ -348,13 +351,8 @@
           addRow("短線判斷", "短線只供監察 / 提示 / 觀察，不建立任何模擬或真實訂單");
           const mediumReady = String(horizon.medium_term_data_state || "") === "sufficient";
           addRow("中線資料狀態", mediumReady ? "資料大致足夠，可做人手中線檢視" : "資料未足夠，暫時只可觀察");
-          const mediumGaps = [];
-          if (!mediumReady) {
-            mediumGaps.push("缺少日線 / 週線信號");
-            mediumGaps.push("缺少風險脈絡");
-            mediumGaps.push("缺少模擬組合背景");
-            mediumGaps.push("缺少個股層級決策 / 結果脈絡");
-          }
+          const mediumGaps = Array.from(new Set((Array.isArray(horizon.horizon_data_gaps) ? horizon.horizon_data_gaps : []).map(mapMediumGapToChinese).filter(Boolean)));
+          if (!mediumReady && !mediumGaps.length) mediumGaps.push("中線資料不足：請先補充信號、風險、模擬組合與個股決策脈絡");
           if (mediumGaps.length) addRow("中線資料缺口", mediumGaps.join("；"));
           const longReady = String(horizon.long_term_data_state || "") === "sufficient";
           addRow("長線資料狀態", longReady ? "資料較完整，可做人手長線檢視" : "長線資料不足：缺少基本面 / 估值 / 現金流等資料");

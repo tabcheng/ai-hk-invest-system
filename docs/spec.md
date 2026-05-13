@@ -551,3 +551,4 @@ Proposed table: `human_decision_journal_entries` with draft columns:
 - No broker integration, no live execution path, and no autonomous real-money execution are in scope.
 
 - Step 135E: Strategy Horizon Policy in Stock Dossier added deterministic horizon fields (recommended_review_horizon, short/medium/long policies, data states, data gaps, confidence notes, paper_decision_scope) and Stock Review "策略週期判斷" UI section; short-term remains monitoring/observation-only; no broker/order/live/real-money path.
+- Step 135E follow-up contract refinement: medium-term sufficiency requires matching ticker-level decision context; global decision-context status without ticker match is insufficient for medium-term recommendation.

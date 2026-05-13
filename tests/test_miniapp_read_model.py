@@ -264,8 +264,33 @@ def test_stock_dossier_horizon_policy_medium_sufficient_recommend_medium():
     section = build_stock_dossiers_v1_section(
         {"status": "ok", "top_items": [{"ticker": "0700.HK", "signal": "positive"}]},
         {"status": "ok", "risk_level": "low"},
-        {"status": "ok", "tickers": []},
+        {"status": "ok", "tickers": [{"ticker": "0700.HK", "context_readiness": "ready"}]},
         {"status": "ok", "rows": [{"ticker": "0700.HK", "quantity": 1, "total_pnl": 0}]},
+    )
+    policy = section["items"][0]["strategy_horizon_policy"]
+    assert policy["recommended_review_horizon"] == "medium"
+    assert policy["medium_term_data_state"] == "sufficient"
+
+
+def test_stock_dossier_horizon_policy_not_sufficient_when_global_ok_but_ticker_context_missing():
+    section = build_stock_dossiers_v1_section(
+        {"status": "ok", "top_items": [{"ticker": "0700.HK", "signal": "positive"}]},
+        {"status": "ok", "risk_level": "low"},
+        {"status": "ok", "tickers": [{"ticker": "0005.HK", "context_readiness": "ready"}]},
+        {"status": "ok", "rows": [{"ticker": "0700.HK", "quantity": 2, "total_pnl": 10}]},
+    )
+    policy = section["items"][0]["strategy_horizon_policy"]
+    assert policy["recommended_review_horizon"] != "medium"
+    assert policy["medium_term_data_state"] != "sufficient"
+    assert "缺少個股層級脈絡資料" in policy["horizon_data_gaps"]
+
+
+def test_stock_dossier_horizon_policy_sufficient_when_matching_ticker_context_exists():
+    section = build_stock_dossiers_v1_section(
+        {"status": "ok", "top_items": [{"ticker": "0388.HK", "signal": "neutral"}]},
+        {"status": "ok", "risk_level": "medium"},
+        {"status": "partial", "tickers": [{"ticker": "0388.HK", "context_readiness": "basic"}]},
+        {"status": "ok", "rows": [{"ticker": "0388.HK", "quantity": 1, "total_pnl": 0}]},
     )
     policy = section["items"][0]["strategy_horizon_policy"]
     assert policy["recommended_review_horizon"] == "medium"

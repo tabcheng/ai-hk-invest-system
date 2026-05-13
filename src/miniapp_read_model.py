@@ -65,7 +65,17 @@ def build_stock_dossiers_v1_section(
         else:
             risk_brief = "未有足夠風險資料，請先觀察。"
         p = portfolio_rows.get(ticker, {})
-        horizon_policy = _compute_horizon_policy(signal, risk_level, bool(p), str(decision_context_summary.get("status") or "unknown"))
+        ticker_context = context_rows.get(ticker, {})
+        has_ticker_context = bool(ticker_context)
+        ticker_context_state = str(ticker_context.get("context_readiness") or ticker_context.get("status") or "unknown").lower()
+        horizon_policy = _compute_horizon_policy(
+            signal=signal,
+            risk_level=risk_level,
+            has_portfolio=bool(p),
+            decision_context_status=str(decision_context_summary.get("status") or "unknown"),
+            has_ticker_context=has_ticker_context,
+            ticker_context_state=ticker_context_state,
+        )
         if p:
             portfolio_context = f"持倉={p.get('quantity', 0)}，總盈虧={p.get('total_pnl', '未有資料')}。"
         else:
@@ -107,13 +117,25 @@ def build_stock_dossiers_v1_section(
     return {"status": "ok", "source": "stock_dossier_v1_read_model", "items": output_items}
 
 
-def _compute_horizon_policy(signal: str, risk_level: str, has_portfolio: bool, decision_context_status: str) -> dict[str, Any]:
+def _compute_horizon_policy(
+    signal: str,
+    risk_level: str,
+    has_portfolio: bool,
+    decision_context_status: str,
+    has_ticker_context: bool,
+    ticker_context_state: str,
+) -> dict[str, Any]:
     short_term_policy = "短線：只供觀察；短線只作監察，不作模擬買賣方向。"
     medium_gaps=[]
     if signal not in {"positive","neutral","negative"}: medium_gaps.append("缺少 daily/weekly signals")
     if risk_level not in {"low","medium","high"}: medium_gaps.append("缺少 risk context")
     if not has_portfolio: medium_gaps.append("缺少 paper portfolio context")
-    if decision_context_status not in {"ok","partial"}: medium_gaps.append("缺少 outcome review/context")
+    if decision_context_status not in {"ok", "partial"}:
+        medium_gaps.append("缺少 outcome review/context")
+    if not has_ticker_context:
+        medium_gaps.append("缺少個股層級脈絡資料")
+    elif ticker_context_state in {"insufficient", "unavailable", "unknown"}:
+        medium_gaps.append("個股層級脈絡資料不足")
     if len(medium_gaps)==0: medium_state='sufficient'
     elif len(medium_gaps)<=2: medium_state='partial'
     elif len(medium_gaps)>=4: medium_state='unavailable'

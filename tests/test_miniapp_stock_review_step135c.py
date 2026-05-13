@@ -58,6 +58,17 @@ def test_stock_review_prevents_duplicate_prefixed_strings() -> None:
     assert "模擬組合背景：模擬組合背景" not in block
 
 
+def test_stock_review_horizon_first_layer_uses_human_labels_not_raw_enum() -> None:
+    html = Path("miniapp/index.html").read_text(encoding="utf-8")
+    block = _stock_review_block(html)
+
+    assert 'if (key === "sufficient") return "足夠";' in block
+    assert 'if (key === "partial") return "部分";' in block
+    assert 'if (key === "unavailable") return "未能提供";' in block
+    assert 'horizon.recommended_review_horizon' in block
+    assert '`建議：${horizonLabel(horizon.recommended_review_horizon)}`' in block
+
+
 def test_stock_review_no_execution_wording_and_no_secret_exposure() -> None:
     html = Path("miniapp/index.html").read_text(encoding="utf-8")
     block = _stock_review_block(html)

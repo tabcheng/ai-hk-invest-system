@@ -607,3 +607,4 @@
 - Platform impact: GitHub docs-only updates; Railway unchanged; Supabase unchanged.
 
 - Step 135E: Strategy Horizon Policy in Stock Dossier added deterministic horizon fields (recommended_review_horizon, short/medium/long policies, data states, data gaps, confidence notes, paper_decision_scope) and Stock Review "策略週期判斷" UI section; short-term remains monitoring/observation-only; no broker/order/live/real-money path.
+- Step 135E follow-up fix: medium-term readiness now requires ticker-level decision-context match (not global status alone); if no matching ticker context/outcome context, medium-term cannot be marked sufficient.

@@ -296,3 +296,10 @@ All surfaces remain read/review-first and paper-only unless a later explicit gat
 - If static helper text is shown for simulated direction, use:
   `AI 模擬方向只分為：偏正面觀察、繼續觀察、謹慎、資料不足。只供模擬檢視。`
 - Technical/internal/raw fields continue to stay under collapsed `查看技術資料` only.
+
+## Step 135D strategy research reference alignment (docs-only)
+- Added long-term research reference: `docs/hk-equity-strategy-research-reference-20260512.md`.
+- Canonical implementation phase numbering remains defined in `docs/ai-team-analysis-blueprint.md`; Step 135D reference provides strategy workstreams only.
+- Product surface interpretation now follows explicit horizon policy: short-term=observation/alert only, medium/long-term=primary review scope in current phase.
+- Stock Dossier / AI Decision Advisor copy must remain multi-dimensional (data quality, technical, fundamental, catalyst, risk, liquidity, exposure, confidence, simulated direction) and avoid one magic total score.
+- Safety boundary unchanged: paper-only decision support (`只供模擬檢視`, `不建立訂單`, `不連接券商`, `不是真實買賣建議`), no broker/live-order semantics.

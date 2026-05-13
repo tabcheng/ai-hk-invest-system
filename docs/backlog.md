@@ -8,6 +8,11 @@ Prioritization:
 ## Active backlog (pending)
 
 ### P0
+1. **Step 135D — HK Equity Strategy Research Reference docs-of-record (docs-only)**
+   - Add `docs/hk-equity-strategy-research-reference-20260512.md` as long-term internal strategy research reference from source 「港股 AI Team Analysis Blueprint 落地研究報告 20260512」.
+   - Define horizon policy (short=observation only for now; medium/long=current implementation focus), HK-market characteristics, strategy families, desk mapping, scorecard/risk-gate framework, strategy workstreams, and hard boundaries.
+   - Keep canonical implementation phase numbering in `docs/ai-team-analysis-blueprint.md`; Step 135D must not renumber phases.
+   - Align cross-doc references in `docs/ai-team-analysis-blueprint.md`, `docs/product-surface-strategy.md`, `docs/status.md`, and `docs/operator-runbook.md` where interpretation guidance is affected.
 1. **Step 135A — AI Team Analysis Blueprint docs-of-record alignment (docs-only)**
    - Add and align `docs/ai-team-analysis-blueprint.md` as per-ticker analysis contract across all 15 AI team departments.
    - Standardize Stock Dossier v1 fields + scorecard vocabulary + phased implementation contract.

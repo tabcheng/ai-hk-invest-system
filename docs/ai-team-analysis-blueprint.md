@@ -2,6 +2,7 @@
 
 ## 1) Purpose and Positioning
 - This blueprint is the docs-of-record analysis contract for how the AI team analyzes **each stock / specified ticker** inside this system.
+- Strategy-research companion docs-of-record: `docs/hk-equity-strategy-research-reference-20260512.md` (horizon policy, HK market characteristics, strategy families, scorecard/risk-gate framework, desk mapping).
 - Product定位：這不是專業交易員 dashboard；這是給非專業人類操作員使用的 **AI 香港股票投資團隊工作台**。
 - Internal analysis can use professional methods, but first-layer UI must stay simple Traditional Chinese and Cantonese-friendly.
 - A non-professional operator should understand the **conclusion + risk + next review action** within ~10 seconds.

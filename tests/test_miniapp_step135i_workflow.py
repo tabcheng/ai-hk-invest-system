@@ -34,4 +34,4 @@ def test_system_safety_and_tab_mapping_present():
 def test_set_active_tab_uses_stable_journal_ids():
     assert 'journal:["journal-card","journal-context-details","journal-snapshot-details","journal-outcome-details"]' in HTML
     assert "journal-context-details" in HTML
-    assert "journal-context\"" not in HTML
+    assert "journal-context-content" in HTML

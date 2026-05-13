@@ -1,4 +1,12 @@
 from pathlib import Path
+import re
+
+
+def _section_tag(html: str, section_id: str) -> str:
+    pattern = rf'<section[^>]*id="{re.escape(section_id)}"[^>]*>'
+    match = re.search(pattern, html)
+    assert match is not None, f"section not found: {section_id}"
+    return match.group(0)
 
 
 def test_today_first_view_is_single_hero_summary_card() -> None:
@@ -43,24 +51,24 @@ def test_stock_review_keeps_horizon_and_technical_details_contract() -> None:
     assert '查看技術資料' in html
 
 
-def test_tabpanel_aria_labelledby_matches_new_tabs() -> None:
+def test_tabpanel_aria_labelledby_matches_new_tabs_per_panel() -> None:
     html = Path('miniapp/index.html').read_text(encoding='utf-8')
     required = {
-        'overview-card': 'tab-today',
-        'stock-review-card': 'tab-stock-review',
-        'paper-pnl-card': 'tab-portfolio',
-        'risk-card': 'tab-portfolio',
-        'journal-card': 'tab-journal',
-        'team-card': 'tab-system',
-        'latest-card': 'tab-system',
-        'daily-card': 'tab-system',
-        'signals-card': 'tab-system',
-        'context-card': 'tab-system',
+        'overview-card': ('today', 'tab-today'),
+        'stock-review-card': ('stock-review', 'tab-stock-review'),
+        'paper-pnl-card': ('portfolio', 'tab-portfolio'),
+        'risk-card': ('portfolio', 'tab-portfolio'),
+        'journal-card': ('journal', 'tab-journal'),
+        'team-card': ('system', 'tab-system'),
+        'latest-card': ('system', 'tab-system'),
+        'daily-card': ('system', 'tab-system'),
+        'signals-card': ('system', 'tab-system'),
+        'context-card': ('system', 'tab-system'),
     }
-    for panel_id, label_id in required.items():
-        needle = f'id="{panel_id}" class="section-card" data-tab-panel=' if panel_id != 'overview-card' else f'id="{panel_id}" class="overview-card" data-tab-panel='
-        assert needle in html
-        assert f'id="{panel_id}"' in html and f'aria-labelledby="{label_id}"' in html
+    for panel_id, (data_tab, aria_id) in required.items():
+        tag = _section_tag(html, panel_id)
+        assert f'data-tab-panel="{data_tab}"' in tag
+        assert f'aria-labelledby="{aria_id}"' in tag
 
 
 def test_stale_tab_ids_removed_and_no_wrong_today_labels_for_system_portfolio() -> None:
@@ -68,6 +76,5 @@ def test_stale_tab_ids_removed_and_no_wrong_today_labels_for_system_portfolio() 
     assert 'tab-signals' not in html
     assert 'tab-context' not in html
     for panel_id in ['paper-pnl-card', 'risk-card', 'team-card', 'latest-card', 'daily-card', 'signals-card', 'context-card']:
-        bad = f'id="{panel_id}"'
-        segment = html[html.index(bad): html.index(bad) + 220]
-        assert 'aria-labelledby="tab-today"' not in segment
+        tag = _section_tag(html, panel_id)
+        assert 'aria-labelledby="tab-today"' not in tag

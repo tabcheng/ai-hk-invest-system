@@ -9,6 +9,7 @@
 
 - Step 135G implementation in progress on branch: yes (Mini App first-view IA cleanup + Step 135F post-merge closure).
 - Core deliverable (Step 135G target):
+  - Mini App accessibility checklist baseline added (`docs/accessibility-checklist.md`) for tab/tabpanel and first-view review discipline.
   - Step 135G-DOC baseline: documentation governance + AI risk register + regulatory boundary docs-of-record.
   - Accessibility hotfix: tabpanel aria-labelledby mapping aligned with new tab IDs for screen-reader-safe tab semantics.
   - Today tab first screen keeps one compact hero summary (今日狀態 / 一句總結 / 資料夠唔夠 / 主要風險 / AI 模擬方向 / 你下一步要做咩).

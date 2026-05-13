@@ -303,3 +303,15 @@ All surfaces remain read/review-first and paper-only unless a later explicit gat
 - Product surface interpretation now follows explicit horizon policy: short-term=observation/alert only, medium/long-term=primary review scope in current phase.
 - Stock Dossier / AI Decision Advisor copy must remain multi-dimensional (data quality, technical, fundamental, catalyst, risk, liquidity, exposure, confidence, simulated direction) and avoid one magic total score.
 - Safety boundary unchanged: paper-only decision support (`只供模擬檢視`, `不建立訂單`, `不連接券商`, `不是真實買賣建議`), no broker/live-order semantics.
+
+## Step 135E next increment note (Stock Review)
+- Next Stock Review product increment candidate is **Step 135E — Strategy Horizon Policy in Stock Dossier**.
+- UI/policy direction for this increment:
+  - strategy horizon policy display in Stock Review read-only layer,
+  - short-term horizon remains monitoring/alert/observation only,
+  - medium/long-term horizons remain current review focus,
+  - first-layer UI remains compact and non-technical for operators.
+- Existing rules remain unchanged:
+  - Mini App main wording stays Traditional Chinese first (English only secondary/helper),
+  - paper-only / decision-support boundary remains explicit,
+  - no broker connection, no live order placement, no autonomous real-money execution.

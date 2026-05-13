@@ -1,3 +1,16 @@
+## Current state checkpoint (as of Step 135D)
+
+Recent completed product track summary (compact):
+- AI Team Operating Model docs-of-record established and active as role-boundary baseline.
+- AI Team Analysis Blueprint docs-of-record established for implementation sequencing and contracts.
+- Daily Brief read model delivered as current read-only operator summary surface.
+- Stock Dossier / Stock Review v1 delivered (backend read model + Mini App Stock Review shell).
+- Stock Review first-layer UX polish delivered for Chinese-first compact review flow.
+- HK Equity Strategy Research Reference (`docs/hk-equity-strategy-research-reference-20260512.md`) delivered as strategy reference docs-of-record.
+
+Next implementation candidate:
+- **Step 135E — Strategy Horizon Policy in Stock Dossier**
+
 # Project Implementation Plan (System-of-Record View)
 
 ## Purpose

@@ -346,3 +346,16 @@ No broker integration or autonomous real-money execution is authorized by this p
 - Mini App `Stock Review` / `股票檢視` uses read-only aggregated fields from existing sections only (signals/risk/decision-context/paper-portfolio review).
 - No DB writes are introduced by this section.
 - No vendor token, no AI token, no broker connection, and no real-money execution path are introduced.
+
+## Step 135C/135D boundary note (read-only interpretation layers)
+- Stock Review UX polish (Step 135C) and HK strategy research reference usage (Step 135D) both remain **read-only interpretation layers**.
+- Horizon interpretation boundary in current phase:
+  - short-term horizon = monitoring / alert / observation only,
+  - medium/long-term horizons = current review focus.
+- Hard boundary unchanged:
+  - no write path,
+  - no decision capture in this layer,
+  - no paper order,
+  - no simulated order creation,
+  - no broker/live execution,
+  - no frontend secret exposure.

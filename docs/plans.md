@@ -39,6 +39,12 @@ Improve reliability and observability while keeping human-in-the-loop decision a
 - Verify controls continue to prevent autonomous real-trade execution.
 
 
+### Current roadmap checkpoint as of Step 135D
+- Current product track is **AI Team Workbench + Daily Brief + Stock Dossier / Stock Review**.
+- Repo history reflects recent completion of Step 135B (Stock Dossier v1 shell/read model), Step 135C (Stock Review first-layer UX polish), and Step 135D (HK strategy research reference docs-of-record).
+- Immediate next implementation candidate is **Step 135E — Strategy Horizon Policy in Stock Dossier**.
+- Legacy Step 91C / `latest_system_runs` path remains important baseline history, but is not the immediate next implementation slice for current product increment planning.
+
 ### Current roadmap checkpoint (post Step 91C)
 #### Completed
 - Step 91A/91B/91C runtime acceptance path completed.

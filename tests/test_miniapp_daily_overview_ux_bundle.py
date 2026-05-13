@@ -301,7 +301,7 @@ def test_layout_polish_rows_and_timestamp_wrap_guard_present() -> None:
     assert "time-value" in INDEX_HTML
     assert "line4.append(timeLabel,timeValue);" in INDEX_HTML
     assert "line2.appendChild(summary)" in INDEX_HTML
-    assert "line3.appendChild(renderStatusChip" in INDEX_HTML
+    assert 'if (coverage === "unavailable") line3.textContent = "資料狀態：資料不足";' in INDEX_HTML
 
 
 def test_signal_warning_and_unknown_confidence_present() -> None:

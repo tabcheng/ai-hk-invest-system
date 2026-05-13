@@ -114,7 +114,10 @@
         const hasSignals = signals?.status === "ok";
         const availableSections = asSectionNames(daily?.available_sections);
         const missingSections = asSectionNames(daily?.unavailable_sections);
-        const coverage = missingSections.length > 0 ? "partial" : (availableSections.length > 0 ? "ready" : "unavailable");
+        const readiness = String(daily?.review_readiness || "").toLowerCase();
+        const coverage = (readiness === "unavailable" || readiness === "failed" || readiness === "unknown")
+          ? "unavailable"
+          : (missingSections.length > 0 ? "partial" : (availableSections.length > 0 ? "ready" : "unavailable"));
         const date=latest?.business_date || daily?.business_date || signals?.business_date || "-";
         const ts=latest?.data_timestamp_hkt || signals?.data_timestamp_hkt || "-";
 

@@ -565,3 +565,10 @@ When validating Mini App Journal Outcome Review and Telegram `/journal_outcome`,
   - 「系統」看 latest run / daily summary / 診斷資料；
   - 「股票檢視」維持 Step 135F 的策略週期判斷與查看技術資料。
 - 所有解讀仍屬 paper-only decision support。
+
+## Step 135I operator interpretation reminders
+- Today tab answer is: 今日先看什麼，不是交易指令。
+- Stock Review `檢視結論` / `AI 模擬方向` 是檢視支援；若含 `資料不足` caveat，不可提高決策信心。
+- Portfolio/Risk 的 `已載入` 只代表資料成功讀取，不代表風險安全。
+- `未能判斷` / `資料不足` 應視為提高謹慎，不是中性放行。
+- Journal 分類只供 paper journal 記錄，並非真實買賣指令。

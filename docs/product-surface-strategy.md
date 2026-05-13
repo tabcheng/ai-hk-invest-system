@@ -384,3 +384,12 @@ Allowed safer wording:
 - 不建立訂單
 - 不連接券商
 - 不是真實買賣建議
+
+## 2026-05-13 — Step 135I Mini App Operator workflow final contract
+- Each tab has one primary job: Today=今日先看什麼；Stock Review=單一股票是否繼續檢視；Portfolio/Risk=paper exposure/risk interpretation；Journal=新增人手模擬決策；System=診斷/技術/完整安全說明。
+- First layer is summary-first; historical/raw/technical/outcome content must be collapsed or moved to System/secondary sections.
+- Stock Review first layer must remain compact: `檢視結論` `策略週期` `主要缺口` `風險提示` `AI 模擬方向` `下一步`.
+- Journal default is create-first: form expanded; `決策參考資料` `最近紀錄` `後續結果` collapsed/de-emphasized by default.
+- Loaded-state and sufficiency must stay separated: `已載入` does not mean `可安全判斷`.
+- Full safety details belong to System/collapsed area; short safety boundary stays globally visible.
+- This step defines final operator workflow baseline to avoid repeated micro-fix UI cycles on the same first-view issue set.

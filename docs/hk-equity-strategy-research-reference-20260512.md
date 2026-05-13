@@ -153,3 +153,5 @@ This research reference does **not** redefine canonical phase numbering. It prov
 - Validate data freshness, risk level, and horizon fit before interpretation.
 - If data quality is weak or stale, prefer `資料不足` / `資料可能過舊` framing and defer action.
 - Always keep paper-only safety wording visible: `只供模擬檢視 / 不建立訂單 / 不連接券商 / 不是真實買賣建議`.
+
+- Step 135E: Strategy Horizon Policy in Stock Dossier added deterministic horizon fields (recommended_review_horizon, short/medium/long policies, data states, data gaps, confidence notes, paper_decision_scope) and Stock Review "策略週期判斷" UI section; short-term remains monitoring/observation-only; no broker/order/live/real-money path.

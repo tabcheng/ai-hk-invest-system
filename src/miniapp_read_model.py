@@ -65,6 +65,17 @@ def build_stock_dossiers_v1_section(
         else:
             risk_brief = "未有足夠風險資料，請先觀察。"
         p = portfolio_rows.get(ticker, {})
+        ticker_context = context_rows.get(ticker, {})
+        has_ticker_context = bool(ticker_context)
+        ticker_context_state = str(ticker_context.get("context_readiness") or ticker_context.get("status") or "unknown").lower()
+        horizon_policy = _compute_horizon_policy(
+            signal=signal,
+            risk_level=risk_level,
+            has_portfolio=bool(p),
+            decision_context_status=str(decision_context_summary.get("status") or "unknown"),
+            has_ticker_context=has_ticker_context,
+            ticker_context_state=ticker_context_state,
+        )
         if p:
             portfolio_context = f"持倉={p.get('quantity', 0)}，總盈虧={p.get('total_pnl', '未有資料')}。"
         else:
@@ -79,12 +90,17 @@ def build_stock_dossiers_v1_section(
                 "catalyst_observation": "未有新聞/催化資料，暫不作催化判斷。",
                 "risk_brief": risk_brief,
                 "portfolio_context": portfolio_context,
-                "simulated_direction": simulated_direction,
+                "simulated_direction": (
+                    "資料不足，繼續觀察（短線只供觀察）"
+                    if signal == "unknown"
+                    else simulated_direction
+                ),
                 "operator_next_actions": [
                     "先確認資料夠唔夠。",
                     "再查看風險提示。",
                     "最後由人手在系統外作出真實買賣決定。",
                 ],
+                "strategy_horizon_policy": horizon_policy,
                 "technical_details": {
                     "signal": signal,
                     "risk_level": risk_level,
@@ -93,11 +109,56 @@ def build_stock_dossiers_v1_section(
                     "risk_status": risk_summary.get("status"),
                     "latest_run_id": latest_system_run.get("run_id") if isinstance(latest_system_run, Mapping) else None,
                     "daily_review_status": daily_review_summary.get("status") if isinstance(daily_review_summary, Mapping) else None,
+                    "horizon_policy": horizon_policy,
                 },
                 "safety_note": "只供模擬檢視｜不建立訂單｜不連接券商｜不是真實買賣建議｜真實買賣決定由人類在系統外作出",
             }
         )
     return {"status": "ok", "source": "stock_dossier_v1_read_model", "items": output_items}
+
+
+def _compute_horizon_policy(
+    signal: str,
+    risk_level: str,
+    has_portfolio: bool,
+    decision_context_status: str,
+    has_ticker_context: bool,
+    ticker_context_state: str,
+) -> dict[str, Any]:
+    short_term_policy = "短線：只供觀察；短線只作監察，不作模擬買賣方向。"
+    medium_gaps=[]
+    if signal not in {"positive","neutral","negative"}: medium_gaps.append("缺少 daily/weekly signals")
+    if risk_level not in {"low","medium","high"}: medium_gaps.append("缺少 risk context")
+    if not has_portfolio: medium_gaps.append("缺少 paper portfolio context")
+    if decision_context_status not in {"ok", "partial"}:
+        medium_gaps.append("缺少 outcome review/context")
+    if not has_ticker_context:
+        medium_gaps.append("缺少個股層級脈絡資料")
+    elif ticker_context_state in {"insufficient", "unavailable", "unknown"}:
+        medium_gaps.append("個股層級脈絡資料不足")
+    if len(medium_gaps)==0: medium_state='sufficient'
+    elif len(medium_gaps)<=2: medium_state='partial'
+    elif len(medium_gaps)>=4: medium_state='unavailable'
+    else: medium_state='insufficient'
+    long_gaps=["缺少基本面資料","缺少估值資料","缺少盈利資料","缺少現金流資料","缺少資產負債表資料","缺少行業/週期資料"]
+    recommended='medium' if medium_state=='sufficient' else 'observation_only'
+    paper_scope='medium_term_review_only' if medium_state=='sufficient' else 'observation_only'
+    medium_policy = (
+        "中線：資料足夠，可作模擬檢視。"
+        if medium_state == "sufficient"
+        else "中線：資料未齊，先補風險/組合/結果脈絡，再作模擬檢視。"
+    )
+    return {
+      'recommended_review_horizon': recommended,
+      'short_term_policy': short_term_policy,
+      'medium_term_policy': medium_policy,
+      'long_term_policy': '長線：需要基本面/估值/盈利/現金流/資產負債表/行業週期資料，否則只可保守觀察。',
+      'medium_term_data_state': medium_state,
+      'long_term_data_state': 'insufficient',
+      'horizon_data_gaps': medium_gaps+long_gaps,
+      'horizon_confidence_notes': ['短線訊號不足以形成 paper decision','長線資料不足，長線信心有限'],
+      'paper_decision_scope': paper_scope,
+    }
 
 
 def build_daily_brief_section(

@@ -348,3 +348,5 @@ Per ticker, the first-layer dossier output uses:
 - No new vendor / AI token integration in this docs-only step.
 - Existing backend-only vendor-token policy remains unchanged.
 - No DB writes.
+
+- Step 135E: Strategy Horizon Policy in Stock Dossier added deterministic horizon fields (recommended_review_horizon, short/medium/long policies, data states, data gaps, confidence notes, paper_decision_scope) and Stock Review "策略週期判斷" UI section; short-term remains monitoring/observation-only; no broker/order/live/real-money path.

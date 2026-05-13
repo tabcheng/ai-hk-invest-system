@@ -317,3 +317,9 @@ All surfaces remain read/review-first and paper-only unless a later explicit gat
   - no broker connection, no live order placement, no autonomous real-money execution.
 
 - Step 135E: Strategy Horizon Policy in Stock Dossier added deterministic horizon fields (recommended_review_horizon, short/medium/long policies, data states, data gaps, confidence notes, paper_decision_scope) and Stock Review "策略週期判斷" UI section; short-term remains monitoring/observation-only; no broker/order/live/real-money path.
+- Step 135F: Stock Review first-layer is calibrated to fixed order:
+  1) 一句總結 2) 資料夠唔夠 3) 策略週期判斷 4) 風險提示 5) AI 模擬方向 6) 你下一步要做咩 7) 查看技術資料。
+- Step 135F horizon wording policy:
+  - short-term stays observation-only (`短線只供監察 / 提示 / 觀察，不建立任何模擬或真實訂單`);
+  - medium-term sufficiency cannot be inferred from global status alone and must keep ticker-context-aware missing-gap summary;
+  - long-term first-layer uses compact human summary (`長線資料不足：缺少基本面 / 估值 / 現金流等資料`), with detailed fields under technical details.

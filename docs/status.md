@@ -5,7 +5,14 @@
 
 
 
-## 2026-05-13 — Current status as of Step 135E
+## 2026-05-13 — Current status as of Step 135F
+
+- Step 135F implementation in progress on branch: yes (pre-merge).
+- Core deliverable (Step 135F target):
+  - Stock Review first-layer structure reordered to operator decision-support flow.
+  - Horizon policy wording calibrated to Chinese-first, short-term observation-only, medium-term ticker-context-aware, long-term compact data-gap summary.
+  - Technical/internal horizon detail moved under `查看技術資料`.
+  - No write-path / broker / live-execution / real-money behavior change.
 
 - Step 135E repo merge completed: yes.
 - PR #145 merged: yes.

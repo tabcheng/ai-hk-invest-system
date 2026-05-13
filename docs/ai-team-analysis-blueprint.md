@@ -350,3 +350,4 @@ Per ticker, the first-layer dossier output uses:
 - No DB writes.
 
 - Step 135E: Strategy Horizon Policy in Stock Dossier added deterministic horizon fields (recommended_review_horizon, short/medium/long policies, data states, data gaps, confidence notes, paper_decision_scope) and Stock Review "策略週期判斷" UI section; short-term remains monitoring/observation-only; no broker/order/live/real-money path.
+- Step 135F: Stock Review first-layer presentation contract is calibrated for operator flow and Chinese-first horizon interpretation; detailed horizon policy object/raw states remain under `查看技術資料` and do not change backend decision semantics.

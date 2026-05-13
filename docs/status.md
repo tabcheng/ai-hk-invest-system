@@ -5,6 +5,22 @@
 
 
 
+## 2026-05-13 — Step 135I Mini App Operator Workflow Finalization
+
+- Step 135H repo merge completed: yes.
+- PR #149 merged: yes.
+- CI success before merge: yes.
+- Codex review threads resolved before merge: yes.
+- Step 135H Post-merge QA Check: pass enough to proceed (based on screenshot smoke only).
+- Step 135H Post-merge Domain Check: pass.
+- Step 135H screenshot smoke findings captured: Today first-view pass enough; Stock Review still text-heavy; Portfolio/Risk mostly acceptable but loaded-vs-safe wording must stay separate; Journal wording boundary pass but page too long; System acceptable secondary diagnostic surface with collapsed safety details.
+- Step 135I scope: finalize Mini App operator workflow contract across Today / Stock Review / Portfolio-Risk / Journal / System tabs, with summary-first first layer and collapsed secondary blocks.
+- GitHub impact: Mini App UI + focused tests + docs-of-record alignment.
+- Railway impact: unchanged.
+- Supabase impact: unchanged.
+- No backend/API/schema/vendor/broker/order/live/real-money behavior change.
+- Post-deploy Mini App screenshot smoke required after merge: yes.
+
 ## 2026-05-13 — Current status as of Step 135H
 
 - Step 135G repo merge completed: yes (PR #148).

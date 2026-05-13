@@ -5,10 +5,9 @@ import subprocess
 
 def test_human_journal_section_and_guardrail_wording_present():
     html = Path("miniapp/index.html").read_text(encoding="utf-8")
-    assert "人手模擬決策日誌" in html
-    assert "Human Paper Decision Journal" in html
+    assert "新增人手模擬決策" in html
     assert "記錄人手模擬決策" in html
-    assert "決策參考資料 / Decision Context" in html
+    assert "決策參考資料" in html
     assert "不建立訂單" in html
     assert "不連接券商" in html
     assert "不作真實落盤" in html
@@ -76,7 +75,7 @@ def test_load_journal_snapshots_does_not_write_outcome_panel():
     start = html.index("async function loadJournalSnapshots()")
     end = html.index("async function loadJournalOutcomes()", start)
     section = html[start:end]
-    assert "journal-outcome-review" not in section
+    assert "journal-outcome-content" not in section
 
 
 def _simulate_journal_submit_flow(fetch_responses: list[dict], *, edit_after_retry: bool) -> dict:
@@ -99,7 +98,7 @@ class Element {{
   removeChild(node) {{ this.children = this.children.filter((c) => c !== node); }}
   set innerHTML(v) {{
     this._text = String(v || "");
-    const ids = ["journal-result-banner","journal-context","journal-form","journal-ticker","journal-decision-type","journal-rationale","journal-counter","journal-confidence","journal-ack","journal-submit","journal-result","journal-submit-result-card"];
+    const ids = ["journal-result-banner","journal-context-details","journal-context-content","journal-snapshot-details","journal-snapshot-content","journal-outcome-details","journal-outcome-content","journal-form","journal-ticker","journal-decision-type","journal-rationale","journal-counter","journal-confidence","journal-ack","journal-submit","journal-result","journal-submit-result-card"];
     ids.forEach((id) => {{ if (this._text.includes(`id="${{id}}"`) && !byId[id]) byId[id] = new Element(id === "journal-form" ? "form" : "div", id); }});
   }}
   get innerHTML() {{ return this._text; }}
@@ -124,6 +123,8 @@ const document = {{ createElement: (tag) => new Element(tag), getElementById: (i
 const window = {{ MINIAPP_API_BASE_URL: "https://example.invalid", Telegram: {{ WebApp: {{ initData: "safe-init" }} }} }};
 const fetch = async (url) => {{
   if (url.includes("/miniapp/api/review-shell")) return {{ ok: true, json: async () => ({{ sections: {{ latest_system_run: {{ status: "ok", business_date: "2026-05-11", run_id: "r1", data_timestamp_hkt: "2026-05-11 20:00:00 HKT" }}, signals_summary: {{ status: "ok", top_items: [{{ ticker: "0700.HK", signal_label: "neutral", reason_short: "test" }}] }}, decision_context_summary: {{ context_readiness: "basic", tickers: [] }} }} }}) }};
+  if (url.includes("/miniapp/api/journal-snapshots")) return {{ ok: true, json: async () => ({{ ok: true, items: [] }}) }};
+  if (url.includes("/miniapp/api/journal-outcomes")) return {{ ok: true, json: async () => ({{ ok: true, items: [] }}) }};
   const next = scripted.shift() || {{ ok: false, payload: {{ ok: false }} }};
   return {{ ok: Boolean(next.ok), json: async () => next.payload }};
 }};

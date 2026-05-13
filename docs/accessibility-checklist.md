@@ -12,3 +12,10 @@ Use this checklist for Mini App UI changes (especially tabs / first-view / card 
 8. Meaning is not color-only.
 9. Safety wording is visible (`只供模擬檢視`, `不建立訂單`, `不連接券商`, `不是真實買賣建議`).
 10. No raw enum/internal field is used as first-layer UX text.
+
+## Step 135I Mini App accessibility checks
+- Tab/tabpanel mapping must stay correct after any tab structure change (`role=tab` + `data-tab-panel` + `aria-labelledby`).
+- Collapsed sections must use meaningful Chinese-first labels。
+- Hidden collapsed content should not leave confusing focus order for keyboard navigation.
+- Status meaning cannot rely on color only; wording must carry meaning.
+- Operator-facing labels should be Chinese-first and descriptive.

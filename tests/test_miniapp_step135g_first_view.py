@@ -20,7 +20,7 @@ def test_today_first_view_is_single_hero_summary_card() -> None:
 
 def test_today_hero_has_required_operator_fields_and_safety_wording() -> None:
     html = Path('miniapp/index.html').read_text(encoding='utf-8')
-    for required in ['一句總結：', '資料夠唔夠：', '風險提示：', 'AI 模擬方向：', '你下一步要做咩', '只供模擬檢視｜不建立訂單｜不連接券商｜不是真實買賣建議']:
+    for required in ['一句總結：', '資料狀態：', '風險提示：', 'AI 模擬方向：', '你下一步要做咩', '只供模擬檢視｜不建立訂單｜不連接券商｜不是真實買賣建議']:
         assert required in html
 
 
@@ -47,7 +47,7 @@ def test_portfolio_tab_owns_pnl_and_risk_not_today() -> None:
 
 def test_stock_review_keeps_horizon_and_technical_details_contract() -> None:
     html = Path('miniapp/index.html').read_text(encoding='utf-8')
-    assert '策略週期判斷' in html
+    assert '策略週期' in html
     assert '查看技術資料' in html
 
 

@@ -35,7 +35,7 @@ class Element {{
   addEventListener(name, handler) {{ this._listeners[name] = handler; }}
   set innerHTML(v) {{
     this._text = String(v || "");
-    const ids = ["journal-result-banner","journal-context","journal-form","journal-ticker","journal-decision-type","journal-rationale","journal-counter","journal-confidence","journal-ack","journal-submit","journal-result"];
+    const ids = ["journal-result-banner","journal-context-details","journal-context-content","journal-snapshot-details","journal-snapshot-content","journal-outcome-details","journal-outcome-content","journal-form","journal-ticker","journal-decision-type","journal-rationale","journal-counter","journal-confidence","journal-ack","journal-submit","journal-result"];
     ids.forEach((id) => {{
       if (this._text.includes(`id="${{id}}"`) && !byId[id]) {{
         byId[id] = new Element(id === "journal-form" ? "form" : "div");
@@ -92,11 +92,11 @@ globalThis.fetch = fetch;
     build_meta_visible: byId["build-meta"].textContent.includes("UI build:") && byId["build-meta"].textContent.includes("Deployed build:"),
     boundary_visible: byId["overview-card"].textContent.includes("Daily Brief"),
     system_row_has_chip_text: systemRowText.includes("一句總結"),
-    coverage_row_has_chip_text: coverageRowText.includes("資料夠唔夠"),
+    coverage_row_has_chip_text: coverageRowText.includes("資料狀態"),
     journal_selected_ticker: byId["journal-ticker"] ? byId["journal-ticker"].value : "",
     journal_ticker_options: byId["journal-ticker"] ? byId["journal-ticker"].children.map((c) => c.textContent) : [],
-    journal_context_text: byId["journal-context"] ? byId["journal-context"].textContent : "",
-    journal_context_html: byId["journal-context"] ? byId["journal-context"].innerHTML : "",
+    journal_context_text: byId["journal-context-content"] ? byId["journal-context-content"].textContent : "",
+    journal_context_html: byId["journal-context-content"] ? byId["journal-context-content"].innerHTML : "",
     full_render_text: Object.values(byId).map((n) => n.textContent).join("\\n"),
   }};
   if (byId["context-shell"] && byId["context-shell"].children[0] && byId["context-shell"].children[0].children[0]) {{
@@ -169,6 +169,23 @@ def test_render_level_daily_summary_availability_consistency() -> None:
     assert rendered["boundary_visible"] is True
     assert rendered["system_row_has_chip_text"] is True
     assert rendered["coverage_row_has_chip_text"] is True
+
+
+def test_overview_unavailable_never_shows_viewable_wording_even_with_unknown_risk() -> None:
+    sections = _base_sections()
+    sections["daily_review_summary"] = {"status": "ok", "review_readiness": "unavailable", "available_sections": [], "unavailable_sections": ["signals", "paper_pnl", "risk", "latest_system_run"]}
+    sections["risk_summary"] = {"status": "ok", "risk_level": "unknown", "warnings": [], "limitations": ["risk source unavailable"]}
+    rendered = _render_with_sample_payload({"sections": sections})
+    assert "資料狀態：資料不足" in rendered["full_render_text"]
+    assert "資料狀態：可檢視，但風險資料不足" not in rendered["full_render_text"]
+
+
+def test_overview_partial_or_ready_may_show_risk_gap_wording() -> None:
+    sections = _base_sections()
+    sections["daily_review_summary"] = {"status": "ok", "review_readiness": "partial", "available_sections": ["latest_system_run"], "unavailable_sections": ["risk"]}
+    sections["risk_summary"] = {"status": "ok", "risk_level": "unknown", "warnings": [], "limitations": ["risk source unavailable"]}
+    rendered = _render_with_sample_payload({"sections": sections})
+    assert "資料狀態：可檢視，但風險資料不足" in rendered["full_render_text"]
     assert rendered["build_meta_visible"] is True
 
     full_text = str(rendered["full_render_text"]).lower()
@@ -284,7 +301,7 @@ def test_layout_polish_rows_and_timestamp_wrap_guard_present() -> None:
     assert "time-value" in INDEX_HTML
     assert "line4.append(timeLabel,timeValue);" in INDEX_HTML
     assert "line2.appendChild(summary)" in INDEX_HTML
-    assert "line3.appendChild(renderStatusChip" in INDEX_HTML
+    assert 'if (coverage === "unavailable") line3.textContent = "資料狀態：資料不足";' in INDEX_HTML
 
 
 def test_signal_warning_and_unknown_confidence_present() -> None:

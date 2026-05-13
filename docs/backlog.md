@@ -20,12 +20,6 @@ Prioritization:
 3. **Long-term fundamentals coverage roadmap (pending)**
 4. **Docs-of-record consistency monitoring (pending)**
 
-## Completed / Archived (recent)
-- Step 135A — AI Team Analysis Blueprint docs-of-record alignment (docs-only) completed and merged.
-- Step 135B — Stock Dossier v1 backend read model + Mini App Stock Review shell completed and merged (PR #141).
-- Step 135C — Stock Review first-layer UX polish completed and merged (PR #142).
-- Step 135D — HK Equity Strategy Research Reference docs-of-record completed and merged (PR #143).
-
 ### P0.5 — Active track scaffolding (Step 69 direction alignment)
 
 #### Product Surface Track
@@ -51,6 +45,28 @@ Prioritization:
   - Mini App frontend fetch decision (for latest_system_runs read-only baseline)
   - Production data-read acceptance for latest_system_runs baseline
 - Subsequent active Mini App expansion starts from Step 92E Signals Summary read-only card.
+
+### Legacy pending / to re-triage
+- Operator-facing runner status surface refinement (future).
+- PnL / risk summary future cards enrichment.
+- Richer signal confidence model.
+- UI accessibility follow-up.
+- Mini App decision capture / paper order creation (phase-gated deferred track).
+- Mini App domain + environment decisions.
+- Mini App frontend framework migration decision (deferred).
+- Step 67 future plan — scheduled daily health check.
+- GitHub Actions Node.js deprecation maintenance.
+- Rate limiting / interaction-frequency hardening.
+- Telegram command registration follow-up (optional).
+- Platform evidence cadence + artifact capture follow-up.
+- Decision-to-outcome attribution linkage follow-up (analytics).
+- Telegram output language option (future).
+
+## Completed / Archived (recent)
+- Step 135A — AI Team Analysis Blueprint docs-of-record alignment (docs-only) completed and merged.
+- Step 135B — Stock Dossier v1 backend read model + Mini App Stock Review shell completed and merged (PR #141).
+- Step 135C — Stock Review first-layer UX polish completed and merged (PR #142).
+- Step 135D — HK Equity Strategy Research Reference docs-of-record completed and merged (PR #143).
 
 ## Completed backlog (archived)
 
@@ -248,13 +264,4 @@ Prioritization:
 
 - [ ] Step 134B: Daily Brief + AI Team role UI（Mini App 第一層結論先行 + AI team role 人話化；保持 read-only / paper-only）
 
-- **Step 134C (in progress):** Backend Daily Brief read model + Mini App first-layer consumption from bounded `sections.daily_brief`, with fallback rendering and focused tests. Guardrails unchanged: read-only/paper-only/no broker/no live execution/no order creation.
-
-1. **Step 135B — Stock Dossier v1 bounded slice (in progress)**
-   - Add read-only backend stock dossier builder and expose via Mini App review-shell bounded section.
-   - Add Mini App 股票檢視 shell with ticker selector and Chinese-first first-layer wording + `查看技術資料` split.
-   - Add focused backend/Mini App tests and keep no-write/no-execution/no-vendor-token constraints.
-2. **Step 135C — Stock Review first-layer UX polish (in progress)**
-   - Keep first-layer labels simple and explicit for non-professional operators (`一句總結`, `資料夠唔夠`, `風險提示`, `AI 模擬方向`, `你下一步要做咩` etc.).
-   - Keep technical/internal fields only under collapsed `查看技術資料`.
-   - Verify empty-state wording/safety note/no-execution wording and textContent-only rendering guardrails through focused tests.
+- **Step 134C completed:** Backend Daily Brief read model + Mini App first-layer consumption from bounded `sections.daily_brief` landed with fallback rendering and focused tests. Guardrails unchanged: read-only/paper-only/no broker/no live execution/no order creation.

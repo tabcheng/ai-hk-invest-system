@@ -71,7 +71,7 @@ Prioritization:
 - Step 135F — Stock Review horizon policy calibration completed and merged (PR #147).
 - Step 135H — Mini App Operator First-View Polish from Screenshot Smoke Review completed and merged (PR #149).
 - Step 135I — Mini App Operator Workflow Finalization completed and merged (PR #150, merge commit `ce8ef2132a3f06df978cc509a5232dd2fd8e239c`).
-- Step 135J — Stock Review Data Gap Action Model completed and merged in follow-up closure PR (this branch).
+- Step 135J — Stock Review Data Gap Action Model (PR #151) in review; move to completed after merge.
 
 ## Completed backlog (archived)
 

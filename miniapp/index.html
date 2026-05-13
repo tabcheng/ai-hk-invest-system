@@ -367,12 +367,17 @@
           };
           const gapText = mediumGaps.join("；");
           if (gapText.includes("風險脈絡")) pushGapAction("先補看：風險摘要與限制說明", "已載入不等於可安全判斷");
-          if (gapText.includes("個股層級決策 / 結果脈絡")) pushGapAction("先補看：最近模擬決策日誌、決策脈絡或結果", "未足夠支持提高檢視信心");
+          if (gapText.includes("個股層級決策 / 結果脈絡") || gapText.includes("個股層級脈絡資料不足")) pushGapAction("先補看：最近模擬決策日誌、決策脈絡或結果", "未足夠支持提高檢視信心");
           if (gapText.includes("基本面資料")) pushGapAction("先補看：最新業績、盈利能力、資產負債與公司公告", "長線 review 暫不提高信心");
           if (gapText.includes("估值資料")) pushGapAction("先補看：估值比較、歷史估值、同業比較", "長線只可觀察");
           if (gapText.includes("現金流資料") || gapText.includes("盈利資料") || gapText.includes("資產負債表資料")) pushGapAction("先補看：現金流／盈利／資產負債表財務細項", "不應輸出強長線結論");
-          const freshnessHints = `${String(chosen?.risk_brief || "")} ${String(chosen?.data_sufficiency || "")} ${String(chosen?.technical_details?.market_data_status || "")}`.toLowerCase();
-          if (freshnessHints.includes("過舊") || freshnessHints.includes("不足") || freshnessHints.includes("stale") || freshnessHints.includes("unavailable") || freshnessHints.includes("unknown")) {
+          const marketStatusHints = [
+            chosen?.technical_details?.market_data_status,
+            chosen?.technical_details?.freshness_status,
+            chosen?.technical_details?.market_data_acceptance_status,
+          ].map((x) => String(x || "").toLowerCase()).filter(Boolean);
+          const hasMarketStaleFlag = marketStatusHints.some((x) => x.includes("stale") || x.includes("過舊") || x.includes("unavailable") || x.includes("unknown") || x.includes("delayed"));
+          if (hasMarketStaleFlag) {
             pushGapAction("先補看：資料時間、更新狀態與市場 smoke 檢查證據", "短線只可觀察，不可當即時訊號");
           }
           if (gapText.includes("模擬組合背景")) pushGapAction("先補看：模擬組合／風險頁的持倉與盈虧脈絡", "不可推斷目前 paper exposure 安全");

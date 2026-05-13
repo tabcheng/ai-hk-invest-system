@@ -20,5 +20,23 @@ def test_stock_review_data_gap_action_mapping_strings_present():
 
 
 def test_stock_review_no_execution_wording_in_data_gap_actions():
-    for forbidden in ["立即買入", "立即賣出", "真實落盤", "Buy now", "Sell now", "Execute", "Order", "Trade action"]:
+    for forbidden in ["立即買入", "立即賣出", "馬上落盤", "立即執行", "Buy now", "Sell now", "Execute now", "Place order", "Trade action"]:
         assert forbidden not in HTML
+
+
+
+def test_stock_review_allows_safety_negation_wording():
+    assert "不作真實落盤" in HTML
+
+
+def test_market_smoke_trigger_uses_market_specific_fields_only():
+    assert "market_data_status" in HTML
+    assert "freshness_status" in HTML
+    assert "market_data_acceptance_status" in HTML
+    block = HTML.split("const marketStatusHints", 1)[1].split("if (hasMarketStaleFlag)", 1)[0]
+    assert "risk_brief" not in block
+    assert "data_sufficiency" not in block
+
+
+def test_ticker_context_insufficient_variant_maps_to_context_action():
+    assert 'gapText.includes("個股層級脈絡資料不足")' in HTML

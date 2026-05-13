@@ -328,12 +328,15 @@
             if (key === "long") return "長線檢視";
             return "只供觀察";
           };
-          const dataStateLabel = (value) => {
-            const key = String(value || "");
-            if (key === "sufficient") return "足夠";
-            if (key === "partial") return "部分";
-            if (key === "unavailable") return "未能提供";
-            return "不足";
+          const mapMediumGapToChinese = (gap) => {
+            const raw = String(gap || "").trim();
+            if (!raw) return "";
+            const lower = raw.toLowerCase();
+            if (lower.includes("daily/weekly signals")) return "缺少日線 / 週線信號";
+            if (lower.includes("risk context")) return "缺少風險脈絡";
+            if (lower.includes("paper portfolio context")) return "缺少模擬組合背景";
+            if (lower.includes("outcome review/context") || lower.includes("個股層級脈絡資料")) return "缺少個股層級決策 / 結果脈絡";
+            return raw;
           };
           const addRow = (label, value) => {
             const p = document.createElement("p");
@@ -345,17 +348,16 @@
           addRow("資料夠唔夠", chosen?.data_sufficiency);
           const horizon = chosen?.strategy_horizon_policy || {};
           addRow("策略週期判斷", `建議：${horizonLabel(horizon.recommended_review_horizon)}`);
-          addRow("短線", horizon.short_term_policy || "短線：只供觀察");
-          addRow("中線資料狀態", dataStateLabel(horizon.medium_term_data_state));
-          addRow("長線資料狀態", dataStateLabel(horizon.long_term_data_state));
-          if (Array.isArray(horizon.horizon_data_gaps) && horizon.horizon_data_gaps.length > 0) {
-            addRow("資料缺口", horizon.horizon_data_gaps.join("；"));
-          }
-          addRow("技術觀察", chosen?.technical_observation);
-          addRow("基本面觀察", chosen?.fundamental_observation);
-          addRow("新聞 / 催化觀察", chosen?.catalyst_observation);
+          addRow("短線判斷", "短線只供監察 / 提示 / 觀察，不建立任何模擬或真實訂單");
+          const mediumReady = String(horizon.medium_term_data_state || "") === "sufficient";
+          addRow("中線資料狀態", mediumReady ? "資料大致足夠，可做人手中線檢視" : "資料未足夠，暫時只可觀察");
+          const mediumGaps = Array.from(new Set((Array.isArray(horizon.horizon_data_gaps) ? horizon.horizon_data_gaps : []).map(mapMediumGapToChinese).filter(Boolean)));
+          if (!mediumReady && !mediumGaps.length) mediumGaps.push("中線資料不足：請先補充信號、風險、模擬組合與個股決策脈絡");
+          if (mediumGaps.length) addRow("中線資料缺口", mediumGaps.join("；"));
+          const longReady = String(horizon.long_term_data_state || "") === "sufficient";
+          addRow("長線資料狀態", longReady ? "資料較完整，可做人手長線檢視" : "長線資料不足：缺少基本面 / 估值 / 現金流等資料");
+          
           addRow("風險提示", chosen?.risk_brief);
-          addRow("模擬組合背景", chosen?.portfolio_context);
           addRow("AI 模擬方向", chosen?.simulated_direction);
           const directionHelper = document.createElement("p");
           directionHelper.className = "helper-text";
@@ -367,7 +369,18 @@
           card.append(actionsTitle, ul);
           addRow("安全提示", chosen?.safety_note || "只供模擬檢視｜不建立訂單｜不連接券商｜不是真實買賣建議");
           const d = document.createElement("details"); const s = document.createElement("summary"); s.textContent = "查看技術資料";
-          const tech = document.createElement("pre"); tech.className="helper-text"; tech.textContent = JSON.stringify(chosen?.technical_details || {}, null, 2);
+          const techObj = {
+            horizon_policy: horizon,
+            horizon_data_gaps: horizon.horizon_data_gaps || [],
+            medium_term_data_state: horizon.medium_term_data_state || "unknown",
+            long_term_data_state: horizon.long_term_data_state || "unknown",
+            technical_observation: chosen?.technical_observation || "未有資料",
+            fundamental_observation: chosen?.fundamental_observation || "未有資料",
+            catalyst_observation: chosen?.catalyst_observation || "未有資料",
+            portfolio_context: chosen?.portfolio_context || "未有資料",
+            technical_details: chosen?.technical_details || {},
+          };
+          const tech = document.createElement("pre"); tech.className="helper-text"; tech.textContent = JSON.stringify(techObj, null, 2);
           d.append(s, tech); card.appendChild(d);
         };
         picker.addEventListener("change", renderOne);

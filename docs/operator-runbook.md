@@ -545,3 +545,15 @@ When validating Mini App Journal Outcome Review and Telegram `/journal_outcome`,
 - Safety wording remains mandatory: `只供模擬檢視` / `不建立訂單` / `不連接券商` / `不是真實買賣建議`.
 
 - Step 135E: Strategy Horizon Policy in Stock Dossier added deterministic horizon fields (recommended_review_horizon, short/medium/long policies, data states, data gaps, confidence notes, paper_decision_scope) and Stock Review "策略週期判斷" UI section; short-term remains monitoring/observation-only; no broker/order/live/real-money path.
+- Step 135F 讀取次序更新（Stock Review 第一層）：
+  1) 一句總結
+  2) 資料夠唔夠
+  3) 策略週期判斷
+  4) 風險提示
+  5) AI 模擬方向
+  6) 你下一步要做咩
+  7) 查看技術資料
+- Step 135F horizon 解讀重點：
+  - 短線固定為監察/提示/觀察用途，不建立任何模擬或真實訂單。
+  - 中線若資料不足，第一層必須用中文缺口提示（信號/風險/模擬組合/個股決策脈絡）。
+  - 長線若不足，第一層以精簡人話顯示「長線資料不足：缺少基本面 / 估值 / 現金流等資料」。

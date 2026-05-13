@@ -5,6 +5,15 @@
 
 
 
+## 2026-05-13 — Current status as of Step 135D
+
+- Step 135B (PR #141) repo merge completed: Stock Dossier v1 backend read model + Mini App Stock Review shell completed in GitHub history.
+- Step 135C (PR #142) repo merge completed: Stock Review first-layer UX polish completed in GitHub history.
+- Step 135D (PR #143) repo merge completed: `docs/hk-equity-strategy-research-reference-20260512.md` added as HK strategy research reference docs-of-record.
+- Post-merge QA Check: pending retrospective record.
+- Post-merge Domain Check: pending retrospective record.
+- Wording discipline reminder: `docs/status.md` records merge-completion truth and acceptance outcomes; `docs/backlog.md` records pending follow-up work only.
+
 ## 2026-05-06 — Step 91C Runtime Acceptance ledger update
 - repo merge completed: yes
 - PR #98 merged: yes
@@ -573,7 +582,7 @@
 - 保持 read-only/paper-only：不建立訂單、不連接券商、不是真實買賣建議。
 - Step 134B review follow-up: Daily Brief now explicitly includes first-layer risk提示 + AI模擬方向 + Human Operator 下一步清單，並把 technical status 放入「查看技術資料」。
 
-## 2026-05-12 — Step 135A AI Team Analysis Blueprint docs-of-record (in progress)
+## 2026-05-12 — Step 135A AI Team Analysis Blueprint docs-of-record (repo merge completed)
 - Added `docs/ai-team-analysis-blueprint.md` as the per-ticker analysis contract across 15 AI team departments (purpose/inputs/methods/output/UI/must-not/evidence).
 - Defined Stock Dossier v1 output schema and standardized scorecard vocabulary for data quality, technical, fundamental, catalyst, risk, confidence, and simulated direction.
 - Defined phased implementation path (Phase 1 deterministic read models -> Phase 2 backend-only AI synthesis -> Phase 3 DB audit persistence -> Phase 4 strategy learning).
@@ -586,10 +595,10 @@
 - Technical diagnostics remain under `查看技術資料`; first-layer wording keeps Traditional Chinese + paper-only safety note.
 - Added focused tests for Daily Brief read-model direction/risk/data sufficiency and Mini App render guardrails.
 
-- Step 135B in progress: added read-only Stock Dossier v1 section in Mini App review-shell (`sections.stock_dossier_review`) and Chinese-first Stock Review UI shell; scope remains read-only with no DB writes, no broker/live execution, and no vendor/AI token integrations. GitHub impact: backend read-model + Mini App shell/tests/docs updates. Railway impact: no topology/env/scheduler change required. Supabase impact: read-only existing-source consumption only, no schema/RLS migration.
-- Step 135C in progress: polished Stock Review first-layer UX for non-professional operators with explicit labeled rows (`一句總結 / 資料夠唔夠 / 技術觀察 / 基本面觀察 / 新聞 / 催化觀察 / 風險提示 / 模擬組合背景 / AI 模擬方向 / 你下一步要做咩`) while keeping technical/internal values under collapsed `查看技術資料`. Empty-state wording updated to `暫時未有可檢視的股票簡報。系統會在有 signals / risk / portfolio context 後顯示。` and safety helper text retained (`只供模擬檢視`). GitHub impact: Mini App stock-review renderer/tests/docs only. Railway impact: none. Supabase impact: read-only existing-source consumption only, no schema/RLS migration.
+- Step 135B repo merge completed: added read-only Stock Dossier v1 section in Mini App review-shell (`sections.stock_dossier_review`) and Chinese-first Stock Review UI shell; scope remains read-only with no DB writes, no broker/live execution, and no vendor/AI token integrations. GitHub impact: backend read-model + Mini App shell/tests/docs updates. Railway impact: no topology/env/scheduler change required. Supabase impact: read-only existing-source consumption only, no schema/RLS migration.
+- Step 135C repo merge completed: polished Stock Review first-layer UX for non-professional operators with explicit labeled rows (`一句總結 / 資料夠唔夠 / 技術觀察 / 基本面觀察 / 新聞 / 催化觀察 / 風險提示 / 模擬組合背景 / AI 模擬方向 / 你下一步要做咩`) while keeping technical/internal values under collapsed `查看技術資料`. Empty-state wording updated to `暫時未有可檢視的股票簡報。系統會在有 signals / risk / portfolio context 後顯示。` and safety helper text retained (`只供模擬檢視`). GitHub impact: Mini App stock-review renderer/tests/docs only. Railway impact: none. Supabase impact: read-only existing-source consumption only, no schema/RLS migration.
 
-## 2026-05-12 — Step 135D HK Equity Strategy Research Reference docs-of-record (in progress)
+## 2026-05-12 — Step 135D HK Equity Strategy Research Reference docs-of-record (repo merge completed)
 - Added `docs/hk-equity-strategy-research-reference-20260512.md` from research source 「港股 AI Team Analysis Blueprint 落地研究報告 20260512」 as long-term internal strategy reference (not trading advice).
 - Defined explicit horizon policy: short-term stays observation/alert only in current phase; medium/long-term are primary design scopes for Stock Dossier + AI Decision Advisor v1.
 - Documented HK market characteristics, horizon-based data requirements/freshness risks, strategy families, AI desk mapping, multidimensional scorecard + risk-gate + human review contract, and phased implementation path.

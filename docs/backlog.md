@@ -8,94 +8,23 @@ Prioritization:
 ## Active backlog (pending)
 
 ### P0
-1. **Step 135D — HK Equity Strategy Research Reference docs-of-record (docs-only)**
-   - Add `docs/hk-equity-strategy-research-reference-20260512.md` as long-term internal strategy research reference from source 「港股 AI Team Analysis Blueprint 落地研究報告 20260512」.
-   - Define horizon policy (short=observation only for now; medium/long=current implementation focus), HK-market characteristics, strategy families, desk mapping, scorecard/risk-gate framework, strategy workstreams, and hard boundaries.
-   - Keep canonical implementation phase numbering in `docs/ai-team-analysis-blueprint.md`; Step 135D must not renumber phases.
-   - Align cross-doc references in `docs/ai-team-analysis-blueprint.md`, `docs/product-surface-strategy.md`, `docs/status.md`, and `docs/operator-runbook.md` where interpretation guidance is affected.
-1. **Step 135A — AI Team Analysis Blueprint docs-of-record alignment (docs-only)**
-   - Add and align `docs/ai-team-analysis-blueprint.md` as per-ticker analysis contract across all 15 AI team departments.
-   - Standardize Stock Dossier v1 fields + scorecard vocabulary + phased implementation contract.
-   - Keep strict paper-only/decision-support boundary and Chinese-first first-layer wording with `查看技術資料` separation.
-
-1. **Operator-facing runner status surface refinement (future)**
-   - Keep improving operator-facing run-status readability and hierarchy beyond Step 112 baseline.
-
-2. **PnL / risk summary future cards enrichment**
-   - Expand future read-only card details once data contracts are ready; keep empty-state semantics clear and non-failure.
-
-3. **Richer signal confidence model**
-   - Introduce better confidence semantics only as bounded read-only follow-up; avoid trade-instruction wording.
-
-4. **UI accessibility follow-up**
-   - Review Mini App readability/accessibility (contrast, semantic labels, spacing) while preserving mobile-first compactness.
-
-5. **Step 92E — Signals Summary read-only card (next implementation step)**
-   - Implement Mini App read-only Signals Summary card after Step 92D-UX docs-of-record alignment.
-   - Keep backend/frontend scope read-only and preserve paper-trading/no-broker boundary.
-
-6. **Step 70 — GitHub / Codex instruction guardrails update**
-   - Update repo-level instruction guardrails in `AGENTS.md` to reflect current project direction and governance baseline.
-   - PR review checklist must explicitly include inline review threads / Codex comments.
-   - Unresolved Codex comments remain blockers when they affect correctness, audit trail, security, runtime behavior, or domain guardrails.
-
-7. **Mini App decision capture / paper order creation (active, deferred)**
-   - Decision capture is Phase 2 follow-up and must remain bounded/non-execution.
-   - Paper order creation is later controlled phase only after risk-gate requirements.
-
-8. **Mini App domain + environment decisions (active)**
-   - Decide custom domain policy for Mini App preview/production path.
-   - Decide PR preview environment policy for Mini App changes.
-
-9. **Mini App frontend framework migration decision (active, deferred)**
-   - Keep static shell baseline for now; evaluate framework migration only if needed later.
-
-10. **Step 67 future plan — scheduled daily health check**
-   - Keep as future plan only; do not implement scheduled automation until explicitly approved in a future step.
-
-11. **GitHub Actions Node.js 20 deprecation maintenance**
-   - Track and update workflows/actions before Node.js 20 deprecation deadlines impact CI/manual QA workflows.
-   - Keep maintenance bounded to workflow/runtime compatibility, with no strategy/paper-trading logic side effects.
-
-12. **Rate limiting / interaction-frequency hardening (active)**
-   - Define bounded backend protections for Mini App API request burst/abuse control without introducing write/execution semantics.
+1. **Step 135E — Strategy Horizon Policy in Stock Dossier**
+   - Add Stock Review horizon policy display aligned with Step 135D strategy reference.
+   - Keep short-term horizon as monitoring / alert / observation only.
+   - Keep medium/long-term horizons as current review focus.
+   - Preserve first-layer compact UI readability and Traditional Chinese operator-first wording.
 
 ### P1
+1. **Stock Review horizon policy calibration (pending)**
+2. **Stock Review wording regression tests (pending)**
+3. **Long-term fundamentals coverage roadmap (pending)**
+4. **Docs-of-record consistency monitoring (pending)**
 
-1. **Operator smoke report wording normalization / possible future test-mode echo**
-   - Continue clarifying transport verification vs response-text verification semantics.
-   - Revisit test-mode echo feasibility only as a future bounded QA-harness enhancement.
-
-2. **Telegram command registration follow-up (optional)**
-   - Decide whether to add bot command registration (`setMyCommands`) for discoverability.
-   - Keep this isolated from strategy and paper-trading logic.
-
-3. **Delivery semantics phase narrative instrumentation (`delivery_phase`)**
-   - Re-evaluate whether a compact `delivery_phase` enum still adds enough operator triage value beyond current fields (`correlation_id`, `dedup_check_result`, `dedup_persist_result`).
-   - Keep scope bounded and avoid broad telemetry redesign; preserve current best-effort/non-blocking delivery behavior.
-   - If approved later, require focused tests and explicit backward-compatible projection semantics.
-
-4. **Platform evidence cadence + artifact capture follow-up (GitHub / Railway / Supabase)**
-   - Define a lightweight recurring manual verification cadence (for example monthly/after critical config changes) and where to store dated evidence snapshots/screenshots.
-   - Keep this as documentation/process hardening first; do not trigger infra refactor or runtime topology changes without a separate approved step.
-
-5. **Decision-to-outcome attribution linkage follow-up (analytics)**
-   - Evaluate a bounded linkage model between `paper_trade_decisions` records and subsequent closed-trade outcomes.
-   - Keep this as a follow-up design/implementation candidate only after Step 55 confirms baseline utility.
-   - Preserve decision-support guardrails; do not introduce autonomous execution semantics.
-
-6. **Telegram output language option (future)**
-   - Add configurable Telegram output language support, initially `zh-HK` and `en`.
-   - Suggested rollout: apply first to `/daily_review`, then expand to other commands.
-   - Not in Step 60 scope: no localization implementation in this step.
-
-### P2
-- Future normal feature development after Step 66 checklist baseline (new runtime/Telegram/DB slices must declare QA coverage explicitly).
-- Expand deterministic replay/integration fixtures for multi-day paper-trading scenarios.
-- Improve failure-path coverage for DB/notification/run-finalization edge cases.
-- Track lightweight runtime health metrics (duration, per-ticker latency, failure ratio) in a scoped step.
-- Add market-relative/context overlays for analytics interpretation (for example benchmark comparison or regime tags) only after baseline outcome summary is stable.
-
+## Completed / Archived (recent)
+- Step 135A — AI Team Analysis Blueprint docs-of-record alignment (docs-only) completed and merged.
+- Step 135B — Stock Dossier v1 backend read model + Mini App Stock Review shell completed and merged (PR #141).
+- Step 135C — Stock Review first-layer UX polish completed and merged (PR #142).
+- Step 135D — HK Equity Strategy Research Reference docs-of-record completed and merged (PR #143).
 
 ### P0.5 — Active track scaffolding (Step 69 direction alignment)
 

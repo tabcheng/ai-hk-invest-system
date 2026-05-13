@@ -20,11 +20,7 @@ def test_stock_review_tab_and_first_layer_labels_exist() -> None:
         "短線判斷",
         "中線資料狀態",
         "長線資料狀態",
-        "技術觀察",
-        "基本面觀察",
-        "新聞 / 催化觀察",
         "風險提示",
-        "模擬組合背景",
         "AI 模擬方向",
         "你下一步要做咩",
     ]:
@@ -73,6 +69,10 @@ def test_stock_review_horizon_first_layer_uses_human_labels_not_raw_enum() -> No
     assert 'horizon.recommended_review_horizon' in block
     assert '`建議：${horizonLabel(horizon.recommended_review_horizon)}`' in block
     assert "decision_context_summary.status" not in block
+    assert "technical_observation: chosen?.technical_observation" in block
+    assert "fundamental_observation: chosen?.fundamental_observation" in block
+    assert "catalyst_observation: chosen?.catalyst_observation" in block
+    assert "portfolio_context: chosen?.portfolio_context" in block
 
 
 def test_stock_review_first_layer_avoids_english_only_gap_labels() -> None:

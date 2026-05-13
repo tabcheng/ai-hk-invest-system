@@ -359,11 +359,7 @@
           const longReady = String(horizon.long_term_data_state || "") === "sufficient";
           addRow("長線資料狀態", longReady ? "資料較完整，可做人手長線檢視" : "長線資料不足：缺少基本面 / 估值 / 現金流等資料");
           
-          addRow("技術觀察", chosen?.technical_observation);
-          addRow("基本面觀察", chosen?.fundamental_observation);
-          addRow("新聞 / 催化觀察", chosen?.catalyst_observation);
           addRow("風險提示", chosen?.risk_brief);
-          addRow("模擬組合背景", chosen?.portfolio_context);
           addRow("AI 模擬方向", chosen?.simulated_direction);
           const directionHelper = document.createElement("p");
           directionHelper.className = "helper-text";
@@ -380,6 +376,10 @@
             horizon_data_gaps: horizon.horizon_data_gaps || [],
             medium_term_data_state: horizon.medium_term_data_state || "unknown",
             long_term_data_state: horizon.long_term_data_state || "unknown",
+            technical_observation: chosen?.technical_observation || "未有資料",
+            fundamental_observation: chosen?.fundamental_observation || "未有資料",
+            catalyst_observation: chosen?.catalyst_observation || "未有資料",
+            portfolio_context: chosen?.portfolio_context || "未有資料",
             technical_details: chosen?.technical_details || {},
           };
           const tech = document.createElement("pre"); tech.className="helper-text"; tech.textContent = JSON.stringify(techObj, null, 2);

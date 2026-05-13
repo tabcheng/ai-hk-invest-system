@@ -8,9 +8,12 @@ Prioritization:
 ## Active backlog (pending)
 
 ### P0
-1. **Step 135G — Stock Review long-term fundamentals coverage roadmap (pending)**
-   - Follow-up after Step 135F UI/horizon calibration merge.
-   - Scope: long-term fundamentals/valuation/cash-flow/sector-cycle data coverage roadmap only.
+1. **Step 135F — Stock Review horizon policy calibration**
+   - Calibration-only / deterministic helper refinement for Stock Review horizon policy interpretation.
+   - Preserve short-term monitoring / alert / observation-only boundary.
+   - Keep medium/long-term scope bounded to review-readiness interpretation calibration only.
+   - Explicit non-goals: no vendor integration, no AI token, no DB write, no Telegram command, no broker/live/real-money execution, no paper order / simulated order creation.
+   - Required deliverables: docs updates + focused tests.
 
 ### P1
 1. **Stock Review wording regression tests (pending)**
@@ -65,7 +68,6 @@ Prioritization:
 - Step 135C — Stock Review first-layer UX polish completed and merged (PR #142).
 - Step 135D — HK Equity Strategy Research Reference docs-of-record completed and merged (PR #143).
 - Step 135E — Strategy Horizon Policy in Stock Dossier completed and merged (PR #145).
-- Step 135F — Stock Review UI structure + horizon policy calibration completed (this PR branch).
 
 ## Completed backlog (archived)
 

@@ -323,3 +323,13 @@ All surfaces remain read/review-first and paper-only unless a later explicit gat
   - short-term stays observation-only (`短線只供監察 / 提示 / 觀察，不建立任何模擬或真實訂單`);
   - medium-term sufficiency cannot be inferred from global status alone and must keep ticker-context-aware missing-gap summary;
   - long-term first-layer uses compact human summary (`長線資料不足：缺少基本面 / 估值 / 現金流等資料`), with detailed fields under technical details.
+
+## 2026-05-13 — Step 135G first-view IA contract
+- Today (今日) default first-screen keeps one primary hero summary card only.
+- Hero must include: 今日狀態/一句總結/資料夠唔夠/主要風險/AI 模擬方向/你下一步要做咩 + short safety boundary.
+- Secondary responsibility split:
+  - 股票檢視: Stock Review first-layer contract from Step 135F.
+  - 模擬組合: full paper PnL + risk breakdown.
+  - 日誌: human paper decision journal/outcome review surfaces.
+  - 系統: Latest System Run, Daily Review Summary, signals/context diagnostics, build metadata visibility.
+- Boundary unchanged: read-only/paper-only decision support; no broker/live/order/real-money execution.

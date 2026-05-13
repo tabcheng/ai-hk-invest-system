@@ -8,12 +8,10 @@ Prioritization:
 ## Active backlog (pending)
 
 ### P0
-1. **Step 135F — Stock Review horizon policy calibration**
-   - Calibration-only / deterministic helper refinement for Stock Review horizon policy interpretation.
-   - Preserve short-term monitoring / alert / observation-only boundary.
-   - Keep medium/long-term scope bounded to review-readiness interpretation calibration only.
-   - Explicit non-goals: no vendor integration, no AI token, no DB write, no Telegram command, no broker/live/real-money execution, no paper order / simulated order creation.
-   - Required deliverables: docs updates + focused tests.
+1. **Step 135G — Mini App First-View IA Cleanup**
+   - Today tab first view keeps one compact decision-support hero; secondary cards move to dedicated tabs/details.
+   - Tabs use Traditional Chinese primary labels: 今日 / 股票檢視 / 模擬組合 / 日誌 / 系統.
+   - Preserve paper-only/read-only boundary and no execution semantics.
 
 ### P1
 1. **Stock Review wording regression tests (pending)**
@@ -68,6 +66,7 @@ Prioritization:
 - Step 135C — Stock Review first-layer UX polish completed and merged (PR #142).
 - Step 135D — HK Equity Strategy Research Reference docs-of-record completed and merged (PR #143).
 - Step 135E — Strategy Horizon Policy in Stock Dossier completed and merged (PR #145).
+- Step 135F — Stock Review horizon policy calibration completed and merged (PR #147).
 
 ## Completed backlog (archived)
 

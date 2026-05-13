@@ -5,10 +5,18 @@
 
 
 
-## 2026-05-13 — Current status as of Step 135F
+## 2026-05-13 — Current status as of Step 135G
 
-- Step 135F implementation in progress on branch: yes (pre-merge).
-- Core deliverable (Step 135F target):
+- Step 135G implementation in progress on branch: yes (Mini App first-view IA cleanup + Step 135F post-merge closure).
+- Core deliverable (Step 135G target):
+  - Today tab first screen keeps one compact hero summary (今日狀態 / 一句總結 / 資料夠唔夠 / 主要風險 / AI 模擬方向 / 你下一步要做咩).
+  - Secondary cards moved out of Today first view: system run/review/diagnostics to 系統, PnL/risk detail to 模擬組合.
+  - Top tabs normalized to Chinese-first: 今日 / 股票檢視 / 模擬組合 / 日誌 / 系統.
+  - No write-path / broker / live-execution / real-money behavior change.
+
+- Step 135F repo merge completed: yes
+- PR #147 merged: yes
+- Core deliverable (Step 135F):
   - Stock Review first-layer structure reordered to operator decision-support flow.
   - Horizon policy wording calibrated to Chinese-first, short-term observation-only, medium-term ticker-context-aware, long-term compact data-gap summary.
   - Technical/internal horizon detail moved under `查看技術資料`.
@@ -27,7 +35,7 @@
 - Post-merge Domain Check: pass (paper-only / decision-support only; no broker/live/real-money/order path introduced).
 - Railway impact: unchanged.
 - Supabase impact: unchanged (no schema/RLS/write change).
-- Post-deploy UI smoke: not required / not run in this docs-only closure because no runtime deployment acceptance is being claimed.
+- Mini App UI smoke: recommended if not yet manually recorded (no fabrication in this PR).
 - Wording discipline reminder: `docs/status.md` records merge-completion truth and acceptance outcomes; `docs/backlog.md` records pending follow-up work only.
 
 ## 2026-05-13 — Historical context (Step 135D)

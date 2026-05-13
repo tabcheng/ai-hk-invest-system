@@ -169,6 +169,23 @@ def test_render_level_daily_summary_availability_consistency() -> None:
     assert rendered["boundary_visible"] is True
     assert rendered["system_row_has_chip_text"] is True
     assert rendered["coverage_row_has_chip_text"] is True
+
+
+def test_overview_unavailable_never_shows_viewable_wording_even_with_unknown_risk() -> None:
+    sections = _base_sections()
+    sections["daily_review_summary"] = {"status": "ok", "review_readiness": "unavailable", "available_sections": [], "unavailable_sections": ["signals", "paper_pnl", "risk", "latest_system_run"]}
+    sections["risk_summary"] = {"status": "ok", "risk_level": "unknown", "warnings": [], "limitations": ["risk source unavailable"]}
+    rendered = _render_with_sample_payload({"sections": sections})
+    assert "資料狀態：資料不足" in rendered["full_render_text"]
+    assert "資料狀態：可檢視，但風險資料不足" not in rendered["full_render_text"]
+
+
+def test_overview_partial_or_ready_may_show_risk_gap_wording() -> None:
+    sections = _base_sections()
+    sections["daily_review_summary"] = {"status": "ok", "review_readiness": "partial", "available_sections": ["latest_system_run"], "unavailable_sections": ["risk"]}
+    sections["risk_summary"] = {"status": "ok", "risk_level": "unknown", "warnings": [], "limitations": ["risk source unavailable"]}
+    rendered = _render_with_sample_payload({"sections": sections})
+    assert "資料狀態：可檢視，但風險資料不足" in rendered["full_render_text"]
     assert rendered["build_meta_visible"] is True
 
     full_text = str(rendered["full_render_text"]).lower()

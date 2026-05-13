@@ -4,7 +4,10 @@ HTML = Path('miniapp/index.html').read_text(encoding='utf-8')
 
 
 def test_today_and_stockreview_contract_strings():
+    assert 'if (coverage === "unavailable") line3.textContent = "資料狀態：資料不足";' in HTML
+    assert 'else line3.textContent = hasRiskGap ? "資料狀態：可檢視，但風險資料不足"' in HTML
     assert '資料狀態：可檢視，但風險資料不足' in HTML
+    assert '資料狀態：資料不足' in HTML
     assert '檢視結論' in HTML
     assert '策略週期' in HTML
     assert 'AI 模擬方向' in HTML

@@ -144,7 +144,8 @@
         summary.textContent = String(dailyBrief?.headline_summary || (coverage === "ready" ? "今日資料足夠，可做模擬 review。" : (coverage === "partial" ? "今日要小心，部分資料不足。" : "今日未適合判斷。")));
         line2.appendChild(summary);
         const hasRiskGap = String(risk?.risk_level || "unknown").toLowerCase() === "unknown" || (Array.isArray(risk?.limitations) && risk.limitations.length > 0);
-        line3.textContent = hasRiskGap ? "資料狀態：可檢視，但風險資料不足" : (coverage === "ready" ? "資料狀態：可檢視" : (coverage === "partial" ? "資料狀態：部分可檢視" : "資料狀態：資料不足"));
+        if (coverage === "unavailable") line3.textContent = "資料狀態：資料不足";
+        else line3.textContent = hasRiskGap ? "資料狀態：可檢視，但風險資料不足" : (coverage === "ready" ? "資料狀態：可檢視" : "資料狀態：部分可檢視");
         const riskLine=document.createElement("p"); riskLine.className="row"; riskLine.textContent=`風險提示：${riskText || fallbackRiskText(riskLevel)}`;
         const directionLine=document.createElement("p"); directionLine.className="row"; directionLine.textContent=`AI 模擬方向：${aiDirection}`;
         const nextTitle=document.createElement("h3"); nextTitle.textContent="你下一步要做咩";

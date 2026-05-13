@@ -14,6 +14,8 @@ def test_human_journal_section_and_guardrail_wording_present():
     assert "不作真實落盤" in html
     assert "此分類只供 paper journal 記錄，不建立訂單，不連接券商，不代表真實買賣決定。" in html
     assert "未改變 paper position" in html
+    for label in ["繼續觀察", "偏正面觀察", "謹慎觀察", "資料不足", "跳過"]:
+        assert label in html
 
 
 def test_human_journal_requires_guardrail_checkbox_in_ui():

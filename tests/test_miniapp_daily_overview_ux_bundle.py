@@ -311,6 +311,8 @@ def test_system_safety_card_is_system_tab_only() -> None:
 def test_risk_warning_wording_branches_present() -> None:
     assert "暫無明確風險警示" in INDEX_HTML
     assert "暫無明確警示，但風險資料不足" in INDEX_HTML
+    assert 'const hasInsufficientRisk = riskRaw === "unknown" || hasLimitations' in INDEX_HTML
+    assert 'none.textContent=hasInsufficientRisk ? "暫無明確警示，但風險資料不足" : "暫無明確風險警示"' in INDEX_HTML
 
 
 def test_journal_ticker_picker_and_context_updates() -> None:

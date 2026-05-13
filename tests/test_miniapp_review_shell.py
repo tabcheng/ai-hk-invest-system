@@ -113,6 +113,7 @@ def test_step92f_ui_review_shell_static_contract() -> None:
         assert re.search(pattern, html, flags=re.IGNORECASE) is None
 
     assert "if (!rows.length) { shell.textContent = \"暫時未有可檢視的股票簡報。系統會在有 signals / risk / portfolio context 後顯示。\"; return; }" in html
+    assert 'system:["signals-card","context-card","team-card","latest-card","daily-card","system-safety-card"]' in html
     stock_review_block = html[html.index("function renderStockReview"):html.index("function renderRisk")]
     assert "card.innerHTML" not in stock_review_block
     assert "technical_observation: chosen?.technical_observation" in stock_review_block

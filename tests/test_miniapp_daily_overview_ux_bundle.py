@@ -302,6 +302,17 @@ def test_safety_boundary_copy_present() -> None:
     assert "Deployed build:" in INDEX_HTML
 
 
+def test_system_safety_card_is_system_tab_only() -> None:
+    assert 'id="system-safety-card"' in INDEX_HTML
+    assert 'data-tab-panel="system"' in INDEX_HTML
+    assert 'system:["signals-card","context-card","team-card","latest-card","daily-card","system-safety-card"]' in INDEX_HTML
+
+
+def test_risk_warning_wording_branches_present() -> None:
+    assert "暫無明確風險警示" in INDEX_HTML
+    assert "暫無明確警示，但風險資料不足" in INDEX_HTML
+
+
 def test_journal_ticker_picker_and_context_updates() -> None:
     sections = _base_sections()
     sections["signals_summary"]["top_items"] = [

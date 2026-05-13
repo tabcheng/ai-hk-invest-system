@@ -64,6 +64,7 @@ def test_tabpanel_aria_labelledby_matches_new_tabs_per_panel() -> None:
         'daily-card': ('system', 'tab-system'),
         'signals-card': ('system', 'tab-system'),
         'context-card': ('system', 'tab-system'),
+        'system-safety-card': ('system', 'tab-system'),
     }
     for panel_id, (data_tab, aria_id) in required.items():
         tag = _section_tag(html, panel_id)
@@ -75,6 +76,6 @@ def test_stale_tab_ids_removed_and_no_wrong_today_labels_for_system_portfolio() 
     html = Path('miniapp/index.html').read_text(encoding='utf-8')
     assert 'tab-signals' not in html
     assert 'tab-context' not in html
-    for panel_id in ['paper-pnl-card', 'risk-card', 'team-card', 'latest-card', 'daily-card', 'signals-card', 'context-card']:
+    for panel_id in ['paper-pnl-card', 'risk-card', 'team-card', 'latest-card', 'daily-card', 'signals-card', 'context-card', 'system-safety-card']:
         tag = _section_tag(html, panel_id)
         assert 'aria-labelledby="tab-today"' not in tag

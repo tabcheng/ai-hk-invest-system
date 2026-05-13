@@ -5,17 +5,14 @@
 
 
 
-## 2026-05-13 — Current status as of Step 135G
+## 2026-05-13 — Current status as of Step 135H
 
-- Step 135G implementation in progress on branch: yes (Mini App first-view IA cleanup + Step 135F post-merge closure).
-- Core deliverable (Step 135G target):
-  - Mini App accessibility checklist baseline added (`docs/accessibility-checklist.md`) for tab/tabpanel and first-view review discipline.
-  - Step 135G-DOC baseline: documentation governance + AI risk register + regulatory boundary docs-of-record.
-  - Accessibility hotfix: tabpanel aria-labelledby mapping aligned with new tab IDs for screen-reader-safe tab semantics.
-  - Today tab first screen keeps one compact hero summary (今日狀態 / 一句總結 / 資料夠唔夠 / 主要風險 / AI 模擬方向 / 你下一步要做咩).
-  - Secondary cards moved out of Today first view: system run/review/diagnostics to 系統, PnL/risk detail to 模擬組合.
-  - Top tabs normalized to Chinese-first: 今日 / 股票檢視 / 模擬組合 / 日誌 / 系統.
-  - No runtime/backend/Supabase/Railway/vendor/broker/order behavior change.
+- Step 135G repo merge completed: yes (PR #148).
+- Step 135G post-merge QA/Domain check: pass (paper-only / decision-support only; no broker/live/order/real-money path).
+- Step 135G screenshot smoke findings recorded: Today direction passed; Stock Review first-layer too text-heavy; Journal too long and mixed; loaded/sufficient wording mixed; buy/sell wording too close to trading semantics; full safety card too dominant and should move to System/collapsed details.
+- Step 135H implementation in progress: screenshot-smoke-driven Mini App operator-first polish.
+- Step 135H scope (frontend/docs/tests only): system safety tab isolation, risk-warning wording branch fix, first-layer journal wording safety mapping, and docs/test alignment.
+- No runtime/backend/API/schema/Railway/Supabase/vendor/broker/order/live behavior change.
 
 - Step 135F repo merge completed: yes
 - PR #147 merged: yes

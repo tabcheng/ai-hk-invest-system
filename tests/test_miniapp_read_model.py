@@ -247,6 +247,43 @@ def test_local_artifact_provider_returns_unavailable_when_run_status_invalid(tmp
     assert latest_system_run["source"] == "local_artifact"
 
 
+def test_stock_dossier_horizon_policy_short_term_observation_only():
+    section = build_stock_dossiers_v1_section(
+        {"status": "ok", "top_items": [{"ticker": "0700.HK", "signal": "unknown"}]},
+        {"status": "ok", "risk_level": "unknown"},
+        {"status": "unavailable", "tickers": []},
+        {"status": "ok", "rows": []},
+    )
+    item = section["items"][0]
+    assert item["strategy_horizon_policy"]["short_term_policy"].startswith("短線：只供觀察")
+    assert item["strategy_horizon_policy"]["paper_decision_scope"] == "observation_only"
+    assert "短線只供觀察" in item["simulated_direction"]
+
+
+def test_stock_dossier_horizon_policy_medium_sufficient_recommend_medium():
+    section = build_stock_dossiers_v1_section(
+        {"status": "ok", "top_items": [{"ticker": "0700.HK", "signal": "positive"}]},
+        {"status": "ok", "risk_level": "low"},
+        {"status": "ok", "tickers": []},
+        {"status": "ok", "rows": [{"ticker": "0700.HK", "quantity": 1, "total_pnl": 0}]},
+    )
+    policy = section["items"][0]["strategy_horizon_policy"]
+    assert policy["recommended_review_horizon"] == "medium"
+    assert policy["medium_term_data_state"] == "sufficient"
+
+
+def test_stock_dossier_horizon_policy_long_term_gap_visible():
+    section = build_stock_dossiers_v1_section(
+        {"status": "ok", "top_items": [{"ticker": "0700.HK", "signal": "neutral"}]},
+        {"status": "ok", "risk_level": "medium"},
+        {"status": "partial", "tickers": []},
+        {"status": "ok", "rows": [{"ticker": "0700.HK", "quantity": 2, "total_pnl": 11}]},
+    )
+    policy = section["items"][0]["strategy_horizon_policy"]
+    assert policy["long_term_data_state"] == "insufficient"
+    assert "缺少基本面資料" in policy["horizon_data_gaps"]
+
+
 def test_local_artifact_provider_bounds_long_fields_and_ignores_extra_fields(tmp_path):
     artifact = tmp_path / "latest_system_run.json"
     artifact.write_text(

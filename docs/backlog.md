@@ -265,3 +265,4 @@ Prioritization:
 - [ ] Step 134B: Daily Brief + AI Team role UI（Mini App 第一層結論先行 + AI team role 人話化；保持 read-only / paper-only）
 
 - **Step 134C completed:** Backend Daily Brief read model + Mini App first-layer consumption from bounded `sections.daily_brief` landed with fallback rendering and focused tests. Guardrails unchanged: read-only/paper-only/no broker/no live execution/no order creation.
+\n- Step 135E: Strategy Horizon Policy in Stock Dossier added deterministic horizon fields (recommended_review_horizon, short/medium/long policies, data states, data gaps, confidence notes, paper_decision_scope) and Stock Review "策略週期判斷" UI section; short-term remains monitoring/observation-only; no broker/order/live/real-money path.

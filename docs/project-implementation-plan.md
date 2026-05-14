@@ -1,4 +1,4 @@
-## Current state checkpoint (as of Step 135E)
+## Current state checkpoint (as of Step 135K candidate)
 
 Recent completed product track summary (compact):
 - AI Team Operating Model docs-of-record established and active as role-boundary baseline.
@@ -8,8 +8,9 @@ Recent completed product track summary (compact):
 - Stock Review first-layer UX polish delivered for Chinese-first compact review flow.
 - HK Equity Strategy Research Reference (`docs/hk-equity-strategy-research-reference-20260512.md`) delivered as strategy reference docs-of-record.
 
-Next implementation candidate:
-- **Step 135F — Stock Review horizon policy calibration**
+Current sequence:
+- **Step 135J completed/merged** (PR #151).
+- **Step 135K active candidate**: backend-owned Stock Review data-gap action contract with frontend backend-first consumption.
 
 # Project Implementation Plan (System-of-Record View)
 

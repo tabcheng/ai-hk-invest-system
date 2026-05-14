@@ -40,3 +40,10 @@ def test_market_smoke_trigger_uses_market_specific_fields_only():
 
 def test_ticker_context_insufficient_variant_maps_to_context_action():
     assert 'gapText.includes("個股層級脈絡資料不足")' in HTML
+
+
+def test_frontend_prefers_backend_data_gap_actions_contract():
+    assert "const backendGapActions = Array.isArray(chosen?.data_gap_actions) ? chosen.data_gap_actions : [];" in HTML
+    assert "if (backendGapActions.length)" in HTML
+    assert "backendGapActions.forEach((entry) => pushGapAction(String(entry?.label || \"\"), String(entry?.interpretation || \"\")))" in HTML
+    assert "chosen?.data_gap_interpretation_summary ||" in HTML

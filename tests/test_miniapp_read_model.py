@@ -434,3 +434,57 @@ def test_stock_dossier_has_no_execution_wording_in_english_or_chinese():
     ]:
         assert forbidden not in serialized
     assert "不建立訂單" in serialized
+
+
+def test_stock_dossier_exposes_backend_data_gap_action_contract():
+    section = build_stock_dossiers_v1_section(
+        {"status": "ok", "top_items": [{"ticker": "0700.HK", "signal": "unknown"}]},
+        {"status": "ok", "risk_level": "unknown"},
+        {"status": "unavailable", "tickers": []},
+        {"status": "ok", "rows": []},
+        latest_system_run={"market_data_status": "stale"},
+    )
+    item = section["items"][0]
+    assert item["data_gap_action_source"] == "backend_read_model"
+    assert isinstance(item["data_gap_actions"], list) and item["data_gap_actions"]
+    assert item["data_gap_interpretation_summary"].startswith("解讀限制：")
+    assert all(action["review_only"] is True for action in item["data_gap_actions"])
+    categories = {action["category"] for action in item["data_gap_actions"]}
+    assert "ticker_decision_context" in categories
+    assert "market_freshness" in categories
+
+
+def test_stock_dossier_market_freshness_gap_uses_market_fields_only():
+    section = build_stock_dossiers_v1_section(
+        {"status": "ok", "top_items": [{"ticker": "0700.HK", "signal": "neutral"}]},
+        {"status": "ok", "risk_level": "low"},
+        {"status": "ok", "tickers": [{"ticker": "0700.HK", "context_readiness": "ready"}]},
+        {"status": "ok", "rows": [{"ticker": "0700.HK", "quantity": 1, "total_pnl": 0}]},
+        latest_system_run={"market_data_status": "ok", "freshness_status": "ok", "market_data_acceptance_status": "ok"},
+    )
+    categories = {action["category"] for action in section["items"][0]["data_gap_actions"]}
+    assert "market_freshness" not in categories
+
+
+def test_stock_dossier_data_gap_actions_no_execution_wording():
+    section = build_stock_dossiers_v1_section(
+        {"status": "ok", "top_items": [{"ticker": "0700.HK", "signal": "unknown"}]},
+        {"status": "ok", "risk_level": "unknown"},
+        {"status": "unavailable", "tickers": []},
+        {"status": "ok", "rows": []},
+        latest_system_run={"market_data_status": "delayed"},
+    )
+    payload = str(section["items"][0]["data_gap_actions"])
+    for forbidden in ["立即買入", "立即賣出", "馬上落盤", "立即執行", "Buy now", "Sell now", "Execute now", "Place order", "Trade action"]:
+        assert forbidden not in payload
+
+
+def test_stock_dossier_ticker_context_insufficient_maps_to_ticker_decision_context():
+    section = build_stock_dossiers_v1_section(
+        {"status": "ok", "top_items": [{"ticker": "0700.HK", "signal": "positive"}]},
+        {"status": "ok", "risk_level": "low"},
+        {"status": "ok", "tickers": [{"ticker": "0700.HK", "context_readiness": "insufficient"}]},
+        {"status": "ok", "rows": [{"ticker": "0700.HK", "quantity": 1, "total_pnl": 0}]},
+    )
+    category_to_label = {row["category"]: row["label"] for row in section["items"][0]["data_gap_actions"]}
+    assert category_to_label["ticker_decision_context"] == "先補看：最近模擬決策日誌、決策脈絡或結果"

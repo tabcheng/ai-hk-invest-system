@@ -211,6 +211,8 @@ def _build_data_gap_actions(horizon_policy: Mapping[str, Any], technical_details
         value = str(flag or "").strip().lower()
         if not value:
             return False
+        # Explicitly allow paper-review acceptance status on its own.
+        # Separate freshness/market status fields can still independently mark stale/delayed.
         if value == "acceptable_for_paper_review":
             return False
         if value.startswith("stale") or value.startswith("unknown") or value.startswith("unavailable") or value.startswith("delayed"):

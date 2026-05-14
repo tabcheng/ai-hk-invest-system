@@ -502,6 +502,21 @@ def test_stock_dossier_market_freshness_gap_acceptance_status_acceptable_for_pap
     assert "market_freshness" not in categories
 
 
+def test_stock_dossier_market_freshness_gap_when_acceptable_for_paper_review_but_freshness_stale():
+    section = build_stock_dossiers_v1_section(
+        {"status": "ok", "top_items": [{"ticker": "0700.HK", "signal": "neutral"}]},
+        {"status": "ok", "risk_level": "low"},
+        {"status": "ok", "tickers": [{"ticker": "0700.HK", "context_readiness": "ready"}]},
+        {"status": "ok", "rows": [{"ticker": "0700.HK", "quantity": 1, "total_pnl": 0}]},
+        latest_system_run={
+            "market_data_acceptance_status": "acceptable_for_paper_review",
+            "freshness_status": "stale",
+        },
+    )
+    categories = {action["category"] for action in section["items"][0]["data_gap_actions"]}
+    assert "market_freshness" in categories
+
+
 def test_stock_dossier_data_gap_actions_no_execution_wording():
     section = build_stock_dossiers_v1_section(
         {"status": "ok", "top_items": [{"ticker": "0700.HK", "signal": "unknown"}]},

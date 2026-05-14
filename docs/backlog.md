@@ -8,10 +8,12 @@ Prioritization:
 ## Active backlog (pending)
 
 ### P0
-1. **Step 135L — Stock Review Data Gap Action Routing + Today Action Alignment (PR in review)**
-   - Extend backend-owned `data_gap_actions` contract with routing metadata (`target_surface`, `action_type`, `confidence_effect`, `priority`, `operator_hint`).
-   - Keep backend read-model canonical mapping and align Today `你下一步要做咩` with Stock Review routing intent where available.
-   - Keep compact Chinese-first review-only wording and paper-only boundary (no order/broker/live/real-money/autonomous execution path).
+1. **Step 136A — Automatic Backend Data Cadence & Refresh Planner (PR in review)**
+   - 建立 backend run-type/cadence policy contract（pre-market/midday/post-close/stale-risk/event/manual-fallback）。
+   - 建立 deterministic auto refresh planner（bounded + dedup + paper-only + no order/broker）。
+   - manual refresh 只可作 fallback / operator emergency check，唔可以做主路徑。
+2. **Step 136B — Railway scheduled cadence deployment + smoke (next)**
+   - Step 136A merge 後先可推進部署與 smoke，並提供 deploy evidence。
 
 ### P1
 1. **Stock Review wording regression tests (pending)**
@@ -76,6 +78,7 @@ Prioritization:
 - Step 135I — Mini App Operator Workflow Finalization completed and merged (PR #150, merge commit `ce8ef2132a3f06df978cc509a5232dd2fd8e239c`).
 - Step 135J — Stock Review Data Gap Action Model completed and merged (PR #151, merge commit `521db7bdaa0a4ff701ffb480c2b2c37a10f5545a`).
 - Step 135K — Backend-owned Stock Review Data Gap Action Contract completed and merged (PR #152, merge commit `34b4dc552714ade11969e6e2d8ba2bc688d0c469`).
+- Step 135L — Stock Review Data Gap Action Routing + Today Action Alignment completed and merged (PR #153, merge commit `85fb55928127e28a02f22ccd414008f9660add06`).
 
 ## Completed backlog (archived)
 

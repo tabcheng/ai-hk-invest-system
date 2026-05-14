@@ -11,7 +11,9 @@ Recent completed product track summary (compact):
 Current sequence:
 - **Step 135J completed/merged** (PR #151).
 - **Step 135K completed/merged** (PR #152, merge commit `34b4dc552714ade11969e6e2d8ba2bc688d0c469`).
-- **Step 135L active candidate**: add routed review metadata to backend-owned `data_gap_actions` and align Today next-action wording with backend routing intent.
+- **Step 135L completed**: routed review metadata merged in PR #153 (`85fb55928127e28a02f22ccd414008f9660add06`).
+- **Step 136A active candidate**: Automatic Backend Data Cadence & Refresh Planner.
+- Next direction: **Step 136B** scheduled cadence deployment/smoke, then **Step 136C** AI team backend analysis packet.
 
 # Project Implementation Plan (System-of-Record View)
 

@@ -252,3 +252,8 @@ Operator deploy + smoke evidence flow (manual):
 - `telegram-webhook`: set `MARKET_DATA_PROVIDER=eodhd`, `EODHD_API_TOKEN=<backend-only secret>`, `MARKET_DATA_TIMEOUT_SECONDS=3`, optional `MARKET_DATA_DELAY_POLICY=delayed|unknown`.
 - `miniapp-static-preview`: MUST NOT set `EODHD_API_TOKEN` or any vendor key.
 - `paper-daily-runner`: keep `EODHD_API_TOKEN` unset unless a future approved writer step explicitly requires it.
+
+
+## Step 136A optional variable
+- `AIHK_RUN_TYPE` (optional): run-type hint (`post_close_daily_review` default; other values are cadence-contract types).
+- This variable definition does not itself enable new Railway schedules.

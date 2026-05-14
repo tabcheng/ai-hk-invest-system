@@ -87,3 +87,10 @@
 
 - Step 131 note: decision-context snapshot persistence stores only normalized bounded fields (`reference_price`, `previous_close`, `change`, `change_pct`, `volume`, `turnover`, freshness/acceptance) and never raw vendor payload/token.
 - Real-time HK data enablement still requires separate vendor/license review before any production escalation.
+
+
+## Step 136A backend cadence strategy
+- Automatic cadence is preferred: pre-market readiness, midday monitor, post-close review, stale/risk-triggered refresh, event-context refresh planning.
+- Current 20:00 HKT run remains post-close formal review baseline, not full-day monitoring by itself.
+- Manual refresh is fallback/emergency only, not primary path.
+- This step does not add new vendor integration or token usage.

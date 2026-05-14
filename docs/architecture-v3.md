@@ -336,3 +336,8 @@ The platform is designed as an **AI investment firm operating model** with stric
 - Decision layer outputs are strictly **paper-only** and simulation-oriented.
 - Governance layer (`Model Auditor`, `Compliance & Boundary Desk`) checks model quality and boundary risk before interpretation is escalated.
 - Architecture includes no broker/live execution path and no real-money order path.
+
+
+## Step 136A component: Backend Data Cadence + Auto Refresh Planner
+- Planner emits bounded paper-only refresh candidates (`auto_refresh_plan`) for review surfaces.
+- Component never creates orders and never connects to brokers.

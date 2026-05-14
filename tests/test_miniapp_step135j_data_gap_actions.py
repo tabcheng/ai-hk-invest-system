@@ -54,8 +54,15 @@ def test_stock_review_renders_route_and_confidence_metadata():
     assert "影響：" in HTML
     assert "target_surface_label" in HTML
     assert "confidence_effect" in HTML
+    assert "confidence_effect_label" in HTML
 
 
 def test_today_next_actions_can_use_routed_backend_actions():
     assert "const routedActions = Array.isArray(stockReview?.items?.[0]?.data_gap_actions)" in HTML
     assert "先看 ${target}：" in HTML
+
+
+def test_stock_review_first_layer_route_text_does_not_render_raw_confidence_enum():
+    block = HTML.split("const routeText = ", 1)[1].split("pushGapAction", 1)[0]
+    for raw_enum in ["context_required", "caps_long_term", "caps_medium_term", "blocks_short_term", "watch_only"]:
+        assert raw_enum not in block

@@ -377,7 +377,8 @@
           };
           if (backendGapActions.length) {
             backendGapActions.forEach((entry) => {
-              const routeText = `去向：${String(entry?.target_surface_label || "Stock Review")}｜影響：${String(entry?.confidence_effect || "context_required")}`;
+              const confidenceLabel = String(entry?.confidence_effect_label || "需要先補脈絡");
+              const routeText = `去向：${String(entry?.target_surface_label || "Stock Review")}｜影響：${confidenceLabel}`;
               pushGapAction(`${String(entry?.label || "")}（${routeText}）`, String(entry?.interpretation || ""));
             });
           } else {

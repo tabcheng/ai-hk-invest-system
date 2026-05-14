@@ -453,6 +453,7 @@ def test_stock_dossier_exposes_backend_data_gap_action_contract():
     assert all("target_surface_label" in action for action in item["data_gap_actions"])
     assert all("action_type" in action for action in item["data_gap_actions"])
     assert all("confidence_effect" in action for action in item["data_gap_actions"])
+    assert all("confidence_effect_label" in action for action in item["data_gap_actions"])
     assert all("priority" in action for action in item["data_gap_actions"])
     assert all("operator_hint" in action for action in item["data_gap_actions"])
     categories = {action["category"] for action in item["data_gap_actions"]}
@@ -564,3 +565,5 @@ def test_stock_dossier_data_gap_routing_mapping_fields():
     assert mapping["cashflow_earnings_balance_sheet"]["target_surface"] == "external_authorized_research"
     assert mapping["source_confidence"]["target_surface"] == "operator_review"
     assert mapping["source_confidence"]["confidence_effect"] == "watch_only"
+    assert mapping["market_freshness"]["confidence_effect_label"] == "限制短線判斷"
+    assert mapping["source_confidence"]["confidence_effect_label"] == "只可觀察"

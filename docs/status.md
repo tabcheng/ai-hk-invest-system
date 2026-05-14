@@ -67,6 +67,18 @@
 - No simulated/paper order creation: pass.
 - Human final real-money decision remains outside system: pass.
 
+### Step 135K post-merge closure record (PR #152)
+- PR #152 merged: yes.
+- Merge commit: `34b4dc552714ade11969e6e2d8ba2bc688d0c469`.
+- CI result before merge: success.
+- Test evidence before merge: `pytest` (525 passed).
+- Review thread resolved before merge: yes.
+- GitHub impact: backend read-model `data_gap_actions`, frontend backend-first rendering, tests, docs.
+- Railway impact: unchanged.
+- Supabase impact: unchanged.
+- DB/schema/RLS impact: unchanged.
+- Vendor/token impact: unchanged.
+- Broker/order/live/real-money/autonomous execution impact: none.
 
 ### Step 135K Post-merge QA Check
 - backend `data_gap_actions` contract exists and is backend-owned.

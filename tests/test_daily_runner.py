@@ -115,3 +115,18 @@ def test_run_summary_uses_fallback_run_type_for_invalid_env(monkeypatch, capsys)
     assert daily_runner.run() == 0
     summary = _extract_execution_summary(capsys.readouterr().out)
     assert summary["run_type"] == "post_close_daily_review"
+
+
+def test_run_summary_uses_env_run_type_when_valid(monkeypatch, capsys):
+    monkeypatch.setattr(daily_runner, "_run_daily_pipeline", lambda: None)
+    monkeypatch.setenv("AIHK_RUN_TYPE", "midday_market_monitor")
+
+    timestamps = iter([
+        datetime(2026, 3, 21, 12, 0, 0, tzinfo=timezone.utc),
+        datetime(2026, 3, 21, 12, 0, 1, tzinfo=timezone.utc),
+    ])
+    monkeypatch.setattr(daily_runner, "_utc_now", lambda: next(timestamps))
+
+    assert daily_runner.run() == 0
+    summary = _extract_execution_summary(capsys.readouterr().out)
+    assert summary["run_type"] == "midday_market_monitor"

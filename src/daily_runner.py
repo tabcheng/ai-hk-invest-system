@@ -8,6 +8,7 @@ reusing `src.app.main` as the daily run orchestrator.
 from __future__ import annotations
 
 import json
+import os
 import traceback
 from datetime import datetime, timezone
 
@@ -95,7 +96,7 @@ def run() -> int:
     started_at = _utc_now()
     print(f"[daily_runner] started entrypoint={ENTRYPOINT} started_at={started_at.isoformat()}")
 
-    run_type = get_effective_run_type()
+    run_type = get_effective_run_type(os.environ)
 
     try:
         _run_daily_pipeline()

@@ -3,6 +3,7 @@ from __future__ import annotations
 from datetime import datetime, timedelta, timezone
 from typing import Any, Mapping
 
+from src.backend_data_cadence import build_backend_data_cadence_policy, plan_backend_auto_refreshes
 from src.miniapp_data_provider import (
     LocalArtifactMiniAppReadDataProvider,
     MiniAppReadDataProvider,
@@ -373,6 +374,17 @@ def build_miniapp_review_shell_response(
         sections["ticker_level_paper_portfolio_review"],
         latest_system_run=sections["latest_system_run"],
         daily_review_summary=sections["daily_review_summary"],
+    )
+    sections["backend_data_cadence_policy"] = {
+        "status": "ok",
+        "manual_refresh_fallback_only": True,
+        "items": build_backend_data_cadence_policy(),
+    }
+    sections["auto_refresh_plan"] = plan_backend_auto_refreshes(
+        latest_system_run=sections["latest_system_run"],
+        risk_summary=sections["risk_summary"],
+        stock_dossier_items=list(sections["stock_dossier_review"].get("items") or []),
+        now=generated_at,
     )
     return {
         "status": "ok",

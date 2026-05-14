@@ -94,14 +94,41 @@
 - no simulated/paper order creation: pass.
 - human final real-money decision remains outside system: pass.
 
-### Step 135L implementation summary (PR in review)
-- Scope: extend backend-owned `data_gap_actions` with routing metadata (`target_surface`, `target_surface_label`, `action_type`, `confidence_effect`, `priority`, `operator_hint`) and align Today next-action hints with backend routing intent.
-- GitHub impact: `src/miniapp_read_model.py`, `miniapp/index.html`, focused tests, docs-of-record alignment.
+### Step 135L post-merge closure (PR #153)
+- PR #153 merged: yes.
+- merge commit: `85fb55928127e28a02f22ccd414008f9660add06`.
+- CI before merge: success; test evidence: `pytest` (529 passed).
+- Review thread resolved before merge: operator-reported accepted before merge.
+- GitHub impact: backend data-gap routing metadata + Today/Stock Review routed hints + tests + docs.
 - Railway impact: unchanged.
+- Supabase/DB/schema/RLS impact: unchanged.
+- Vendor/token impact: unchanged.
+- Broker/order/live/real-money/autonomous execution impact: none.
+
+### Step 135L Post-merge QA Check
+- backend `data_gap_actions` route metadata exists.
+- Stock Review renders routed actions and confidence effect labels in Chinese-readable wording.
+- Today next-actions align with backend routing intent.
+- No execution wording introduced.
+- Tests passed before merge: `pytest` (529 passed).
+
+### Step 135L Post-merge Domain Check
+- paper-only / decision-support only: pass.
+- no broker/live/real-money/autonomous execution: pass.
+- no simulated/paper order creation: pass.
+- human final real-money decision remains outside system: pass.
+
+### Step 136A implementation summary (PR in review)
+- Scope: add backend run-type contract + cadence policy + deterministic auto refresh planner (`src/backend_data_cadence.py`), and expose read-only planner outputs in Mini App read model.
+- Preferred path: automatic scheduled/policy refresh planning.
+- Manual refresh role: fallback/emergency only, not primary path.
+- GitHub impact: backend cadence/planner contract, read-model wiring, focused tests, docs-of-record updates.
+- Railway impact: unchanged; no new Railway cron activation is claimed in this PR.
 - Supabase impact: unchanged.
-- DB/schema/RLS/vendor/token impact: unchanged.
-- Risk/limitation: Today alignment is compact summary rendering and must not become a technical dump or second mapping source.
-- Pre-Step-135L screenshot baseline: build/deploy `34b4dc5` shows data-gap actions present but route/impact not yet shown.
+- DB/schema/RLS impact: unchanged.
+- Vendor/token impact: unchanged.
+- Broker/order/live/real-money/autonomous execution impact: none.
+- Risk/limitation: run-type metadata wiring into runner execution summary is deferred follow-up; current post-close 20:00 HKT baseline remains backward compatible.
 
 ## 2026-05-13 — Step 135I Mini App Operator Workflow Finalization
 
@@ -762,3 +789,4 @@
 - Step 135H scope（frontend-only）: 分離「已載入」與「資料不足/未能判斷」語意、壓縮股票檢視第一層、日誌改為分段主次、完整安全說明移到系統分頁可摺疊區塊。
 - Domain check: pass（paper-only / decision-support only；無 broker/live/order/real-money 路徑）。
 - Platform impact: GitHub Mini App UI only；Railway/Supabase/runtime schema/API 無變更。
+

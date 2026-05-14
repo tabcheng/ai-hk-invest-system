@@ -411,3 +411,7 @@ Allowed safer wording:
 - Routing metadata is review/navigation guidance only, not trading action guidance.
 - Today `你下一步要做咩` should reuse routed intent when available to avoid drift from Stock Review per-stock action meaning.
 - Stock Review first-layer rendering remains compact (max first 3 actions) and Chinese-first, with route/confidence shown as readable text (`去向` / `影響`) rather than color-only cues.
+
+
+## Step 136A product-surface note
+- Mini App may show compact auto-refresh summary for operator review; scheduler internals stay in System/technical context.

@@ -588,3 +588,9 @@ When validating Mini App Journal Outcome Review and Telegram `/journal_outcome`,
 - `資料缺口行動` 會顯示 `去向`（建議去邊個檢視頁面）同 `影響`（對短/中/長線檢視信心的限制）。
 - `去向` 只係 review/navigation 提示，唔係買賣或落盤指令。
 - Today `你下一步要做咩` 係摘要版路由提示；Stock Review 仍然係逐隻股票的詳細行動來源。
+
+
+## Step 136A operator expectation
+- Normal workflow should rely on automatic refresh planning candidates.
+- Manual refresh is fallback/troubleshooting only.
+- All outputs remain review-only and paper-only.

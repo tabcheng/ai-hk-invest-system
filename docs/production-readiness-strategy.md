@@ -180,3 +180,8 @@ Step 91A acceptance status update:
   - RLS remains enabled.
   - Backend secret key usage remains backend-only.
   - System remains AI HK equity paper-trading / decision-support only, with no broker/live-money execution path.
+
+
+## Step 136A runtime/env note
+- Added run-type contract supports optional `AIHK_RUN_TYPE` defaulting to `post_close_daily_review`.
+- No claim of Railway cron activation/change without separate deploy evidence.

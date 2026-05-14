@@ -1,0 +1,41 @@
+name: backend-cadence-smoke
+
+on:
+  workflow_dispatch:
+    inputs:
+      run_type:
+        description: 'Cadence run type to validate'
+        required: true
+        default: 'post_close_daily_review'
+        type: choice
+        options:
+          - post_close_daily_review
+          - pre_market_readiness_check
+          - midday_market_monitor
+          - stale_risk_refresh
+          - event_context_refresh
+          - manual_operator_refresh_fallback
+          - invalid
+      upload_artifact:
+        description: 'Upload smoke JSON artifact'
+        required: true
+        default: false
+        type: boolean
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+      - name: Run backend cadence smoke
+        run: python scripts/backend_cadence_smoke.py --run-type "${{ inputs.run_type }}" --output-json backend_cadence_smoke_report.json
+      - name: Upload smoke artifact
+        if: ${{ inputs.upload_artifact }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-cadence-smoke-report
+          path: backend_cadence_smoke_report.json
+          retention-days: 7

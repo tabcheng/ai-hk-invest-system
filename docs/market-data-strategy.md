@@ -94,3 +94,8 @@
 - Current 20:00 HKT run remains post-close formal review baseline, not full-day monitoring by itself.
 - Manual refresh is fallback/emergency only, not primary path.
 - This step does not add new vendor integration or token usage.
+
+## Step 136B runtime bridge note
+- Step 136B 將 Step 136A cadence contract 連到 runner metadata（`run_type`）與 smoke evidence harness，屬 repo-side wiring only。
+- 20:00 HKT 仍然係 post-close baseline（`post_close_daily_review`）。
+- pre-market / midday / stale-risk cadence 需要後續 Railway schedule activation + deploy + smoke evidence，先可以聲稱 production active。

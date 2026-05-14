@@ -594,3 +594,8 @@ When validating Mini App Journal Outcome Review and Telegram `/journal_outcome`,
 - Normal workflow should rely on automatic refresh planning candidates.
 - Manual refresh is fallback/troubleshooting only.
 - All outputs remain review-only and paper-only.
+
+## Step 136B cadence smoke expectation
+- 正常路徑應該係自動 scheduled/policy refresh；manual refresh 仍然只係 fallback。
+- cadence smoke evidence 只代表 repo-side cadence contract 健康，唔代表 Railway cron 已 live。
+- 若要聲稱 cron/live cadence，必須附 deploy 後 smoke evidence。

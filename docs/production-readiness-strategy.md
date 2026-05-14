@@ -185,3 +185,12 @@ Step 91A acceptance status update:
 ## Step 136A runtime/env note
 - Added run-type contract supports optional `AIHK_RUN_TYPE` defaulting to `post_close_daily_review`.
 - No claim of Railway cron activation/change without separate deploy evidence.
+
+## Step 136B staged acceptance path
+1. Repo local smoke script pass (`scripts/backend_cadence_smoke.py`)。
+2. GitHub Actions manual smoke pass (`workflow_dispatch` only)。
+3. Railway env/cron staged review（operator 手動）。
+4. Deploy。
+5. Post-deploy smoke evidence（summary-only, secret-safe）。
+
+- Railway 平台變更不能由 repo merge 自動推斷為已生效。

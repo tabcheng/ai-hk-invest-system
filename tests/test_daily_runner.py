@@ -46,6 +46,7 @@ def test_run_success_returns_zero_and_logs_consistent_summary(monkeypatch, capsy
     assert summary["duration_seconds"] == 5.0
     assert summary["entrypoint"] == "python -m src.daily_runner"
     assert summary["schedule_basis"] == "HKT 20:00 (Railway cron UTC: 0 12 * * *)"
+    assert summary["run_type"] == "post_close_daily_review"
     assert "error_summary" not in summary
 
 
@@ -77,6 +78,7 @@ def test_run_failure_returns_one_and_logs_failure_summary(monkeypatch, capsys):
     assert summary["duration_seconds"] == 2.0
     assert summary["entrypoint"] == "python -m src.daily_runner"
     assert summary["schedule_basis"] == "HKT 20:00 (Railway cron UTC: 0 12 * * *)"
+    assert summary["run_type"] == "post_close_daily_review"
     assert summary["error_summary"] == "RuntimeError: boom"
 
 
@@ -98,3 +100,18 @@ def test_summarize_error_normalizes_whitespace_and_truncates():
     assert summary.startswith("RuntimeError: boom with extra spaces")
     assert len(summary) == daily_runner._MAX_ERROR_SUMMARY_LENGTH
     assert summary.endswith("...")
+
+
+def test_run_summary_uses_fallback_run_type_for_invalid_env(monkeypatch, capsys):
+    monkeypatch.setattr(daily_runner, "_run_daily_pipeline", lambda: None)
+    monkeypatch.setenv("AIHK_RUN_TYPE", "invalid")
+
+    timestamps = iter([
+        datetime(2026, 3, 21, 12, 0, 0, tzinfo=timezone.utc),
+        datetime(2026, 3, 21, 12, 0, 1, tzinfo=timezone.utc),
+    ])
+    monkeypatch.setattr(daily_runner, "_utc_now", lambda: next(timestamps))
+
+    assert daily_runner.run() == 0
+    summary = _extract_execution_summary(capsys.readouterr().out)
+    assert summary["run_type"] == "post_close_daily_review"

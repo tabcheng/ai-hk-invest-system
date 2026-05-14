@@ -8,7 +8,10 @@ Prioritization:
 ## Active backlog (pending)
 
 ### P0
-- (none currently; next P0 to be selected after Step 135J merge verification)
+1. **Step 135J — Stock Review Data Gap Action Model (PR #151 in review)**
+   - Deterministic `資料缺口行動 / 下一步資料行動` mapping with watch-only boundary is implemented and under review.
+   - Keep no broker/order/live/real-money/autonomous execution path.
+   - Move to Completed only after PR #151 merge + acceptance closure in `docs/status.md`.
 
 ### P1
 1. **Stock Review wording regression tests (pending)**
@@ -71,7 +74,6 @@ Prioritization:
 - Step 135F — Stock Review horizon policy calibration completed and merged (PR #147).
 - Step 135H — Mini App Operator First-View Polish from Screenshot Smoke Review completed and merged (PR #149).
 - Step 135I — Mini App Operator Workflow Finalization completed and merged (PR #150, merge commit `ce8ef2132a3f06df978cc509a5232dd2fd8e239c`).
-- Step 135J — Stock Review Data Gap Action Model (PR #151) in review; move to completed after merge.
 
 ## Completed backlog (archived)
 

@@ -54,8 +54,26 @@ def test_acceptable_for_paper_review_does_not_force_stale_trigger():
 
 
 def test_no_execution_wording_in_output():
-    plan = plan_backend_auto_refreshes(latest_system_run={"market_data_status": "delayed"}, risk_summary={"risk_level": "unknown"}, stock_dossier_items=[])
-    text = str(plan).lower()
-    assert "buy" not in text and "sell" not in text and "order" not in text and "execute" not in text
+    plan = plan_backend_auto_refreshes(
+        latest_system_run={"market_data_status": "delayed"},
+        risk_summary={"risk_level": "unknown"},
+        stock_dossier_items=[],
+    )
+    user_facing_text = " ".join(
+        part
+        for item in plan["items"]
+        for part in (
+            str(item.get("reason") or ""),
+            str(item.get("operator_hint") or ""),
+            str(item.get("target_surface_label") or ""),
+            str(item.get("freshness_requirement") or ""),
+        )
+    ).lower()
+    assert "buy" not in user_facing_text
+    assert "sell" not in user_facing_text
+    assert "order" not in user_facing_text
+    assert "execute" not in user_facing_text
     assert all(x["creates_orders"] is False for x in plan["items"])
+    assert all(x["broker_connection"] is False for x in plan["items"])
+    assert all(x["paper_only"] is True for x in plan["items"])
     assert any(x["run_type"] == RUN_TYPE_STALE_RISK for x in plan["items"])

@@ -96,9 +96,9 @@ def build_stock_dossiers_v1_section(
                     else simulated_direction
                 ),
                 "operator_next_actions": [
-                    "先確認資料夠唔夠。",
-                    "再查看風險提示。",
-                    "最後由人手在系統外作出真實買賣決定。",
+                    "先補看主要資料缺口。",
+                    "再核對風險摘要與限制說明。",
+                    "保持觀察，並由人手在系統外作出真實買賣決定。",
                 ],
                 "strategy_horizon_policy": horizon_policy,
                 "technical_details": {

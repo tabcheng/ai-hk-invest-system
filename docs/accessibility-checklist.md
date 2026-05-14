@@ -19,3 +19,9 @@ Use this checklist for Mini App UI changes (especially tabs / first-view / card 
 - Hidden collapsed content should not leave confusing focus order for keyboard navigation.
 - Status meaning cannot rely on color only; wording must carry meaning.
 - Operator-facing labels should be Chinese-first and descriptive.
+
+
+## Step 135J accessibility checks
+- `資料缺口行動`/`下一步資料行動` uses readable text bullets (not color-only signals).
+- Data-gap interpretation caveats are visible as text (`解讀限制`), not icon/color only.
+- `查看技術資料` remains collapsible and keyboard accessible.

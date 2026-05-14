@@ -393,3 +393,10 @@ Allowed safer wording:
 - Loaded-state and sufficiency must stay separated: `已載入` does not mean `可安全判斷`.
 - Full safety details belong to System/collapsed area; short safety boundary stays globally visible.
 - This step defines final operator workflow baseline to avoid repeated micro-fix UI cycles on the same first-view issue set.
+
+
+## 2026-05-13 — Step 135J Stock Review Data Gap Action Model policy
+- Stock Review first layer remains compact and non-execution: `一句總結` `檢視結論` `策略週期` `主要缺口` `資料缺口行動` `風險提示` `AI 模擬方向` `下一步` `查看技術資料`.
+- `資料缺口行動` uses deterministic mapping from known gap categories (risk context, ticker decision/outcome context, fundamentals, valuation, cashflow/earnings/balance-sheet, stale market data, paper exposure/PnL, low-confidence/conflicting signals).
+- All actions are review/data actions only (先補看 / 保持觀察), never buy/sell/order/execute instructions.
+- Insufficient/stale data must downgrade interpretation to watch-only and keep `只供模擬檢視` boundary explicit.

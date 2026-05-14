@@ -21,7 +21,7 @@ def test_stock_review_tab_and_first_layer_labels_exist() -> None:
         "風險提示",
         "AI 模擬方向",
         "下一步",
-        "查看資料缺口",
+        "資料缺口行動",
     ]:
         assert label in block
 
@@ -34,6 +34,7 @@ def test_stock_review_empty_state_and_safety_text() -> None:
     assert "第一層只顯示重點，完整資料放在可展開區塊。只供模擬檢視。" in html
     assert "只供模擬檢視｜不建立訂單｜不連接券商｜不是真實買賣建議" in block
     assert "短線觀察；中線" in block
+    assert "解讀限制：" in block
     assert "；長線" in block
     assert "資料不足" in block
 

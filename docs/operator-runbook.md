@@ -572,3 +572,9 @@ When validating Mini App Journal Outcome Review and Telegram `/journal_outcome`,
 - Portfolio/Risk 的 `已載入` 只代表資料成功讀取，不代表風險安全。
 - `未能判斷` / `資料不足` 應視為提高謹慎，不是中性放行。
 - Journal 分類只供 paper journal 記錄，並非真實買賣指令。
+
+
+## Step 135J operator interpretation note
+- `資料缺口行動` 係提示下一步應該補看邊類資料，唔係交易指令。
+- 當顯示資料不足/過舊，代表信心下降，應 `保持觀察`，唔代表系統失效。
+- 任務仍屬 paper-only：不建立訂單、不連接券商、不是真實買賣建議。

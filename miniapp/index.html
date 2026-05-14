@@ -358,16 +358,42 @@
           const mediumGaps = Array.from(new Set((Array.isArray(horizon.horizon_data_gaps) ? horizon.horizon_data_gaps : []).map(mapMediumGapToChinese).filter(Boolean)));
           if (!mediumReady && !mediumGaps.length) mediumGaps.push("中線資料不足：請先補充信號、風險、模擬組合與個股決策脈絡");
           if (mediumGaps.length) addRow("主要缺口", mediumGaps.slice(0, 3).join("；"));
-          
+
+          const gapActions = [];
+          const gapInterpretations = [];
+          const pushGapAction = (action, interpretation) => {
+            if (action && !gapActions.includes(action)) gapActions.push(action);
+            if (interpretation && !gapInterpretations.includes(interpretation)) gapInterpretations.push(interpretation);
+          };
+          const gapText = mediumGaps.join("；");
+          if (gapText.includes("風險脈絡")) pushGapAction("先補看：風險摘要與限制說明", "已載入不等於可安全判斷");
+          if (gapText.includes("個股層級決策 / 結果脈絡") || gapText.includes("個股層級脈絡資料不足")) pushGapAction("先補看：最近模擬決策日誌、決策脈絡或結果", "未足夠支持提高檢視信心");
+          if (gapText.includes("基本面資料")) pushGapAction("先補看：最新業績、盈利能力、資產負債與公司公告", "長線 review 暫不提高信心");
+          if (gapText.includes("估值資料")) pushGapAction("先補看：估值比較、歷史估值、同業比較", "長線只可觀察");
+          if (gapText.includes("現金流資料") || gapText.includes("盈利資料") || gapText.includes("資產負債表資料")) pushGapAction("先補看：現金流／盈利／資產負債表財務細項", "不應輸出強長線結論");
+          const marketStatusHints = [
+            chosen?.technical_details?.market_data_status,
+            chosen?.technical_details?.freshness_status,
+            chosen?.technical_details?.market_data_acceptance_status,
+          ].map((x) => String(x || "").toLowerCase()).filter(Boolean);
+          const hasMarketStaleFlag = marketStatusHints.some((x) => x.includes("stale") || x.includes("過舊") || x.includes("unavailable") || x.includes("unknown") || x.includes("delayed"));
+          if (hasMarketStaleFlag) {
+            pushGapAction("先補看：資料時間、更新狀態與市場 smoke 檢查證據", "短線只可觀察，不可當即時訊號");
+          }
+          if (gapText.includes("模擬組合背景")) pushGapAction("先補看：模擬組合／風險頁的持倉與盈虧脈絡", "不可推斷目前 paper exposure 安全");
+          if (String(chosen?.technical_details?.signals_status || "").toLowerCase() !== "ok") pushGapAction("保持觀察：補官方或已授權來源，避免單一訊號", "來源或訊號未一致，不可升級為明確方向");
+          if (!gapActions.length) pushGapAction("下一步資料行動：繼續檢視風險、信號與人手模擬決策紀錄", "仍只供模擬檢視，不代表買賣建議");
+
           addRow("風險提示", chosen?.risk_brief);
           const rawDirection = String(chosen?.simulated_direction || "資料不足，暫時只可觀察");
           const caveatDirection = (chosen?.data_sufficiency !== "sufficient" && chosen?.data_sufficiency !== "ready" && !rawDirection.includes("資料不足")) ? `${rawDirection}，但資料不足，仍只供觀察` : rawDirection;
           addRow("AI 模擬方向", caveatDirection);
-          addRow("下一步", "先觀察，再做人手 paper journal 記錄");
-          const actionsTitle = document.createElement("h3"); actionsTitle.textContent = "查看資料缺口";
+          addRow("下一步", "保持觀察，先補看資料缺口，再記錄人手模擬決策日誌");
+          const actionsTitle = document.createElement("h3"); actionsTitle.textContent = "資料缺口行動 / 下一步資料行動";
           const ul = document.createElement("ul");
-          (chosen?.operator_next_actions || []).forEach((a) => { const li = document.createElement("li"); li.textContent = String(a); ul.appendChild(li); });
-          card.append(actionsTitle, ul);
+          gapActions.slice(0, 3).forEach((a) => { const li = document.createElement("li"); li.textContent = String(a); ul.appendChild(li); });
+          const interpretation = document.createElement("p"); interpretation.className = "helper-text"; interpretation.textContent = `解讀限制：${gapInterpretations.slice(0, 2).join("；") || "仍只供模擬檢視，不代表買賣建議"}`;
+          card.append(actionsTitle, ul, interpretation);
           addRow("安全提示", chosen?.safety_note || "只供模擬檢視｜不建立訂單｜不連接券商｜不是真實買賣建議");
           const d = document.createElement("details"); const s = document.createElement("summary"); s.textContent = "查看技術資料";
           const techObj = {

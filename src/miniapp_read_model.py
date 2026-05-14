@@ -178,15 +178,38 @@ def _build_data_gap_actions(horizon_policy: Mapping[str, Any], technical_details
     lower_gap_text = gap_text.lower()
     actions: list[dict[str, Any]] = []
 
+    confidence_labels = {
+        "context_required": "需要先補脈絡",
+        "blocks_short_term": "限制短線判斷",
+        "caps_medium_term": "限制中線信心",
+        "caps_long_term": "限制長線信心",
+        "watch_only": "只可觀察",
+    }
+    route_meta = {
+        "risk_context": {"target_surface": "portfolio_risk", "target_surface_label": "Portfolio/Risk", "action_type": "review_internal_surface", "action_type_label": "檢視內部頁面", "confidence_effect": "context_required", "priority": 1, "operator_hint": "先睇風險摘要同限制，唔好將已載入理解為安全。"},
+        "ticker_decision_context": {"target_surface": "journal_outcome", "target_surface_label": "Journal / Outcome", "action_type": "review_journal_context", "action_type_label": "檢視日誌脈絡", "confidence_effect": "caps_medium_term", "priority": 2, "operator_hint": "先睇最近人手模擬決策、理由同後續結果。"},
+        "fundamentals": {"target_surface": "external_authorized_research", "target_surface_label": "授權資料 / 公司資料", "action_type": "review_external_authorized_source", "action_type_label": "補看授權資料", "confidence_effect": "caps_long_term", "priority": 3, "operator_hint": "補看業績、盈利能力、資產負債同公告後先做長線 review。"},
+        "valuation": {"target_surface": "external_authorized_research", "target_surface_label": "授權資料 / 估值比較", "action_type": "review_external_authorized_source", "action_type_label": "補看授權資料", "confidence_effect": "caps_long_term", "priority": 4, "operator_hint": "補估值比較、歷史估值、同業比較；未補前只可觀察。"},
+        "cashflow_earnings_balance_sheet": {"target_surface": "external_authorized_research", "target_surface_label": "授權資料 / 財務細項", "action_type": "review_external_authorized_source", "action_type_label": "補看授權資料", "confidence_effect": "caps_long_term", "priority": 5, "operator_hint": "補現金流、盈利、資產負債表後再 review。"},
+        "market_freshness": {"target_surface": "system_market_data", "target_surface_label": "System / Market Data", "action_type": "review_market_freshness", "action_type_label": "核對市場資料時間", "confidence_effect": "blocks_short_term", "priority": 1, "operator_hint": "先核對資料時間、freshness、market smoke；不可當即時訊號。"},
+        "paper_exposure_pnl": {"target_surface": "portfolio_risk", "target_surface_label": "Portfolio/Risk", "action_type": "review_portfolio_context", "action_type_label": "檢視組合背景", "confidence_effect": "context_required", "priority": 2, "operator_hint": "先睇模擬持倉與 PnL，唔好推斷 exposure 安全。"},
+        "source_confidence": {"target_surface": "operator_review", "target_surface_label": "Operator Review", "action_type": "observe_only", "action_type_label": "保持觀察", "confidence_effect": "watch_only", "priority": 6, "operator_hint": "來源或訊號未一致，保持觀察，補官方或已授權來源。"},
+        "general_review": {"target_surface": "stock_review", "target_surface_label": "Stock Review", "action_type": "review_internal_surface", "action_type_label": "檢視內部頁面", "confidence_effect": "context_required", "priority": 9, "operator_hint": "繼續檢視風險、信號同人手模擬決策紀錄。"},
+    }
+
     def push(category: str, label: str, interpretation: str) -> None:
         if any(row.get("category") == category for row in actions):
             return
+        meta = route_meta.get(category, route_meta["general_review"])
+        confidence_key = str(meta.get("confidence_effect") or "context_required")
         actions.append(
             {
                 "category": category,
                 "label": label,
                 "interpretation": interpretation,
                 "review_only": True,
+                **meta,
+                "confidence_effect_label": confidence_labels.get(confidence_key, "需要先補脈絡"),
             }
         )
 

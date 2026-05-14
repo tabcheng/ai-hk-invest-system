@@ -67,16 +67,41 @@
 - No simulated/paper order creation: pass.
 - Human final real-money decision remains outside system: pass.
 
-### Step 135K implementation summary (PR in review)
-- Scope: backend/read-model owns canonical Stock Review data-gap action contract (`data_gap_actions`, `data_gap_interpretation_summary`, `data_gap_action_source`) and frontend consumes backend structured fields first.
-- Compatibility boundary: frontend keeps safe fallback mapping only for old payload compatibility.
-- GitHub impact: `src/miniapp_read_model.py`, `miniapp/index.html`, focused tests, docs-of-record sync.
+### Step 135K post-merge closure record (PR #152)
+- PR #152 merged: yes.
+- Merge commit: `34b4dc552714ade11969e6e2d8ba2bc688d0c469`.
+- CI result before merge: success.
+- Test evidence before merge: `pytest` (525 passed).
+- Review thread resolved before merge: yes.
+- GitHub impact: backend read-model `data_gap_actions`, frontend backend-first rendering, tests, docs.
+- Railway impact: unchanged.
+- Supabase impact: unchanged.
+- DB/schema/RLS impact: unchanged.
+- Vendor/token impact: unchanged.
+- Broker/order/live/real-money/autonomous execution impact: none.
+
+### Step 135K Post-merge QA Check
+- backend `data_gap_actions` contract exists and is backend-owned.
+- frontend consumes backend contract first; fallback remains compatibility-only.
+- stale/unknown/delayed/last-close market variants covered; `acceptable_for_paper_review` alone does not trigger false stale warning.
+- Stock Review displays data-gap actions with no execution wording.
+- Tests passed before merge: `pytest` (525 passed).
+- Screenshot smoke confirms deployed build prefix `34b4dc5` (operator visual evidence only).
+
+### Step 135K Post-merge Domain Check
+- paper-only / decision-support only: pass.
+- no broker/live/real-money/autonomous execution: pass.
+- no simulated/paper order creation: pass.
+- human final real-money decision remains outside system: pass.
+
+### Step 135L implementation summary (PR in review)
+- Scope: extend backend-owned `data_gap_actions` with routing metadata (`target_surface`, `target_surface_label`, `action_type`, `confidence_effect`, `priority`, `operator_hint`) and align Today next-action hints with backend routing intent.
+- GitHub impact: `src/miniapp_read_model.py`, `miniapp/index.html`, focused tests, docs-of-record alignment.
 - Railway impact: unchanged.
 - Supabase impact: unchanged.
 - DB/schema/RLS/vendor/token impact: unchanged.
-- Tests run in this PR: focused Mini App/read-model suites plus full `pytest`.
-- Acceptance note: keep Step 135K as PR-in-review until merged; do not claim completion before merge acceptance.
-- Risk/limitation: frontend fallback path must stay in sync only for compatibility; canonical mapping remains backend-owned.
+- Risk/limitation: Today alignment is compact summary rendering and must not become a technical dump or second mapping source.
+- Pre-Step-135L screenshot baseline: build/deploy `34b4dc5` shows data-gap actions present but route/impact not yet shown.
 
 ## 2026-05-13 — Step 135I Mini App Operator Workflow Finalization
 

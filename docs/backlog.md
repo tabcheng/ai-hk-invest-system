@@ -8,9 +8,9 @@ Prioritization:
 ## Active backlog (pending)
 
 ### P0
-1. **Step 135K — Backend-owned Stock Review Data Gap Action Contract (PR in review)**
-   - Move canonical `資料缺口行動` mapping from frontend-only string matching to backend read-model structured contract.
-   - Mini App frontend must consume backend `data_gap_actions` first; local fallback is compatibility-only for old payloads.
+1. **Step 135L — Stock Review Data Gap Action Routing + Today Action Alignment (PR in review)**
+   - Extend backend-owned `data_gap_actions` contract with routing metadata (`target_surface`, `action_type`, `confidence_effect`, `priority`, `operator_hint`).
+   - Keep backend read-model canonical mapping and align Today `你下一步要做咩` with Stock Review routing intent where available.
    - Keep compact Chinese-first review-only wording and paper-only boundary (no order/broker/live/real-money/autonomous execution path).
 
 ### P1
@@ -75,6 +75,7 @@ Prioritization:
 - Step 135H — Mini App Operator First-View Polish from Screenshot Smoke Review completed and merged (PR #149).
 - Step 135I — Mini App Operator Workflow Finalization completed and merged (PR #150, merge commit `ce8ef2132a3f06df978cc509a5232dd2fd8e239c`).
 - Step 135J — Stock Review Data Gap Action Model completed and merged (PR #151, merge commit `521db7bdaa0a4ff701ffb480c2b2c37a10f5545a`).
+- Step 135K — Backend-owned Stock Review Data Gap Action Contract completed and merged (PR #152, merge commit `34b4dc552714ade11969e6e2d8ba2bc688d0c469`).
 
 ## Completed backlog (archived)
 

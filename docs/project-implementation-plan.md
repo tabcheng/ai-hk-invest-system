@@ -1,4 +1,4 @@
-## Current state checkpoint (as of Step 135K candidate)
+## Current state checkpoint (as of Step 135L candidate)
 
 Recent completed product track summary (compact):
 - AI Team Operating Model docs-of-record established and active as role-boundary baseline.
@@ -10,7 +10,8 @@ Recent completed product track summary (compact):
 
 Current sequence:
 - **Step 135J completed/merged** (PR #151).
-- **Step 135K active candidate**: backend-owned Stock Review data-gap action contract with frontend backend-first consumption.
+- **Step 135K completed/merged** (PR #152, merge commit `34b4dc552714ade11969e6e2d8ba2bc688d0c469`).
+- **Step 135L active candidate**: add routed review metadata to backend-owned `data_gap_actions` and align Today next-action wording with backend routing intent.
 
 # Project Implementation Plan (System-of-Record View)
 

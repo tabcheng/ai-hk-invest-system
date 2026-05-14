@@ -8,10 +8,10 @@ Prioritization:
 ## Active backlog (pending)
 
 ### P0
-1. **Step 135J — Stock Review Data Gap Action Model (PR #151 in review)**
-   - Deterministic `資料缺口行動 / 下一步資料行動` mapping with watch-only boundary is implemented and under review.
-   - Keep no broker/order/live/real-money/autonomous execution path.
-   - Move to Completed only after PR #151 merge + acceptance closure in `docs/status.md`.
+1. **Step 135K — Backend-owned Stock Review Data Gap Action Contract (PR in review)**
+   - Move canonical `資料缺口行動` mapping from frontend-only string matching to backend read-model structured contract.
+   - Mini App frontend must consume backend `data_gap_actions` first; local fallback is compatibility-only for old payloads.
+   - Keep compact Chinese-first review-only wording and paper-only boundary (no order/broker/live/real-money/autonomous execution path).
 
 ### P1
 1. **Stock Review wording regression tests (pending)**
@@ -74,6 +74,7 @@ Prioritization:
 - Step 135F — Stock Review horizon policy calibration completed and merged (PR #147).
 - Step 135H — Mini App Operator First-View Polish from Screenshot Smoke Review completed and merged (PR #149).
 - Step 135I — Mini App Operator Workflow Finalization completed and merged (PR #150, merge commit `ce8ef2132a3f06df978cc509a5232dd2fd8e239c`).
+- Step 135J — Stock Review Data Gap Action Model completed and merged (PR #151, merge commit `521db7bdaa0a4ff701ffb480c2b2c37a10f5545a`).
 
 ## Completed backlog (archived)
 

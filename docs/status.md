@@ -36,14 +36,47 @@
 - No autonomous execution / no trade instruction wording: pass.
 - Human final real-money decision remains outside system: pass.
 
-### Step 135J implementation summary (PR #151 in review)
-- Scope (PR #151 pending merge): bounded deterministic Stock Review data-gap-to-action model in Mini App first layer (`資料缺口行動 / 下一步資料行動`), plus focused tests and docs alignment.
-- No AI token / no vendor integration / no DB schema-RLS change / no Supabase migration.
-- No broker/order/live/real-money/autonomous execution behavior.
-- No simulated order creation and no paper order creation in this step.
+### Step 135J post-merge closure (PR #151)
+- PR #151 merged: yes.
+- Merge commit: `521db7bdaa0a4ff701ffb480c2b2c37a10f5545a`.
+- CI result before merge: success.
+- Test evidence before merge: `pytest` (516 passed).
+- Review threads resolved before merge: yes.
+- GitHub impact: Mini App Stock Review data-gap action UI/read-model/docs/tests.
 - Railway impact: unchanged.
-- Merge state: pending PR #151 review; acceptance finalization to be recorded after merge.
 - Supabase impact: unchanged.
+- DB/schema/RLS impact: unchanged.
+- Vendor/token impact: unchanged.
+- Broker/order/live/real-money/autonomous execution impact: none.
+
+### Step 135J Post-merge QA Check
+- Stock Review shows deterministic `資料缺口行動 / 下一步資料行動`.
+- Data-gap guidance remains compact and Chinese-first.
+- Missing/stale/insufficient data lowers confidence or limits interpretation.
+- Market freshness action is triggered only by market-specific fields, not generic `不足`.
+- Ticker context insufficient variant is covered.
+- Tests passed before merge: `pytest` (516 passed).
+- Limitation: no automated browser screenshot test evidence in this step.
+
+### Step 135J Post-merge Domain Check
+- AI HK investing system alignment: pass.
+- Paper-trading / decision-support only: pass.
+- No broker connection: pass.
+- No live execution / real-money execution: pass.
+- No autonomous execution: pass.
+- No simulated/paper order creation: pass.
+- Human final real-money decision remains outside system: pass.
+
+### Step 135K implementation summary (PR in review)
+- Scope: backend/read-model owns canonical Stock Review data-gap action contract (`data_gap_actions`, `data_gap_interpretation_summary`, `data_gap_action_source`) and frontend consumes backend structured fields first.
+- Compatibility boundary: frontend keeps safe fallback mapping only for old payload compatibility.
+- GitHub impact: `src/miniapp_read_model.py`, `miniapp/index.html`, focused tests, docs-of-record sync.
+- Railway impact: unchanged.
+- Supabase impact: unchanged.
+- DB/schema/RLS/vendor/token impact: unchanged.
+- Tests run in this PR: focused Mini App/read-model suites plus full `pytest`.
+- Acceptance note: keep Step 135K as PR-in-review until merged; do not claim completion before merge acceptance.
+- Risk/limitation: frontend fallback path must stay in sync only for compatibility; canonical mapping remains backend-owned.
 
 ## 2026-05-13 — Step 135I Mini App Operator Workflow Finalization
 
@@ -57,7 +90,7 @@
 - Step 135I scope: finalize Mini App operator workflow contract across Today / Stock Review / Portfolio-Risk / Journal / System tabs, with summary-first first layer and collapsed secondary blocks.
 - GitHub impact: Mini App UI + focused tests + docs-of-record alignment.
 - Railway impact: unchanged.
-- Merge state: pending PR #151 review; acceptance finalization to be recorded after merge.
+- Merge state: superseded by Step 135J post-merge closure record above.
 - Supabase impact: unchanged.
 - No backend/API/schema/vendor/broker/order/live/real-money behavior change.
 - Post-deploy Mini App screenshot smoke required after merge: yes.
@@ -91,7 +124,7 @@
 - Post-merge QA Check: pass (docs/status + docs/backlog post-merge closure is recorded by this docs-only PR).
 - Post-merge Domain Check: pass (paper-only / decision-support only; no broker/live/real-money/order path introduced).
 - Railway impact: unchanged.
-- Merge state: pending PR #151 review; acceptance finalization to be recorded after merge.
+- Merge state: superseded by Step 135J post-merge closure record above.
 - Supabase impact: unchanged (no schema/RLS/write change).
 - Mini App UI smoke: recommended after merge for UI changes; docs-only governance additions alone do not require post-deploy smoke.
 - Wording discipline reminder: `docs/status.md` records merge-completion truth and acceptance outcomes; `docs/backlog.md` records pending follow-up work only.

@@ -76,6 +76,14 @@ def build_stock_dossiers_v1_section(
             has_ticker_context=has_ticker_context,
             ticker_context_state=ticker_context_state,
         )
+        action_context = {
+            "signal": signal,
+            "risk_level": risk_level,
+            "market_data_status": ((latest_system_run or {}).get("market_data_status") if isinstance(latest_system_run, Mapping) else None),
+            "freshness_status": ((latest_system_run or {}).get("freshness_status") if isinstance(latest_system_run, Mapping) else None),
+            "market_data_acceptance_status": ((latest_system_run or {}).get("market_data_acceptance_status") if isinstance(latest_system_run, Mapping) else None),
+        }
+        data_gap_actions, data_gap_interpretation_summary = _build_data_gap_actions(horizon_policy, action_context)
         if p:
             portfolio_context = f"持倉={p.get('quantity', 0)}，總盈虧={p.get('total_pnl', '未有資料')}。"
         else:
@@ -101,6 +109,9 @@ def build_stock_dossiers_v1_section(
                     "保持觀察，並由人手在系統外作出真實買賣決定。",
                 ],
                 "strategy_horizon_policy": horizon_policy,
+                "data_gap_actions": data_gap_actions,
+                "data_gap_interpretation_summary": data_gap_interpretation_summary,
+                "data_gap_action_source": "backend_read_model",
                 "technical_details": {
                     "signal": signal,
                     "risk_level": risk_level,
@@ -159,6 +170,69 @@ def _compute_horizon_policy(
       'horizon_confidence_notes': ['短線訊號不足以形成 paper decision','長線資料不足，長線信心有限'],
       'paper_decision_scope': paper_scope,
     }
+
+
+def _build_data_gap_actions(horizon_policy: Mapping[str, Any], technical_details: Mapping[str, Any]) -> tuple[list[dict[str, Any]], str]:
+    gaps = list(horizon_policy.get("horizon_data_gaps") or [])
+    gap_text = "；".join(str(x) for x in gaps)
+    lower_gap_text = gap_text.lower()
+    actions: list[dict[str, Any]] = []
+
+    def push(category: str, label: str, interpretation: str) -> None:
+        if any(row.get("category") == category for row in actions):
+            return
+        actions.append(
+            {
+                "category": category,
+                "label": label,
+                "interpretation": interpretation,
+                "review_only": True,
+            }
+        )
+
+    if "risk context" in lower_gap_text:
+        push("risk_context", "先補看：風險摘要與限制說明", "已載入不等於可安全判斷")
+    if ("outcome review/context" in lower_gap_text) or ("缺少個股層級脈絡資料" in gap_text) or ("個股層級脈絡資料不足" in gap_text):
+        push("ticker_decision_context", "先補看：最近模擬決策日誌、決策脈絡或結果", "未足夠支持提高檢視信心")
+    if "缺少基本面資料" in gap_text:
+        push("fundamentals", "先補看：最新業績、盈利能力、資產負債與公司公告", "長線 review 暫不提高信心")
+    if "缺少估值資料" in gap_text:
+        push("valuation", "先補看：估值比較、歷史估值、同業比較", "長線只可觀察")
+    if any(x in gap_text for x in ["缺少現金流資料", "缺少盈利資料", "缺少資產負債表資料"]):
+        push("cashflow_earnings_balance_sheet", "先補看：現金流／盈利／資產負債表財務細項", "不應輸出強長線結論")
+
+    market_flags = [
+        str(technical_details.get("market_data_status") or "").lower(),
+        str(technical_details.get("freshness_status") or "").lower(),
+        str(technical_details.get("market_data_acceptance_status") or "").lower(),
+    ]
+
+    def _is_market_freshness_gap(flag: str) -> bool:
+        value = str(flag or "").strip().lower()
+        if not value:
+            return False
+        # Explicitly allow paper-review acceptance status on its own.
+        # Separate freshness/market status fields can still independently mark stale/delayed.
+        if value == "acceptable_for_paper_review":
+            return False
+        if value.startswith("stale") or value.startswith("unknown") or value.startswith("unavailable") or value.startswith("delayed"):
+            return True
+        return any(token in value for token in ["stale", "unknown", "unavailable", "delayed", "caution_last_available_close"])
+
+    if any(_is_market_freshness_gap(flag) for flag in market_flags):
+        push("market_freshness", "先補看：資料時間、更新狀態與市場 smoke 檢查證據", "短線只可觀察，不可當即時訊號")
+    if "paper portfolio context" in lower_gap_text:
+        push("paper_exposure_pnl", "先補看：模擬組合／風險頁的持倉與盈虧脈絡", "不可推斷目前 paper exposure 安全")
+
+    signal = str(technical_details.get("signal") or "").lower()
+    risk_level = str(technical_details.get("risk_level") or "").lower()
+    if signal not in {"positive", "neutral", "negative"} or risk_level not in {"low", "medium", "high"}:
+        push("source_confidence", "保持觀察：補官方或已授權來源，避免單一訊號", "來源或訊號未一致，不可升級為明確方向")
+
+    if not actions:
+        push("general_review", "下一步資料行動：繼續檢視風險、信號與人手模擬決策紀錄", "仍只供模擬檢視，不代表買賣建議")
+
+    return actions, f"解讀限制：{'；'.join(row['interpretation'] for row in actions[:2])}"
 
 
 def build_daily_brief_section(

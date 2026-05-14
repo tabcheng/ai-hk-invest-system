@@ -400,3 +400,8 @@ Allowed safer wording:
 - `資料缺口行動` uses deterministic mapping from known gap categories (risk context, ticker decision/outcome context, fundamentals, valuation, cashflow/earnings/balance-sheet, stale market data, paper exposure/PnL, low-confidence/conflicting signals).
 - All actions are review/data actions only (先補看 / 保持觀察), never buy/sell/order/execute instructions.
 - Insufficient/stale data must downgrade interpretation to watch-only and keep `只供模擬檢視` boundary explicit.
+
+## 2026-05-14 — Step 135K backend-owned Stock Review data-gap action contract policy
+- Backend/read-model is the canonical source of Stock Review data-gap action contract (`data_gap_actions`, `data_gap_interpretation_summary`, `data_gap_action_source=backend_read_model`).
+- Frontend must render backend structured data first; local string-sniff fallback is compatibility-only for older payloads and must not become a second source of truth.
+- UI remains compact, Chinese-first, and review-only (`資料缺口行動` + `解讀限制`), with no execution-implying wording.

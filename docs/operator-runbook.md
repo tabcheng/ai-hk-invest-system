@@ -578,3 +578,8 @@ When validating Mini App Journal Outcome Review and Telegram `/journal_outcome`,
 - `資料缺口行動` 係提示下一步應該補看邊類資料，唔係交易指令。
 - 當顯示資料不足/過舊，代表信心下降，應 `保持觀察`，唔代表系統失效。
 - 任務仍屬 paper-only：不建立訂單、不連接券商、不是真實買賣建議。
+
+## Step 135K operator interpretation note
+- `資料缺口行動` 由 backend read model deterministic contract 提供，前端主要負責顯示。
+- `資料缺口行動` 代表下一步要檢視咩資料，唔係交易建議，更唔係落盤指令。
+- 當顯示資料不足／過舊／來源未一致，應理解為信心下降與 `只可觀察`，唔應升級為明確方向。

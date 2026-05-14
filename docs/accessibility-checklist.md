@@ -25,3 +25,8 @@ Use this checklist for Mini App UI changes (especially tabs / first-view / card 
 - `資料缺口行動`/`下一步資料行動` uses readable text bullets (not color-only signals).
 - Data-gap interpretation caveats are visible as text (`解讀限制`), not icon/color only.
 - `查看技術資料` remains collapsible and keyboard accessible.
+
+## Step 135K accessibility checks
+- `資料缺口行動` and `解讀限制` remain readable text (not color-only/icon-only meaning).
+- Backend-structured data action text still renders as plain readable list items.
+- `查看技術資料` collapsed details remain keyboard accessible and unchanged as secondary layer.

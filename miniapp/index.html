@@ -105,7 +105,7 @@
         return "訊號未一致，先做人工 review";
       }
       function fillUnavailable(cardId, title){ const card=document.getElementById(cardId); card.textContent=""; const h=document.createElement("h2"); h.textContent=title; const chip=renderStatusChip("unavailable"); const p=document.createElement("p"); p.className="helper-text"; p.textContent=`${title}未有資料（Data not available yet）`; card.append(h,chip,p); }
-      function renderOverview(latest,daily,signals,risk,dailyBrief){
+      function renderOverview(latest,daily,signals,risk,dailyBrief,stockReview){
         const card=document.getElementById("overview-card");
         card.textContent="";
         const h=document.createElement("h2");
@@ -153,9 +153,18 @@
         const directionLine=document.createElement("p"); directionLine.className="row"; directionLine.textContent=`AI 模擬方向：${aiDirection}`;
         const nextTitle=document.createElement("h3"); nextTitle.textContent="你下一步要做咩";
         const nextList=document.createElement("ul");
-        const actions = Array.isArray(dailyBrief?.operator_next_actions) && dailyBrief.operator_next_actions.length > 0
-          ? dailyBrief.operator_next_actions.slice(0,3)
-          : ["查看 Outcome Review", "查看風險提示", coverage === "ready" ? "寫低你嘅模擬決定理由（paper decision journal）" : "暫時只觀察，不作模擬決策"];
+        const routedActions = Array.isArray(stockReview?.items?.[0]?.data_gap_actions)
+          ? stockReview.items[0].data_gap_actions.slice(0, 3).map((entry) => {
+            const target = String(entry?.target_surface_label || "Stock Review");
+            const hint = String(entry?.operator_hint || entry?.label || "保持觀察，先補看資料。");
+            return `先看 ${target}：${hint}`;
+          })
+          : [];
+        const actions = routedActions.length
+          ? routedActions
+          : (Array.isArray(dailyBrief?.operator_next_actions) && dailyBrief.operator_next_actions.length > 0
+            ? dailyBrief.operator_next_actions.slice(0,3)
+            : ["查看 Outcome Review", "查看風險提示", coverage === "ready" ? "寫低你嘅模擬決定理由（paper decision journal）" : "暫時只觀察，不作模擬決策"]);
         actions.forEach((x)=>{ const li=document.createElement("li"); li.textContent=String(x); nextList.appendChild(li); });
         const safetyLine=document.createElement("p"); safetyLine.className="helper-text"; safetyLine.textContent=String(dailyBrief?.safety_note || "只供模擬檢視｜不建立訂單｜不連接券商｜不是真實買賣建議");
         card.append(h,line1,line2,line3,line4,availabilityGrid,riskLine,directionLine,nextTitle,nextList,note,safetyLine);
@@ -367,7 +376,10 @@
             if (interpretation && !gapInterpretations.includes(interpretation)) gapInterpretations.push(interpretation);
           };
           if (backendGapActions.length) {
-            backendGapActions.forEach((entry) => pushGapAction(String(entry?.label || ""), String(entry?.interpretation || "")));
+            backendGapActions.forEach((entry) => {
+              const routeText = `去向：${String(entry?.target_surface_label || "Stock Review")}｜影響：${String(entry?.confidence_effect || "context_required")}`;
+              pushGapAction(`${String(entry?.label || "")}（${routeText}）`, String(entry?.interpretation || ""));
+            });
           } else {
             const gapText = mediumGaps.join("；");
             if (gapText.includes("風險脈絡")) pushGapAction("先補看：風險摘要與限制說明", "已載入不等於可安全判斷");
@@ -608,7 +620,7 @@
           const pnl = payload?.sections?.paper_pnl_summary;
           const risk = payload?.sections?.risk_summary;
           const dailyBrief = payload?.sections?.daily_brief;
-          renderOverview(latest, daily, signals, risk, dailyBrief);
+          renderOverview(latest, daily, signals, risk, dailyBrief, payload?.sections?.stock_dossier_review);
           renderLatest(latest);
           renderDaily(daily, signals);
           let selectedTicker = Array.isArray(signals?.top_items) && signals.top_items.length > 0 ? String(signals.top_items[0].ticker || "") : "";

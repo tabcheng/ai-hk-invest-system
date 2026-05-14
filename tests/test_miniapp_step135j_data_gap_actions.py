@@ -45,5 +45,17 @@ def test_ticker_context_insufficient_variant_maps_to_context_action():
 def test_frontend_prefers_backend_data_gap_actions_contract():
     assert "const backendGapActions = Array.isArray(chosen?.data_gap_actions) ? chosen.data_gap_actions : [];" in HTML
     assert "if (backendGapActions.length)" in HTML
-    assert "backendGapActions.forEach((entry) => pushGapAction(String(entry?.label || \"\"), String(entry?.interpretation || \"\")))" in HTML
+    assert "backendGapActions.forEach((entry) => {" in HTML
     assert "chosen?.data_gap_interpretation_summary ||" in HTML
+
+
+def test_stock_review_renders_route_and_confidence_metadata():
+    assert "去向：" in HTML
+    assert "影響：" in HTML
+    assert "target_surface_label" in HTML
+    assert "confidence_effect" in HTML
+
+
+def test_today_next_actions_can_use_routed_backend_actions():
+    assert "const routedActions = Array.isArray(stockReview?.items?.[0]?.data_gap_actions)" in HTML
+    assert "先看 ${target}：" in HTML

@@ -449,6 +449,12 @@ def test_stock_dossier_exposes_backend_data_gap_action_contract():
     assert isinstance(item["data_gap_actions"], list) and item["data_gap_actions"]
     assert item["data_gap_interpretation_summary"].startswith("解讀限制：")
     assert all(action["review_only"] is True for action in item["data_gap_actions"])
+    assert all("target_surface" in action for action in item["data_gap_actions"])
+    assert all("target_surface_label" in action for action in item["data_gap_actions"])
+    assert all("action_type" in action for action in item["data_gap_actions"])
+    assert all("confidence_effect" in action for action in item["data_gap_actions"])
+    assert all("priority" in action for action in item["data_gap_actions"])
+    assert all("operator_hint" in action for action in item["data_gap_actions"])
     categories = {action["category"] for action in item["data_gap_actions"]}
     assert "ticker_decision_context" in categories
     assert "market_freshness" in categories
@@ -539,3 +545,22 @@ def test_stock_dossier_ticker_context_insufficient_maps_to_ticker_decision_conte
     )
     category_to_label = {row["category"]: row["label"] for row in section["items"][0]["data_gap_actions"]}
     assert category_to_label["ticker_decision_context"] == "先補看：最近模擬決策日誌、決策脈絡或結果"
+
+
+def test_stock_dossier_data_gap_routing_mapping_fields():
+    section = build_stock_dossiers_v1_section(
+        {"status": "ok", "top_items": [{"ticker": "0700.HK", "signal": "unknown"}]},
+        {"status": "ok", "risk_level": "unknown"},
+        {"status": "unavailable", "tickers": []},
+        {"status": "ok", "rows": []},
+        latest_system_run={"market_data_status": "stale"},
+    )
+    mapping = {row["category"]: row for row in section["items"][0]["data_gap_actions"]}
+    assert mapping["market_freshness"]["target_surface"] == "system_market_data"
+    assert mapping["market_freshness"]["confidence_effect"] == "blocks_short_term"
+    assert mapping["fundamentals"]["target_surface"] == "external_authorized_research"
+    assert mapping["fundamentals"]["confidence_effect"] == "caps_long_term"
+    assert mapping["valuation"]["target_surface"] == "external_authorized_research"
+    assert mapping["cashflow_earnings_balance_sheet"]["target_surface"] == "external_authorized_research"
+    assert mapping["source_confidence"]["target_surface"] == "operator_review"
+    assert mapping["source_confidence"]["confidence_effect"] == "watch_only"

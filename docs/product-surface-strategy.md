@@ -405,3 +405,9 @@ Allowed safer wording:
 - Backend/read-model is the canonical source of Stock Review data-gap action contract (`data_gap_actions`, `data_gap_interpretation_summary`, `data_gap_action_source=backend_read_model`).
 - Frontend must render backend structured data first; local string-sniff fallback is compatibility-only for older payloads and must not become a second source of truth.
 - UI remains compact, Chinese-first, and review-only (`資料缺口行動` + `解讀限制`), with no execution-implying wording.
+
+## 2026-05-14 — Step 135L data-gap routing policy
+- `data_gap_actions` must include operator routing metadata: `target_surface`, `target_surface_label`, `action_type`, `confidence_effect`, `priority`, `operator_hint`.
+- Routing metadata is review/navigation guidance only, not trading action guidance.
+- Today `你下一步要做咩` should reuse routed intent when available to avoid drift from Stock Review per-stock action meaning.
+- Stock Review first-layer rendering remains compact (max first 3 actions) and Chinese-first, with route/confidence shown as readable text (`去向` / `影響`) rather than color-only cues.

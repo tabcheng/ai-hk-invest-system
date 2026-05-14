@@ -8,8 +8,11 @@ reusing `src.app.main` as the daily run orchestrator.
 from __future__ import annotations
 
 import json
+import os
 import traceback
 from datetime import datetime, timezone
+
+from src.backend_data_cadence import get_effective_run_type
 
 ENTRYPOINT = "python -m src.daily_runner"
 SCHEDULE_BASIS = "HKT 20:00 (Railway cron UTC: 0 12 * * *)"
@@ -48,6 +51,7 @@ def _print_execution_summary(
     started_at: datetime,
     finished_at: datetime,
     status: str,
+    run_type: str,
     error_summary: str | None = None,
 ) -> None:
     """Emit a consistent single-line JSON execution summary."""
@@ -60,6 +64,7 @@ def _print_execution_summary(
         "status": status,
         "entrypoint": ENTRYPOINT,
         "schedule_basis": SCHEDULE_BASIS,
+        "run_type": run_type,
     }
     if error_summary is not None:
         summary["error_summary"] = error_summary
@@ -91,6 +96,8 @@ def run() -> int:
     started_at = _utc_now()
     print(f"[daily_runner] started entrypoint={ENTRYPOINT} started_at={started_at.isoformat()}")
 
+    run_type = get_effective_run_type(os.environ)
+
     try:
         _run_daily_pipeline()
     except Exception as exc:
@@ -104,6 +111,7 @@ def run() -> int:
             started_at=started_at,
             finished_at=finished_at,
             status=FAILED_STATUS,
+            run_type=run_type,
             error_summary=error_summary,
         )
         traceback.print_exc()
@@ -115,6 +123,7 @@ def run() -> int:
         started_at=started_at,
         finished_at=finished_at,
         status=SUCCESS_STATUS,
+        run_type=run_type,
     )
     return 0
 

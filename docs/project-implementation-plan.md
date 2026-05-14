@@ -147,3 +147,10 @@ Paper-trading review/read-surface expansion, Telegram operator workflow hardenin
 - **Step 91 completed:** added proposal migration SQL for `latest_system_runs` and backend repository/provider contract doc for future runner-write + miniapp-read paths.
 - **Scope boundary:** no runtime Supabase read/write integration, no Mini App frontend fetch change, and no Railway topology change.
 - **Step 92 next candidate:** implement backend repository/provider runtime wiring after schema/RLS proposal acceptance.
+
+## Step 136 cadence status update
+- Step 136A 已完成並合併（PR #154）。
+- Step 136B 目前 active：runner run-type metadata wiring + cadence smoke harness（repo-side）。
+- Step 136B 後續方向：
+  1. Railway platform scheduled cadence activation（staged review + deploy + smoke evidence）。
+  2. AI team backend analysis packet。

@@ -118,17 +118,40 @@
 - no simulated/paper order creation: pass.
 - human final real-money decision remains outside system: pass.
 
-### Step 136A implementation summary (PR in review)
-- Scope: add backend run-type contract + cadence policy + deterministic auto refresh planner (`src/backend_data_cadence.py`), and expose read-only planner outputs in Mini App read model.
-- Preferred path: automatic scheduled/policy refresh planning.
-- Manual refresh role: fallback/emergency only, not primary path.
-- GitHub impact: backend cadence/planner contract, read-model wiring, focused tests, docs-of-record updates.
-- Railway impact: unchanged; no new Railway cron activation is claimed in this PR.
-- Supabase impact: unchanged.
-- DB/schema/RLS impact: unchanged.
+### Step 136A post-merge closure (PR #154)
+- PR #154 merged: yes.
+- Merge commit: `948c25507025f63e069edcf24ca207844f01649c`.
+- CI result before merge: success.
+- Test evidence before merge: `pytest` (534 passed).
+- Review threads resolved before merge: yes.
+- GitHub impact: backend cadence planner contract, auto-refresh planner, Mini App read-model read-only exposure, docs/tests.
+- Railway impact: unchanged; no new cron activated by PR #154.
+- Supabase/DB/schema/RLS impact: unchanged.
 - Vendor/token impact: unchanged.
 - Broker/order/live/real-money/autonomous execution impact: none.
-- Risk/limitation: run-type metadata wiring into runner execution summary is deferred follow-up; current post-close 20:00 HKT baseline remains backward compatible.
+
+### Step 136A Post-merge QA Check
+- backend cadence policy exists.
+- auto-refresh planner exists.
+- manual refresh is fallback only.
+- Mini App read model exposes read-only cadence policy + auto-refresh plan.
+- no execution wording in planner user-facing fields.
+- tests passed before merge: `pytest` (534 passed).
+- limitation: Railway scheduled cadence was not activated by Step 136A.
+
+### Step 136A Post-merge Domain Check
+- paper-only / decision-support only: pass.
+- no broker/live/real-money/autonomous execution: pass.
+- no simulated/paper order creation: pass.
+- human final real-money decision remains outside system: pass.
+
+### Step 136B implementation summary (PR in review)
+- Scope: wire Step 136A run-type contract into runner execution summary metadata, add repo-side cadence smoke harness script, add manual-only GitHub Actions smoke workflow, add focused tests/docs alignment.
+- Repo-side only: smoke harness validates cadence contract and guardrails; it does not deploy or activate Railway cron.
+- Railway impact: unchanged in this PR; schedule/env activation remains operator staged review + deploy + smoke evidence.
+- Supabase/DB/schema/RLS impact: unchanged.
+- Vendor/token/broker/order/live/real-money/autonomous execution impact: none.
+- Manual refresh remains fallback only; automatic scheduled cadence remains preferred path.
 
 ## 2026-05-13 — Step 135I Mini App Operator Workflow Finalization
 

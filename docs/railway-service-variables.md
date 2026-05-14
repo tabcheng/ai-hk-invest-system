@@ -257,3 +257,11 @@ Operator deploy + smoke evidence flow (manual):
 ## Step 136A optional variable
 - `AIHK_RUN_TYPE` (optional): run-type hint (`post_close_daily_review` default; other values are cadence-contract types).
 - This variable definition does not itself enable new Railway schedules.
+
+## Step 136B run-type mapping (documentation only)
+- `AIHK_RUN_TYPE=post_close_daily_review`: post-close runner（現有 20:00 HKT baseline）。
+- `AIHK_RUN_TYPE=pre_market_readiness_check`: future pre-market service/run.
+- `AIHK_RUN_TYPE=midday_market_monitor`: future midday service/run.
+- `AIHK_RUN_TYPE=stale_risk_refresh`: future stale-risk refresh service/run.
+- Variable docs 本身不會啟用 Railway schedule；仍需 operator staged review + deploy。
+- Secrets 維持 backend-only，frontend/Mini App 不可持有 backend secrets。

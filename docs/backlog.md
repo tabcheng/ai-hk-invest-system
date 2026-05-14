@@ -8,12 +8,13 @@ Prioritization:
 ## Active backlog (pending)
 
 ### P0
-1. **Step 136A — Automatic Backend Data Cadence & Refresh Planner (PR in review)**
-   - 建立 backend run-type/cadence policy contract（pre-market/midday/post-close/stale-risk/event/manual-fallback）。
-   - 建立 deterministic auto refresh planner（bounded + dedup + paper-only + no order/broker）。
-   - manual refresh 只可作 fallback / operator emergency check，唔可以做主路徑。
-2. **Step 136B — Railway scheduled cadence deployment + smoke (next)**
-   - Step 136A merge 後先可推進部署與 smoke，並提供 deploy evidence。
+1. **Step 136B — Scheduled Cadence Runtime Wiring + Smoke Evidence Harness (active)**
+   - 將 `AIHK_RUN_TYPE` 合約接到 runner execution summary metadata（安全 fallback 到 `post_close_daily_review`）。
+   - 新增 repo-side cadence smoke script + manual GitHub Actions smoke workflow（`workflow_dispatch` only）。
+   - 保持 paper-only guardrails：不建立訂單、不連接券商、不做 live/real-money execution。
+2. **Step 136C — Next follow-up (pending)**
+   - Railway 平台排程/env staged review + deploy + post-deploy smoke evidence。
+   - AI team backend analysis packet 依 docs-of-record sequencing推進。
 
 ### P1
 1. **Stock Review wording regression tests (pending)**
@@ -79,6 +80,7 @@ Prioritization:
 - Step 135J — Stock Review Data Gap Action Model completed and merged (PR #151, merge commit `521db7bdaa0a4ff701ffb480c2b2c37a10f5545a`).
 - Step 135K — Backend-owned Stock Review Data Gap Action Contract completed and merged (PR #152, merge commit `34b4dc552714ade11969e6e2d8ba2bc688d0c469`).
 - Step 135L — Stock Review Data Gap Action Routing + Today Action Alignment completed and merged (PR #153, merge commit `85fb55928127e28a02f22ccd414008f9660add06`).
+- Step 136A — Automatic Backend Data Cadence & Refresh Planner completed and merged (PR #154, merge commit `948c25507025f63e069edcf24ca207844f01649c`).
 
 ## Completed backlog (archived)
 

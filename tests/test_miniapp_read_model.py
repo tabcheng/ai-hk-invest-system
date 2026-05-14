@@ -466,6 +466,42 @@ def test_stock_dossier_market_freshness_gap_uses_market_fields_only():
     assert "market_freshness" not in categories
 
 
+def test_stock_dossier_market_freshness_gap_acceptance_status_stale_variant():
+    section = build_stock_dossiers_v1_section(
+        {"status": "ok", "top_items": [{"ticker": "0700.HK", "signal": "neutral"}]},
+        {"status": "ok", "risk_level": "low"},
+        {"status": "ok", "tickers": [{"ticker": "0700.HK", "context_readiness": "ready"}]},
+        {"status": "ok", "rows": [{"ticker": "0700.HK", "quantity": 1, "total_pnl": 0}]},
+        latest_system_run={"market_data_acceptance_status": "stale_do_not_use_for_intraday"},
+    )
+    categories = {action["category"] for action in section["items"][0]["data_gap_actions"]}
+    assert "market_freshness" in categories
+
+
+def test_stock_dossier_market_freshness_gap_acceptance_status_caution_last_close():
+    section = build_stock_dossiers_v1_section(
+        {"status": "ok", "top_items": [{"ticker": "0700.HK", "signal": "neutral"}]},
+        {"status": "ok", "risk_level": "low"},
+        {"status": "ok", "tickers": [{"ticker": "0700.HK", "context_readiness": "ready"}]},
+        {"status": "ok", "rows": [{"ticker": "0700.HK", "quantity": 1, "total_pnl": 0}]},
+        latest_system_run={"market_data_acceptance_status": "caution_last_available_close"},
+    )
+    categories = {action["category"] for action in section["items"][0]["data_gap_actions"]}
+    assert "market_freshness" in categories
+
+
+def test_stock_dossier_market_freshness_gap_acceptance_status_acceptable_for_paper_review_not_stale():
+    section = build_stock_dossiers_v1_section(
+        {"status": "ok", "top_items": [{"ticker": "0700.HK", "signal": "neutral"}]},
+        {"status": "ok", "risk_level": "low"},
+        {"status": "ok", "tickers": [{"ticker": "0700.HK", "context_readiness": "ready"}]},
+        {"status": "ok", "rows": [{"ticker": "0700.HK", "quantity": 1, "total_pnl": 0}]},
+        latest_system_run={"market_data_acceptance_status": "acceptable_for_paper_review"},
+    )
+    categories = {action["category"] for action in section["items"][0]["data_gap_actions"]}
+    assert "market_freshness" not in categories
+
+
 def test_stock_dossier_data_gap_actions_no_execution_wording():
     section = build_stock_dossiers_v1_section(
         {"status": "ok", "top_items": [{"ticker": "0700.HK", "signal": "unknown"}]},

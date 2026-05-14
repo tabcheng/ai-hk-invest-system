@@ -206,7 +206,18 @@ def _build_data_gap_actions(horizon_policy: Mapping[str, Any], technical_details
         str(technical_details.get("freshness_status") or "").lower(),
         str(technical_details.get("market_data_acceptance_status") or "").lower(),
     ]
-    if any(flag in {"stale", "unavailable", "unknown", "delayed"} for flag in market_flags):
+
+    def _is_market_freshness_gap(flag: str) -> bool:
+        value = str(flag or "").strip().lower()
+        if not value:
+            return False
+        if value == "acceptable_for_paper_review":
+            return False
+        if value.startswith("stale") or value.startswith("unknown") or value.startswith("unavailable") or value.startswith("delayed"):
+            return True
+        return any(token in value for token in ["stale", "unknown", "unavailable", "delayed", "caution_last_available_close"])
+
+    if any(_is_market_freshness_gap(flag) for flag in market_flags):
         push("market_freshness", "先補看：資料時間、更新狀態與市場 smoke 檢查證據", "短線只可觀察，不可當即時訊號")
     if "paper portfolio context" in lower_gap_text:
         push("paper_exposure_pnl", "先補看：模擬組合／風險頁的持倉與盈虧脈絡", "不可推斷目前 paper exposure 安全")

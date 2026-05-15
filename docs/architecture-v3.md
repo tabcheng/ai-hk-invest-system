@@ -341,3 +341,7 @@ The platform is designed as an **AI investment firm operating model** with stric
 ## Step 136A component: Backend Data Cadence + Auto Refresh Planner
 - Planner emits bounded paper-only refresh candidates (`auto_refresh_plan`) for review surfaces.
 - Component never creates orders and never connects to brokers.
+
+## Step 136E addition: AI Team Analysis Packet layer
+- Add backend deterministic `ai_team_analysis_packet.v1` read-model layer between run-context synthesis and future consumption surfaces.
+- This layer is backend-only and pure deterministic synthesis (no LLM call, no vendor call, no broker/order/live path).

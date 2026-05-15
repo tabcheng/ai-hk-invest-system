@@ -219,3 +219,7 @@ Notes:
 - Railway cron should run short-lived jobs and terminate.
 - If prior run is still Active, future scheduled execution may be skipped.
 - GitHub `workflow_dispatch` evidence is manual GitHub runner evidence, not Railway activation proof.
+
+## Step 136E readiness note
+- AI Team packet v1 is deterministic, backend-only, and requires no external tokens.
+- No Railway platform mutation, no LLM integration, no vendor integration, and no DB migration are included in Step 136E.

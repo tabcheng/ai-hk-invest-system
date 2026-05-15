@@ -116,3 +116,7 @@
 - `midday_market_monitor` is an automatic review cadence for freshness/risk context checks.
 - `stale_risk_refresh` is the next staged cadence (prep in repo; activation remains operator-staged later).
 - Both cadences are paper-only data/risk review support flows and are not trading execution flows.
+
+## Step 136E packet data-source boundary
+- AI Team packet v1 only consumes existing provider outputs and run artifacts; it must not call vendor SDKs directly.
+- Source lineage must remain explicit via packet audit/source references.

@@ -178,7 +178,7 @@
 - no Railway platform cron mutation from repo: pass.
 - human final real-money decision remains outside system: pass.
 
-### Step 136C — Railway Scheduled Cadence Activation Scaffold + Acceptance Gate (in review)
+### Step 136C — Railway Scheduled Cadence Activation Scaffold + Acceptance Gate (superseded by post-merge closure below)
 - Scope: repo-side activation plan contract + operator checklist generator + manual checklist workflow + focused guardrail tests + docs alignment.
 - Explicit boundary: this PR does not mutate Railway platform and does not claim cron active by merge alone.
 - Manual refresh remains fallback only; no Supabase/vendor/broker/order/live execution change.
@@ -843,3 +843,51 @@
 - Domain check: pass（paper-only / decision-support only；無 broker/live/order/real-money 路徑）。
 - Platform impact: GitHub Mini App UI only；Railway/Supabase/runtime schema/API 無變更。
 
+
+
+### Step 136C post-merge closure (PR #157)
+- PR #157 merged: yes.
+- merge commit: `f3636acf9a15a86b73304779939f06133b88f56d`.
+- CI before merge: success (`pytest`, 544 passed).
+- Checklist workflow run: `25898639016` (`generate-checklist`) success.
+- Artifact: `railway-cadence-activation-checklist`, artifact id `7009549724`.
+- Artifact digest (zip SHA256): `74cb9dae0aed9f00f8c70a175f5bf105ee874dbdb6aec8a8125705aca378c843`.
+- GitHub impact: activation plan contract + checklist generator + manual checklist workflow + tests/docs alignment.
+- Railway impact: unchanged by repo merge; no platform cron mutation.
+- Supabase/DB/schema/RLS impact: unchanged.
+- Vendor/token impact: unchanged.
+- Broker/order/live/real-money/autonomous execution impact: none.
+
+### Step 136C Post-merge QA Check
+- Checklist workflow runs on main: pass.
+- Checklist artifact uploaded: pass.
+- Candidate rows include post-close/midday/stale-risk entries: pass.
+- Schedules keep UTC cron and HKT intent separated: pass.
+- Repo merge does not claim Railway cron active: pass.
+- Checklist artifact remains secret-safe: pass.
+
+### Step 136C Post-merge Domain Check
+- paper-only / decision-support only: pass.
+- no broker/live/real-money/autonomous execution: pass.
+- no simulated/paper order creation: pass.
+- no Supabase/schema/RLS migration: pass.
+- no Railway platform cron mutation from repo: pass.
+- human final real-money decision remains outside system: pass.
+
+### Step 136D-1 `paper-daily-runner` baseline verification (manual evidence)
+- service: `paper-daily-runner`.
+- run_type: `post_close_daily_review`.
+- start command / entrypoint: `python -m src.daily_runner`.
+- cron schedule: `0 12 * * *`.
+- schedule basis: `HKT 20:00 (Railway cron UTC: 0 12 * * *)`.
+- deployment id: `8a1957b5-8187-46b2-b2f2-1968633377aa`.
+- run record id: `51`.
+- manual smoke window: `2026-05-15T06:58:59Z` to `2026-05-15T06:59:06Z`.
+- execution_summary.run_type: `post_close_daily_review`.
+- execution_summary.status: `success`.
+- paper result: `trades=0`, `events=3`.
+- Telegram notification sent: yes (chat id redacted in docs).
+- no raw secrets observed.
+- no broker/live/order/real-money execution observed.
+- limitation: manual equivalent runner smoke only; natural scheduled 20:00 HKT cron evidence remains pending.
+- Step 136D-1 manual baseline smoke: PASS.

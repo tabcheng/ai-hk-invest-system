@@ -106,3 +106,8 @@
 - Midday monitor and stale-risk refresh are scheduled-candidate review flows, not execution flows.
 - All cadence outputs remain paper-only interpretation support; no real-time trading execution semantics.
 - Event-context refresh remains planned-later and depends on future provider/event-trigger design acceptance.
+
+## Midday monitor boundary clarification (Step 136D)
+- `midday_market_monitor` 是自動化檢視候選 cadence，用於中午資料新鮮度/風險脈絡覆核。
+- 不是 real-time trading，不是 live signal，不是 broker/order path。
+- 目的係減少只靠人手 refresh，而唔係建立執行交易路徑。

@@ -237,3 +237,24 @@ For each Railway scheduled service candidate, capture:
 - guardrails confirmation (`paper_only=true`, `creates_orders=false`, `broker_connection=false`)
 - safety confirmation (no secrets observed, no live/order execution observed)
 - operator conclusion (`PASS` / `FAIL` / `BLOCKED`)
+
+## Railway cadence evidence validator usage
+- Input: Railway logs JSON export (`--input-json`) and/or plain text logs (`--input-text`).
+- Required expected args:
+  - `--expected-run-type`
+  - `--expected-entrypoint` (default `python -m src.daily_runner`)
+  - `--expected-schedule-basis-contains` (recommended)
+- Example:
+  - `python scripts/railway_cadence_evidence_validate.py --input-json logs.json --expected-run-type midday_market_monitor --expected-schedule-basis-contains "Railway cron UTC: 30 4 * * 1-5" --output-json report.json --output-md report.md`
+- Required PASS fields:
+  - `status=pass`
+  - `execution_status=success`
+  - expected/observed run_type match
+  - expected entrypoint match
+  - completed message present
+  - `secrets_observed=false`
+  - `broker_live_order_execution_observed=false`
+- Redaction rules:
+  - Telegram chat id must not appear in report output.
+  - Secret-like tokens must not be echoed to report output.
+  - Evidence remains manual/operator-provided unless separately marked natural cron evidence.

@@ -162,3 +162,12 @@ Paper-trading review/read-surface expansion, Telegram operator workflow hardenin
 - Next steps remain:
   - Step 136D: operator-executed Railway platform activation + post-deploy smoke evidence.
   - Step 136E: AI team backend analysis packet after Step 136D acceptance.
+
+## Step 136 progression update
+- Step 136C: completed (merged) with checklist workflow evidence.
+- Step 136D-1: `paper-daily-runner` baseline manual smoke PASS (operator-provided evidence).
+- Step 136D-2: active (midday monitor staged setup + cadence evidence validator).
+
+Next:
+- Step 136D-3: stale-risk staged setup after midday acceptance.
+- Step 136E: AI team backend analysis packet after cadence acceptance.

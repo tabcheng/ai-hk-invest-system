@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -101,6 +102,76 @@ def test_cli_json_and_md_output(tmp_path: Path):
     assert data["status"] == "pass"
     assert "real-money execution" in out_md.read_text(encoding="utf-8")
     assert "token=" not in proc.stdout
+
+
+def test_cli_direct_invocation_derives_midday_schedule_without_pythonpath(tmp_path: Path, monkeypatch):
+    in_path = tmp_path / "midday.json"
+    out_json = tmp_path / "midday.out.json"
+    in_path.write_text(
+        json.dumps(
+            _sample(
+                run_type="midday_market_monitor",
+                schedule_basis="HKT around 12:30 weekday (Railway cron UTC: 30 4 * * 1-5)",
+            )
+        ),
+        encoding="utf-8",
+    )
+    env = dict(os.environ)
+    env.pop("PYTHONPATH", None)
+    proc = subprocess.run(
+        [
+            sys.executable,
+            "scripts/railway_cadence_evidence_validate.py",
+            "--input-json",
+            str(in_path),
+            "--expected-run-type",
+            "midday_market_monitor",
+            "--output-json",
+            str(out_json),
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
+        env=env,
+    )
+    data = json.loads(out_json.read_text(encoding="utf-8"))
+    assert data["status"] == "pass"
+    assert "schedule basis mismatch" not in proc.stdout
+
+
+def test_cli_direct_invocation_derives_stale_schedule_without_pythonpath(tmp_path: Path):
+    in_path = tmp_path / "stale.json"
+    out_json = tmp_path / "stale.out.json"
+    in_path.write_text(
+        json.dumps(
+            _sample(
+                run_type="stale_risk_refresh",
+                schedule_basis="HKT around 15:30 weekday (Railway cron UTC: 30 7 * * 1-5)",
+            )
+        ),
+        encoding="utf-8",
+    )
+    env = dict(os.environ)
+    env.pop("PYTHONPATH", None)
+    proc = subprocess.run(
+        [
+            sys.executable,
+            "scripts/railway_cadence_evidence_validate.py",
+            "--input-json",
+            str(in_path),
+            "--expected-run-type",
+            "stale_risk_refresh",
+            "--output-json",
+            str(out_json),
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
+        env=env,
+    )
+    data = json.loads(out_json.read_text(encoding="utf-8"))
+    assert data["status"] == "pass"
+    assert "schedule basis mismatch" not in proc.stdout
 
 
 def test_support_midday_and_stale(tmp_path: Path):

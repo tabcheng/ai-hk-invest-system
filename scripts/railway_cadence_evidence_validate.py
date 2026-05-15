@@ -3,9 +3,21 @@ from __future__ import annotations
 import argparse
 import json
 import re
+import sys
 from datetime import datetime
 from pathlib import Path
 from typing import Any
+
+_REPO_ROOT = Path(__file__).resolve().parents[1]
+
+
+def _ensure_repo_root_on_path() -> None:
+    repo_root = str(_REPO_ROOT)
+    if repo_root not in sys.path:
+        sys.path.insert(0, repo_root)
+
+
+_ensure_repo_root_on_path()
 
 from src.railway_cadence_runtime import get_runtime_schedule_basis
 

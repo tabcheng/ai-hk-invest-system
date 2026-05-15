@@ -7,7 +7,7 @@ from datetime import datetime, timezone
 from typing import Any
 from zoneinfo import ZoneInfo
 
-from src.daily_runner import ENTRYPOINT, SCHEDULE_BASIS
+from src.daily_runner import ENTRYPOINT
 from src.human_decision_journal import (
     ALLOWED_HUMAN_ACTIONS,
     ALLOWED_SOURCE_COMMANDS,
@@ -25,6 +25,7 @@ from src.market_data.smoke import (
     normalize_smoke_ticker,
 )
 from src.runs import get_latest_run_execution_summary, get_run_by_id, list_recent_runs
+from src.railway_cadence_runtime import get_runtime_schedule_basis
 
 _RUNS_COMMAND_PATTERN = re.compile(r"^/runs(?:\s+(\d+)d)?\s*$", re.IGNORECASE)
 _RISK_REVIEW_COMMAND_PATTERN = re.compile(r"^/risk_review(?:\s+(\S+))?\s*$", re.IGNORECASE)
@@ -51,6 +52,7 @@ _DECISION_NOTE_EXECUTION_WORDING_PATTERN = re.compile(
     re.IGNORECASE,
 )
 _HKT_TZ = ZoneInfo("Asia/Hong_Kong")
+_POST_CLOSE_SCHEDULE_BASIS = get_runtime_schedule_basis("post_close_daily_review")
 
 
 def _parse_allowed_user_ids(raw_value: str | None) -> set[str]:
@@ -443,7 +445,7 @@ def _format_runner_status_message(latest_summary_row: dict[str, Any]) -> str:
             ),
             ("duration_seconds", duration_seconds),
             ("entrypoint", ENTRYPOINT),
-            ("schedule_basis", SCHEDULE_BASIS),
+            ("schedule_basis", _POST_CLOSE_SCHEDULE_BASIS),
             # `error_summary` can come from persistence and may include reserved
             # HTML symbols. Rendering via `_build_operator_message` applies
             # centralized escaping so all commands stay parse-safe by default.

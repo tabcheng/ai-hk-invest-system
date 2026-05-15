@@ -3,9 +3,23 @@ from __future__ import annotations
 import argparse
 import json
 import re
+import sys
 from datetime import datetime
 from pathlib import Path
 from typing import Any
+
+_REPO_ROOT = Path(__file__).resolve().parents[1]
+
+
+def _ensure_repo_root_on_path() -> None:
+    repo_root = str(_REPO_ROOT)
+    if repo_root not in sys.path:
+        sys.path.insert(0, repo_root)
+
+
+_ensure_repo_root_on_path()
+
+from src.railway_cadence_runtime import get_runtime_schedule_basis
 
 ALLOWED_RUN_TYPES = {"post_close_daily_review", "midday_market_monitor", "stale_risk_refresh"}
 DEFAULT_ENTRYPOINT = "python -m src.daily_runner"
@@ -97,6 +111,16 @@ def _is_safe_negative_guardrail_line(normalized_line: str) -> bool:
     parts = [p.strip() for p in re.split(r"[;,]", normalized_line) if p.strip()]
     return bool(parts) and all(p in SAFE_NEGATIVE_EXECUTION_PHRASES for p in parts)
 
+
+
+
+def _derive_expected_schedule_basis_fragment(expected_run_type: str) -> str:
+    schedule_basis = get_runtime_schedule_basis(expected_run_type)
+    marker = "Railway cron UTC:"
+    if marker in schedule_basis:
+        cron_fragment = schedule_basis.split(marker, 1)[1].rstrip(")").strip()
+        return f"{marker} {cron_fragment}"
+    return schedule_basis
 
 def validate_evidence(args: argparse.Namespace) -> dict[str, Any]:
     if args.expected_run_type not in ALLOWED_RUN_TYPES:
@@ -200,7 +224,8 @@ def validate_evidence(args: argparse.Namespace) -> dict[str, Any]:
     if entrypoint != args.expected_entrypoint:
         status = "fail"
         notes.append("entrypoint mismatch")
-    if args.expected_schedule_basis_contains and (not schedule_basis or args.expected_schedule_basis_contains not in str(schedule_basis)):
+    expected_schedule_basis_contains = args.expected_schedule_basis_contains or _derive_expected_schedule_basis_fragment(args.expected_run_type)
+    if expected_schedule_basis_contains and (not schedule_basis or expected_schedule_basis_contains not in str(schedule_basis)):
         status = "fail"
         notes.append("schedule basis mismatch")
     if "completed" not in full_text.lower():

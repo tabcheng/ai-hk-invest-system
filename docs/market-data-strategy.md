@@ -111,3 +111,8 @@
 - `midday_market_monitor` 是自動化檢視候選 cadence，用於中午資料新鮮度/風險脈絡覆核。
 - 不是 real-time trading，不是 live signal，不是 broker/order path。
 - 目的係減少只靠人手 refresh，而唔係建立執行交易路徑。
+
+### Step 136D cadence interpretation boundary
+- `midday_market_monitor` is an automatic review cadence for freshness/risk context checks.
+- `stale_risk_refresh` is the next staged cadence (prep in repo; activation remains operator-staged later).
+- Both cadences are paper-only data/risk review support flows and are not trading execution flows.

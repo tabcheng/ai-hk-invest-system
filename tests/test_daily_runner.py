@@ -130,3 +130,36 @@ def test_run_summary_uses_env_run_type_when_valid(monkeypatch, capsys):
     assert daily_runner.run() == 0
     summary = _extract_execution_summary(capsys.readouterr().out)
     assert summary["run_type"] == "midday_market_monitor"
+
+
+def test_run_summary_midday_schedule_basis(monkeypatch, capsys):
+    monkeypatch.setattr(daily_runner, "_run_daily_pipeline", lambda: None)
+    monkeypatch.setenv("AIHK_RUN_TYPE", "midday_market_monitor")
+    timestamps = iter([datetime(2026, 3, 21, 12, 0, 0, tzinfo=timezone.utc), datetime(2026, 3, 21, 12, 0, 1, tzinfo=timezone.utc)])
+    monkeypatch.setattr(daily_runner, "_utc_now", lambda: next(timestamps))
+    assert daily_runner.run() == 0
+    summary = _extract_execution_summary(capsys.readouterr().out)
+    assert summary["run_type"] == "midday_market_monitor"
+    assert "Railway cron UTC: 30 4 * * 1-5" in summary["schedule_basis"]
+
+
+def test_run_summary_stale_risk_schedule_basis(monkeypatch, capsys):
+    monkeypatch.setattr(daily_runner, "_run_daily_pipeline", lambda: None)
+    monkeypatch.setenv("AIHK_RUN_TYPE", "stale_risk_refresh")
+    timestamps = iter([datetime(2026, 3, 21, 12, 0, 0, tzinfo=timezone.utc), datetime(2026, 3, 21, 12, 0, 1, tzinfo=timezone.utc)])
+    monkeypatch.setattr(daily_runner, "_utc_now", lambda: next(timestamps))
+    assert daily_runner.run() == 0
+    summary = _extract_execution_summary(capsys.readouterr().out)
+    assert summary["run_type"] == "stale_risk_refresh"
+    assert "Railway cron UTC: 30 7 * * 1-5" in summary["schedule_basis"]
+
+
+def test_run_summary_invalid_run_type_fallback_schedule_basis(monkeypatch, capsys):
+    monkeypatch.setattr(daily_runner, "_run_daily_pipeline", lambda: None)
+    monkeypatch.setenv("AIHK_RUN_TYPE", "bogus")
+    timestamps = iter([datetime(2026, 3, 21, 12, 0, 0, tzinfo=timezone.utc), datetime(2026, 3, 21, 12, 0, 1, tzinfo=timezone.utc)])
+    monkeypatch.setattr(daily_runner, "_utc_now", lambda: next(timestamps))
+    assert daily_runner.run() == 0
+    summary = _extract_execution_summary(capsys.readouterr().out)
+    assert summary["run_type"] == "post_close_daily_review"
+    assert "Railway cron UTC: 0 12 * * *" in summary["schedule_basis"]

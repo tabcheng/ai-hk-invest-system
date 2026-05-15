@@ -134,6 +134,20 @@ def test_mixed_negative_and_positive_execution_phrase_fails(tmp_path: Path):
     assert res["broker_live_order_execution_observed"] is True
 
 
+def test_but_clause_with_order_created_fails(tmp_path: Path):
+    payload = _sample() + [{"message": "no broker connection but order created successfully"}]
+    res = validate_evidence(_args(tmp_path, payload))
+    assert res["status"] == "fail"
+    assert res["broker_live_order_execution_observed"] is True
+
+
+def test_no_real_money_but_place_order_called_fails(tmp_path: Path):
+    payload = _sample() + [{"message": "no real-money execution; place order called"}]
+    res = validate_evidence(_args(tmp_path, payload))
+    assert res["status"] == "fail"
+    assert res["broker_live_order_execution_observed"] is True
+
+
 def test_secret_like_schedule_basis_redacted_everywhere(tmp_path: Path):
     payload = _sample()
     payload[2] = {

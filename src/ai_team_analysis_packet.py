@@ -3,13 +3,27 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from typing import Any, Dict, List
 
-RUN_TYPE_TO_SCHEDULE = {
-    "post_close_daily_review": "HKT around 20:00 daily (Railway cron UTC: 0 12 * * *)",
-    "midday_market_monitor": "HKT around 12:30 weekday (Railway cron UTC: 30 4 * * 1-5)",
-    "stale_risk_refresh": "HKT around 15:30 weekday (Railway cron UTC: 30 7 * * 1-5)",
-}
+from src.railway_cadence_runtime import get_runtime_schedule_basis
 
 SAFE_DIRECTIONS = {"watch_only", "insufficient_data", "mixed_watch"}
+
+_MISSING_SENTINELS = {"", "unknown", "not_available", "n/a", "na", "missing", "null"}
+
+
+def _is_available_value(value: Any) -> bool:
+    if value is None:
+        return False
+    if isinstance(value, str):
+        return value.strip().lower() not in _MISSING_SENTINELS
+    if isinstance(value, (list, dict, tuple, set)):
+        return len(value) > 0
+    return True
+
+
+def _has_valid_risk_flags(risk_flags: Any) -> bool:
+    if not isinstance(risk_flags, list) or not risk_flags:
+        return False
+    return any(_is_available_value(flag) for flag in risk_flags)
 
 
 def _status_and_confidence(has_market: bool, has_signal: bool, has_risk: bool) -> tuple[str, str]:
@@ -38,14 +52,14 @@ def _derive_simulated_direction(status: str, market_context: Dict[str, Any], ris
     if status in {"blocked", "not_available"}:
         return "insufficient_data"
 
-    has_market_baseline = market_context.get("price") is not None or bool(market_context.get("signal_direction"))
+    has_market_baseline = _is_available_value(market_context.get("price")) or _is_available_value(market_context.get("signal_direction"))
     if not has_market_baseline:
         return "insufficient_data"
 
     risk_flags = risk_context.get("risk_flags") or []
     signal_direction = str(market_context.get("signal_direction", "")).lower()
 
-    if risk_flags and signal_direction in {"down", "mixed", "not_available", ""}:
+    if _has_valid_risk_flags(risk_flags) and signal_direction in {"down", "mixed", "not_available", ""}:
         return "mixed_watch"
     return "watch_only"
 
@@ -66,12 +80,17 @@ def build_ai_team_analysis_packet(
     paper_signal_context = paper_signal_context or {}
     risk_context = risk_context or {}
 
-    has_market = bool(market_context.get("price") is not None or market_context.get("signal_direction"))
-    has_signal = bool(paper_signal_context.get("latest_signal"))
-    has_risk = bool(risk_context)
+    has_market = _is_available_value(market_context.get("price")) or _is_available_value(market_context.get("signal_direction"))
+    has_signal = _is_available_value(paper_signal_context.get("latest_signal"))
+    has_risk = (
+        _has_valid_risk_flags(risk_context.get("risk_flags"))
+        or _is_available_value(risk_context.get("liquidity_flag"))
+        or _is_available_value(risk_context.get("freshness_flag"))
+        or _is_available_value(risk_context.get("data_gap_flag"))
+    )
 
     run_type = run_context.get("run_type", "unknown")
-    run_schedule = run_context.get("schedule_basis") or RUN_TYPE_TO_SCHEDULE.get(run_type, "not_available")
+    run_schedule = run_context.get("schedule_basis") or get_runtime_schedule_basis(run_type)
     run_manual = bool(run_context.get("manual_evidence_only", run_type in {"midday_market_monitor", "stale_risk_refresh"}))
 
     status, confidence = _status_and_confidence(has_market, has_signal, has_risk)

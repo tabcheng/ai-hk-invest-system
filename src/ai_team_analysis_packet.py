@@ -8,6 +8,7 @@ from src.railway_cadence_runtime import get_runtime_schedule_basis
 SAFE_DIRECTIONS = {"watch_only", "insufficient_data", "mixed_watch"}
 
 _MISSING_SENTINELS = {"", "unknown", "not_available", "n/a", "na", "missing", "null"}
+_SUMMARY_MISSING_SENTINELS = _MISSING_SENTINELS | {"none"}
 
 
 def _is_available_value(value: Any) -> bool:
@@ -181,3 +182,156 @@ def build_ai_team_analysis_packet(
         "limitations": ["deterministic-only synthesis", "missing upstream contexts remain explicit"],
     }
     return packet
+
+
+def build_ai_team_packet_summary(packet: Dict[str, Any]) -> Dict[str, Any]:
+    guardrails = packet.get("guardrails") if isinstance(packet.get("guardrails"), dict) else {}
+    run_context = packet.get("run_context") if isinstance(packet.get("run_context"), dict) else {}
+    slots = packet.get("ai_team_slots") if isinstance(packet.get("ai_team_slots"), dict) else {}
+    decision_support = (
+        packet.get("decision_support") if isinstance(packet.get("decision_support"), dict) else {}
+    )
+
+    slot_status_counts = {"ok": 0, "partial": 0, "missing": 0, "unknown": 0}
+    for slot in slots.values():
+        status = str((slot or {}).get("status") or "").strip().lower()
+        if status in {"ready", "ok"}:
+            slot_status_counts["ok"] += 1
+        elif status == "partial":
+            slot_status_counts["partial"] += 1
+        elif status in {"not_available", "blocked"}:
+            slot_status_counts["missing"] += 1
+        else:
+            slot_status_counts["unknown"] += 1
+
+    direction = str(decision_support.get("simulated_direction") or "insufficient_data").strip().lower()
+    if direction not in SAFE_DIRECTIONS:
+        direction = "insufficient_data"
+    simulated_direction_counts = {"insufficient_data": 0, "watch_only": 0, "mixed_watch": 0}
+    simulated_direction_counts[direction] += 1
+
+    top_gaps = []
+    for slot in slots.values():
+        for gap in list((slot or {}).get("gaps") or []):
+            gap_text = str(gap or "").strip().lower()
+            if not gap_text or gap_text in _SUMMARY_MISSING_SENTINELS:
+                continue
+            if gap_text in top_gaps:
+                continue
+            top_gaps.append(gap_text[:80])
+            if len(top_gaps) >= 5:
+                break
+        if len(top_gaps) >= 5:
+            break
+
+    limitations = []
+    for source in [packet.get("audit"), *slots.values()]:
+        source_limitations = (source or {}).get("limitations")
+        for item in list(source_limitations or []):
+            text = str(item or "").strip()
+            if not text:
+                continue
+            if text in limitations:
+                continue
+            limitations.append(text[:120])
+            if len(limitations) >= 5:
+                break
+        if len(limitations) >= 5:
+            break
+
+    missing_context_count = sum(
+        1
+        for key in ("run_id", "run_type", "schedule_basis")
+        if str(run_context.get(key, "")).strip().lower() in _SUMMARY_MISSING_SENTINELS
+    )
+    if missing_context_count >= 2:
+        status = "insufficient_data"
+    elif slot_status_counts["ok"] > 0:
+        status = "ok" if slot_status_counts["partial"] == 0 and slot_status_counts["missing"] == 0 else "partial"
+    else:
+        status = "unavailable"
+
+    return {
+        "schema_version": "ai_team_analysis_packet_summary.v1",
+        "packet_schema_version": str(packet.get("schema_version") or "ai_team_analysis_packet.v1")[:64],
+        "status": status,
+        "paper_trade_only": bool(guardrails.get("paper_only", True)),
+        "decision_support_only": bool(guardrails.get("decision_support_only", True)),
+        "llm_generated": bool(guardrails.get("llm_generated", False)),
+        "vendor_call_performed": bool(guardrails.get("vendor_call_performed", False)),
+        "broker_connection": bool(guardrails.get("broker_connection", False)),
+        "live_execution": bool(guardrails.get("live_execution", False)),
+        "real_money_execution": bool(guardrails.get("real_money_execution", False)),
+        "creates_orders": bool(guardrails.get("creates_orders", False)),
+        "run_id": str(run_context.get("run_id") or "not_available")[:80],
+        "business_date": str(packet.get("as_of") or "not_available")[:40],
+        "run_type": str(run_context.get("run_type") or "unknown")[:80],
+        "schedule_basis": str(run_context.get("schedule_basis") or "unknown")[:80],
+        "covered_tickers": 1,
+        "slot_status_counts": slot_status_counts,
+        "simulated_direction_counts": simulated_direction_counts,
+        "top_gaps": top_gaps,
+        "limitations": limitations,
+        "source": "deterministic_backend_packet",
+    }
+
+
+def build_latest_system_run_ai_team_packet_section(
+    *,
+    run_id: str | int | None,
+    business_date: str,
+    run_type: str,
+    schedule_basis: str,
+    processed_tickers: int,
+    successful_tickers: int,
+    failed_tickers: int,
+) -> Dict[str, Any]:
+    processed = max(0, int(processed_tickers))
+    success = max(0, int(successful_tickers))
+    failed = max(0, int(failed_tickers))
+    unknown = max(0, processed - success - failed)
+    if processed <= 0:
+        status = "insufficient_data"
+    elif success == processed:
+        status = "ok"
+    elif success > 0:
+        status = "partial"
+    else:
+        status = "unavailable"
+
+    return {
+        "schema_version": "ai_team_analysis_packet_summary.v1",
+        "packet_schema_version": "ai_team_analysis_packet.v1",
+        "status": status,
+        "paper_trade_only": True,
+        "decision_support_only": True,
+        "llm_generated": False,
+        "vendor_call_performed": False,
+        "broker_connection": False,
+        "live_execution": False,
+        "real_money_execution": False,
+        "creates_orders": False,
+        "run_id": str(run_id or "not_available")[:80],
+        "business_date": str(business_date or "not_available")[:40],
+        "run_type": str(run_type or "unknown")[:80],
+        "schedule_basis": str(schedule_basis or "unknown")[:80],
+        "covered_tickers": processed,
+        "slot_status_counts": {
+            "ok": success,
+            "partial": 1 if success > 0 and failed > 0 else 0,
+            "missing": failed,
+            "unknown": unknown,
+        },
+        "simulated_direction_counts": {
+            "insufficient_data": failed if failed > 0 else 0,
+            "watch_only": success if success > 0 else 0,
+            "mixed_watch": 1 if success > 0 and failed > 0 else 0,
+        },
+        "top_gaps": (["paper_signal_missing", "risk_context_missing"] if failed > 0 else []),
+        "limitations": [
+            "deterministic runner projection only",
+            "paper-only decision support summary",
+            "no llm summary or external vendor call",
+        ],
+        "source": "deterministic_backend_packet",
+    }

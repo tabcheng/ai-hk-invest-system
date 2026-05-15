@@ -52,6 +52,9 @@ class MiniAppReadDataProvider(Protocol):
     def get_ticker_level_paper_portfolio_review(self) -> dict[str, Any]:
         """Return bounded ticker-level paper portfolio review section."""
 
+    def get_ai_team_packet_summary(self) -> dict[str, Any]:
+        """Return bounded AI team packet summary for read-only operator surfaces."""
+
 
 class RailwayRuntimeEnvMiniAppReadDataProvider:
     """Bounded internal provider backed by Railway runtime environment metadata only."""
@@ -187,6 +190,16 @@ class RailwayRuntimeEnvMiniAppReadDataProvider:
             "paper_trade_only": True,
             "rows": [],
             "limitations": ["No production ticker-level paper portfolio read model configured yet."],
+        }
+
+    def get_ai_team_packet_summary(self) -> dict[str, Any]:
+        return {
+            "status": "unavailable",
+            "source": "latest_system_runs",
+            "paper_trade_only": True,
+            "decision_support_only": True,
+            "reason": "AI Team packet summary is not available yet",
+            "boundary": "read-only AI simulated context only; no broker/live execution",
         }
 
 
@@ -787,6 +800,67 @@ class SupabaseLatestSystemRunMiniAppReadDataProvider(RailwayRuntimeEnvMiniAppRea
             "global_limitations": [
                 "Market data fields unavailable from current bounded read sources."
             ],
+        }
+
+    def get_ai_team_packet_summary(self) -> dict[str, Any]:
+        row = self._get_latest_row()
+        if not isinstance(row, dict) or not row:
+            return RailwayRuntimeEnvMiniAppReadDataProvider().get_ai_team_packet_summary()
+        summary = row.get("summary_json") if isinstance(row.get("summary_json"), dict) else {}
+        if summary.get("paper_trade_only") is not True:
+            return RailwayRuntimeEnvMiniAppReadDataProvider().get_ai_team_packet_summary()
+        packet = summary.get("ai_team_packet") if isinstance(summary.get("ai_team_packet"), dict) else None
+        if not isinstance(packet, dict):
+            return RailwayRuntimeEnvMiniAppReadDataProvider().get_ai_team_packet_summary()
+        if packet.get("paper_trade_only") is not True:
+            return RailwayRuntimeEnvMiniAppReadDataProvider().get_ai_team_packet_summary()
+        if packet.get("decision_support_only") is not True:
+            return RailwayRuntimeEnvMiniAppReadDataProvider().get_ai_team_packet_summary()
+        for unsafe_key in ("broker_connection", "live_execution", "real_money_execution", "creates_orders"):
+            if packet.get(unsafe_key) is not False:
+                return RailwayRuntimeEnvMiniAppReadDataProvider().get_ai_team_packet_summary()
+
+        slot_counts_raw = packet.get("slot_status_counts")
+        slot_counts_in = slot_counts_raw if isinstance(slot_counts_raw, dict) else {}
+        slot_counts = {
+            "ok": _safe_int_counter(slot_counts_in.get("ok")),
+            "partial": _safe_int_counter(slot_counts_in.get("partial")),
+            "missing": _safe_int_counter(slot_counts_in.get("missing")),
+            "unknown": _safe_int_counter(slot_counts_in.get("unknown")),
+        }
+        direction_counts_raw = packet.get("simulated_direction_counts")
+        direction_counts_in = direction_counts_raw if isinstance(direction_counts_raw, dict) else {}
+        direction_counts = {
+            "insufficient_data": _safe_int_counter(direction_counts_in.get("insufficient_data")),
+            "watch_only": _safe_int_counter(direction_counts_in.get("watch_only")),
+            "mixed_watch": _safe_int_counter(direction_counts_in.get("mixed_watch")),
+        }
+
+        top_gaps_raw = packet.get("top_gaps")
+        top_gaps = (
+            [str(x)[:80] for x in top_gaps_raw[:5] if isinstance(x, str)]
+            if isinstance(top_gaps_raw, list)
+            else []
+        )
+        limitations_raw = packet.get("limitations")
+        limitations = (
+            [str(x)[:120] for x in limitations_raw[:5] if isinstance(x, str)]
+            if isinstance(limitations_raw, list)
+            else []
+        )
+        return {
+            "status": str(packet.get("status") or "unavailable")[:40],
+            "source": "latest_system_runs",
+            "schema_version": str(packet.get("schema_version") or "")[:64],
+            "packet_schema_version": str(packet.get("packet_schema_version") or "")[:64],
+            "paper_trade_only": bool(packet.get("paper_trade_only", True)),
+            "decision_support_only": bool(packet.get("decision_support_only", True)),
+            "covered_tickers": _safe_int_counter(packet.get("covered_tickers")),
+            "slot_status_counts": slot_counts,
+            "simulated_direction_counts": direction_counts,
+            "top_gaps": top_gaps,
+            "limitations": limitations,
+            "boundary": "read-only AI simulated context only; no broker/live execution",
         }
 
     def _get_latest_row(self) -> dict[str, Any] | None:

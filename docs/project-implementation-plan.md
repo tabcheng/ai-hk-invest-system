@@ -154,3 +154,11 @@ Paper-trading review/read-surface expansion, Telegram operator workflow hardenin
 - Step 136B 後續方向：
   1. Railway platform scheduled cadence activation（staged review + deploy + smoke evidence）。
   2. AI team backend analysis packet。
+
+
+## Step 136B/136C sequencing update
+- Step 136B and Step 136B-SMOKE-FIX are treated as completed closure items with rerun pass evidence recorded in `docs/status.md`.
+- Step 136C is active as repo-side activation scaffold and acceptance gate.
+- Next steps remain:
+  - Step 136D: operator-executed Railway platform activation + post-deploy smoke evidence.
+  - Step 136E: AI team backend analysis packet after Step 136D acceptance.

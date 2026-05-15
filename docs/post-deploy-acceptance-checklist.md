@@ -222,3 +222,18 @@ Step 91A recorded result (PR #88):
 - Telegram `/market_smoke` now formats price/percent/volume/timestamp/freshness for readability with Chinese-first freshness labeling and caution wording.
 - Mini App Context market section now displays formatted values and freshness warnings for `last_available_close`/`stale`/`unknown` using backend payload only.
 - Boundaries unchanged: read-only diagnostics + decision support, paper trading only, no broker/live execution, no real-money execution, no order or simulated-order creation, no frontend vendor key, no token/raw vendor payload exposure, no fake data.
+
+
+## Step 136C/136D Railway cadence post-deploy evidence fields
+For each Railway scheduled service candidate, capture:
+- service_name
+- run_type
+- railway_cron_utc
+- intended_hkt_window
+- deploy_id_or_timestamp
+- run_log_evidence_pointer
+- execution_summary.run_type
+- smoke_command_or_run_id
+- guardrails confirmation (`paper_only=true`, `creates_orders=false`, `broker_connection=false`)
+- safety confirmation (no secrets observed, no live/order execution observed)
+- operator conclusion (`PASS` / `FAIL` / `BLOCKED`)

@@ -265,3 +265,12 @@ Operator deploy + smoke evidence flow (manual):
 - `AIHK_RUN_TYPE=stale_risk_refresh`: future stale-risk refresh service/run.
 - Variable docs 本身不會啟用 Railway schedule；仍需 operator staged review + deploy。
 - Secrets 維持 backend-only，frontend/Mini App 不可持有 backend secrets。
+
+
+## Step 136C scheduled cadence env mapping (operator setup target)
+- Planned per-service run-type mapping for manual Railway setup:
+  - `AIHK_RUN_TYPE=post_close_daily_review`
+  - `AIHK_RUN_TYPE=midday_market_monitor`
+  - `AIHK_RUN_TYPE=stale_risk_refresh`
+- Cron configuration is stored in Railway service schedule settings and interpreted in UTC.
+- Secret handling unchanged: backend-only secrets remain backend-only; no raw secret values in docs/logs/chat/frontend.

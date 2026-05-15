@@ -145,16 +145,43 @@
 - no simulated/paper order creation: pass.
 - human final real-money decision remains outside system: pass.
 
-### Step 136B post-merge smoke evidence + Step 136B-SMOKE-FIX prerequisite
-- PR #155 merged: yes.
-- Merge commit: `5a9548686131e33e2cf70562497949db54528499`.
-- CI result before merge: success (`pytest`, 539 passed).
-- Initial manual backend-cadence-smoke workflow runs failed: `25880694967`, `25881137883`, `25881210053`.
-- Shared failure reason: `ModuleNotFoundError: No module named 'src'` from CLI path `python scripts/backend_cadence_smoke.py --run-type ...`.
-- Classification: repo-side smoke harness import-path bug; **not** a Railway cron activation failure.
-- Railway scheduled cadence remains **not activated**.
-- Supabase/vendor/broker/order/live execution impact: none.
-- This step (Step 136B-SMOKE-FIX) is the smoke harness fix + acceptance retry prerequisite before any Railway cadence activation claim.
+### Step 136B / 136B-SMOKE-FIX post-merge closure
+- PR #155 merged: yes; merge commit `5a9548686131e33e2cf70562497949db54528499`; pre-merge CI success (`pytest`, 539 passed).
+- PR #156 merged: yes; merge commit `fadcced60b92ac618a99f38ec5629ad7d7f22739`; pre-merge CI success (`pytest`, 541 passed).
+- Initial failed manual smoke runs: `25880694967`, `25881137883`, `25881210053`; failure cause `ModuleNotFoundError: No module named 'src'`.
+- Classification: repo-side smoke harness CLI import-path bug, not Railway cron failure.
+- Fix in PR #156: script import-path hardening + workflow `PYTHONPATH` + CLI subprocess tests.
+- Successful rerun evidence: `25897779726` (`post_close_daily_review`) pass, `25897892221` (`midday_market_monitor`) pass, `25897908924` (`stale_risk_refresh`) pass; all uploaded smoke artifacts.
+- GitHub impact: run_type metadata wiring, smoke script, manual workflow, CLI fix, artifacts, tests, docs.
+- Railway impact: unchanged; no cron/platform activation by PR #155/#156.
+- Supabase/DB/schema/RLS impact: unchanged.
+- Vendor/token impact: unchanged.
+- Broker/order/live/real-money/autonomous execution impact: none.
+- Railway scheduled cadence still **not active** until operator staged platform setup + deploy + post-deploy smoke evidence.
+
+### Step 136B Post-merge QA Check
+- `AIHK_RUN_TYPE` metadata path: pass.
+- CLI smoke script from GitHub manual workflow: pass.
+- Workflow trigger mode remains `workflow_dispatch` only: pass.
+- Required run types pass (`post_close_daily_review` / `midday_market_monitor` / `stale_risk_refresh`): pass.
+- Artifact upload: pass.
+- Smoke report summary-only and secret-safe: pass.
+- No execution wording in smoke report: pass.
+- Manual refresh fallback-only: pass.
+- Limitation: repo-side smoke does not prove Railway cron active.
+
+### Step 136B Post-merge Domain Check
+- paper-only / decision-support only: pass.
+- no broker/live/real-money/autonomous execution: pass.
+- no simulated/paper order creation: pass.
+- no Supabase/schema/RLS migration: pass.
+- no Railway platform cron mutation from repo: pass.
+- human final real-money decision remains outside system: pass.
+
+### Step 136C — Railway Scheduled Cadence Activation Scaffold + Acceptance Gate (in review)
+- Scope: repo-side activation plan contract + operator checklist generator + manual checklist workflow + focused guardrail tests + docs alignment.
+- Explicit boundary: this PR does not mutate Railway platform and does not claim cron active by merge alone.
+- Manual refresh remains fallback only; no Supabase/vendor/broker/order/live execution change.
 
 ## 2026-05-13 — Step 135I Mini App Operator Workflow Finalization
 

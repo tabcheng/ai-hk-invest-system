@@ -1,0 +1,23 @@
+name: Railway Cadence Activation Checklist
+
+on:
+  workflow_dispatch:
+
+jobs:
+  generate-checklist:
+    runs-on: ubuntu-latest
+    env:
+      PYTHONPATH: ${{ github.workspace }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Generate checklist artifacts
+        run: python scripts/railway_cadence_activation_checklist.py --output-md railway_cadence_activation_checklist.md --output-json railway_cadence_activation_checklist.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: railway-cadence-activation-checklist
+          path: |
+            railway_cadence_activation_checklist.md
+            railway_cadence_activation_checklist.json

@@ -605,3 +605,16 @@ When validating Mini App Journal Outcome Review and Telegram `/journal_outcome`,
 - 處理方式：先套用 Step 136B-SMOKE-FIX hotfix（script CLI import path），再 rerun manual workflow 驗證。
 - 在 hotfix smoke pass 前，**不得**宣稱 Railway scheduled cadence 已啟動。
 
+
+
+## Step 136C operator activation checklist usage
+1. Run manual GitHub workflow `Railway Cadence Activation Checklist` (artifact generation only).
+2. Download markdown/json artifacts and confirm service/run_type/UTC cron mapping.
+3. Perform Railway setup manually (service/env/cron), then deploy.
+4. Run post-deploy smoke and verify `execution_summary.run_type` for each activated service.
+5. Record evidence in `docs/status.md` with conclusion PASS / FAIL / BLOCKED.
+
+Boundary reminder:
+- Repository merge alone does not activate Railway cron.
+- Manual refresh remains fallback-only.
+- System remains paper-only decision-support (no broker/live/order execution).

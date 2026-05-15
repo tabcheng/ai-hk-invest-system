@@ -1,8 +1,51 @@
 # Project Status
 
 ## Last reviewed date
-2026-05-08
+2026-05-15
 
+
+## 2026-05-15 — Step 136D-POST closure + Step 136E AI Team Backend Analysis Packet v1
+
+### PR #159 post-merge closure
+- PR #159 merged: yes.
+- Merge commit: `828d06ef61197b1d480db982be431660c847a292`.
+- CI result before merge: success (`pytest`, 571 passed).
+- Railway impact: no platform mutation by repo merge.
+- Supabase impact: unchanged.
+- Domain impact: paper-only / decision-support only.
+
+### Step 136D-2 `paper-midday-monitor` manual-equivalent smoke PASS
+- service `paper-midday-monitor`, deployment `877b0a72-524a-4d22-a864-ab9c5dbcff90`, run id `55`.
+- window `2026-05-15T09:35:56.991513+00:00` to `2026-05-15T09:36:06.373237+00:00`.
+- run_type `midday_market_monitor`; status success; `trades=0`, `events=3`.
+- duplicate protection + Telegram dedup behavior acceptable for same-date manual rerun smoke.
+- no raw secrets and no broker/live/order/real-money execution observed.
+
+### Step 136D-3 `paper-stale-risk-refresh` manual-equivalent smoke PASS
+- service `paper-stale-risk-refresh`, deployment `26a40b08-17cf-460d-9a2d-67986f64a5b4`, run id `56`.
+- window `2026-05-15T09:38:42.534151+00:00` to `2026-05-15T09:38:50.266038+00:00`.
+- run_type `stale_risk_refresh`; status success; `trades=0`, `events=3`.
+- duplicate protection + Telegram dedup behavior acceptable for same-date manual rerun smoke.
+- no raw secrets and no broker/live/order/real-money execution observed.
+
+### Step 136D closure
+- Step 136D-2 and 136D-3 closed as manual-equivalent smoke evidence.
+- natural cron evidence remains follow-up monitoring and is not blocked by this step.
+
+### Step 136E deferred integrations
+- LLM deferred until deterministic packet contract stabilizes.
+- Vendor deferred and must stay behind `MarketDataProvider` abstraction.
+- DB persistence deferred; pure read-model first.
+- UI consumption deferred until packet contract/test stabilization.
+
+### Post-merge QA Check (PR #159 / Step 136D)
+- cadence mapping/runtime schedule basis/doc alignment is consistent.
+- operator-provided midday/stale manual-equivalent smoke evidence passed.
+
+### Post-merge Domain Check (PR #159 / Step 136D)
+- AI HK alignment: pass.
+- paper-only / decision-support-only: pass.
+- no broker/live/real-money/autonomous execution: pass.
 
 
 ## 2026-05-13 — Step 135I-POST closure + Step 135J Stock Review Data Gap Action Model

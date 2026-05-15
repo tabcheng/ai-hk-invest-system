@@ -415,3 +415,7 @@ Allowed safer wording:
 
 ## Step 136A product-surface note
 - Mini App may show compact auto-refresh summary for operator review; scheduler internals stay in System/technical context.
+
+## Step 136E backend packet consumption path (deferred UI)
+- Future Mini App/Telegram AI-team surfaces should consume `ai_team_analysis_packet.v1` as read-only backend payload.
+- Packet consumption remains deferred until contract stability and test evidence are complete.

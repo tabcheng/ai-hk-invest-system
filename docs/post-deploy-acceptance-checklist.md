@@ -262,3 +262,11 @@ For each Railway scheduled service candidate, capture:
 ### Cadence metadata consistency gate (Step 136D-2-FIX)
 - `execution_summary.schedule_basis` must match effective `AIHK_RUN_TYPE` cadence mapping.
 - Failure classification: `run_type=status success` but `schedule_basis mismatch` = metadata blocker (not platform-success evidence).
+
+## Step 136D accepted manual-equivalent evidence pattern
+- `midday_market_monitor`: manual-equivalent smoke pass is acceptable when run metadata, status, entrypoint, schedule basis, and paper result are present and secret-safe.
+- `stale_risk_refresh`: manual-equivalent smoke pass is acceptable with the same evidence structure.
+- For both cases, duplicate-protection/Telegram dedup behavior in same-date reruns is acceptable if clearly classified as manual-equivalent smoke.
+
+## Natural cron evidence follow-up template
+- Record service name, deployment id, run id, UTC start/finish time, run_type, expected UTC cron expression, observed schedule alignment, and secret-safe log summary.

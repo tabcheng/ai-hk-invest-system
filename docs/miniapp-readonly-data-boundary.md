@@ -375,3 +375,9 @@ No broker integration or autonomous real-money execution is authorized by this p
 - Frontend may only use non-secret runtime config.
 - Any production data access must be backend-mediated with server-side Telegram initData validation and operator authorization.
 - Raw Telegram initData, allowlist IDs, vendor tokens, and raw vendor payloads must not appear in frontend/logs/docs/chat.
+
+## Step 136G-lite update
+- Mini App backend review-shell adds read-only `sections.ai_team_packet_summary` from bounded `latest_system_runs.summary_json.ai_team_packet`.
+- Missing/malformed packet summary returns bounded unavailable fallback (no raw DB/internal error leakage).
+- Section remains review-only and explicitly paper-trading/decision-support-only.
+- No Mini App auth boundary change, no frontend direct Supabase access, no write path/order creation/broker/live execution behavior.

@@ -18,3 +18,11 @@ Missing contexts stay explicit (`not_available`/`unknown`) and reduce slot statu
 - Vendor: deferred; future approved provider abstraction only.
 - DB: deferred; persistence/read-model expansion can be Step 136F follow-up.
 - UI: deferred; Mini App/Telegram consumption can be Step 136G follow-up.
+
+
+## Step 136F/136G-lite bounded summary projection
+- Added backend bounded summary schema `ai_team_analysis_packet_summary.v1` for `latest_system_runs.summary_json.ai_team_packet`.
+- Projection is deterministic and allowlisted only (status/guardrails/counts/top_gaps/limitations + run metadata).
+- Read-model guardrails remain explicit: paper-only, decision-support-only, no broker/live/order/real-money execution, no LLM/vendor call in default runtime.
+- Mini App backend review-shell now exposes read-only `sections.ai_team_packet_summary` with unavailable-safe fallback for missing/malformed rows.
+- No DB migration added in this step; persistence uses existing `summary_json` bounded path.

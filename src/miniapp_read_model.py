@@ -358,6 +358,7 @@ def build_miniapp_review_shell_response(
         "signals_summary": data_provider.get_signals_summary(),
         "paper_pnl_summary": data_provider.get_paper_pnl_summary(),
         "risk_summary": data_provider.get_risk_summary(),
+        "ai_team_packet_summary": data_provider.get_ai_team_packet_summary(),
         "decision_context_summary": data_provider.get_decision_context_summary(),
         "ticker_level_paper_portfolio_review": data_provider.get_ticker_level_paper_portfolio_review(),
         "daily_review": {"status": "mock"},

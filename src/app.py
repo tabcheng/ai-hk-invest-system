@@ -2,6 +2,7 @@ import os
 from datetime import datetime, timezone
 
 from src.config import STOCK_METADATA, TICKERS, get_supabase_client
+from src.ai_team_analysis_packet import build_latest_system_run_ai_team_packet_section
 from src.db import save_signal
 from src.decision_ledger import (
     create_decision_record_from_signal,
@@ -144,21 +145,35 @@ def _write_latest_system_run_best_effort(
     if run_id is None:
         return
 
+    summary_json = {
+        "run_id": run_id,
+        "status": terminal_status,
+        "processed_tickers": processed_tickers,
+        "successful_tickers": successful_tickers,
+        "failed_tickers": failed_tickers,
+        "finished_at": finished_at_iso,
+        "paper_trade_only": True,
+    }
+    try:
+        summary_json["ai_team_packet"] = build_latest_system_run_ai_team_packet_section(
+            run_id=run_id,
+            business_date=str(run_date),
+            run_type="paper_daily_runner",
+            schedule_basis="daily_close",
+            processed_tickers=processed_tickers,
+            successful_tickers=successful_tickers,
+            failed_tickers=failed_tickers,
+        )
+    except Exception as packet_error:
+        print(f"AI team packet summary skipped (best-effort): {packet_error.__class__.__name__}")
+
     payload = build_latest_system_run_upsert_payload(
         run_id=run_id,
         business_date=run_date,
         status=terminal_status.lower(),
         source="paper_daily_runner",
         data_timestamp=datetime.now(timezone.utc),
-        summary_json={
-            "run_id": run_id,
-            "status": terminal_status,
-            "processed_tickers": processed_tickers,
-            "successful_tickers": successful_tickers,
-            "failed_tickers": failed_tickers,
-            "finished_at": finished_at_iso,
-            "paper_trade_only": True,
-        },
+        summary_json=summary_json,
         risk_summary_json={},
     )
     upsert_latest_system_run(client, payload)

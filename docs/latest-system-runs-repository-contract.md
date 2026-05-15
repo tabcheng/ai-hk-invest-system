@@ -100,3 +100,9 @@ Write integration is best-effort from paper daily runner completion and does not
 - Current system still lacks canonical market data source; market data may remain unavailable/unknown.
 - No vendor integration, no broker/live/real-money execution, no order/simulated-order creation, no Supabase schema migration, no Telegram auth change.
 
+
+## Step 136F bounded AI Team packet summary persistence
+- `paper-daily-runner` now writes bounded `summary_json.ai_team_packet` derived from deterministic backend packet builder.
+- Shape is allowlisted summary-only (`schema_version`, `packet_schema_version`, `status`, guardrails, run metadata, bounded counters, bounded `top_gaps`, bounded `limitations`).
+- Write path remains best-effort: packet-summary failure is logged as safe bounded message and does not change run terminal status.
+- No DB migration in this step; existing `summary_json` path is reused.

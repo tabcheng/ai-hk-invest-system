@@ -187,9 +187,9 @@ Step 91A acceptance status update:
 - No claim of Railway cron activation/change without separate deploy evidence.
 
 ## Step 136B staged acceptance path
-1. Repo local smoke script pass (`scripts/backend_cadence_smoke.py`)。
-2. GitHub Actions manual smoke pass (`workflow_dispatch` only)。
-3. Railway env/cron staged review（operator 手動）。
+1. Repo local CLI smoke script pass (`python scripts/backend_cadence_smoke.py --run-type <type>`)；必須覆蓋真 CLI invocation path。
+2. GitHub Actions manual smoke pass (`workflow_dispatch` only, no secrets required)。
+3. Railway env/cron staged review（operator 手動；僅在 repo-side smoke harness pass 後可進行）。
 4. Deploy。
 5. Post-deploy smoke evidence（summary-only, secret-safe）。
 

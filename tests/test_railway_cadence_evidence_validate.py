@@ -39,6 +39,8 @@ def test_daily_baseline_pass(tmp_path: Path):
     assert res["status"] == "pass"
     assert res["telegram_sent"] is True
     assert res["telegram_chat_id_redacted"] is True
+    assert res["duration_seconds"] is not None
+    assert abs(res["duration_seconds"] - 7.35418) < 0.001
 
 
 def test_mismatch_run_type_fails(tmp_path: Path):
@@ -120,6 +122,13 @@ def test_negative_guardrail_wording_not_treated_as_execution(tmp_path: Path):
 
 def test_positive_execution_phrase_with_no_word_still_fails(tmp_path: Path):
     payload = _sample() + [{"message": "order created successfully; no retries"}]
+    res = validate_evidence(_args(tmp_path, payload))
+    assert res["status"] == "fail"
+    assert res["broker_live_order_execution_observed"] is True
+
+
+def test_mixed_negative_and_positive_execution_phrase_fails(tmp_path: Path):
+    payload = _sample() + [{"message": "no live execution; order created successfully"}]
     res = validate_evidence(_args(tmp_path, payload))
     assert res["status"] == "fail"
     assert res["broker_live_order_execution_observed"] is True

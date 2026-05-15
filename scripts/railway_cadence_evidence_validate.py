@@ -22,6 +22,7 @@ SAFE_NEGATIVE_EXECUTION_PHRASES = {
     "no broker connection",
     "no live execution",
     "no real-money execution",
+    "no real-money execution observed",
     "no broker/live/order/real-money execution observed",
     "no order execution observed",
 }
@@ -72,6 +73,10 @@ def _collect_rows(input_json: Any) -> list[dict[str, Any]]:
 def _parse_ts(v: str | None) -> datetime | None:
     if not v:
         return None
+    try:
+        return datetime.fromisoformat(v.replace("Z", "+00:00"))
+    except Exception:
+        return None
 
 
 def _has_secret_like(v: Any) -> bool:
@@ -84,10 +89,13 @@ def _sanitize_text(v: Any) -> Any:
     if isinstance(v, str) and _has_secret_like(v):
         return REDACTED
     return v
-    try:
-        return datetime.fromisoformat(v.replace("Z", "+00:00"))
-    except Exception:
-        return None
+
+
+def _is_safe_negative_guardrail_line(normalized_line: str) -> bool:
+    if normalized_line in SAFE_NEGATIVE_EXECUTION_PHRASES:
+        return True
+    parts = [p.strip() for p in re.split(r"[;,]", normalized_line) if p.strip()]
+    return bool(parts) and all(p in SAFE_NEGATIVE_EXECUTION_PHRASES for p in parts)
 
 
 def validate_evidence(args: argparse.Namespace) -> dict[str, Any]:
@@ -170,12 +178,12 @@ def validate_evidence(args: argparse.Namespace) -> dict[str, Any]:
 
     broker_live_order_execution_observed = False
     for line in messages:
-        low = line.lower()
-        if any(safe in low for safe in SAFE_NEGATIVE_EXECUTION_PHRASES):
+        normalized = " ".join(line.lower().split())
+        if _is_safe_negative_guardrail_line(normalized):
             continue
-        if any(x in low for x in UNSAFE_EXECUTION_PHRASES):
-                broker_live_order_execution_observed = True
-                break
+        if any(x in normalized for x in UNSAFE_EXECUTION_PHRASES):
+            broker_live_order_execution_observed = True
+            break
 
     notes: list[str] = []
     status = "pass"

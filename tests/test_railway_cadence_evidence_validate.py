@@ -1,0 +1,115 @@
+from __future__ import annotations
+
+import json
+import subprocess
+import sys
+from pathlib import Path
+
+from scripts.railway_cadence_evidence_validate import to_markdown, validate_evidence
+
+
+def _sample(run_type: str = "post_close_daily_review", status: str = "success") -> list[dict[str, str]]:
+    return [
+        {"message": "deployment id=8a1957b5-8187-46b2-b2f2-1968633377aa run record: id=51"},
+        {"message": "started_at=2026-05-15T06:58:59.550516+00:00"},
+        {"message": f'execution_summary={{"run_type":"{run_type}","entrypoint":"python -m src.daily_runner","schedule_basis":"HKT 20:00 (Railway cron UTC: 0 12 * * *)","status":"{status}"}}'},
+        {"message": "trades=0, events=3"},
+        {"message": "Telegram message sent to chat_id=123456789"},
+        {"message": "completed"},
+        {"message": "finished_at=2026-05-15T06:59:06.904696+00:00"},
+    ]
+
+
+def _args(tmp_path: Path, payload: list[dict[str, str]], expected: str = "post_close_daily_review"):
+    p = tmp_path / "in.json"
+    p.write_text(json.dumps(payload), encoding="utf-8")
+
+    class A:
+        input_json = str(p)
+        input_text = None
+        expected_run_type = expected
+        expected_entrypoint = "python -m src.daily_runner"
+        expected_schedule_basis_contains = "Railway cron UTC: 0 12 * * *"
+
+    return A()
+
+
+def test_daily_baseline_pass(tmp_path: Path):
+    res = validate_evidence(_args(tmp_path, _sample()))
+    assert res["status"] == "pass"
+    assert res["telegram_sent"] is True
+    assert res["telegram_chat_id_redacted"] is True
+
+
+def test_mismatch_run_type_fails(tmp_path: Path):
+    res = validate_evidence(_args(tmp_path, _sample(run_type="midday_market_monitor")))
+    assert res["status"] == "fail"
+
+
+def test_missing_execution_summary_fails(tmp_path: Path):
+    payload = _sample()
+    payload = [x for x in payload if "execution_summary" not in x["message"]]
+    res = validate_evidence(_args(tmp_path, payload))
+    assert res["status"] == "fail"
+
+
+def test_non_success_fails(tmp_path: Path):
+    res = validate_evidence(_args(tmp_path, _sample(status="failed")))
+    assert res["status"] == "fail"
+
+
+def test_secret_not_emitted_in_markdown(tmp_path: Path):
+    payload = _sample() + [{"message": "token=abc"}]
+    res = validate_evidence(_args(tmp_path, payload))
+    md = to_markdown(res)
+    assert "chat_id=123456789" not in md
+    assert "token=abc" not in md
+    assert res["status"] == "fail"
+
+
+def test_cli_json_and_md_output(tmp_path: Path):
+    in_path = tmp_path / "in.json"
+    out_json = tmp_path / "out.json"
+    out_md = tmp_path / "out.md"
+    in_path.write_text(json.dumps(_sample()), encoding="utf-8")
+    subprocess.run(
+        [
+            sys.executable,
+            "scripts/railway_cadence_evidence_validate.py",
+            "--input-json",
+            str(in_path),
+            "--expected-run-type",
+            "post_close_daily_review",
+            "--expected-schedule-basis-contains",
+            "Railway cron UTC",
+            "--output-json",
+            str(out_json),
+            "--output-md",
+            str(out_md),
+        ],
+        check=True,
+    )
+    data = json.loads(out_json.read_text(encoding="utf-8"))
+    assert data["status"] == "pass"
+    assert "real-money execution" in out_md.read_text(encoding="utf-8")
+
+
+def test_support_midday_and_stale(tmp_path: Path):
+    midday = validate_evidence(_args(tmp_path, _sample(run_type="midday_market_monitor"), expected="midday_market_monitor"))
+    stale = validate_evidence(_args(tmp_path, _sample(run_type="stale_risk_refresh"), expected="stale_risk_refresh"))
+    assert midday["status"] == "pass"
+    assert stale["status"] == "pass"
+
+
+def test_structured_tags_deployment_id_supported(tmp_path: Path):
+    payload = _sample()
+    payload[0] = {"message": "run record: id=51", "tags": {"deploymentId": "8a1957b5-8187-46b2-b2f2-1968633377aa"}}
+    res = validate_evidence(_args(tmp_path, payload))
+    assert res["status"] == "pass"
+    assert res["deployment_id"] == "8a1957b5-8187-46b2-b2f2-1968633377aa"
+
+
+def test_negative_guardrail_wording_not_treated_as_execution(tmp_path: Path):
+    payload = _sample() + [{"message": "no broker execution, no live execution, no real-money execution observed"}]
+    res = validate_evidence(_args(tmp_path, payload))
+    assert res["status"] == "pass"

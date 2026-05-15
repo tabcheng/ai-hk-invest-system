@@ -618,3 +618,16 @@ Boundary reminder:
 - Repository merge alone does not activate Railway cron.
 - Manual refresh remains fallback-only.
 - System remains paper-only decision-support (no broker/live/order execution).
+
+## Step 136D-2 `paper-midday-monitor` staged setup checklist (post-merge operator action)
+- Repo merge 本身不會啟用 Railway service；請在此 PR merge 後才進行平台設定。
+- Service name: `paper-midday-monitor`.
+- Start command: `python -m src.daily_runner`.
+- Env: `AIHK_RUN_TYPE=midday_market_monitor`.
+- Cron (UTC): `30 4 * * 1-5`（目標約 HKT 平日 12:30）.
+- Railway cron 屬最佳努力排程，分鐘級不保證精準；若上次 execution 尚未結束，下一次可能被 skip。
+- 先收集 manual equivalent smoke / log evidence，再執行 validator：
+  - `python scripts/railway_cadence_evidence_validate.py --input-json <logs.json> --expected-run-type midday_market_monitor --expected-entrypoint "python -m src.daily_runner" --expected-schedule-basis-contains "Railway cron UTC: 30 4 * * 1-5" --output-json <report.json> --output-md <report.md>`
+- 現階段 evidence 仍以 operator 手動提供為主；validator 只做標準化檢查。
+- 分享證據前必須 redact chat id / secret；validator 輸出不得包含 raw secret。
+- `paper-stale-risk-refresh` 必須等 `paper-midday-monitor` acceptance 後才可啟動。

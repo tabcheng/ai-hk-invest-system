@@ -274,3 +274,16 @@ Operator deploy + smoke evidence flow (manual):
   - `AIHK_RUN_TYPE=stale_risk_refresh`
 - Cron configuration is stored in Railway service schedule settings and interpreted in UTC.
 - Secret handling unchanged: backend-only secrets remain backend-only; no raw secret values in docs/logs/chat/frontend.
+
+## Step 136D multi-service cadence decision (current)
+- Current direction: keep separate Railway services by `run_type` (daily / midday / stale-risk).
+- Not adopting single-service consolidation at this stage.
+- Rationale: clearer logs, run-type isolation, safer staged rollout, and easier smoke evidence/audit trail.
+- Future consolidation can be reconsidered only after multiple cadence services are stable with evidence.
+
+### `paper-midday-monitor` staged variable checklist
+- `AIHK_RUN_TYPE=midday_market_monitor`
+- Start command: `python -m src.daily_runner`
+- Cron UTC: `30 4 * * 1-5`
+- Intent HKT: around 12:30 weekday
+- Keep paper-only boundaries; no broker/live/order execution path.

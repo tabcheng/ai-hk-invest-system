@@ -205,3 +205,17 @@ Step 91A acceptance status update:
   4. run post-deploy smoke,
   5. record PASS/FAIL/BLOCKED evidence in `docs/status.md`.
 - Railway cron design remains short-lived task execution and UTC-based scheduling; cadence must tolerate minute-level drift.
+
+## Step 136D staged cadence flow
+1. `paper-daily-runner` baseline verified.
+2. `paper-midday-monitor` staged setup (manual operator in Railway).
+3. Midday manual-equivalent smoke evidence collection.
+4. `railway_cadence_evidence_validate.py` PASS.
+5. Natural cron evidence captured later (separate acceptance item).
+6. `paper-stale-risk-refresh` only after midday acceptance.
+
+Notes:
+- Railway cron uses UTC; HKT intent must be documented separately.
+- Railway cron should run short-lived jobs and terminate.
+- If prior run is still Active, future scheduled execution may be skipped.
+- GitHub `workflow_dispatch` evidence is manual GitHub runner evidence, not Railway activation proof.

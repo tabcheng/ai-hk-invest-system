@@ -72,7 +72,7 @@ def test_cli_json_and_md_output(tmp_path: Path):
     out_json = tmp_path / "out.json"
     out_md = tmp_path / "out.md"
     in_path.write_text(json.dumps(_sample()), encoding="utf-8")
-    subprocess.run(
+    proc = subprocess.run(
         [
             sys.executable,
             "scripts/railway_cadence_evidence_validate.py",
@@ -88,10 +88,13 @@ def test_cli_json_and_md_output(tmp_path: Path):
             str(out_md),
         ],
         check=True,
+        capture_output=True,
+        text=True,
     )
     data = json.loads(out_json.read_text(encoding="utf-8"))
     assert data["status"] == "pass"
     assert "real-money execution" in out_md.read_text(encoding="utf-8")
+    assert "token=" not in proc.stdout
 
 
 def test_support_midday_and_stale(tmp_path: Path):
@@ -110,6 +113,51 @@ def test_structured_tags_deployment_id_supported(tmp_path: Path):
 
 
 def test_negative_guardrail_wording_not_treated_as_execution(tmp_path: Path):
-    payload = _sample() + [{"message": "no broker execution, no live execution, no real-money execution observed"}]
+    payload = _sample() + [{"message": "no broker connection, no live execution, no real-money execution observed"}]
     res = validate_evidence(_args(tmp_path, payload))
     assert res["status"] == "pass"
+
+
+def test_positive_execution_phrase_with_no_word_still_fails(tmp_path: Path):
+    payload = _sample() + [{"message": "order created successfully; no retries"}]
+    res = validate_evidence(_args(tmp_path, payload))
+    assert res["status"] == "fail"
+    assert res["broker_live_order_execution_observed"] is True
+
+
+def test_secret_like_schedule_basis_redacted_everywhere(tmp_path: Path):
+    payload = _sample()
+    payload[2] = {
+        "message": 'execution_summary={"run_type":"post_close_daily_review","entrypoint":"python -m src.daily_runner","schedule_basis":"token=abc","status":"success"}'
+    }
+    res = validate_evidence(_args(tmp_path, payload))
+    md = to_markdown(res)
+    assert res["status"] == "fail"
+    assert res["secrets_observed"] is True
+    assert res["schedule_basis"] == "[REDACTED_SECRET_LIKE_VALUE]"
+    assert "token=abc" not in md
+    assert "token=abc" not in json.dumps(res)
+
+
+def test_secret_like_entrypoint_redacted_everywhere(tmp_path: Path):
+    payload = _sample()
+    payload[2] = {
+        "message": 'execution_summary={"run_type":"post_close_daily_review","entrypoint":"sb_secret_123456","schedule_basis":"HKT 20:00 (Railway cron UTC: 0 12 * * *)","status":"success"}'
+    }
+    res = validate_evidence(_args(tmp_path, payload))
+    md = to_markdown(res)
+    assert res["status"] == "fail"
+    assert res["secrets_observed"] is True
+    assert res["entrypoint"] == "[REDACTED_SECRET_LIKE_VALUE]"
+    assert "sb_secret_123456" not in md
+    assert "sb_secret_123456" not in json.dumps(res)
+
+
+def test_telegram_bot_token_like_string_not_emitted(tmp_path: Path):
+    payload = _sample() + [{"message": "bot12345678:ABCDefghijklmnopqrstuvwxy"}]
+    res = validate_evidence(_args(tmp_path, payload))
+    md = to_markdown(res)
+    dumped = json.dumps(res)
+    assert res["status"] == "fail"
+    assert "bot12345678:ABCDefghijklmnopqrstuvwxy" not in md
+    assert "bot12345678:ABCDefghijklmnopqrstuvwxy" not in dumped

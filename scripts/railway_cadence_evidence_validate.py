@@ -16,6 +16,15 @@ SECRET_PATTERNS = [
     re.compile(r"\bbot\d{8,}:[A-Za-z0-9_\-]{20,}\b"),
     re.compile(r"\btoken\s*[=:]\s*[^\s]+", re.IGNORECASE),
 ]
+REDACTED = "[REDACTED_SECRET_LIKE_VALUE]"
+UNSAFE_EXECUTION_PHRASES = ["order created", "place order", "broker execution", "live execution", "real-money execution"]
+SAFE_NEGATIVE_EXECUTION_PHRASES = {
+    "no broker connection",
+    "no live execution",
+    "no real-money execution",
+    "no broker/live/order/real-money execution observed",
+    "no order execution observed",
+}
 
 
 def _safe_load_json(path: Path) -> Any:
@@ -63,6 +72,18 @@ def _collect_rows(input_json: Any) -> list[dict[str, Any]]:
 def _parse_ts(v: str | None) -> datetime | None:
     if not v:
         return None
+
+
+def _has_secret_like(v: Any) -> bool:
+    if not isinstance(v, str):
+        return False
+    return any(p.search(v) for p in SECRET_PATTERNS)
+
+
+def _sanitize_text(v: Any) -> Any:
+    if isinstance(v, str) and _has_secret_like(v):
+        return REDACTED
+    return v
     try:
         return datetime.fromisoformat(v.replace("Z", "+00:00"))
     except Exception:
@@ -137,11 +158,22 @@ def validate_evidence(args: argparse.Namespace) -> dict[str, Any]:
     schedule_basis = execution_summary.get("schedule_basis") if execution_summary else None
 
     secrets_observed = any(p.search(full_text) for p in SECRET_PATTERNS)
+    if _has_secret_like(entrypoint):
+        secrets_observed = True
+        entrypoint = REDACTED
+    if _has_secret_like(schedule_basis):
+        secrets_observed = True
+        schedule_basis = REDACTED
+    if _has_secret_like(deployment_id):
+        secrets_observed = True
+        deployment_id = REDACTED
+
     broker_live_order_execution_observed = False
     for line in messages:
         low = line.lower()
-        if any(x in low for x in ["place order", "order created", "live execution", "broker execution", "real-money execution"]):
-            if "no " not in low and "not " not in low:
+        if any(safe in low for safe in SAFE_NEGATIVE_EXECUTION_PHRASES):
+            continue
+        if any(x in low for x in UNSAFE_EXECUTION_PHRASES):
                 broker_live_order_execution_observed = True
                 break
 
@@ -178,15 +210,16 @@ def validate_evidence(args: argparse.Namespace) -> dict[str, Any]:
     if st_dt and fn_dt:
         duration_seconds = round((fn_dt - st_dt).total_seconds(), 6)
 
+    notes = [_sanitize_text(n) for n in notes]
     result = {
         "status": status,
         "expected_run_type": args.expected_run_type,
         "observed_run_type": observed_run_type,
         "execution_status": execution_status,
-        "entrypoint": entrypoint,
-        "schedule_basis": schedule_basis,
+        "entrypoint": _sanitize_text(entrypoint),
+        "schedule_basis": _sanitize_text(schedule_basis),
         "run_record_id": run_record_id,
-        "deployment_id": deployment_id,
+        "deployment_id": _sanitize_text(deployment_id),
         "started_at": started_at,
         "finished_at": finished_at,
         "duration_seconds": duration_seconds,

@@ -2,10 +2,26 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
 from pathlib import Path
 from typing import Any
 
-from src.backend_data_cadence import build_backend_data_cadence_policy, get_effective_run_type, plan_backend_auto_refreshes
+_REPO_ROOT = Path(__file__).resolve().parents[1]
+
+
+def _ensure_repo_root_on_path() -> None:
+    repo_root = str(_REPO_ROOT)
+    if repo_root not in sys.path:
+        sys.path.insert(0, repo_root)
+
+
+_ensure_repo_root_on_path()
+
+from src.backend_data_cadence import (
+    build_backend_data_cadence_policy,
+    get_effective_run_type,
+    plan_backend_auto_refreshes,
+)
 
 
 def run_smoke(requested_run_type: str) -> dict[str, Any]:

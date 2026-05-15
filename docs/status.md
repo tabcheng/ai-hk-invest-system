@@ -145,13 +145,16 @@
 - no simulated/paper order creation: pass.
 - human final real-money decision remains outside system: pass.
 
-### Step 136B implementation summary (PR in review)
-- Scope: wire Step 136A run-type contract into runner execution summary metadata, add repo-side cadence smoke harness script, add manual-only GitHub Actions smoke workflow, add focused tests/docs alignment.
-- Repo-side only: smoke harness validates cadence contract and guardrails; it does not deploy or activate Railway cron.
-- Railway impact: unchanged in this PR; schedule/env activation remains operator staged review + deploy + smoke evidence.
-- Supabase/DB/schema/RLS impact: unchanged.
-- Vendor/token/broker/order/live/real-money/autonomous execution impact: none.
-- Manual refresh remains fallback only; automatic scheduled cadence remains preferred path.
+### Step 136B post-merge smoke evidence + Step 136B-SMOKE-FIX prerequisite
+- PR #155 merged: yes.
+- Merge commit: `5a9548686131e33e2cf70562497949db54528499`.
+- CI result before merge: success (`pytest`, 539 passed).
+- Initial manual backend-cadence-smoke workflow runs failed: `25880694967`, `25881137883`, `25881210053`.
+- Shared failure reason: `ModuleNotFoundError: No module named 'src'` from CLI path `python scripts/backend_cadence_smoke.py --run-type ...`.
+- Classification: repo-side smoke harness import-path bug; **not** a Railway cron activation failure.
+- Railway scheduled cadence remains **not activated**.
+- Supabase/vendor/broker/order/live execution impact: none.
+- This step (Step 136B-SMOKE-FIX) is the smoke harness fix + acceptance retry prerequisite before any Railway cadence activation claim.
 
 ## 2026-05-13 — Step 135I Mini App Operator Workflow Finalization
 

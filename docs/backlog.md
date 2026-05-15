@@ -8,12 +8,13 @@ Prioritization:
 ## Active backlog (pending)
 
 ### P0
-1. **Step 136B — Scheduled Cadence Runtime Wiring + Smoke Evidence Harness (active)**
-   - 將 `AIHK_RUN_TYPE` 合約接到 runner execution summary metadata（安全 fallback 到 `post_close_daily_review`）。
-   - 新增 repo-side cadence smoke script + manual GitHub Actions smoke workflow（`workflow_dispatch` only）。
+1. **Step 136B — Scheduled Cadence Runtime Wiring + Smoke Evidence Harness (active; smoke acceptance still open)**
+   - `AIHK_RUN_TYPE` runner metadata wiring 已落地，但 manual smoke acceptance 未完成。
+   - backend-cadence-smoke manual workflow 三次失敗（runs: `25880694967`, `25881137883`, `25881210053`），原因為 repo-side CLI import-path bug (`No module named src`)。
+   - Step 136B-SMOKE-FIX 必須先完成 + rerun smoke pass，先可關閉 Step 136B acceptance。
    - 保持 paper-only guardrails：不建立訂單、不連接券商、不做 live/real-money execution。
-2. **Step 136C — Next follow-up (pending)**
-   - Railway 平台排程/env staged review + deploy + post-deploy smoke evidence。
+2. **Step 136C — Next follow-up (pending, blocked by Step 136B smoke pass evidence)**
+   - Railway 平台排程/env staged review + deploy + post-deploy smoke evidence（僅在 Step 136B manual smoke pass 後推進）。
    - AI team backend analysis packet 依 docs-of-record sequencing推進。
 
 ### P1

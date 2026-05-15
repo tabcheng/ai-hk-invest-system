@@ -599,3 +599,9 @@ When validating Mini App Journal Outcome Review and Telegram `/journal_outcome`,
 - 正常路徑應該係自動 scheduled/policy refresh；manual refresh 仍然只係 fallback。
 - cadence smoke evidence 只代表 repo-side cadence contract 健康，唔代表 Railway cron 已 live。
 - 若要聲稱 cron/live cadence，必須附 deploy 後 smoke evidence。
+
+## Step 136B smoke troubleshooting (`No module named src`)
+- 若手動 workflow 或本地執行 `python scripts/backend_cadence_smoke.py --run-type ...` 出現 `ModuleNotFoundError: No module named src`，代表係 repo-side smoke harness import-path 問題，唔係 Railway cron activation 問題。
+- 處理方式：先套用 Step 136B-SMOKE-FIX hotfix（script CLI import path），再 rerun manual workflow 驗證。
+- 在 hotfix smoke pass 前，**不得**宣稱 Railway scheduled cadence 已啟動。
+

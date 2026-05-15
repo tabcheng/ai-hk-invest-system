@@ -194,3 +194,14 @@ Step 91A acceptance status update:
 5. Post-deploy smoke evidence（summary-only, secret-safe）。
 
 - Railway 平台變更不能由 repo merge 自動推斷為已生效。
+
+
+## Step 136C staged activation discipline (repo scaffold only)
+- Step 136C delivers repository-side planning/checklist artifacts only; merging repository code does **not** activate Railway cron.
+- Activation ownership remains with human operator staged actions:
+  1. review generated checklist,
+  2. configure Railway service/env/UTC cron manually,
+  3. deploy,
+  4. run post-deploy smoke,
+  5. record PASS/FAIL/BLOCKED evidence in `docs/status.md`.
+- Railway cron design remains short-lived task execution and UTC-based scheduling; cadence must tolerate minute-level drift.

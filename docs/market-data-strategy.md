@@ -99,3 +99,10 @@
 - Step 136B 將 Step 136A cadence contract 連到 runner metadata（`run_type`）與 smoke evidence harness，屬 repo-side wiring only。
 - 20:00 HKT 仍然係 post-close baseline（`post_close_daily_review`）。
 - pre-market / midday / stale-risk cadence 需要後續 Railway schedule activation + deploy + smoke evidence，先可以聲稱 production active。
+
+
+## Step 136C cadence activation scaffold positioning
+- 20:00 HKT post-close review remains baseline review cadence.
+- Midday monitor and stale-risk refresh are scheduled-candidate review flows, not execution flows.
+- All cadence outputs remain paper-only interpretation support; no real-time trading execution semantics.
+- Event-context refresh remains planned-later and depends on future provider/event-trigger design acceptance.

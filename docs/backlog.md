@@ -8,14 +8,13 @@ Prioritization:
 ## Active backlog (pending)
 
 ### P0
-1. **Step 136B — Scheduled Cadence Runtime Wiring + Smoke Evidence Harness (active; smoke acceptance still open)**
-   - `AIHK_RUN_TYPE` runner metadata wiring 已落地，但 manual smoke acceptance 未完成。
-   - backend-cadence-smoke manual workflow 三次失敗（runs: `25880694967`, `25881137883`, `25881210053`），原因為 repo-side CLI import-path bug (`No module named src`)。
-   - Step 136B-SMOKE-FIX 必須先完成 + rerun smoke pass，先可關閉 Step 136B acceptance。
-   - 保持 paper-only guardrails：不建立訂單、不連接券商、不做 live/real-money execution。
-2. **Step 136C — Next follow-up (pending, blocked by Step 136B smoke pass evidence)**
-   - Railway 平台排程/env staged review + deploy + post-deploy smoke evidence（僅在 Step 136B manual smoke pass 後推進）。
-   - AI team backend analysis packet 依 docs-of-record sequencing推進。
+1. **Step 136C — Railway Scheduled Cadence Activation Scaffold + Acceptance Gate (active)**
+   - repo-side activation scaffold：run-type schedule matrix + manual checklist generator + manual-only checklist workflow + guardrail tests。
+   - 明確保持 human operator staged Railway setup/deploy/smoke ownership；repo merge 不代表 cron 已啟用。
+2. **Step 136D — Railway scheduled cadence platform setup + post-deploy smoke evidence (next)**
+   - 人手在 Railway 設定 service/env/cron（UTC），deploy 後執行 smoke，並回填 docs/status evidence。
+3. **Step 136E — AI team backend analysis packet (next)**
+   - 依 docs-of-record sequencing，在 136D acceptance 後推進。
 
 ### P1
 1. **Stock Review wording regression tests (pending)**
@@ -70,6 +69,9 @@ Prioritization:
 - Telegram output language option (future).
 
 ## Completed / Archived (recent)
+- Step 136B — Scheduled Cadence Runtime Wiring + Smoke Evidence Harness completed and merged (PR #155, merge commit `5a9548686131e33e2cf70562497949db54528499`).
+- Step 136B-SMOKE-FIX completed and merged (PR #156, merge commit `fadcced60b92ac618a99f38ec5629ad7d7f22739`).
+- Step 136B post-fix manual smoke reruns passed: `25897779726` (`post_close_daily_review`), `25897892221` (`midday_market_monitor`), `25897908924` (`stale_risk_refresh`).
 - Step 135A — AI Team Analysis Blueprint docs-of-record alignment (docs-only) completed and merged.
 - Step 135B — Stock Dossier v1 backend read model + Mini App Stock Review shell completed and merged (PR #141).
 - Step 135C — Stock Review first-layer UX polish completed and merged (PR #142).

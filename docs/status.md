@@ -10,8 +10,12 @@
 - Merge commit: `391c4fcf02256113356a7dc63eb1b4e8291bd8cc`.
 - CI result before merge: success (`pytest`, 582 passed).
 - Codex review threads resolved: yes.
-- Review threads count: 2; unresolved: 0; outdated unresolved: 0; review submissions: 1.
-- PR comments count / issue comments count: recorded from GitHub review metadata at merge time.
+- PR review timeline entries: 3.
+- PR top-level issue comments: 0.
+- Review submissions: 1.
+- Review threads: 2.
+- Unresolved review threads: 0.
+- Outdated unresolved threads: 0.
 - Railway impact (Step 136E): no platform mutation by repo merge.
 - Supabase impact (Step 136E): unchanged.
 - UI impact (Step 136E): unchanged.

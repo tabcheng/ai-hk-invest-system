@@ -2,7 +2,9 @@ import os
 from datetime import datetime, timezone
 
 from src.config import STOCK_METADATA, TICKERS, get_supabase_client
+from src.backend_data_cadence import RUN_TYPE_POST_CLOSE
 from src.ai_team_analysis_packet import build_latest_system_run_ai_team_packet_section
+from src.railway_cadence_runtime import get_runtime_schedule_basis
 from src.db import save_signal
 from src.decision_ledger import (
     create_decision_record_from_signal,
@@ -158,8 +160,8 @@ def _write_latest_system_run_best_effort(
         summary_json["ai_team_packet"] = build_latest_system_run_ai_team_packet_section(
             run_id=run_id,
             business_date=str(run_date),
-            run_type="paper_daily_runner",
-            schedule_basis="daily_close",
+            run_type=RUN_TYPE_POST_CLOSE,
+            schedule_basis=get_runtime_schedule_basis(RUN_TYPE_POST_CLOSE),
             processed_tickers=processed_tickers,
             successful_tickers=successful_tickers,
             failed_tickers=failed_tickers,

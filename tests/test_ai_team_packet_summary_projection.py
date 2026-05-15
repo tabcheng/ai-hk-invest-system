@@ -58,3 +58,62 @@ def test_latest_system_run_ai_team_packet_section_uses_processed_ticker_counts()
     assert summary["status"] == "partial"
     assert summary["paper_trade_only"] is True
     assert summary["decision_support_only"] is True
+
+
+def test_miniapp_provider_ai_team_packet_summary_fails_closed_on_unsafe_guardrails(monkeypatch):
+    class _Client:
+        pass
+
+    monkeypatch.setattr(
+        "src.latest_system_runs_repository.get_latest_system_run",
+        lambda client, source="paper_daily_runner": {
+            "summary_json": {
+                "paper_trade_only": True,
+                "ai_team_packet": {
+                    "status": "ok",
+                    "paper_trade_only": True,
+                    "decision_support_only": True,
+                    "broker_connection": True,
+                    "live_execution": False,
+                    "real_money_execution": False,
+                    "creates_orders": False,
+                },
+            }
+        },
+    )
+    provider = SupabaseLatestSystemRunMiniAppReadDataProvider(client=_Client())
+    result = provider.get_ai_team_packet_summary()
+    assert result["status"] == "unavailable"
+
+
+def test_miniapp_provider_ai_team_packet_summary_allowlists_and_bounds_fields(monkeypatch):
+    class _Client:
+        pass
+
+    monkeypatch.setattr(
+        "src.latest_system_runs_repository.get_latest_system_run",
+        lambda client, source="paper_daily_runner": {
+            "summary_json": {
+                "paper_trade_only": True,
+                "ai_team_packet": {
+                    "status": "ok",
+                    "paper_trade_only": True,
+                    "decision_support_only": True,
+                    "broker_connection": False,
+                    "live_execution": False,
+                    "real_money_execution": False,
+                    "creates_orders": False,
+                    "slot_status_counts": {"ok": "2", "partial": "x", "missing": True, "unknown": 1, "extra": 99},
+                    "simulated_direction_counts": {"insufficient_data": "3", "watch_only": 1.9, "mixed_watch": "bad", "extra": 9},
+                    "top_gaps": {"bad": "shape"},
+                    "limitations": "bad-shape",
+                },
+            }
+        },
+    )
+    provider = SupabaseLatestSystemRunMiniAppReadDataProvider(client=_Client())
+    result = provider.get_ai_team_packet_summary()
+    assert result["slot_status_counts"] == {"ok": 2, "partial": 0, "missing": 0, "unknown": 1}
+    assert result["simulated_direction_counts"] == {"insufficient_data": 3, "watch_only": 1, "mixed_watch": 0}
+    assert result["top_gaps"] == []
+    assert result["limitations"] == []

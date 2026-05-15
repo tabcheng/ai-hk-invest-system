@@ -350,6 +350,13 @@ def build_miniapp_review_shell_response(
 ) -> dict[str, Any]:
     generated_at = now.astimezone(_HKT) if now else datetime.now(_HKT)
     data_provider = provider or _resolve_default_provider(env=env, now=generated_at)
+    fallback_provider = RailwayRuntimeEnvMiniAppReadDataProvider(env=env, now=generated_at)
+    ai_team_packet_reader = getattr(data_provider, "get_ai_team_packet_summary", None)
+    ai_team_packet_summary = (
+        ai_team_packet_reader()
+        if callable(ai_team_packet_reader)
+        else fallback_provider.get_ai_team_packet_summary()
+    )
 
     sections = {
         "runner_status": data_provider.get_runtime_status_summary(),
@@ -358,7 +365,7 @@ def build_miniapp_review_shell_response(
         "signals_summary": data_provider.get_signals_summary(),
         "paper_pnl_summary": data_provider.get_paper_pnl_summary(),
         "risk_summary": data_provider.get_risk_summary(),
-        "ai_team_packet_summary": data_provider.get_ai_team_packet_summary(),
+        "ai_team_packet_summary": ai_team_packet_summary,
         "decision_context_summary": data_provider.get_decision_context_summary(),
         "ticker_level_paper_portfolio_review": data_provider.get_ticker_level_paper_portfolio_review(),
         "daily_review": {"status": "mock"},

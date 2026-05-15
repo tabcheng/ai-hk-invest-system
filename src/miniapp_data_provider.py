@@ -807,9 +807,47 @@ class SupabaseLatestSystemRunMiniAppReadDataProvider(RailwayRuntimeEnvMiniAppRea
         if not isinstance(row, dict) or not row:
             return RailwayRuntimeEnvMiniAppReadDataProvider().get_ai_team_packet_summary()
         summary = row.get("summary_json") if isinstance(row.get("summary_json"), dict) else {}
+        if summary.get("paper_trade_only") is not True:
+            return RailwayRuntimeEnvMiniAppReadDataProvider().get_ai_team_packet_summary()
         packet = summary.get("ai_team_packet") if isinstance(summary.get("ai_team_packet"), dict) else None
         if not isinstance(packet, dict):
             return RailwayRuntimeEnvMiniAppReadDataProvider().get_ai_team_packet_summary()
+        if packet.get("paper_trade_only") is not True:
+            return RailwayRuntimeEnvMiniAppReadDataProvider().get_ai_team_packet_summary()
+        if packet.get("decision_support_only") is not True:
+            return RailwayRuntimeEnvMiniAppReadDataProvider().get_ai_team_packet_summary()
+        for unsafe_key in ("broker_connection", "live_execution", "real_money_execution", "creates_orders"):
+            if packet.get(unsafe_key) is not False:
+                return RailwayRuntimeEnvMiniAppReadDataProvider().get_ai_team_packet_summary()
+
+        slot_counts_raw = packet.get("slot_status_counts")
+        slot_counts_in = slot_counts_raw if isinstance(slot_counts_raw, dict) else {}
+        slot_counts = {
+            "ok": _safe_int_counter(slot_counts_in.get("ok")),
+            "partial": _safe_int_counter(slot_counts_in.get("partial")),
+            "missing": _safe_int_counter(slot_counts_in.get("missing")),
+            "unknown": _safe_int_counter(slot_counts_in.get("unknown")),
+        }
+        direction_counts_raw = packet.get("simulated_direction_counts")
+        direction_counts_in = direction_counts_raw if isinstance(direction_counts_raw, dict) else {}
+        direction_counts = {
+            "insufficient_data": _safe_int_counter(direction_counts_in.get("insufficient_data")),
+            "watch_only": _safe_int_counter(direction_counts_in.get("watch_only")),
+            "mixed_watch": _safe_int_counter(direction_counts_in.get("mixed_watch")),
+        }
+
+        top_gaps_raw = packet.get("top_gaps")
+        top_gaps = (
+            [str(x)[:80] for x in top_gaps_raw[:5] if isinstance(x, str)]
+            if isinstance(top_gaps_raw, list)
+            else []
+        )
+        limitations_raw = packet.get("limitations")
+        limitations = (
+            [str(x)[:120] for x in limitations_raw[:5] if isinstance(x, str)]
+            if isinstance(limitations_raw, list)
+            else []
+        )
         return {
             "status": str(packet.get("status") or "unavailable")[:40],
             "source": "latest_system_runs",
@@ -818,14 +856,10 @@ class SupabaseLatestSystemRunMiniAppReadDataProvider(RailwayRuntimeEnvMiniAppRea
             "paper_trade_only": bool(packet.get("paper_trade_only", True)),
             "decision_support_only": bool(packet.get("decision_support_only", True)),
             "covered_tickers": _safe_int_counter(packet.get("covered_tickers")),
-            "slot_status_counts": packet.get("slot_status_counts")
-            if isinstance(packet.get("slot_status_counts"), dict)
-            else {"ok": 0, "partial": 0, "missing": 0, "unknown": 0},
-            "simulated_direction_counts": packet.get("simulated_direction_counts")
-            if isinstance(packet.get("simulated_direction_counts"), dict)
-            else {"insufficient_data": 0, "watch_only": 0, "mixed_watch": 0},
-            "top_gaps": [str(x)[:80] for x in list(packet.get("top_gaps") or [])[:5]],
-            "limitations": [str(x)[:120] for x in list(packet.get("limitations") or [])[:5]],
+            "slot_status_counts": slot_counts,
+            "simulated_direction_counts": direction_counts,
+            "top_gaps": top_gaps,
+            "limitations": limitations,
             "boundary": "read-only AI simulated context only; no broker/live execution",
         }
 

@@ -258,3 +258,7 @@ For each Railway scheduled service candidate, capture:
   - Telegram chat id must not appear in report output.
   - Secret-like tokens must not be echoed to report output.
   - Evidence remains manual/operator-provided unless separately marked natural cron evidence.
+
+### Cadence metadata consistency gate (Step 136D-2-FIX)
+- `execution_summary.schedule_basis` must match effective `AIHK_RUN_TYPE` cadence mapping.
+- Failure classification: `run_type=status success` but `schedule_basis mismatch` = metadata blocker (not platform-success evidence).

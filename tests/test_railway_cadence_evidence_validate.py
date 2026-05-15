@@ -8,11 +8,11 @@ from pathlib import Path
 from scripts.railway_cadence_evidence_validate import to_markdown, validate_evidence
 
 
-def _sample(run_type: str = "post_close_daily_review", status: str = "success") -> list[dict[str, str]]:
+def _sample(run_type: str = "post_close_daily_review", status: str = "success", schedule_basis: str | None = None) -> list[dict[str, str]]:
     return [
         {"message": "deployment id=8a1957b5-8187-46b2-b2f2-1968633377aa run record: id=51"},
         {"message": "started_at=2026-05-15T06:58:59.550516+00:00"},
-        {"message": f'execution_summary={{"run_type":"{run_type}","entrypoint":"python -m src.daily_runner","schedule_basis":"HKT 20:00 (Railway cron UTC: 0 12 * * *)","status":"{status}"}}'},
+        {"message": f'execution_summary={{"run_type":"{run_type}","entrypoint":"python -m src.daily_runner","schedule_basis":"{schedule_basis or "HKT 20:00 (Railway cron UTC: 0 12 * * *)"}","status":"{status}"}}'},
         {"message": "trades=0, events=3"},
         {"message": "Telegram message sent to chat_id=123456789"},
         {"message": "completed"},
@@ -29,7 +29,7 @@ def _args(tmp_path: Path, payload: list[dict[str, str]], expected: str = "post_c
         input_text = None
         expected_run_type = expected
         expected_entrypoint = "python -m src.daily_runner"
-        expected_schedule_basis_contains = "Railway cron UTC: 0 12 * * *"
+        expected_schedule_basis_contains = None
 
     return A()
 
@@ -100,8 +100,26 @@ def test_cli_json_and_md_output(tmp_path: Path):
 
 
 def test_support_midday_and_stale(tmp_path: Path):
-    midday = validate_evidence(_args(tmp_path, _sample(run_type="midday_market_monitor"), expected="midday_market_monitor"))
-    stale = validate_evidence(_args(tmp_path, _sample(run_type="stale_risk_refresh"), expected="stale_risk_refresh"))
+    midday = validate_evidence(
+        _args(
+            tmp_path,
+            _sample(
+                run_type="midday_market_monitor",
+                schedule_basis="HKT around 12:30 weekday (Railway cron UTC: 30 4 * * 1-5)",
+            ),
+            expected="midday_market_monitor",
+        )
+    )
+    stale = validate_evidence(
+        _args(
+            tmp_path,
+            _sample(
+                run_type="stale_risk_refresh",
+                schedule_basis="HKT around 15:30 weekday (Railway cron UTC: 30 7 * * 1-5)",
+            ),
+            expected="stale_risk_refresh",
+        )
+    )
     assert midday["status"] == "pass"
     assert stale["status"] == "pass"
 
@@ -184,3 +202,15 @@ def test_telegram_bot_token_like_string_not_emitted(tmp_path: Path):
     assert res["status"] == "fail"
     assert "bot12345678:ABCDefghijklmnopqrstuvwxy" not in md
     assert "bot12345678:ABCDefghijklmnopqrstuvwxy" not in dumped
+
+
+def test_midday_derived_schedule_pass_and_mismatch_fail(tmp_path: Path):
+    ok = validate_evidence(_args(tmp_path, _sample(run_type="midday_market_monitor", schedule_basis="HKT around 12:30 weekday (Railway cron UTC: 30 4 * * 1-5)"), expected="midday_market_monitor"))
+    bad = validate_evidence(_args(tmp_path, _sample(run_type="midday_market_monitor", schedule_basis="HKT 20:00 (Railway cron UTC: 0 12 * * *)"), expected="midday_market_monitor"))
+    assert ok["status"] == "pass"
+    assert bad["status"] == "fail"
+
+
+def test_stale_risk_derived_schedule_pass(tmp_path: Path):
+    res = validate_evidence(_args(tmp_path, _sample(run_type="stale_risk_refresh", schedule_basis="HKT around 15:30 weekday (Railway cron UTC: 30 7 * * 1-5)"), expected="stale_risk_refresh"))
+    assert res["status"] == "pass"

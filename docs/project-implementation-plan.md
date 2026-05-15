@@ -171,3 +171,8 @@ Paper-trading review/read-surface expansion, Telegram operator workflow hardenin
 Next:
 - Step 136D-3: stale-risk staged setup after midday acceptance.
 - Step 136E: AI team backend analysis packet after cadence acceptance.
+
+### Step 136D sequencing update (2026-05-15)
+- Step 136D-2 remains active pending post-fix midday rerun acceptance evidence.
+- Step 136D-3 stale-risk prep is ready at docs/code level only, and must not be activated before 136D-2 acceptance.
+- Step 136E AI team backend analysis packet remains after cadence acceptance.

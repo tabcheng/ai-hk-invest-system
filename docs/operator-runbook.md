@@ -631,3 +631,24 @@ Boundary reminder:
 - 現階段 evidence 仍以 operator 手動提供為主；validator 只做標準化檢查。
 - 分享證據前必須 redact chat id / secret；validator 輸出不得包含 raw secret。
 - `paper-stale-risk-refresh` 必須等 `paper-midday-monitor` acceptance 後才可啟動。
+
+### Step 136D-2 post-fix rerun command (after merge)
+- Operator must rerun `paper-midday-monitor` manual-equivalent smoke after this PR merge.
+- Validator command (derived expected schedule supported):
+  - `python scripts/railway_cadence_evidence_validate.py --input-json logs.json --expected-run-type midday_market_monitor --output-json midday_report.json --output-md midday_report.md`
+- Expected PASS requires:
+  - `run_type=midday_market_monitor`
+  - `status=success`
+  - `entrypoint=python -m src.daily_runner`
+  - `schedule_basis` includes `Railway cron UTC: 30 4 * * 1-5`
+  - no secrets observed
+  - no broker/live/order execution wording observed
+
+### Step 136D-3 staged prep checklist (do not activate yet)
+- Service: `paper-stale-risk-refresh`
+- Start command: `python -m src.daily_runner`
+- Env: `AIHK_RUN_TYPE=stale_risk_refresh`
+- Cron UTC: `30 7 * * 1-5`
+- Intended HKT: around 15:30 weekday
+- Sequence gate: only after 136D-2 midday acceptance
+- Evidence flow: manual-equivalent smoke first, then validator report

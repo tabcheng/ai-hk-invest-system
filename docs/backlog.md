@@ -288,3 +288,8 @@ Prioritization:
 - Step 135E: Strategy Horizon Policy in Stock Dossier added deterministic horizon fields (recommended_review_horizon, short/medium/long policies, data states, data gaps, confidence notes, paper_decision_scope) and Stock Review "策略週期判斷" UI section; short-term remains monitoring/observation-only; no broker/order/live/real-money path.
 ## Completed / Archived recent
 - Step 135G — Mini App First-View IA Cleanup（merged via PR #148）: Today compact hero summary, Chinese-first tabs, system/portfolio separation, docs governance/risk/regulatory/accessibility baseline, aria-labelledby tabpanel fix.
+
+## Step 136D update (2026-05-15)
+- Step 136D-2 remains **Active P0** until post-fix operator rerun evidence passes.
+- This PR addresses the `daily_runner execution_summary.schedule_basis` runtime metadata blocker (midday reported as post-close).
+- Step 136D-3 remains **next** (prep only), not active/completed, and must wait for 136D-2 acceptance.

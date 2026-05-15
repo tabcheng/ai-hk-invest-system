@@ -891,3 +891,28 @@
 - no broker/live/order/real-money execution observed.
 - limitation: manual equivalent runner smoke only; natural scheduled 20:00 HKT cron evidence remains pending.
 - Step 136D-1 manual baseline smoke: PASS.
+
+## 2026-05-15 — Step 136D-2-FIX + 136D-2 Evidence Hardening + 136D-3 Prep
+
+### PR #158 post-merge closure capture
+- PR #158 merged: yes.
+- Merge commit: `43ce30acbef3cdf22b97640942e75d891884a2cf`.
+- CI: success, `pytest` 560 passed.
+- GitHub impact: Railway cadence evidence validator + tests + docs.
+- Railway impact: unchanged by repo merge (no platform mutation/activation implied).
+- Supabase impact: unchanged.
+- Domain impact: paper-only / decision-support only.
+
+### Step 136D-2 `paper-midday-monitor` initial evidence (manual/operator-provided)
+- Railway platform config: PASS (`cronSchedule=30 4 * * 1-5`, `startCommand=python -m src.daily_runner`, `restartPolicyType=NEVER`, `numReplicas=1`).
+- Deployment id: `2f950250-9752-4b1b-8a0e-39892dfa7eb3`.
+- Run record id: `52`.
+- Execution summary run_type/status: `midday_market_monitor` / `success`.
+- Paper result: `trades=0`, `events=3`.
+- Duplicate protection triggered: acceptable for manual-equivalent smoke.
+- Telegram dedup skip observed with redacted target: acceptable.
+- No raw secrets observed.
+- No broker/live/order/real-money execution observed.
+- BLOCKER: `execution_summary.schedule_basis` incorrectly reported post-close `0 12 * * *` instead of midday `30 4 * * 1-5`.
+- Classification: runtime metadata bug (not Railway platform config failure).
+- Acceptance status: **PARTIAL PASS / BLOCKED** pending this fix merge + operator rerun evidence.

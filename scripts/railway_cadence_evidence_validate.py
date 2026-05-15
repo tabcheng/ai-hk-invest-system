@@ -7,6 +7,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+from src.railway_cadence_runtime import get_runtime_schedule_basis
+
 ALLOWED_RUN_TYPES = {"post_close_daily_review", "midday_market_monitor", "stale_risk_refresh"}
 DEFAULT_ENTRYPOINT = "python -m src.daily_runner"
 SECRET_PATTERNS = [
@@ -97,6 +99,15 @@ def _is_safe_negative_guardrail_line(normalized_line: str) -> bool:
     parts = [p.strip() for p in re.split(r"[;,]", normalized_line) if p.strip()]
     return bool(parts) and all(p in SAFE_NEGATIVE_EXECUTION_PHRASES for p in parts)
 
+
+
+
+def _derive_expected_schedule_basis_fragment(expected_run_type: str) -> str:
+    schedule_basis = get_runtime_schedule_basis(expected_run_type)
+    marker = "Railway cron UTC:"
+    if marker in schedule_basis:
+        return schedule_basis.split(marker, 1)[1].rstrip(")").strip()
+    return schedule_basis
 
 def validate_evidence(args: argparse.Namespace) -> dict[str, Any]:
     if args.expected_run_type not in ALLOWED_RUN_TYPES:
@@ -200,7 +211,8 @@ def validate_evidence(args: argparse.Namespace) -> dict[str, Any]:
     if entrypoint != args.expected_entrypoint:
         status = "fail"
         notes.append("entrypoint mismatch")
-    if args.expected_schedule_basis_contains and (not schedule_basis or args.expected_schedule_basis_contains not in str(schedule_basis)):
+    expected_schedule_basis_contains = args.expected_schedule_basis_contains or _derive_expected_schedule_basis_fragment(args.expected_run_type)
+    if expected_schedule_basis_contains and (not schedule_basis or expected_schedule_basis_contains not in str(schedule_basis)):
         status = "fail"
         notes.append("schedule basis mismatch")
     if "completed" not in full_text.lower():

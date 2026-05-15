@@ -287,3 +287,9 @@ Operator deploy + smoke evidence flow (manual):
 - Cron UTC: `30 4 * * 1-5`
 - Intent HKT: around 12:30 weekday
 - Keep paper-only boundaries; no broker/live/order execution path.
+
+### Step 136D runtime run_type ↔ schedule mapping (authoritative)
+- `AIHK_RUN_TYPE=midday_market_monitor` -> `30 4 * * 1-5` (HKT around 12:30 weekday)
+- `AIHK_RUN_TYPE=stale_risk_refresh` -> `30 7 * * 1-5` (HKT around 15:30 weekday)
+- `AIHK_RUN_TYPE=post_close_daily_review` -> `0 12 * * *` (HKT 20:00)
+- Multi-service cadence direction remains current; do not consolidate into single-service cadence in this step.

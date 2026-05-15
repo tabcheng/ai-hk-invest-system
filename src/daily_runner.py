@@ -13,9 +13,9 @@ import traceback
 from datetime import datetime, timezone
 
 from src.backend_data_cadence import get_effective_run_type
+from src.railway_cadence_runtime import get_runtime_schedule_basis
 
 ENTRYPOINT = "python -m src.daily_runner"
-SCHEDULE_BASIS = "HKT 20:00 (Railway cron UTC: 0 12 * * *)"
 SUCCESS_STATUS = "success"
 FAILED_STATUS = "failed"
 _MAX_ERROR_SUMMARY_LENGTH = 240
@@ -53,6 +53,7 @@ def _print_execution_summary(
     status: str,
     run_type: str,
     error_summary: str | None = None,
+    schedule_basis: str,
 ) -> None:
     """Emit a consistent single-line JSON execution summary."""
 
@@ -63,7 +64,7 @@ def _print_execution_summary(
         "duration_seconds": round(duration_seconds, 6),
         "status": status,
         "entrypoint": ENTRYPOINT,
-        "schedule_basis": SCHEDULE_BASIS,
+        "schedule_basis": schedule_basis,
         "run_type": run_type,
     }
     if error_summary is not None:
@@ -97,6 +98,7 @@ def run() -> int:
     print(f"[daily_runner] started entrypoint={ENTRYPOINT} started_at={started_at.isoformat()}")
 
     run_type = get_effective_run_type(os.environ)
+    schedule_basis = get_runtime_schedule_basis(run_type)
 
     try:
         _run_daily_pipeline()
@@ -113,6 +115,7 @@ def run() -> int:
             status=FAILED_STATUS,
             run_type=run_type,
             error_summary=error_summary,
+            schedule_basis=schedule_basis,
         )
         traceback.print_exc()
         return 1
@@ -124,6 +127,7 @@ def run() -> int:
         finished_at=finished_at,
         status=SUCCESS_STATUS,
         run_type=run_type,
+        schedule_basis=schedule_basis,
     )
     return 0
 

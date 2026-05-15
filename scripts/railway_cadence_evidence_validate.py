@@ -106,7 +106,8 @@ def _derive_expected_schedule_basis_fragment(expected_run_type: str) -> str:
     schedule_basis = get_runtime_schedule_basis(expected_run_type)
     marker = "Railway cron UTC:"
     if marker in schedule_basis:
-        return schedule_basis.split(marker, 1)[1].rstrip(")").strip()
+        cron_fragment = schedule_basis.split(marker, 1)[1].rstrip(")").strip()
+        return f"{marker} {cron_fragment}"
     return schedule_basis
 
 def validate_evidence(args: argparse.Namespace) -> dict[str, Any]:

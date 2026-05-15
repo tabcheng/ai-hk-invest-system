@@ -5,7 +5,11 @@ import subprocess
 import sys
 from pathlib import Path
 
-from scripts.railway_cadence_evidence_validate import to_markdown, validate_evidence
+from scripts.railway_cadence_evidence_validate import (
+    _derive_expected_schedule_basis_fragment,
+    to_markdown,
+    validate_evidence,
+)
 
 
 def _sample(run_type: str = "post_close_daily_review", status: str = "success", schedule_basis: str | None = None) -> list[dict[str, str]]:
@@ -214,3 +218,8 @@ def test_midday_derived_schedule_pass_and_mismatch_fail(tmp_path: Path):
 def test_stale_risk_derived_schedule_pass(tmp_path: Path):
     res = validate_evidence(_args(tmp_path, _sample(run_type="stale_risk_refresh", schedule_basis="HKT around 15:30 weekday (Railway cron UTC: 30 7 * * 1-5)"), expected="stale_risk_refresh"))
     assert res["status"] == "pass"
+
+
+def test_derived_expected_schedule_fragment_includes_railway_cron_prefix():
+    assert _derive_expected_schedule_basis_fragment("post_close_daily_review") == "Railway cron UTC: 0 12 * * *"
+    assert _derive_expected_schedule_basis_fragment("midday_market_monitor") == "Railway cron UTC: 30 4 * * 1-5"

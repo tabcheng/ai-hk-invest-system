@@ -436,6 +436,7 @@
 
       function renderAiTeamPacketCard(packet){
         const card=document.getElementById("team-card");
+        if (!card) return;
         const hasSafeGuardrails = packet
           && packet.paper_trade_only === true
           && packet.decision_support_only === true
@@ -457,8 +458,8 @@
           `狀態：${packet.status || 'unavailable'}`,
           `日期：${packet.business_date || '未有資料'}`,
           `覆蓋股票：${packet.covered_tickers ?? 0}`,
-          `slot readiness：ok ${slot.ok||0} / partial ${slot.partial||0} / missing ${slot.missing||0} / unknown ${slot.unknown||0}`,
-          `模擬方向（只供觀察）：watch_only ${direction.watch_only||0} / mixed_watch ${direction.mixed_watch||0} / insufficient_data ${direction.insufficient_data||0}`,
+          `資料準備度：可用 ${slot.ok||0} / 部分 ${slot.partial||0} / 缺少 ${slot.missing||0} / 未知 ${slot.unknown||0}`,
+          `模擬方向（只供觀察）：只觀察 ${direction.watch_only||0} / 混合觀察 ${direction.mixed_watch||0} / 資料不足 ${direction.insufficient_data||0}`,
           `來源：${packet.source || 'latest_system_runs'}`,
           '只供模擬檢視｜只供決策支援｜不連接券商｜不建立訂單｜不是真實買賣建議'
         ];

@@ -71,6 +71,10 @@ def test_miniapp_provider_ai_team_packet_summary_fails_closed_on_unsafe_guardrai
                 "paper_trade_only": True,
                 "ai_team_packet": {
                     "status": "ok",
+                    "business_date": "2026-05-15",
+                    "run_id": "58",
+                    "run_type": "post_close_daily_review",
+                    "schedule_basis": "HKT 20:00",
                     "paper_trade_only": True,
                     "decision_support_only": True,
                     "broker_connection": True,
@@ -117,7 +121,44 @@ def test_miniapp_provider_ai_team_packet_summary_allowlists_and_bounds_fields(mo
     assert result["simulated_direction_counts"] == {"insufficient_data": 3, "watch_only": 1, "mixed_watch": 0}
     assert result["top_gaps"] == []
     assert result["limitations"] == []
+    assert result["business_date"] == "not_available"
+    assert result["run_id"] == "not_available"
+    assert result["run_type"] == "unknown"
+    assert result["schedule_basis"] == "unknown"
     assert result["broker_connection"] is False
     assert result["live_execution"] is False
     assert result["real_money_execution"] is False
     assert result["creates_orders"] is False
+
+
+def test_miniapp_provider_ai_team_packet_summary_passes_through_run_metadata(monkeypatch):
+    class _Client:
+        pass
+
+    monkeypatch.setattr(
+        "src.latest_system_runs_repository.get_latest_system_run",
+        lambda client, source="paper_daily_runner": {
+            "summary_json": {
+                "paper_trade_only": True,
+                "ai_team_packet": {
+                    "status": "ok",
+                    "paper_trade_only": True,
+                    "decision_support_only": True,
+                    "broker_connection": False,
+                    "live_execution": False,
+                    "real_money_execution": False,
+                    "creates_orders": False,
+                    "business_date": "2026-05-15",
+                    "run_id": "58",
+                    "run_type": "post_close_daily_review",
+                    "schedule_basis": "HKT 20:00",
+                },
+            }
+        },
+    )
+    provider = SupabaseLatestSystemRunMiniAppReadDataProvider(client=_Client())
+    result = provider.get_ai_team_packet_summary()
+    assert result["business_date"] == "2026-05-15"
+    assert result["run_id"] == "58"
+    assert result["run_type"] == "post_close_daily_review"
+    assert result["schedule_basis"] == "HKT 20:00"

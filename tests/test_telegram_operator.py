@@ -1388,7 +1388,11 @@ def test_ai_team_packet_command_returns_bounded_summary(monkeypatch):
     assert "Command: /ai_team_packet" in response
     assert "Status: completed." in response
     assert "covered_tickers: 3" in response
+    assert "資料準備度" in response
+    assert "模擬方向統計" in response
+    assert "只觀察=3" in response
     assert "No broker connection" in response
+    assert "watch_only=" not in response
 
 
 def test_ai_team_packet_command_fails_closed_on_unsafe_guardrail(monkeypatch):

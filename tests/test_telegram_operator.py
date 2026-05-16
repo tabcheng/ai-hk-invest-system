@@ -1364,6 +1364,7 @@ def test_ai_team_packet_command_returns_bounded_summary(monkeypatch):
     monkeypatch.setattr(
         "src.telegram_operator.get_latest_system_run",
         lambda *_a, **_k: {
+            "business_date": "2026-05-15",
             "summary_json": {
                 "ai_team_packet": {
                     "status": "ok",

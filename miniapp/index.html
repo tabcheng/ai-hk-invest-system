@@ -483,10 +483,7 @@
           `覆蓋股票：${packet.covered_tickers ?? 0}`,
           `資料準備度：可用 ${slot.ok||0} / 部分 ${slot.partial||0} / 缺少 ${slot.missing||0} / 未知 ${slot.unknown||0}`,
           `模擬方向（只供觀察）：只觀察 ${direction.watch_only||0} / 混合觀察 ${direction.mixed_watch||0} / 資料不足 ${direction.insufficient_data||0}`,
-          `Run ID：${packet.run_id || "未有資料"}`,
-          `排程基準：${packet.schedule_basis || "未有資料"}`,
           `資料狀態：${computePacketFreshness(packet)}`,
-          `來源：${packet.source || 'latest_system_runs'}`,
           '只供模擬檢視｜只供決策支援｜不連接券商｜不建立訂單｜不是真實買賣建議'
         ];
         rows.forEach((t)=>{const p=document.createElement('p'); p.className='row'; p.textContent=t; card.appendChild(p);});
@@ -494,6 +491,17 @@
         const gapText=document.createElement('p'); gapText.className='helper-text'; gapText.textContent=gaps.length?gaps.join('；'):'暫時無主要缺口'; card.appendChild(gapText);
         const limTitle=document.createElement('h3'); limTitle.textContent='限制'; card.appendChild(limTitle);
         const limText=document.createElement('p'); limText.className='helper-text'; limText.textContent=limitations.length?limitations.join('；'):'暫時未提供限制'; card.appendChild(limText);
+        const details=document.createElement('details');
+        const summary=document.createElement('summary');
+        summary.textContent='查看技術資料';
+        const techRows=[
+          `Run ID: ${packet.run_id || "未有資料"}`,
+          `排程基準: ${packet.schedule_basis || "未有資料"}`,
+          `source: ${packet.source || 'latest_system_runs'}`
+        ];
+        techRows.forEach((t)=>{const p=document.createElement('p'); p.className='helper-text'; p.textContent=t; details.appendChild(p);});
+        details.prepend(summary);
+        card.appendChild(details);
       }
 
       function renderJournal(latest, signals, paperPnl, risk, decisionContext){

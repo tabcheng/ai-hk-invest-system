@@ -1388,9 +1388,12 @@ def test_ai_team_packet_command_returns_bounded_summary(monkeypatch):
     assert "Command: /ai_team_packet" in response
     assert "Status: completed." in response
     assert "covered_tickers: 3" in response
+    assert "結果: AI 團隊摘要（只供模擬檢視）" in response
+    assert "資料狀態: 最新" in response
     assert "資料準備度" in response
     assert "模擬方向統計" in response
     assert "只觀察=3" in response
+    assert "安全邊界" in response
     assert "No broker connection" in response
     assert "watch_only=" not in response
 

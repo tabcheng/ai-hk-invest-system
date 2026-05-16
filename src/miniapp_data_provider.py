@@ -854,6 +854,7 @@ class SupabaseLatestSystemRunMiniAppReadDataProvider(RailwayRuntimeEnvMiniAppRea
             "schema_version": str(packet.get("schema_version") or "")[:64],
             "packet_schema_version": str(packet.get("packet_schema_version") or "")[:64],
             "business_date": str(packet.get("business_date") or "not_available")[:40],
+            "latest_business_date": str(row.get("business_date") or "not_available")[:40],
             "run_id": str(packet.get("run_id") or "not_available")[:80],
             "run_type": str(packet.get("run_type") or "unknown")[:80],
             "schedule_basis": str(packet.get("schedule_basis") or "unknown")[:80],

@@ -8,10 +8,10 @@ Prioritization:
 ## Active backlog (pending)
 
 ### P0
-1. **Step 136H — Mini App AI Team Packet Card v1 (active P0)**
+1. **Step 136J — AI Team Packet Operator UX Polish + Recency/Risk Flags (active P0)**
    - render bounded `sections.ai_team_packet_summary` as compact read-only operator card.
    - keep Chinese-first operator wording + fail-closed guardrails.
-2. **Step 136I-lite — Telegram AI Team Packet read-only command (active P0)**
+2. **Step 136K-lite — Internal MVP Launch Candidate checklist and docs alignment (active P0)**
    - bounded `/ai_team_packet` operator summary only; no write side-effects.
    - keep paper-only/decision-support-only/no broker-live-real-money-order wording.
 3. **Natural cron evidence follow-up (non-blocking)**
@@ -307,3 +307,11 @@ Prioritization:
 - Natural cron evidence remains non-blocking follow-up.
 - Follow-up item: Railway access logs currently classify successful Mini App API 2xx as severity error; investigate log-level classification later.
 - Step 137 backend-only LLM provider remains deferred unless explicitly approved and safely scoped.
+
+
+## Step 136H/136I-lite closure
+- Completed via PR #162, merge commit `b41851cc201117a5cb4c157a983663f725c878c2`.
+- Natural cron evidence follow-up remains non-blocking.
+- Railway 2xx access-log severity classification cleanup remains non-blocking observability backlog.
+- Step 137 backend-only LLM provider remains deferred.
+- After Step 136K-lite, non-blocking enhancements move to post-launch backlog unless internal MVP operation is blocked.

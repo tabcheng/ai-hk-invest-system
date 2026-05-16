@@ -495,9 +495,9 @@
         const summary=document.createElement('summary');
         summary.textContent='查看技術資料';
         const techRows=[
-          `Run ID: ${packet.run_id || "未有資料"}`,
-          `排程基準: ${packet.schedule_basis || "未有資料"}`,
-          `source: ${packet.source || 'latest_system_runs'}`
+          `Run ID：${packet.run_id || "未有資料"}`,
+          `排程基準：${packet.schedule_basis || "未有資料"}`,
+          `來源：${packet.source || 'latest_system_runs'}`
         ];
         techRows.forEach((t)=>{const p=document.createElement('p'); p.className='helper-text'; p.textContent=t; details.appendChild(p);});
         details.prepend(summary);

@@ -117,3 +117,7 @@ def test_miniapp_provider_ai_team_packet_summary_allowlists_and_bounds_fields(mo
     assert result["simulated_direction_counts"] == {"insufficient_data": 3, "watch_only": 1, "mixed_watch": 0}
     assert result["top_gaps"] == []
     assert result["limitations"] == []
+    assert result["broker_connection"] is False
+    assert result["live_execution"] is False
+    assert result["real_money_execution"] is False
+    assert result["creates_orders"] is False

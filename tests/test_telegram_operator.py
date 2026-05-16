@@ -1358,3 +1358,52 @@ def test_pnl_review_rows_show_caution_last_available_close_when_helper_returns_l
 
     response = handle_telegram_operator_command(object(), _build_update("/pnl_review"))
     assert "mkt=caution_last_available_close" in response
+
+def test_ai_team_packet_command_returns_bounded_summary(monkeypatch):
+    monkeypatch.setenv("TELEGRAM_CHAT_ID", "chat-1")
+    monkeypatch.setattr(
+        "src.telegram_operator.get_latest_system_run",
+        lambda *_a, **_k: {
+            "summary_json": {
+                "ai_team_packet": {
+                    "status": "ok",
+                    "run_id": "58",
+                    "business_date": "2026-05-15",
+                    "paper_trade_only": True,
+                    "decision_support_only": True,
+                    "broker_connection": False,
+                    "live_execution": False,
+                    "real_money_execution": False,
+                    "creates_orders": False,
+                    "covered_tickers": 3,
+                    "slot_status_counts": {"ok": 3},
+                    "simulated_direction_counts": {"watch_only": 3},
+                    "top_gaps": [],
+                    "limitations": ["paper-only"],
+                }
+            }
+        },
+    )
+    response = handle_telegram_operator_command(object(), _build_update("/ai_team_packet"))
+    assert "Command: /ai_team_packet" in response
+    assert "Status: completed." in response
+    assert "covered_tickers: 3" in response
+    assert "No broker connection" in response
+
+
+def test_ai_team_packet_command_fails_closed_on_unsafe_guardrail(monkeypatch):
+    monkeypatch.setenv("TELEGRAM_CHAT_ID", "chat-1")
+    monkeypatch.setattr(
+        "src.telegram_operator.get_latest_system_run",
+        lambda *_a, **_k: {"summary_json": {"ai_team_packet": {"paper_trade_only": True, "decision_support_only": True, "broker_connection": True}}},
+    )
+    response = handle_telegram_operator_command(object(), _build_update("/ai_team_packet"))
+    assert "Status: unavailable." in response
+
+
+def test_ai_team_packet_command_usage_error_on_extra_tokens(monkeypatch):
+    monkeypatch.setenv("TELEGRAM_CHAT_ID", "chat-1")
+    response = handle_telegram_operator_command(object(), _build_update("/ai_team_packet now"))
+    assert "Command: /ai_team_packet" in response
+    assert "Status: failed." in response
+    assert "Usage: /ai_team_packet" in response

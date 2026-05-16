@@ -298,3 +298,12 @@ Prioritization:
 - Step 136D-2 remains **Active P0** until post-fix operator rerun evidence passes.
 - This PR addresses the `daily_runner execution_summary.schedule_basis` runtime metadata blocker (midday reported as post-close).
 - Step 136D-3 remains **next** (prep only), not active/completed, and must wait for 136D-2 acceptance.
+
+## 2026-05-15 Step 136 roadmap update
+- Moved to Completed/Archived: Step 136F, Step 136G-lite.
+- Active next cohesive slice:
+  - Step 136H — Mini App AI Team Packet Card v1.
+  - Step 136I-lite — Telegram AI Team Packet read-only command.
+- Natural cron evidence remains non-blocking follow-up.
+- Follow-up item: Railway access logs currently classify successful Mini App API 2xx as severity error; investigate log-level classification later.
+- Step 137 backend-only LLM provider remains deferred unless explicitly approved and safely scoped.

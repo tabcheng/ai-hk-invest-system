@@ -26,3 +26,9 @@ Missing contexts stay explicit (`not_available`/`unknown`) and reduce slot statu
 - Read-model guardrails remain explicit: paper-only, decision-support-only, no broker/live/order/real-money execution, no LLM/vendor call in default runtime.
 - Mini App backend review-shell now exposes read-only `sections.ai_team_packet_summary` with unavailable-safe fallback for missing/malformed rows.
 - No DB migration added in this step; persistence uses existing `summary_json` bounded path.
+
+## Step 136H/136I-lite operator consumption
+- Mini App renders `sections.ai_team_packet_summary` as compact read-only card (no raw JSON block).
+- Telegram `/ai_team_packet` returns bounded read-only summary from `latest_system_runs.summary_json.ai_team_packet`.
+- Both surfaces fail closed on missing/malformed/unsafe guardrails.
+- Both surfaces keep explicit boundary wording: paper-only, decision-support-only, no broker, no live execution, no real-money execution, no order creation.

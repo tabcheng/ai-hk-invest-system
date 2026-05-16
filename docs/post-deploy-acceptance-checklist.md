@@ -270,3 +270,9 @@ For each Railway scheduled service candidate, capture:
 
 ## Natural cron evidence follow-up template
 - Record service name, deployment id, run id, UTC start/finish time, run_type, expected UTC cron expression, observed schedule alignment, and secret-safe log summary.
+
+## Step 136H/136I-lite post-deploy smoke additions
+- [ ] Confirm `summary_json.ai_team_packet.status=ok` exists in latest `paper_daily_runner` row.
+- [ ] Confirm Mini App shows AI Team Packet read-only card with safety labels.
+- [ ] Confirm Telegram `/ai_team_packet` returns bounded summary without raw JSON/secrets.
+- [ ] Confirm Mini App + Telegram both remain paper-only/decision-support-only/no broker/no live/no real-money/no order creation.

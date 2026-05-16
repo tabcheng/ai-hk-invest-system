@@ -419,3 +419,8 @@ Allowed safer wording:
 ## Step 136E backend packet consumption path (deferred UI)
 - Future Mini App/Telegram AI-team surfaces should consume `ai_team_analysis_packet.v1` as read-only backend payload.
 - Packet consumption remains deferred until contract stability and test evidence are complete.
+
+## Step 136H/136I-lite surfaces
+- Mini App System area includes read-only AI Team Packet card for operator review.
+- Telegram adds `/ai_team_packet` read-only summary command for quick operator checks.
+- Surfaces are review-only and do not create journal records/orders or trigger runner.

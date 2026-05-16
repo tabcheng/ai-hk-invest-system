@@ -381,3 +381,8 @@ No broker integration or autonomous real-money execution is authorized by this p
 - Missing/malformed packet summary returns bounded unavailable fallback (no raw DB/internal error leakage).
 - Section remains review-only and explicitly paper-trading/decision-support-only.
 - No Mini App auth boundary change, no frontend direct Supabase access, no write path/order creation/broker/live execution behavior.
+
+## Step 136H boundary addendum
+- Mini App AI Team Packet card consumes backend-provided bounded `sections.ai_team_packet_summary` only.
+- No frontend direct Supabase access, no raw JSON passthrough, no secret/token/initData exposure.
+- Unsafe or missing guardrails must return unavailable/fail-closed rendering.

@@ -663,3 +663,9 @@ Boundary reminder:
   - `python scripts/railway_cadence_evidence_validate.py --help`
   - `python scripts/railway_cadence_evidence_validate.py --input-json logs.json --expected-run-type midday_market_monitor --output-json midday_report.json --output-md midday_report.md`
   - `python scripts/railway_cadence_evidence_validate.py --input-json logs.json --expected-run-type stale_risk_refresh --output-json stale_report.json --output-md stale_report.md`
+
+## `/ai_team_packet` runbook note (Step 136I-lite)
+- Usage: `/ai_team_packet`
+- Expected output: bounded status/run/date/covered tickers/slot counts/simulated direction counts/top gaps/limitations + safety boundary.
+- If data missing or guardrails unsafe: unavailable/no-data message (fail closed).
+- Command is read-only; it must not create decision entries or orders.

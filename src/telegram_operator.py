@@ -32,6 +32,7 @@ _RISK_REVIEW_COMMAND_PATTERN = re.compile(r"^/risk_review(?:\s+(\S+))?\s*$", re.
 _RUNNER_STATUS_COMMAND_PATTERN = re.compile(r"^/runner_status\s*$", re.IGNORECASE)
 _LATEST_SYSTEM_RUN_COMMAND_PATTERN = re.compile(r"^/latest_system_run\s*$", re.IGNORECASE)
 _MARKET_SMOKE_COMMAND_PATTERN = re.compile(r"^/market_smoke(?:\s+(\S+))?\s*$", re.IGNORECASE)
+_AI_TEAM_PACKET_COMMAND_PATTERN = re.compile(r"^/ai_team_packet\s*$", re.IGNORECASE)
 _PNL_REVIEW_COMMAND_PATTERN = re.compile(r"^/pnl_review\s*$", re.IGNORECASE)
 _OUTCOME_REVIEW_COMMAND_PATTERN = re.compile(r"^/outcome_review(?:\s+(\S+))?\s*$", re.IGNORECASE)
 _DAILY_REVIEW_COMMAND_PATTERN = re.compile(r"^/daily_review\s*$", re.IGNORECASE)
@@ -474,6 +475,7 @@ def build_help_command_message() -> str:
             "- /runner_status : Show latest daily runner execution summary (最新 runner 狀態摘要).",
             "- /latest_system_run : Show latest bounded paper_daily_runner row summary (最新 bounded 系統 run 摘要).",
             "- /market_smoke [ticker] : Mobile market-data smoke diagnostics (例如 /market_smoke 0700.HK).",
+            "- /ai_team_packet : Show latest bounded AI Team packet summary (只讀模擬摘要).",
             "- /risk_review [run_id] : Run paper-trading risk review for one run (查看單次 run 風險回顧).",
             "- /pnl_review : Show paper position/PnL review snapshot (查看持倉與盈虧摘要).",
             "- /outcome_review [days] : Show closed-trade outcome summary (查看平倉結果摘要，可選天數視窗).",
@@ -726,6 +728,49 @@ def _format_latest_system_run_message(row: dict[str, Any]) -> str:
         ],
     )
 
+
+
+def _format_ai_team_packet_operator_fields(packet: dict[str, Any]) -> list[tuple[str, Any]]:
+    slot = packet.get("slot_status_counts") if isinstance(packet.get("slot_status_counts"), dict) else {}
+    direction = packet.get("simulated_direction_counts") if isinstance(packet.get("simulated_direction_counts"), dict) else {}
+    top_gaps = [str(x)[:80] for x in list(packet.get("top_gaps") or []) if str(x).strip()][:5]
+    limitations = [str(x)[:120] for x in list(packet.get("limitations") or []) if str(x).strip()][:5]
+    return [
+        ("status", str(packet.get("status") or "unavailable")[:40]),
+        ("run_id", str(packet.get("run_id") or "N/A")[:80]),
+        ("business_date", str(packet.get("business_date") or "N/A")[:40]),
+        ("covered_tickers", _safe_int_counter(packet.get("covered_tickers"))),
+        ("資料準備度", f"可用={_safe_int_counter(slot.get('ok'))}, 部分={_safe_int_counter(slot.get('partial'))}, 缺少={_safe_int_counter(slot.get('missing'))}, 未知={_safe_int_counter(slot.get('unknown'))}"),
+        ("模擬方向統計", f"只觀察={_safe_int_counter(direction.get('watch_only'))}, 混合觀察={_safe_int_counter(direction.get('mixed_watch'))}, 資料不足={_safe_int_counter(direction.get('insufficient_data'))}"),
+        ("top_gaps", "；".join(top_gaps) if top_gaps else "none"),
+        ("limitations", "；".join(limitations) if limitations else "none"),
+        ("source", "latest_system_runs"),
+        ("safety", "Paper trading only | Decision support only | No broker connection | No live execution | No real-money execution | No order creation"),
+    ]
+
+
+def _build_ai_team_packet_command_message(client: Any) -> str:
+    try:
+        latest_row = get_latest_system_run(client, source="paper_daily_runner")
+    except Exception:
+        return _build_operator_message(command_label="/ai_team_packet", status="failed", reason="internal latest-system-run lookup error")
+    if not latest_row:
+        return _build_operator_message(command_label="/ai_team_packet", status="no data", reason="no matching records: AI Team packet summary is not available yet")
+    summary = latest_row.get("summary_json") if isinstance(latest_row.get("summary_json"), dict) else {}
+    packet = summary.get("ai_team_packet") if isinstance(summary.get("ai_team_packet"), dict) else None
+    if not isinstance(packet, dict):
+        return _build_operator_message(command_label="/ai_team_packet", status="no data", reason="no matching records: AI Team packet summary is not available yet")
+    if packet.get("paper_trade_only") is not True or packet.get("decision_support_only") is not True:
+        return _build_operator_message(command_label="/ai_team_packet", status="unavailable", reason="guardrail check failed; packet withheld")
+    for k in ("broker_connection", "live_execution", "real_money_execution", "creates_orders"):
+        if packet.get(k) is not False:
+            return _build_operator_message(command_label="/ai_team_packet", status="unavailable", reason="guardrail check failed; packet withheld")
+    return _build_operator_message(command_label="/ai_team_packet", status="completed", result="latest bounded AI Team packet summary", fields=_format_ai_team_packet_operator_fields(packet))
+
+
+def _parse_ai_team_packet_command(command_text: str) -> None:
+    if not _AI_TEAM_PACKET_COMMAND_PATTERN.match(command_text or ""):
+        raise ValueError("Usage: /ai_team_packet")
 
 
 def _parse_market_smoke_command(command_text: str) -> str:
@@ -989,6 +1034,7 @@ def handle_telegram_operator_command(client: Any, update: dict[str, Any]) -> str
     is_journal_review_command = text.lower().startswith("/journal_review")
     is_journal_outcome_command = text.lower().startswith("/journal_outcome")
     is_market_smoke_command = text.lower().startswith("/market_smoke")
+    is_ai_team_packet_command = text.lower().startswith("/ai_team_packet")
     is_decision_note_command = text.lower().startswith("/decision_note")
     if not (
         is_help_command
@@ -1003,6 +1049,7 @@ def handle_telegram_operator_command(client: Any, update: dict[str, Any]) -> str
         or is_journal_outcome_command
         or is_decision_note_command
         or is_market_smoke_command
+        or is_ai_team_packet_command
     ):
         return None
 
@@ -1183,6 +1230,13 @@ def handle_telegram_operator_command(client: Any, update: dict[str, Any]) -> str
                 return _build_usage_error_message(command_label="/market_smoke", error_text=str(exc))
             summary = build_market_smoke_summary(ticker=ticker, env=dict(os.environ))
             return _build_market_smoke_command_message(summary)
+
+        if is_ai_team_packet_command:
+            try:
+                _parse_ai_team_packet_command(text)
+            except ValueError as exc:
+                return _build_usage_error_message(command_label="/ai_team_packet", error_text=str(exc))
+            return _build_ai_team_packet_command_message(client)
 
         if is_decision_note_command:
             try:

@@ -8,12 +8,12 @@ Prioritization:
 ## Active backlog (pending)
 
 ### P0
-1. **Step 136F — AI Team Packet Persistence / Read Model Integration (active P0)**
-   - persist bounded `ai_team_packet` summary under `latest_system_runs.summary_json`.
-   - backend-only deterministic projection; best-effort write path.
-2. **Step 136G-lite — Read-only operator surface consumption (active P0)**
-   - expose bounded `ai_team_packet_summary` in Mini App review-shell backend response.
-   - keep read-only/paper-only wording and unavailable-safe fallback.
+1. **Step 136H — Mini App AI Team Packet Card v1 (active P0)**
+   - render bounded `sections.ai_team_packet_summary` as compact read-only operator card.
+   - keep Chinese-first operator wording + fail-closed guardrails.
+2. **Step 136I-lite — Telegram AI Team Packet read-only command (active P0)**
+   - bounded `/ai_team_packet` operator summary only; no write side-effects.
+   - keep paper-only/decision-support-only/no broker-live-real-money-order wording.
 3. **Natural cron evidence follow-up (non-blocking)**
    - continue recording natural-fire cadence evidence for midday/stale services.
 
@@ -298,3 +298,12 @@ Prioritization:
 - Step 136D-2 remains **Active P0** until post-fix operator rerun evidence passes.
 - This PR addresses the `daily_runner execution_summary.schedule_basis` runtime metadata blocker (midday reported as post-close).
 - Step 136D-3 remains **next** (prep only), not active/completed, and must wait for 136D-2 acceptance.
+
+## 2026-05-15 Step 136 roadmap update
+- Moved to Completed/Archived: Step 136F, Step 136G-lite.
+- Active next cohesive slice:
+  - Step 136H — Mini App AI Team Packet Card v1.
+  - Step 136I-lite — Telegram AI Team Packet read-only command.
+- Natural cron evidence remains non-blocking follow-up.
+- Follow-up item: Railway access logs currently classify successful Mini App API 2xx as severity error; investigate log-level classification later.
+- Step 137 backend-only LLM provider remains deferred unless explicitly approved and safely scoped.

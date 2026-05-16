@@ -433,6 +433,43 @@
         renderOne();
       }
       function renderRisk(risk){ if (!risk || risk.status !== "ok") return fillUnavailable("risk-card","風險摘要"); const card=document.getElementById("risk-card"); card.textContent=""; const h=document.createElement("h2"); h.textContent="風險摘要"; card.append(h, renderStatusChip("success")); const riskRaw = String(risk.risk_level||"unknown"); const riskLabel = riskRaw==="unknown" ? "未能判斷" : riskRaw; const p=document.createElement("p"); p.className="row"; p.textContent=`風險等級：${riskLabel}`; card.appendChild(p); const ts=risk.data_timestamp_hkt || risk.updated_at_hkt; if (ts) { const t=document.createElement("p"); t.className="row"; t.textContent=`資料時間：${ts}`; card.appendChild(t); } const w=document.createElement("h3"); w.textContent="風險警示"; card.appendChild(w); const hasWarnings = Array.isArray(risk.warnings) && risk.warnings.length > 0; const hasLimitations = Array.isArray(risk.limitations) && risk.limitations.length > 0; const sufficiency = String(risk.review_readiness || risk.risk_sufficiency || "ok").toLowerCase(); const hasInsufficientRisk = riskRaw === "unknown" || hasLimitations || (sufficiency !== "ok" && sufficiency !== "ready" && sufficiency !== "sufficient"); if (hasWarnings) { const ul=document.createElement("ul"); risk.warnings.forEach((x)=>{const li=document.createElement("li"); li.textContent=String(x); ul.appendChild(li);}); card.appendChild(ul);} else { const none=document.createElement("p"); none.className="helper-text"; none.textContent=hasInsufficientRisk ? "暫無明確警示，但風險資料不足" : "暫無明確風險警示"; card.appendChild(none);} if (hasLimitations) { const h3=document.createElement("h3"); h3.textContent="限制"; const ul=document.createElement("ul"); risk.limitations.forEach((x)=>{const li=document.createElement("li"); li.textContent=String(x); ul.appendChild(li);}); card.append(h3,ul);} const helper=document.createElement("p"); helper.className="helper-text"; helper.textContent="風險摘要只供 review，不會自動阻止或建立任何真實交易。"; card.appendChild(helper); }
+
+      function renderAiTeamPacketCard(packet){
+        const card=document.getElementById("team-card");
+        if (!card) return;
+        const hasSafeGuardrails = packet
+          && packet.paper_trade_only === true
+          && packet.decision_support_only === true
+          && packet.broker_connection === false
+          && packet.live_execution === false
+          && packet.real_money_execution === false
+          && packet.creates_orders === false;
+        if (!packet || packet.status === "unavailable" || !hasSafeGuardrails) {
+          card.innerHTML = `<h2>AI Team Packet</h2><p class="helper-text">暫時未能載入，請稍後再試。</p><p class="helper-text">只供模擬檢視｜只供決策支援｜不連接券商｜不建立訂單｜不是真實買賣建議</p>`;
+          return;
+        }
+        const slot = packet.slot_status_counts || {};
+        const direction = packet.simulated_direction_counts || {};
+        const gaps = Array.isArray(packet.top_gaps) ? packet.top_gaps : [];
+        const limitations = Array.isArray(packet.limitations) ? packet.limitations : [];
+        card.textContent="";
+        const h=document.createElement("h2"); h.textContent="AI Team Packet"; card.appendChild(h);
+        const rows=[
+          `狀態：${packet.status || 'unavailable'}`,
+          `日期：${packet.business_date || '未有資料'}`,
+          `覆蓋股票：${packet.covered_tickers ?? 0}`,
+          `資料準備度：可用 ${slot.ok||0} / 部分 ${slot.partial||0} / 缺少 ${slot.missing||0} / 未知 ${slot.unknown||0}`,
+          `模擬方向（只供觀察）：只觀察 ${direction.watch_only||0} / 混合觀察 ${direction.mixed_watch||0} / 資料不足 ${direction.insufficient_data||0}`,
+          `來源：${packet.source || 'latest_system_runs'}`,
+          '只供模擬檢視｜只供決策支援｜不連接券商｜不建立訂單｜不是真實買賣建議'
+        ];
+        rows.forEach((t)=>{const p=document.createElement('p'); p.className='row'; p.textContent=t; card.appendChild(p);});
+        const gapTitle=document.createElement('h3'); gapTitle.textContent='主要資料缺口'; card.appendChild(gapTitle);
+        const gapText=document.createElement('p'); gapText.className='helper-text'; gapText.textContent=gaps.length?gaps.join('；'):'暫時無主要缺口'; card.appendChild(gapText);
+        const limTitle=document.createElement('h3'); limTitle.textContent='限制'; card.appendChild(limTitle);
+        const limText=document.createElement('p'); limText.className='helper-text'; limText.textContent=limitations.length?limitations.join('；'):'暫時未提供限制'; card.appendChild(limText);
+      }
+
       function renderJournal(latest, signals, paperPnl, risk, decisionContext){
         const card=document.getElementById("journal-card"); card.textContent="";
         card.innerHTML = `<h2>新增人手模擬決策</h2><p class="helper-text">此區只記錄人手 paper decision，不建立訂單、不連接券商、不作真實落盤。真實交易決定仍由人手在系統外作出。</p><div id="journal-result-banner" class="journal-banner" style="display:none;"></div><form id="journal-form" class="journal-form"><label>股票 / Ticker<select id="journal-ticker" required></select></label><label>人手模擬決策 / Human paper decision<select id="journal-decision-type" required><option value="watch">繼續觀察</option><option value="paper_buy">偏正面觀察</option><option value="paper_sell">謹慎觀察</option><option value="paper_hold">資料不足</option><option value="skip">跳過</option></select></label><p class="helper-text">此分類只供 paper journal 記錄，不建立訂單，不連接券商，不代表真實買賣決定。</p><label>決策原因 / Rationale<textarea id="journal-rationale" maxlength="500" required placeholder="請記錄你的人手模擬決策原因，例如：為何觀察、為何模擬持有、需要補充哪些資料。不要填寫真實交易指令。"></textarea><small id="journal-counter">已輸入 0 / 500 字</small></label><label>信心程度 / Confidence<select id="journal-confidence"><option value="">未選擇</option><option value="low">低</option><option value="medium">中</option><option value="high">高</option><option value="unknown">未知</option></select></label><label><input id="journal-ack" type="checkbox" required> 風險確認 / Guardrail acknowledgement：我確認這只是人手模擬決策日誌，不會建立訂單、不會連接券商、不是真實交易決定。</label><button id="journal-submit" type="submit">記錄人手模擬決策</button><div id="journal-submit-result-card" class="journal-banner" style="display:none;" aria-live="polite" role="status"></div></form><p id="journal-result" class="helper-text"></p><details id="journal-context-details" data-tab-panel="journal"><summary>決策參考資料</summary><div id="journal-context-content" class="metric-item"><h3>決策參考資料 / Decision Context</h3><p class="helper-text">目前資料只足夠作 paper review，不足以作完整投資判斷。</p></div></details><details id="journal-snapshot-details" data-tab-panel="journal"><summary>最近紀錄</summary><div id="journal-snapshot-content" class="metric-item"><h3>最近保存紀錄 / Recent Journal Snapshots</h3><p class="helper-text">載入中...</p></div></details><details id="journal-outcome-details" data-tab-panel="journal" aria-live="polite" role="status"><summary>後續結果</summary><div id="journal-outcome-content" class="metric-item"><h3>後續結果 / Outcome Review</h3><p class="helper-text">正在載入後續結果...</p></div></details>`;
@@ -631,6 +668,7 @@
           renderPaperPnl(pnl);
           renderRisk(risk);
           renderTeamRole(latest, daily, signals, risk);
+          renderAiTeamPacketCard(payload?.sections?.ai_team_packet_summary);
           const decisionContext = payload?.sections?.decision_context_summary;
           renderContextTab(signals, decisionContext, selectedTicker, tickerPortfolio);
           renderStockReview(payload?.sections?.stock_dossier_review);

@@ -979,3 +979,21 @@
 - BLOCKER: `execution_summary.schedule_basis` incorrectly reported post-close `0 12 * * *` instead of midday `30 4 * * 1-5`.
 - Classification: runtime metadata bug (not Railway platform config failure).
 - Acceptance status: **PARTIAL PASS / BLOCKED** pending this fix merge + operator rerun evidence.
+
+## 2026-05-15 — PR #161 post-merge closure (Step 136F/136G-lite)
+- PR #161 merged: yes.
+- Merge commit: `f94347ac500ade9172b22c646e58fac824ffe6ec`.
+- CI result before merge: success (`pytest`, 587 passed).
+- Review submissions: 1.
+- Review threads: 2.
+- Unresolved review threads: 0.
+- Outdated unresolved threads: 0.
+- Issue comments: 0.
+- Railway statuses success: `miniapp-static-preview`, `telegram-webhook`, `paper-stale-risk-refresh`, `paper-daily-runner`, `paper-midday-monitor`.
+- Post-merge smoke evidence: `paper-daily-runner` run id `58` success; `execution_summary.status=success`; `run_type=post_close_daily_review`; `schedule_basis=HKT 20:00 (Railway cron UTC: 0 12 * * *)`.
+- Mini App review-shell POST: HTTP 200.
+- DB evidence: `latest_system_runs.summary_json.ai_team_packet` exists, `status=ok`, `covered_tickers=3`.
+- Canonical run_type/schedule_basis confirmed.
+- Post-merge QA Check: pass.
+- Post-merge Domain Check: pass.
+- Boundary check: no broker/live/real-money/autonomous execution; no LLM/vendor call; no DB migration.

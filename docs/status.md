@@ -1,8 +1,21 @@
 # Project Status
 
 ## Last reviewed date
-2026-05-15
+2026-05-16
 
+## 2026-05-16 — Step 136H/I-POST closure + Step 136J/136K-lite kickoff
+
+### PR #162 post-merge closure
+- PR #162 merged: yes.
+- Merge commit: `b41851cc201117a5cb4c157a983663f725c878c2`.
+- CI result before merge: success (`pytest`, 592 passed).
+- Review submissions: 1; review threads: 2; unresolved review threads: 0; outdated unresolved threads: 0; issue comments: 0.
+- Railway services observed success on merge: `miniapp-static-preview`, `telegram-webhook`, `paper-stale-risk-refresh`, `paper-daily-runner`, `paper-midday-monitor`.
+- Mini App AI Team Packet card manual smoke: PASS.
+- Telegram `/ai_team_packet` manual smoke: PASS.
+- Post-merge QA Check: pass.
+- Post-merge Domain Check: pass.
+- Boundary confirmation: no broker/live/real-money/autonomous execution, no LLM/vendor call, no DB migration.
 
 ## 2026-05-15 — Step 136E post-merge closure + Step 136F/136G-lite in progress
 

@@ -276,3 +276,12 @@ For each Railway scheduled service candidate, capture:
 - [ ] Confirm Mini App shows AI Team Packet read-only card with safety labels.
 - [ ] Confirm Telegram `/ai_team_packet` returns bounded summary without raw JSON/secrets.
 - [ ] Confirm Mini App + Telegram both remain paper-only/decision-support-only/no broker/no live/no real-money/no order creation.
+
+
+### Step 136J/136K-lite update (2026-05-16)
+- AI Team surfaces remain read-only and consume bounded `latest_system_runs.summary_json.ai_team_packet` only.
+- Mini App exposes compact `AI 團隊摘要` in Today tab and detailed `AI 團隊摘要 / AI Team Packet` in System tab with deterministic freshness labels (`最新` / `可能過舊` / `未能判斷`) and fail-closed unavailable behavior.
+- Telegram `/ai_team_packet` is Chinese-first, bounded, read-only operator summary; no raw JSON, no secret exposure, no journal/order/runner side-effects.
+- Guardrails unchanged: paper-only, decision-support-only, no broker connection, no live/real-money execution, no autonomous execution, no order creation; human operator remains final decision-maker outside system.
+- Internal MVP Launch Candidate v1 acceptance requires CI green, Railway service success, latest runner row evidence, Mini App AI Team visibility checks, Telegram command checks, and secret-safe outputs.
+- LLM/vendor integration remains deferred post-launch unless explicitly approved with backend-only provider abstraction and mock-first acceptance path.

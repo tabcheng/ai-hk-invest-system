@@ -730,21 +730,32 @@ def _format_latest_system_run_message(row: dict[str, Any]) -> str:
 
 
 
-def _format_ai_team_packet_operator_fields(packet: dict[str, Any]) -> list[tuple[str, Any]]:
+def _format_ai_team_packet_operator_fields(packet: dict[str, Any], latest_business_date: str) -> list[tuple[str, Any]]:
     slot = packet.get("slot_status_counts") if isinstance(packet.get("slot_status_counts"), dict) else {}
     direction = packet.get("simulated_direction_counts") if isinstance(packet.get("simulated_direction_counts"), dict) else {}
     top_gaps = [str(x)[:80] for x in list(packet.get("top_gaps") or []) if str(x).strip()][:5]
     limitations = [str(x)[:120] for x in list(packet.get("limitations") or []) if str(x).strip()][:5]
+    packet_business_date = str(packet.get("business_date") or "").strip()
+    latest_date = str(latest_business_date or "").strip()
+    freshness = "未能判斷"
+    if packet_business_date and latest_date:
+        if packet_business_date == latest_date:
+            freshness = "最新"
+        elif packet_business_date < latest_date:
+            freshness = "可能過舊"
     return [
         ("status", str(packet.get("status") or "unavailable")[:40]),
+        ("結果", "AI 團隊摘要（只供模擬檢視）"),
         ("run_id", str(packet.get("run_id") or "N/A")[:80]),
-        ("business_date", str(packet.get("business_date") or "N/A")[:40]),
+        ("交易日 / business_date", str(packet.get("business_date") or "N/A")[:40]),
+        ("資料狀態", freshness),
         ("covered_tickers", _safe_int_counter(packet.get("covered_tickers"))),
         ("資料準備度", f"可用={_safe_int_counter(slot.get('ok'))}, 部分={_safe_int_counter(slot.get('partial'))}, 缺少={_safe_int_counter(slot.get('missing'))}, 未知={_safe_int_counter(slot.get('unknown'))}"),
         ("模擬方向統計", f"只觀察={_safe_int_counter(direction.get('watch_only'))}, 混合觀察={_safe_int_counter(direction.get('mixed_watch'))}, 資料不足={_safe_int_counter(direction.get('insufficient_data'))}"),
-        ("top_gaps", "；".join(top_gaps) if top_gaps else "none"),
-        ("limitations", "；".join(limitations) if limitations else "none"),
+        ("主要資料缺口", "；".join(top_gaps) if top_gaps else "none"),
+        ("限制", "；".join(limitations) if limitations else "none"),
         ("source", "latest_system_runs"),
+        ("安全邊界", "只供模擬檢視｜只供決策支援｜不連接券商｜不建立訂單｜不是真實買賣建議"),
         ("safety", "Paper trading only | Decision support only | No broker connection | No live execution | No real-money execution | No order creation"),
     ]
 
@@ -765,7 +776,7 @@ def _build_ai_team_packet_command_message(client: Any) -> str:
     for k in ("broker_connection", "live_execution", "real_money_execution", "creates_orders"):
         if packet.get(k) is not False:
             return _build_operator_message(command_label="/ai_team_packet", status="unavailable", reason="guardrail check failed; packet withheld")
-    return _build_operator_message(command_label="/ai_team_packet", status="completed", result="latest bounded AI Team packet summary", fields=_format_ai_team_packet_operator_fields(packet))
+    return _build_operator_message(command_label="/ai_team_packet", status="completed", result="AI 團隊摘要（只供模擬檢視）", fields=_format_ai_team_packet_operator_fields(packet, str(latest_row.get("business_date") or "")))
 
 
 def _parse_ai_team_packet_command(command_text: str) -> None:

@@ -64,6 +64,7 @@
       </header>
       <section class="boundary-banner">只供模擬檢視 · 不建立訂單 · 不連接券商 · 不是真實買賣建議</section>
       <nav class="tab-bar" role="tablist" aria-label="Mini App sections"><button id="tab-today" role="tab" aria-selected="true" data-tab="today" aria-controls="overview-card">今日</button><button id="tab-stock-review" role="tab" aria-selected="false" data-tab="stock-review" aria-controls="stock-review-card">股票檢視</button><button id="tab-portfolio" role="tab" aria-selected="false" data-tab="portfolio" aria-controls="paper-pnl-card">模擬組合</button><button id="tab-journal" role="tab" aria-selected="false" data-tab="journal" aria-controls="journal-card">日誌</button><button id="tab-system" role="tab" aria-selected="false" data-tab="system" aria-controls="latest-card">系統</button></nav><section id="overview-card" class="overview-card" data-tab-panel="today" role="tabpanel" aria-labelledby="tab-today"><h2>今日簡報 / Daily Brief</h2><p class="helper-text">載入中...</p></section>
+      <section id="team-today-card" class="section-card" data-tab-panel="today" role="tabpanel" aria-labelledby="tab-today"><h2>AI 團隊摘要</h2><p class="helper-text">載入中...</p></section>
       <section id="team-card" class="section-card" data-tab-panel="system" role="tabpanel" aria-labelledby="tab-system"><h2>AI 團隊說明</h2></section>
       <section id="latest-card" class="section-card" data-tab-panel="system" role="tabpanel" aria-labelledby="tab-system"><h2>最新系統運行</h2></section>
       <section id="daily-card" class="section-card" data-tab-panel="system" role="tabpanel" aria-labelledby="tab-system"><h2>每日檢視摘要</h2></section>
@@ -434,6 +435,28 @@
       }
       function renderRisk(risk){ if (!risk || risk.status !== "ok") return fillUnavailable("risk-card","風險摘要"); const card=document.getElementById("risk-card"); card.textContent=""; const h=document.createElement("h2"); h.textContent="風險摘要"; card.append(h, renderStatusChip("success")); const riskRaw = String(risk.risk_level||"unknown"); const riskLabel = riskRaw==="unknown" ? "未能判斷" : riskRaw; const p=document.createElement("p"); p.className="row"; p.textContent=`風險等級：${riskLabel}`; card.appendChild(p); const ts=risk.data_timestamp_hkt || risk.updated_at_hkt; if (ts) { const t=document.createElement("p"); t.className="row"; t.textContent=`資料時間：${ts}`; card.appendChild(t); } const w=document.createElement("h3"); w.textContent="風險警示"; card.appendChild(w); const hasWarnings = Array.isArray(risk.warnings) && risk.warnings.length > 0; const hasLimitations = Array.isArray(risk.limitations) && risk.limitations.length > 0; const sufficiency = String(risk.review_readiness || risk.risk_sufficiency || "ok").toLowerCase(); const hasInsufficientRisk = riskRaw === "unknown" || hasLimitations || (sufficiency !== "ok" && sufficiency !== "ready" && sufficiency !== "sufficient"); if (hasWarnings) { const ul=document.createElement("ul"); risk.warnings.forEach((x)=>{const li=document.createElement("li"); li.textContent=String(x); ul.appendChild(li);}); card.appendChild(ul);} else { const none=document.createElement("p"); none.className="helper-text"; none.textContent=hasInsufficientRisk ? "暫無明確警示，但風險資料不足" : "暫無明確風險警示"; card.appendChild(none);} if (hasLimitations) { const h3=document.createElement("h3"); h3.textContent="限制"; const ul=document.createElement("ul"); risk.limitations.forEach((x)=>{const li=document.createElement("li"); li.textContent=String(x); ul.appendChild(li);}); card.append(h3,ul);} const helper=document.createElement("p"); helper.className="helper-text"; helper.textContent="風險摘要只供 review，不會自動阻止或建立任何真實交易。"; card.appendChild(helper); }
 
+      function computePacketFreshness(packet){
+        const pDate = String(packet?.business_date || "").trim();
+        const latestDate = String(packet?.latest_business_date || "").trim();
+        if (!pDate || !latestDate) return "未能判斷";
+        if (pDate === latestDate) return "最新";
+        return pDate < latestDate ? "可能過舊" : "未能判斷";
+      }
+      function renderAiTeamPacketCompact(packet){
+        const card=document.getElementById("team-today-card"); if(!card) return;
+        const safe = packet && packet.status !== "unavailable" && packet.paper_trade_only===true && packet.decision_support_only===true && packet.broker_connection===false && packet.live_execution===false && packet.real_money_execution===false && packet.creates_orders===false;
+        card.textContent=""; const h=document.createElement("h2"); h.textContent="AI 團隊摘要"; card.appendChild(h);
+        if(!safe){ const p=document.createElement("p"); p.className="helper-text"; p.textContent="暫時未能載入，請到「系統」分頁稍後再試。"; card.appendChild(p); return;}
+        const slot=packet.slot_status_counts||{}; const direction=packet.simulated_direction_counts||{}; const freshness=computePacketFreshness(packet);
+        [
+          `狀態：${packet.status||"unavailable"}`,`日期：${packet.business_date||"未有資料"}`,`覆蓋股票：${packet.covered_tickers??0}`,
+          `資料準備度：可用 ${slot.ok||0} / 部分 ${slot.partial||0} / 缺少 ${slot.missing||0} / 未知 ${slot.unknown||0}`,
+          `模擬觀察：只觀察 ${direction.watch_only||0} / 混合觀察 ${direction.mixed_watch||0} / 資料不足 ${direction.insufficient_data||0}`,
+          `資料狀態：${freshness}`,
+          "只供模擬檢視（不建立訂單、不連接券商）"
+        ].forEach((t)=>{const p=document.createElement("p"); p.className="row"; p.textContent=t; card.appendChild(p);});
+        const hint=document.createElement("p"); hint.className="helper-text"; hint.textContent="詳情請到「系統」分頁查看 AI Team Packet。"; card.appendChild(hint);
+      }
       function renderAiTeamPacketCard(packet){
         const card=document.getElementById("team-card");
         if (!card) return;
@@ -445,7 +468,7 @@
           && packet.real_money_execution === false
           && packet.creates_orders === false;
         if (!packet || packet.status === "unavailable" || !hasSafeGuardrails) {
-          card.innerHTML = `<h2>AI Team Packet</h2><p class="helper-text">暫時未能載入，請稍後再試。</p><p class="helper-text">只供模擬檢視｜只供決策支援｜不連接券商｜不建立訂單｜不是真實買賣建議</p>`;
+          card.innerHTML = `<h2>AI 團隊摘要 / AI Team Packet</h2><p class="helper-text">暫時未能載入，請稍後再試。</p><p class="helper-text">只供模擬檢視｜只供決策支援｜不連接券商｜不建立訂單｜不是真實買賣建議</p>`;
           return;
         }
         const slot = packet.slot_status_counts || {};
@@ -453,14 +476,14 @@
         const gaps = Array.isArray(packet.top_gaps) ? packet.top_gaps : [];
         const limitations = Array.isArray(packet.limitations) ? packet.limitations : [];
         card.textContent="";
-        const h=document.createElement("h2"); h.textContent="AI Team Packet"; card.appendChild(h);
+        const h=document.createElement("h2"); h.textContent="AI 團隊摘要 / AI Team Packet"; card.appendChild(h);
         const rows=[
           `狀態：${packet.status || 'unavailable'}`,
           `日期：${packet.business_date || '未有資料'}`,
           `覆蓋股票：${packet.covered_tickers ?? 0}`,
           `資料準備度：可用 ${slot.ok||0} / 部分 ${slot.partial||0} / 缺少 ${slot.missing||0} / 未知 ${slot.unknown||0}`,
           `模擬方向（只供觀察）：只觀察 ${direction.watch_only||0} / 混合觀察 ${direction.mixed_watch||0} / 資料不足 ${direction.insufficient_data||0}`,
-          `來源：${packet.source || 'latest_system_runs'}`,
+          `資料狀態：${computePacketFreshness(packet)}`,
           '只供模擬檢視｜只供決策支援｜不連接券商｜不建立訂單｜不是真實買賣建議'
         ];
         rows.forEach((t)=>{const p=document.createElement('p'); p.className='row'; p.textContent=t; card.appendChild(p);});
@@ -468,6 +491,17 @@
         const gapText=document.createElement('p'); gapText.className='helper-text'; gapText.textContent=gaps.length?gaps.join('；'):'暫時無主要缺口'; card.appendChild(gapText);
         const limTitle=document.createElement('h3'); limTitle.textContent='限制'; card.appendChild(limTitle);
         const limText=document.createElement('p'); limText.className='helper-text'; limText.textContent=limitations.length?limitations.join('；'):'暫時未提供限制'; card.appendChild(limText);
+        const details=document.createElement('details');
+        const summary=document.createElement('summary');
+        summary.textContent='查看技術資料';
+        const techRows=[
+          `Run ID：${packet.run_id || "未有資料"}`,
+          `排程基準：${packet.schedule_basis || "未有資料"}`,
+          `來源：${packet.source || 'latest_system_runs'}`
+        ];
+        techRows.forEach((t)=>{const p=document.createElement('p'); p.className='helper-text'; p.textContent=t; details.appendChild(p);});
+        details.prepend(summary);
+        card.appendChild(details);
       }
 
       function renderJournal(latest, signals, paperPnl, risk, decisionContext){
@@ -643,7 +677,7 @@
         } catch (_error) { box.innerHTML = `<h3>後續結果 / Outcome Review</h3><p class="helper-text">暫時未能載入，請稍後再試。</p>`; }
       }
 
-      function setActiveTab(tab){ const panelMap={today:["overview-card"],"stock-review":["stock-review-card"],portfolio:["paper-pnl-card","risk-card"],journal:["journal-card","journal-context-details","journal-snapshot-details","journal-outcome-details"],system:["signals-card","context-card","team-card","latest-card","daily-card","system-safety-card"]}; Object.keys(panelMap).forEach((k)=>panelMap[k].forEach((id)=>{const el=document.getElementById(id); if(el) el.style = (k===tab) ? "" : "display:none;"; })); const tabs=["today","stock-review","portfolio","journal","system"]; tabs.forEach((name)=>{const btn=document.getElementById(`tab-${name}`); if(btn){ const on=name===tab; btn.setAttribute("aria-selected", on?"true":"false"); }}); }
+      function setActiveTab(tab){ const panelMap={today:["overview-card","team-today-card"],"stock-review":["stock-review-card"],portfolio:["paper-pnl-card","risk-card"],journal:["journal-card","journal-context-details","journal-snapshot-details","journal-outcome-details"],system:["signals-card","context-card","team-card","latest-card","daily-card","system-safety-card"]}; Object.keys(panelMap).forEach((k)=>panelMap[k].forEach((id)=>{const el=document.getElementById(id); if(el) el.style = (k===tab) ? "" : "display:none;"; })); const tabs=["today","stock-review","portfolio","journal","system"]; tabs.forEach((name)=>{const btn=document.getElementById(`tab-${name}`); if(btn){ const on=name===tab; btn.setAttribute("aria-selected", on?"true":"false"); }}); }
       function bindTabs(){ const tabs=["today","stock-review","portfolio","journal","system"]; tabs.forEach((name)=>{ const b=document.getElementById(`tab-${name}`); if(b) b.addEventListener("click", ()=> setActiveTab(name)); }); setActiveTab("today"); }
       async function loadReviewShell() {
         const initData = (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initData) || "";
@@ -668,6 +702,7 @@
           renderPaperPnl(pnl);
           renderRisk(risk);
           renderTeamRole(latest, daily, signals, risk);
+          renderAiTeamPacketCompact(payload?.sections?.ai_team_packet_summary);
           renderAiTeamPacketCard(payload?.sections?.ai_team_packet_summary);
           const decisionContext = payload?.sections?.decision_context_summary;
           renderContextTab(signals, decisionContext, selectedTicker, tickerPortfolio);
@@ -681,6 +716,7 @@
           fillUnavailable("stock-review-card", "股票檢視");
           fillUnavailable("paper-pnl-card", "模擬盈虧摘要");
           fillUnavailable("risk-card", "風險摘要");
+          fillUnavailable("team-today-card", "AI 團隊摘要");
           renderJournal(null, null, null, null, null);
         }
       }

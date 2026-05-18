@@ -1010,3 +1010,4 @@
 - Post-merge QA Check: pass.
 - Post-merge Domain Check: pass.
 - Boundary check: no broker/live/real-money/autonomous execution; no LLM/vendor call; no DB migration.
+\n\n## 2026-05-16 — Step 136L/136M-lite update\n- Internal MVP Launch Candidate v1: conditionally ready after post-merge smoke.\n- Operating model surface is read-only operator readiness only, not investment recommendation.\n- Guardrails unchanged: no broker connection, no order creation, no live/real-money/autonomous execution; human remains final real-money decision-maker outside system.\n- LLM/vendor expansion deferred post-launch unless backend-only provider abstraction approved.\n

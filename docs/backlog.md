@@ -315,3 +315,4 @@ Prioritization:
 - Railway 2xx access-log severity classification cleanup remains non-blocking observability backlog.
 - Step 137 backend-only LLM provider remains deferred.
 - After Step 136K-lite, non-blocking enhancements move to post-launch backlog unless internal MVP operation is blocked.
+\n\n## 2026-05-16 — Step 136L/136M-lite update\n- Internal MVP Launch Candidate v1: conditionally ready after post-merge smoke.\n- Operating model surface is read-only operator readiness only, not investment recommendation.\n- Guardrails unchanged: no broker connection, no order creation, no live/real-money/autonomous execution; human remains final real-money decision-maker outside system.\n- LLM/vendor expansion deferred post-launch unless backend-only provider abstraction approved.\n

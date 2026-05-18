@@ -65,7 +65,9 @@
       <section class="boundary-banner">只供模擬檢視 · 不建立訂單 · 不連接券商 · 不是真實買賣建議</section>
       <nav class="tab-bar" role="tablist" aria-label="Mini App sections"><button id="tab-today" role="tab" aria-selected="true" data-tab="today" aria-controls="overview-card">今日</button><button id="tab-stock-review" role="tab" aria-selected="false" data-tab="stock-review" aria-controls="stock-review-card">股票檢視</button><button id="tab-portfolio" role="tab" aria-selected="false" data-tab="portfolio" aria-controls="paper-pnl-card">模擬組合</button><button id="tab-journal" role="tab" aria-selected="false" data-tab="journal" aria-controls="journal-card">日誌</button><button id="tab-system" role="tab" aria-selected="false" data-tab="system" aria-controls="latest-card">系統</button></nav><section id="overview-card" class="overview-card" data-tab-panel="today" role="tabpanel" aria-labelledby="tab-today"><h2>今日簡報 / Daily Brief</h2><p class="helper-text">載入中...</p></section>
       <section id="team-today-card" class="section-card" data-tab-panel="today" role="tabpanel" aria-labelledby="tab-today"><h2>AI 團隊摘要</h2><p class="helper-text">載入中...</p></section>
+      <section id="team-status-today-card" class="section-card" data-tab-panel="today" role="tabpanel" aria-labelledby="tab-today"><h2>AI 團隊狀態</h2><p class="helper-text">載入中...</p></section>
       <section id="team-card" class="section-card" data-tab-panel="system" role="tabpanel" aria-labelledby="tab-system"><h2>AI 團隊說明</h2></section>
+      <section id="team-status-card" class="section-card" data-tab-panel="system" role="tabpanel" aria-labelledby="tab-system"><h2>AI 團隊運作狀態</h2></section>
       <section id="latest-card" class="section-card" data-tab-panel="system" role="tabpanel" aria-labelledby="tab-system"><h2>最新系統運行</h2></section>
       <section id="daily-card" class="section-card" data-tab-panel="system" role="tabpanel" aria-labelledby="tab-system"><h2>每日檢視摘要</h2></section>
       <section id="signals-card" class="section-card" data-tab-panel="system" role="tabpanel" aria-labelledby="tab-system"><h2>信號摘要</h2></section><section id="context-card" class="section-card" data-tab-panel="system" role="tabpanel" aria-labelledby="tab-system"><h2>資料脈絡</h2><div id="context-shell" class="helper-text">載入中...</div></section><section id="system-safety-card" class="section-card" data-tab-panel="system" role="tabpanel" aria-labelledby="tab-system"><details><summary>安全與邊界說明</summary><ul><li>Telegram initData 只在後端驗證</li><li>前端不使用 initDataUnsafe 作授權</li><li>前端不保存 Supabase secret / service role key</li><li>只供模擬檢視，不建立訂單，不連接券商</li><li>並非買賣指示，不是真實買賣建議</li><li>真實買賣決定由人類在系統外作出</li></ul></details></section><section id="stock-review-card" class="section-card" data-tab-panel="stock-review" role="tabpanel" aria-labelledby="tab-stock-review"><h2>股票檢視 / Stock Review</h2><p class="helper-text">第一層只顯示重點，完整資料放在可展開區塊。只供模擬檢視。</p><div id="stock-review-shell" class="helper-text">載入中...</div></section>
@@ -503,6 +505,22 @@
         details.prepend(summary);
         card.appendChild(details);
       }
+      function renderAiTeamOperatingModelToday(model){
+        const card=document.getElementById("team-status-today-card"); if(!card) return;
+        card.textContent=""; const h=document.createElement("h2"); h.textContent="AI 團隊狀態"; card.appendChild(h);
+        if(!model || model.status!=="ok"){ const p=document.createElement("p"); p.className="helper-text"; p.textContent="暫時未能載入，請稍後再試。"; card.appendChild(p); return; }
+        const s=model.summary||{};
+        [`內部 MVP：${model.overall_readiness||"條件式可用"}`,`已可用 ${s.working_desks||0} / 部分可用 ${s.partial_desks||0} / 上線後優化 ${s.deferred_desks||0}`, "詳情請到「系統」分頁查看 AI 團隊運作狀態。", "只供模擬檢視（不建立訂單、不連接券商）"].forEach((t)=>{const p=document.createElement("p"); p.className="row"; p.textContent=t; card.appendChild(p);});
+      }
+      function renderAiTeamOperatingModelCard(model){
+        const card=document.getElementById("team-status-card"); if(!card) return;
+        card.textContent=""; const h=document.createElement("h2"); h.textContent="AI 團隊運作狀態 / Operating Model"; card.appendChild(h);
+        if(!model || model.status!=="ok"){ const p=document.createElement("p"); p.className="helper-text"; p.textContent="暫時未能載入，請稍後再試。"; card.appendChild(p); return; }
+        const desks=Array.isArray(model.desks)?model.desks:[]; const groups={working:[],partial:[],deferred:[]};
+        desks.forEach((d)=>{const st=String(d?.status||""); if(["working","working_basic"].includes(st)) groups.working.push(d); else if(st==="partial") groups.partial.push(d); else if(st==="deferred") groups.deferred.push(d);});
+        const renderGroup=(title,rows)=>{const h3=document.createElement("h3"); h3.textContent=title; card.appendChild(h3); if(!rows.length){const p=document.createElement("p"); p.className="helper-text"; p.textContent="暫時無"; card.appendChild(p); return;} const ul=document.createElement("ul"); rows.forEach((d)=>{const li=document.createElement("li"); li.textContent=`${d.name_zh||d.name}：${d.current_capability||"未有資料"}（限制：${d.limitation||"未有資料"}）`; ul.appendChild(li);}); card.appendChild(ul);};
+        renderGroup("已可用", groups.working); renderGroup("部分可用", groups.partial); renderGroup("上線後優化 / Deferred", groups.deferred);
+      }
 
       function renderJournal(latest, signals, paperPnl, risk, decisionContext){
         const card=document.getElementById("journal-card"); card.textContent="";
@@ -677,7 +695,7 @@
         } catch (_error) { box.innerHTML = `<h3>後續結果 / Outcome Review</h3><p class="helper-text">暫時未能載入，請稍後再試。</p>`; }
       }
 
-      function setActiveTab(tab){ const panelMap={today:["overview-card","team-today-card"],"stock-review":["stock-review-card"],portfolio:["paper-pnl-card","risk-card"],journal:["journal-card","journal-context-details","journal-snapshot-details","journal-outcome-details"],system:["signals-card","context-card","team-card","latest-card","daily-card","system-safety-card"]}; Object.keys(panelMap).forEach((k)=>panelMap[k].forEach((id)=>{const el=document.getElementById(id); if(el) el.style = (k===tab) ? "" : "display:none;"; })); const tabs=["today","stock-review","portfolio","journal","system"]; tabs.forEach((name)=>{const btn=document.getElementById(`tab-${name}`); if(btn){ const on=name===tab; btn.setAttribute("aria-selected", on?"true":"false"); }}); }
+      function setActiveTab(tab){ const panelMap={today:["overview-card","team-today-card","team-status-today-card"],"stock-review":["stock-review-card"],portfolio:["paper-pnl-card","risk-card"],journal:["journal-card","journal-context-details","journal-snapshot-details","journal-outcome-details"],system:["signals-card","context-card","team-card","team-status-card","latest-card","daily-card","system-safety-card"]}; Object.keys(panelMap).forEach((k)=>panelMap[k].forEach((id)=>{const el=document.getElementById(id); if(el) el.style = (k===tab) ? "" : "display:none;"; })); const tabs=["today","stock-review","portfolio","journal","system"]; tabs.forEach((name)=>{const btn=document.getElementById(`tab-${name}`); if(btn){ const on=name===tab; btn.setAttribute("aria-selected", on?"true":"false"); }}); }
       function bindTabs(){ const tabs=["today","stock-review","portfolio","journal","system"]; tabs.forEach((name)=>{ const b=document.getElementById(`tab-${name}`); if(b) b.addEventListener("click", ()=> setActiveTab(name)); }); setActiveTab("today"); }
       async function loadReviewShell() {
         const initData = (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initData) || "";
@@ -704,6 +722,8 @@
           renderTeamRole(latest, daily, signals, risk);
           renderAiTeamPacketCompact(payload?.sections?.ai_team_packet_summary);
           renderAiTeamPacketCard(payload?.sections?.ai_team_packet_summary);
+          renderAiTeamOperatingModelToday(payload?.sections?.ai_team_operating_model);
+          renderAiTeamOperatingModelCard(payload?.sections?.ai_team_operating_model);
           const decisionContext = payload?.sections?.decision_context_summary;
           renderContextTab(signals, decisionContext, selectedTicker, tickerPortfolio);
           renderStockReview(payload?.sections?.stock_dossier_review);
@@ -717,6 +737,8 @@
           fillUnavailable("paper-pnl-card", "模擬盈虧摘要");
           fillUnavailable("risk-card", "風險摘要");
           fillUnavailable("team-today-card", "AI 團隊摘要");
+          fillUnavailable("team-status-today-card", "AI 團隊狀態");
+          fillUnavailable("team-status-card", "AI 團隊運作狀態");
           renderJournal(null, null, null, null, null);
         }
       }

@@ -1415,3 +1415,17 @@ def test_ai_team_packet_command_usage_error_on_extra_tokens(monkeypatch):
     assert "Command: /ai_team_packet" in response
     assert "Status: failed." in response
     assert "Usage: /ai_team_packet" in response
+
+def test_ai_team_status_command_returns_chinese_readiness_summary(monkeypatch):
+    monkeypatch.setenv("TELEGRAM_CHAT_ID", "chat-1")
+    response = handle_telegram_operator_command(object(), _build_update("/ai_team_status"))
+    assert "Command: /ai_team_status" in response
+    assert "AI 團隊運作狀態" in response
+    assert "內部 MVP" in response
+    assert "不連接券商" in response
+
+
+def test_ai_team_status_command_usage_error_on_extra_tokens(monkeypatch):
+    monkeypatch.setenv("TELEGRAM_CHAT_ID", "chat-1")
+    response = handle_telegram_operator_command(object(), _build_update("/ai_team_status now"))
+    assert "Usage: /ai_team_status" in response

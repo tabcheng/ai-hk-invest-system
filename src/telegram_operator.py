@@ -16,6 +16,7 @@ from src.human_decision_journal import (
     build_recent_decision_context_snapshots_review,
     build_journal_snapshot_outcome_review,
 )
+from src.ai_team_operating_model import build_ai_team_operating_model_v1
 from src.latest_system_runs_repository import get_latest_system_run
 from src.market_data.smoke import (
     build_market_acceptance_by_ticker,
@@ -33,6 +34,7 @@ _RUNNER_STATUS_COMMAND_PATTERN = re.compile(r"^/runner_status\s*$", re.IGNORECAS
 _LATEST_SYSTEM_RUN_COMMAND_PATTERN = re.compile(r"^/latest_system_run\s*$", re.IGNORECASE)
 _MARKET_SMOKE_COMMAND_PATTERN = re.compile(r"^/market_smoke(?:\s+(\S+))?\s*$", re.IGNORECASE)
 _AI_TEAM_PACKET_COMMAND_PATTERN = re.compile(r"^/ai_team_packet\s*$", re.IGNORECASE)
+_AI_TEAM_STATUS_COMMAND_PATTERN = re.compile(r"^/ai_team_status\s*$", re.IGNORECASE)
 _PNL_REVIEW_COMMAND_PATTERN = re.compile(r"^/pnl_review\s*$", re.IGNORECASE)
 _OUTCOME_REVIEW_COMMAND_PATTERN = re.compile(r"^/outcome_review(?:\s+(\S+))?\s*$", re.IGNORECASE)
 _DAILY_REVIEW_COMMAND_PATTERN = re.compile(r"^/daily_review\s*$", re.IGNORECASE)
@@ -476,6 +478,7 @@ def build_help_command_message() -> str:
             "- /latest_system_run : Show latest bounded paper_daily_runner row summary (最新 bounded 系統 run 摘要).",
             "- /market_smoke [ticker] : Mobile market-data smoke diagnostics (例如 /market_smoke 0700.HK).",
             "- /ai_team_packet : Show latest bounded AI Team packet summary (只讀模擬摘要).",
+            "- /ai_team_status : Show AI 團隊運作狀態摘要（只讀 readiness）.",
             "- /risk_review [run_id] : Run paper-trading risk review for one run (查看單次 run 風險回顧).",
             "- /pnl_review : Show paper position/PnL review snapshot (查看持倉與盈虧摘要).",
             "- /outcome_review [days] : Show closed-trade outcome summary (查看平倉結果摘要，可選天數視窗).",
@@ -784,6 +787,32 @@ def _parse_ai_team_packet_command(command_text: str) -> None:
         raise ValueError("Usage: /ai_team_packet")
 
 
+def _parse_ai_team_status_command(command_text: str) -> None:
+    if not _AI_TEAM_STATUS_COMMAND_PATTERN.match(command_text or ""):
+        raise ValueError("Usage: /ai_team_status")
+
+
+def _build_ai_team_status_command_message() -> str:
+    model = build_ai_team_operating_model_v1()
+    summary = model.get("summary") if isinstance(model.get("summary"), dict) else {}
+    desks = list(model.get("desks") or [])
+    working = [str(row.get("name_zh") or row.get("name") or "") for row in desks if str(row.get("status")) in {"working", "working_basic"}]
+    partial = [str(row.get("name_zh") or row.get("name") or "") for row in desks if str(row.get("status")) == "partial"]
+    deferred = [str(row.get("name_zh") or row.get("name") or "") for row in desks if str(row.get("status")) == "deferred"]
+    return _build_operator_message(
+        command_label="/ai_team_status",
+        status="completed",
+        result="AI 團隊運作狀態（只供模擬檢視）",
+        fields=[
+            ("整體狀態", f"內部 MVP：{model.get('overall_readiness') or '條件式可用'}"),
+            ("已可用", f"{_safe_int_counter(summary.get('working_desks'))} 個：{'、'.join(working) if working else '無'}"),
+            ("部分可用", f"{_safe_int_counter(summary.get('partial_desks'))} 個：{'、'.join(partial) if partial else '無'}"),
+            ("上線後優化", f"{_safe_int_counter(summary.get('deferred_desks'))} 個：{'、'.join(deferred) if deferred else '無'}"),
+            ("邊界", "只供模擬檢視｜不建立訂單｜不連接券商｜不是真實買賣建議"),
+        ],
+    )
+
+
 def _parse_market_smoke_command(command_text: str) -> str:
     match = _MARKET_SMOKE_COMMAND_PATTERN.match(command_text or "")
     if not match:
@@ -1046,6 +1075,7 @@ def handle_telegram_operator_command(client: Any, update: dict[str, Any]) -> str
     is_journal_outcome_command = text.lower().startswith("/journal_outcome")
     is_market_smoke_command = text.lower().startswith("/market_smoke")
     is_ai_team_packet_command = text.lower().startswith("/ai_team_packet")
+    is_ai_team_status_command = text.lower().startswith("/ai_team_status")
     is_decision_note_command = text.lower().startswith("/decision_note")
     if not (
         is_help_command
@@ -1061,6 +1091,7 @@ def handle_telegram_operator_command(client: Any, update: dict[str, Any]) -> str
         or is_decision_note_command
         or is_market_smoke_command
         or is_ai_team_packet_command
+        or is_ai_team_status_command
     ):
         return None
 
@@ -1248,6 +1279,12 @@ def handle_telegram_operator_command(client: Any, update: dict[str, Any]) -> str
             except ValueError as exc:
                 return _build_usage_error_message(command_label="/ai_team_packet", error_text=str(exc))
             return _build_ai_team_packet_command_message(client)
+        if is_ai_team_status_command:
+            try:
+                _parse_ai_team_status_command(text)
+            except ValueError as exc:
+                return _build_usage_error_message(command_label="/ai_team_status", error_text=str(exc))
+            return _build_ai_team_status_command_message()
 
         if is_decision_note_command:
             try:

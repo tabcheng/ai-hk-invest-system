@@ -3,6 +3,7 @@ from __future__ import annotations
 from datetime import datetime, timedelta, timezone
 from typing import Any, Mapping
 
+from src.ai_team_operating_model import build_ai_team_operating_model_v1
 from src.backend_data_cadence import build_backend_data_cadence_policy, plan_backend_auto_refreshes
 from src.miniapp_data_provider import (
     LocalArtifactMiniAppReadDataProvider,
@@ -366,6 +367,7 @@ def build_miniapp_review_shell_response(
         "paper_pnl_summary": data_provider.get_paper_pnl_summary(),
         "risk_summary": data_provider.get_risk_summary(),
         "ai_team_packet_summary": ai_team_packet_summary,
+        "ai_team_operating_model": build_ai_team_operating_model_v1(),
         "decision_context_summary": data_provider.get_decision_context_summary(),
         "ticker_level_paper_portfolio_review": data_provider.get_ticker_level_paper_portfolio_review(),
         "daily_review": {"status": "mock"},

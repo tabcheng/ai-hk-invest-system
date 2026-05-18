@@ -29,3 +29,13 @@ def test_miniapp_includes_ai_team_packet_safety_labels_and_no_raw_json_dump():
     assert "Sell now" not in html
     assert "Execute" not in html
     assert "slot readiness：" not in html
+
+def test_miniapp_includes_ai_team_operating_model_sections():
+    html = Path("miniapp/index.html").read_text(encoding="utf-8")
+    assert "AI 團隊狀態" in html
+    assert "AI 團隊運作狀態 / Operating Model" in html
+    assert "已可用" in html
+    assert "部分可用" in html
+    assert "上線後優化 / Deferred" in html
+    assert "詳情請到「系統」分頁查看 AI 團隊運作狀態" in html
+    assert "JSON.stringify" not in html
